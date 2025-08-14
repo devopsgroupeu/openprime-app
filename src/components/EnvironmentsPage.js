@@ -6,10 +6,11 @@ import EnvironmentCard from './EnvironmentCard';
 import NewEnvironmentModal from './modals/NewEnvironmentModal';
 import HelmValuesModal from './modals/HelmValuesModal';
 import { createEmptyEnvironment } from '../config/environmentsConfig';
+import { useTheme } from '../contexts/ThemeContext';
 
-const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateEnvironment }) => {
+const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateEnvironment, onDeleteEnvironment }) => {
+  const { isDark } = useTheme();
   const [showNewEnvModal, setShowNewEnvModal] = useState(false);
-  const [editingEnv, setEditingEnv] = useState(null);
   const [showValuesEditor, setShowValuesEditor] = useState(null);
   const [editingHelmValues, setEditingHelmValues] = useState('');
   const [newEnv, setNewEnv] = useState(createEmptyEnvironment());
@@ -33,9 +34,9 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
           ...newEnv.services.eks,
           helmCharts: {
             ...newEnv.services.eks.helmCharts,
-            [showValuesEditor]: { 
-              ...newEnv.services.eks.helmCharts[showValuesEditor], 
-              customValues: true 
+            [showValuesEditor]: {
+              ...newEnv.services.eks.helmCharts[showValuesEditor],
+              customValues: true
             }
           }
         }
@@ -46,12 +47,18 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+    <div className={`min-h-screen transition-colors ${
+      isDark
+        ? 'bg-gradient-to-br from-gray-900 to-gray-800'
+        : 'bg-gradient-to-br from-gray-50 to-gray-100'
+    }`}>
       <Navigation setCurrentPage={setCurrentPage} currentPage={currentPage} />
       <div className="max-w-7xl mx-auto px-8 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Environments</h1>
-          <button 
+          <h1 className={`text-3xl font-bold transition-colors ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>Environments</h1>
+          <button
             onClick={() => setShowNewEnvModal(true)}
             className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all flex items-center"
           >
@@ -62,10 +69,11 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {environments.map(env => (
-            <EnvironmentCard 
-              key={env.id} 
-              environment={env} 
-              onEdit={setEditingEnv}
+            <EnvironmentCard
+              key={env.id}
+              environment={env}
+              onEdit={() => {}}
+              onDelete={onDeleteEnvironment}
             />
           ))}
         </div>

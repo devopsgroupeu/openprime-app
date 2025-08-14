@@ -7,8 +7,8 @@ export const initialEnvironments = [
     status: 'running',
     region: 'us-east-1',
     services: {
-      vpc: { 
-        enabled: true, 
+      vpc: {
+        enabled: true,
         cidr: '10.0.0.0/16',
         azCount: 3,
         publicSubnets: 3,
@@ -19,8 +19,8 @@ export const initialEnvironments = [
         enableDnsHostnames: true,
         enableDnsSupport: true
       },
-      eks: { 
-        enabled: true, 
+      eks: {
+        enabled: true,
         version: '1.28',
         nodeGroups: 2,
         minNodes: 2,
@@ -49,9 +49,9 @@ export const initialEnvironments = [
           fluxcd: { enabled: false, customValues: false }
         }
       },
-      rds: { 
-        enabled: true, 
-        engine: 'postgres', 
+      rds: {
+        enabled: true,
+        engine: 'postgres',
         version: '15.4',
         instanceClass: 'db.t3.medium',
         allocatedStorage: 100,
@@ -92,7 +92,7 @@ export const initialEnvironments = [
       s3: {
         enabled: true,
         buckets: [
-          { 
+          {
             name: 'app-assets',
             versioning: true,
             encryption: 'AES256',
@@ -101,7 +101,7 @@ export const initialEnvironments = [
             cors: true,
             replication: false
           },
-          { 
+          {
             name: 'backups',
             versioning: true,
             encryption: 'KMS',
@@ -160,8 +160,8 @@ export const createEmptyEnvironment = () => ({
   type: 'aws',
   region: 'us-east-1',
   services: {
-    vpc: { 
-      enabled: false, 
+    vpc: {
+      enabled: false,
       cidr: '10.0.0.0/16',
       azCount: 2,
       publicSubnets: 2,
@@ -172,8 +172,8 @@ export const createEmptyEnvironment = () => ({
       enableDnsHostnames: true,
       enableDnsSupport: true
     },
-    eks: { 
-      enabled: false, 
+    eks: {
+      enabled: false,
       version: '1.28',
       nodeGroups: 1,
       minNodes: 2,
@@ -205,9 +205,9 @@ export const createEmptyEnvironment = () => ({
         trivy: { enabled: false, customValues: false }
       }
     },
-    rds: { 
-      enabled: false, 
-      engine: 'postgres', 
+    rds: {
+      enabled: false,
+      engine: 'postgres',
       version: '15.4',
       instanceClass: 'db.t3.small',
       allocatedStorage: 20,
@@ -306,7 +306,7 @@ alertmanager:
   ingress:
     enabled: true
     className: nginx
-    
+
 server:
   persistentVolume:
     size: 50Gi
@@ -314,27 +314,27 @@ server:
   global:
     scrape_interval: 15s
     evaluation_interval: 15s
-    
+
 serviceMonitor:
   enabled: true
-  
+
 prometheusOperator:
   enabled: true
   admissionWebhooks:
     enabled: true`,
-  
+
   grafana: `# Grafana Values
 adminPassword: "admin"
 persistence:
   enabled: true
   size: 10Gi
-  
+
 ingress:
   enabled: true
   className: nginx
   hosts:
     - grafana.example.com
-  
+
 datasources:
   datasources.yaml:
     apiVersion: 1
@@ -347,7 +347,7 @@ datasources:
     - name: Loki
       type: loki
       url: http://loki:3100
-      
+
 dashboardProviders:
   dashboardproviders.yaml:
     apiVersion: 1
@@ -358,7 +358,7 @@ dashboardProviders:
       type: file
       disableDeletion: false
       editable: true`,
-    
+
   argocd: `# ArgoCD Values
 server:
   service:
@@ -377,19 +377,19 @@ server:
     oidc.config: |
       name: Example SSO
       issuer: https://auth.example.com
-      
+
 applicationSet:
   enabled: true
-  
+
 notifications:
   enabled: true
   argocdUrl: https://argocd.example.com`,
-      
+
   loki: `# Loki Values
 persistence:
   enabled: true
   size: 10Gi
-  
+
 config:
   auth_enabled: false
   ingester:
@@ -413,7 +413,7 @@ config:
       index:
         prefix: index_
         period: 24h`,
-  
+
   karpenter: `# Karpenter Values
 controller:
   resources:
@@ -423,13 +423,13 @@ controller:
     limits:
       cpu: 2
       memory: 2Gi
-      
+
 settings:
   aws:
     clusterName: "eks-cluster"
     defaultInstanceProfile: "KarpenterNodeInstanceProfile"
     interruptionQueueName: "karpenter-interruption"
-    
+
 provisioners:
   - name: default
     limits:
@@ -443,17 +443,17 @@ provisioners:
       - key: kubernetes.io/arch
         operator: In
         values: ["amd64"]`,
-        
+
   certManager: `# Cert-Manager Values
 installCRDs: true
 webhook:
   timeoutSeconds: 30
-  
+
 prometheus:
   enabled: true
   servicemonitor:
     enabled: true
-    
+
 clusterIssuers:
   - name: letsencrypt-prod
     email: admin@example.com
@@ -463,7 +463,7 @@ clusterIssuers:
   - name: letsencrypt-staging
     email: admin@example.com
     server: https://acme-staging-v02.api.letsencrypt.org/directory`,
-    
+
   nginx: `# NGINX Ingress Controller Values
 controller:
   service:
@@ -482,16 +482,16 @@ controller:
     enabled: true
     minReplicas: 2
     maxReplicas: 10`,
-    
+
   istio: `# Istio Values
 pilot:
   autoscaleEnabled: true
   autoscaleMin: 2
   autoscaleMax: 5
-  
+
 gateway:
   enabled: true
-  
+
 telemetry:
   v2:
     prometheus:
@@ -500,7 +500,7 @@ telemetry:
           disable_host_header_fallback: true
         outboundSidecar:
           disable_host_header_fallback: true`,
-          
+
   velero: `# Velero Values
 configuration:
   provider: aws
@@ -513,7 +513,7 @@ configuration:
     provider: aws
     config:
       region: us-east-1
-      
+
 schedules:
   daily-backup:
     schedule: "0 2 * * *"
@@ -521,26 +521,26 @@ schedules:
       ttl: "720h0m0s"
       includedNamespaces:
       - "*"`,
-      
+
   fluxcd: `# FluxCD Values
 gitRepository:
   url: https://github.com/your-org/flux-config
   branch: main
   interval: 1m
-  
+
 kustomization:
   interval: 10m
   path: "./clusters/production"
   prune: true
   validation: client`,
-  
+
   falco: `# Falco Values
 falco:
   grpc:
     enabled: true
   grpcOutput:
     enabled: true
-    
+
 customRules:
   rules-custom.yaml: |-
     - rule: Unauthorized Process
@@ -548,19 +548,19 @@ customRules:
       condition: spawned_process and not proc.name in (allowed_processes)
       output: Unauthorized process started
       priority: WARNING`,
-      
+
   trivy: `# Trivy Operator Values
 operator:
   scanJobTimeout: 5m
-  
+
 trivy:
   ignoreUnfixed: true
   severity: CRITICAL,HIGH,MEDIUM
-  
+
 webhooks:
   - name: slack
     url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK`,
-    
+
   externalDns: `# External DNS Values
 sources:
   - service
@@ -581,7 +581,7 @@ serviceAccount:
   name: aws-load-balancer-controller
   annotations:
     eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT:role/AWSLoadBalancerControllerRole
-    
+
 enableShield: true
 enableWaf: true
 enableWafv2: true

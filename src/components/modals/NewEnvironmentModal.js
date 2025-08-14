@@ -1,16 +1,16 @@
 // src/components/modals/NewEnvironmentModal.js
 import React from 'react';
-import { 
-  ChevronDown, ChevronUp, Network, Box, Database, Package, 
+import {
+  ChevronDown, ChevronUp, Network, Box, Database, Package,
   Search, Container, Archive, FunctionSquare, HardDrive, MessageSquare,
   Bell, Globe, Lock, Shield, Plus, X
 } from 'lucide-react';
 import { helmChartDefaults } from '../../config/environmentsConfig';
 
-const NewEnvironmentModal = ({ 
-  newEnv, 
-  setNewEnv, 
-  expandedServices, 
+const NewEnvironmentModal = ({
+  newEnv,
+  setNewEnv,
+  expandedServices,
   setExpandedServices,
   onClose,
   onCreate,
@@ -43,10 +43,10 @@ const NewEnvironmentModal = ({
   };
 
   const addS3Bucket = () => {
-    const newBucket = { 
-      name: '', 
-      versioning: true, 
-      encryption: 'AES256', 
+    const newBucket = {
+      name: '',
+      versioning: true,
+      encryption: 'AES256',
       publicAccess: false,
       lifecycleRules: false,
       cors: false,
@@ -80,14 +80,14 @@ const NewEnvironmentModal = ({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-gray-800 rounded-xl p-8 max-w-5xl w-full max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-bold text-white mb-6">Create New Environment</h2>
-        
+
         <div className="space-y-6">
           {/* Basic Configuration */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Environment Name</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
                 placeholder="e.g., Staging"
                 value={newEnv.name}
@@ -96,7 +96,7 @@ const NewEnvironmentModal = ({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">AWS Region</label>
-              <select 
+              <select
                 className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
                 value={newEnv.region}
                 onChange={(e) => setNewEnv({...newEnv, region: e.target.value})}
@@ -146,9 +146,9 @@ const NewEnvironmentModal = ({
                   })}
                   onExpand={() => setExpandedServices({...expandedServices, eks: !expandedServices.eks})}
                 >
-                  <EKSSettings 
-                    newEnv={newEnv} 
-                    setNewEnv={setNewEnv} 
+                  <EKSSettings
+                    newEnv={newEnv}
+                    setNewEnv={setNewEnv}
                     onEditHelmValues={onEditHelmValues}
                   />
                 </ServiceConfiguration>
@@ -198,8 +198,8 @@ const NewEnvironmentModal = ({
                   })}
                   onExpand={() => setExpandedServices({...expandedServices, ecr: !expandedServices.ecr})}
                 >
-                  <ECRSettings 
-                    newEnv={newEnv} 
+                  <ECRSettings
+                    newEnv={newEnv}
                     setNewEnv={setNewEnv}
                     addRepository={addECRRepository}
                     removeRepository={removeECRRepository}
@@ -222,8 +222,8 @@ const NewEnvironmentModal = ({
                   })}
                   onExpand={() => setExpandedServices({...expandedServices, s3: !expandedServices.s3})}
                 >
-                  <S3Settings 
-                    newEnv={newEnv} 
+                  <S3Settings
+                    newEnv={newEnv}
                     setNewEnv={setNewEnv}
                     addBucket={addS3Bucket}
                     removeBucket={removeS3Bucket}
@@ -299,13 +299,13 @@ const NewEnvironmentModal = ({
         </div>
 
         <div className="flex justify-end space-x-3 mt-8">
-          <button 
+          <button
             onClick={onClose}
             className="px-6 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-all"
           >
             Cancel
           </button>
-          <button 
+          <button
             onClick={onCreate}
             className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all"
           >
@@ -322,8 +322,8 @@ const ServiceConfiguration = ({ icon, title, enabled, expanded, onToggle, onExpa
   <div className="bg-gray-700 rounded-lg overflow-hidden">
     <div className="flex items-center justify-between p-3">
       <div className="flex items-center">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           className="mr-3 w-4 h-4"
           checked={enabled}
           onChange={(e) => onToggle(e.target.checked)}
@@ -351,8 +351,8 @@ const VPCSettings = ({ newEnv, setNewEnv }) => (
     <div className="grid grid-cols-2 gap-3">
       <div>
         <label className="block text-xs text-gray-400 mb-1">CIDR Block</label>
-        <input 
-          type="text" 
+        <input
+          type="text"
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.vpc.cidr}
           onChange={(e) => setNewEnv({
@@ -363,7 +363,7 @@ const VPCSettings = ({ newEnv, setNewEnv }) => (
       </div>
       <div>
         <label className="block text-xs text-gray-400 mb-1">Availability Zones</label>
-        <select 
+        <select
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.vpc.azCount}
           onChange={(e) => setNewEnv({
@@ -378,8 +378,8 @@ const VPCSettings = ({ newEnv, setNewEnv }) => (
       </div>
       <div>
         <label className="block text-xs text-gray-400 mb-1">Public Subnets</label>
-        <input 
-          type="number" 
+        <input
+          type="number"
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.vpc.publicSubnets}
           onChange={(e) => setNewEnv({
@@ -390,8 +390,8 @@ const VPCSettings = ({ newEnv, setNewEnv }) => (
       </div>
       <div>
         <label className="block text-xs text-gray-400 mb-1">Private Subnets</label>
-        <input 
-          type="number" 
+        <input
+          type="number"
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.vpc.privateSubnets}
           onChange={(e) => setNewEnv({
@@ -402,7 +402,7 @@ const VPCSettings = ({ newEnv, setNewEnv }) => (
       </div>
       <div>
         <label className="block text-xs text-gray-400 mb-1">NAT Gateway</label>
-        <select 
+        <select
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.vpc.natGateway}
           onChange={(e) => setNewEnv({
@@ -418,8 +418,8 @@ const VPCSettings = ({ newEnv, setNewEnv }) => (
     </div>
     <div className="space-y-2">
       <label className="flex items-center text-xs">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           className="mr-2"
           checked={newEnv.services.vpc.enableFlowLogs}
           onChange={(e) => setNewEnv({
@@ -430,8 +430,8 @@ const VPCSettings = ({ newEnv, setNewEnv }) => (
         <span className="text-gray-300">Enable VPC Flow Logs</span>
       </label>
       <label className="flex items-center text-xs">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           className="mr-2"
           checked={newEnv.services.vpc.enableVpnGateway}
           onChange={(e) => setNewEnv({
@@ -442,8 +442,8 @@ const VPCSettings = ({ newEnv, setNewEnv }) => (
         <span className="text-gray-300">Enable VPN Gateway</span>
       </label>
       <label className="flex items-center text-xs">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           className="mr-2"
           checked={newEnv.services.vpc.enableDnsHostnames}
           onChange={(e) => setNewEnv({
@@ -463,7 +463,7 @@ const EKSSettings = ({ newEnv, setNewEnv, onEditHelmValues }) => (
     <div className="grid grid-cols-2 gap-3">
       <div>
         <label className="block text-xs text-gray-400 mb-1">Version</label>
-        <select 
+        <select
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.eks.version}
           onChange={(e) => setNewEnv({
@@ -478,8 +478,8 @@ const EKSSettings = ({ newEnv, setNewEnv, onEditHelmValues }) => (
       </div>
       <div>
         <label className="block text-xs text-gray-400 mb-1">Node Groups</label>
-        <input 
-          type="number" 
+        <input
+          type="number"
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.eks.nodeGroups}
           onChange={(e) => setNewEnv({
@@ -490,8 +490,8 @@ const EKSSettings = ({ newEnv, setNewEnv, onEditHelmValues }) => (
       </div>
       <div>
         <label className="block text-xs text-gray-400 mb-1">Min Nodes</label>
-        <input 
-          type="number" 
+        <input
+          type="number"
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.eks.minNodes}
           onChange={(e) => setNewEnv({
@@ -502,8 +502,8 @@ const EKSSettings = ({ newEnv, setNewEnv, onEditHelmValues }) => (
       </div>
       <div>
         <label className="block text-xs text-gray-400 mb-1">Max Nodes</label>
-        <input 
-          type="number" 
+        <input
+          type="number"
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.eks.maxNodes}
           onChange={(e) => setNewEnv({
@@ -513,15 +513,15 @@ const EKSSettings = ({ newEnv, setNewEnv, onEditHelmValues }) => (
         />
       </div>
     </div>
-    
+
     {/* EKS Add-ons */}
     <div>
       <div className="text-sm text-gray-300 font-medium mb-2">EKS Add-ons</div>
       <div className="grid grid-cols-2 gap-2">
         {newEnv.services.eks.addons && Object.entries(newEnv.services.eks.addons).map(([addon, config]) => (
           <label key={addon} className="flex items-center text-xs bg-gray-600 rounded px-2 py-1">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               className="mr-2 w-3 h-3"
               checked={config.enabled}
               onChange={(e) => setNewEnv({
@@ -551,8 +551,8 @@ const EKSSettings = ({ newEnv, setNewEnv, onEditHelmValues }) => (
         {Object.entries(newEnv.services.eks.helmCharts).map(([chart, config]) => (
           <div key={chart} className="flex items-center justify-between bg-gray-600 rounded px-2 py-1">
             <div className="flex items-center">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 className="mr-2 w-3 h-3"
                 checked={config.enabled}
                 onChange={(e) => setNewEnv({
@@ -594,7 +594,7 @@ const RDSSettings = ({ newEnv, setNewEnv }) => (
     <div className="grid grid-cols-2 gap-3">
       <div>
         <label className="block text-xs text-gray-400 mb-1">Engine</label>
-        <select 
+        <select
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.rds.engine}
           onChange={(e) => setNewEnv({
@@ -611,7 +611,7 @@ const RDSSettings = ({ newEnv, setNewEnv }) => (
       </div>
       <div>
         <label className="block text-xs text-gray-400 mb-1">Instance Class</label>
-        <select 
+        <select
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.rds.instanceClass}
           onChange={(e) => setNewEnv({
@@ -628,8 +628,8 @@ const RDSSettings = ({ newEnv, setNewEnv }) => (
       </div>
       <div>
         <label className="block text-xs text-gray-400 mb-1">Storage (GB)</label>
-        <input 
-          type="number" 
+        <input
+          type="number"
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.rds.allocatedStorage}
           onChange={(e) => setNewEnv({
@@ -640,8 +640,8 @@ const RDSSettings = ({ newEnv, setNewEnv }) => (
       </div>
       <div>
         <label className="block text-xs text-gray-400 mb-1">Backup Retention</label>
-        <input 
-          type="number" 
+        <input
+          type="number"
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.rds.backupRetention}
           onChange={(e) => setNewEnv({
@@ -653,8 +653,8 @@ const RDSSettings = ({ newEnv, setNewEnv }) => (
     </div>
     <div className="grid grid-cols-2 gap-2">
       <label className="flex items-center text-xs">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           className="mr-2"
           checked={newEnv.services.rds.multiAz}
           onChange={(e) => setNewEnv({
@@ -665,8 +665,8 @@ const RDSSettings = ({ newEnv, setNewEnv }) => (
         <span className="text-gray-300">Multi-AZ Deployment</span>
       </label>
       <label className="flex items-center text-xs">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           className="mr-2"
           checked={newEnv.services.rds.encrypted}
           onChange={(e) => setNewEnv({
@@ -677,8 +677,8 @@ const RDSSettings = ({ newEnv, setNewEnv }) => (
         <span className="text-gray-300">Encryption at Rest</span>
       </label>
       <label className="flex items-center text-xs">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           className="mr-2"
           checked={newEnv.services.rds.performanceInsights}
           onChange={(e) => setNewEnv({
@@ -689,8 +689,8 @@ const RDSSettings = ({ newEnv, setNewEnv }) => (
         <span className="text-gray-300">Performance Insights</span>
       </label>
       <label className="flex items-center text-xs">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           className="mr-2"
           checked={newEnv.services.rds.deletionProtection}
           onChange={(e) => setNewEnv({
@@ -710,7 +710,7 @@ const OpenSearchSettings = ({ newEnv, setNewEnv }) => (
     <div className="grid grid-cols-2 gap-3">
       <div>
         <label className="block text-xs text-gray-400 mb-1">Version</label>
-        <select 
+        <select
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.opensearch.version}
           onChange={(e) => setNewEnv({
@@ -726,7 +726,7 @@ const OpenSearchSettings = ({ newEnv, setNewEnv }) => (
       </div>
       <div>
         <label className="block text-xs text-gray-400 mb-1">Instance Type</label>
-        <select 
+        <select
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.opensearch.instanceType}
           onChange={(e) => setNewEnv({
@@ -742,8 +742,8 @@ const OpenSearchSettings = ({ newEnv, setNewEnv }) => (
       </div>
       <div>
         <label className="block text-xs text-gray-400 mb-1">Instance Count</label>
-        <input 
-          type="number" 
+        <input
+          type="number"
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.opensearch.instanceCount}
           onChange={(e) => setNewEnv({
@@ -754,8 +754,8 @@ const OpenSearchSettings = ({ newEnv, setNewEnv }) => (
       </div>
       <div>
         <label className="block text-xs text-gray-400 mb-1">EBS Volume Size (GB)</label>
-        <input 
-          type="number" 
+        <input
+          type="number"
           className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
           value={newEnv.services.opensearch.ebsVolumeSize}
           onChange={(e) => setNewEnv({
@@ -767,8 +767,8 @@ const OpenSearchSettings = ({ newEnv, setNewEnv }) => (
     </div>
     <div className="grid grid-cols-2 gap-2">
       <label className="flex items-center text-xs">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           className="mr-2"
           checked={newEnv.services.opensearch.dedicatedMasterEnabled}
           onChange={(e) => setNewEnv({
@@ -779,8 +779,8 @@ const OpenSearchSettings = ({ newEnv, setNewEnv }) => (
         <span className="text-gray-300">Dedicated Master Nodes</span>
       </label>
       <label className="flex items-center text-xs">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           className="mr-2"
           checked={newEnv.services.opensearch.nodeToNodeEncryption}
           onChange={(e) => setNewEnv({
@@ -791,8 +791,8 @@ const OpenSearchSettings = ({ newEnv, setNewEnv }) => (
         <span className="text-gray-300">Node-to-Node Encryption</span>
       </label>
       <label className="flex items-center text-xs">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           className="mr-2"
           checked={newEnv.services.opensearch.fineGrainedAccessControl}
           onChange={(e) => setNewEnv({
@@ -803,8 +803,8 @@ const OpenSearchSettings = ({ newEnv, setNewEnv }) => (
         <span className="text-gray-300">Fine-Grained Access Control</span>
       </label>
       <label className="flex items-center text-xs">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           className="mr-2"
           checked={newEnv.services.opensearch.cognitoEnabled}
           onChange={(e) => setNewEnv({
@@ -835,8 +835,8 @@ const ECRSettings = ({ newEnv, setNewEnv, addRepository, removeRepository }) => 
     <div className="space-y-2 max-h-32 overflow-y-auto">
       {newEnv.services.ecr.repositories && newEnv.services.ecr.repositories.map((repo, index) => (
         <div key={index} className="flex items-center gap-2 bg-gray-600 rounded p-2">
-          <input 
-            type="text" 
+          <input
+            type="text"
             className="flex-1 px-2 py-1 bg-gray-700 border border-gray-500 rounded text-white text-xs"
             placeholder="Repository name"
             value={repo.name}
@@ -850,8 +850,8 @@ const ECRSettings = ({ newEnv, setNewEnv, addRepository, removeRepository }) => 
             }}
           />
           <label className="flex items-center text-xs">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               className="mr-1"
               checked={repo.scanOnPush}
               onChange={(e) => {
@@ -877,8 +877,8 @@ const ECRSettings = ({ newEnv, setNewEnv, addRepository, removeRepository }) => 
     </div>
     <div className="grid grid-cols-2 gap-2">
       <label className="flex items-center text-xs">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           className="mr-2"
           checked={newEnv.services.ecr.lifecyclePolicy}
           onChange={(e) => setNewEnv({
@@ -889,8 +889,8 @@ const ECRSettings = ({ newEnv, setNewEnv, addRepository, removeRepository }) => 
         <span className="text-gray-300">Lifecycle Policy</span>
       </label>
       <label className="flex items-center text-xs">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           className="mr-2"
           checked={newEnv.services.ecr.crossRegionReplication}
           onChange={(e) => setNewEnv({
@@ -922,8 +922,8 @@ const S3Settings = ({ newEnv, setNewEnv, addBucket, removeBucket }) => (
       {newEnv.services.s3.buckets && newEnv.services.s3.buckets.map((bucket, index) => (
         <div key={index} className="bg-gray-600 rounded p-2">
           <div className="flex items-center gap-2 mb-2">
-            <input 
-              type="text" 
+            <input
+              type="text"
               className="flex-1 px-2 py-1 bg-gray-700 border border-gray-500 rounded text-white text-xs"
               placeholder="Bucket name"
               value={bucket.name}
@@ -936,7 +936,7 @@ const S3Settings = ({ newEnv, setNewEnv, addBucket, removeBucket }) => (
                 });
               }}
             />
-            <select 
+            <select
               className="px-2 py-1 bg-gray-700 border border-gray-500 rounded text-white text-xs"
               value={bucket.encryption}
               onChange={(e) => {
@@ -961,8 +961,8 @@ const S3Settings = ({ newEnv, setNewEnv, addBucket, removeBucket }) => (
           </div>
           <div className="grid grid-cols-3 gap-1">
             <label className="flex items-center text-xs">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 className="mr-1"
                 checked={bucket.versioning}
                 onChange={(e) => {
@@ -977,8 +977,8 @@ const S3Settings = ({ newEnv, setNewEnv, addBucket, removeBucket }) => (
               <span className="text-gray-300">Versioning</span>
             </label>
             <label className="flex items-center text-xs">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 className="mr-1"
                 checked={bucket.lifecycleRules}
                 onChange={(e) => {
@@ -993,8 +993,8 @@ const S3Settings = ({ newEnv, setNewEnv, addBucket, removeBucket }) => (
               <span className="text-gray-300">Lifecycle</span>
             </label>
             <label className="flex items-center text-xs">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 className="mr-1"
                 checked={bucket.replication}
                 onChange={(e) => {
@@ -1020,7 +1020,7 @@ const LambdaSettings = ({ newEnv, setNewEnv }) => (
   <div className="grid grid-cols-2 gap-3 mt-3">
     <div>
       <label className="block text-xs text-gray-400 mb-1">Default Runtime</label>
-      <select 
+      <select
         className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
         value={newEnv.services.lambda.defaultRuntime}
         onChange={(e) => setNewEnv({
@@ -1036,7 +1036,7 @@ const LambdaSettings = ({ newEnv, setNewEnv }) => (
     </div>
     <div>
       <label className="block text-xs text-gray-400 mb-1">Default Memory (MB)</label>
-      <select 
+      <select
         className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
         value={newEnv.services.lambda.defaultMemory}
         onChange={(e) => setNewEnv({
@@ -1052,8 +1052,8 @@ const LambdaSettings = ({ newEnv, setNewEnv }) => (
     </div>
     <div>
       <label className="block text-xs text-gray-400 mb-1">Default Timeout (sec)</label>
-      <input 
-        type="number" 
+      <input
+        type="number"
         className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
         value={newEnv.services.lambda.defaultTimeout}
         onChange={(e) => setNewEnv({
@@ -1070,7 +1070,7 @@ const ElastiCacheSettings = ({ newEnv, setNewEnv }) => (
   <div className="grid grid-cols-2 gap-3 mt-3">
     <div>
       <label className="block text-xs text-gray-400 mb-1">Engine</label>
-      <select 
+      <select
         className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
         value={newEnv.services.elasticache.engine}
         onChange={(e) => setNewEnv({
@@ -1084,7 +1084,7 @@ const ElastiCacheSettings = ({ newEnv, setNewEnv }) => (
     </div>
     <div>
       <label className="block text-xs text-gray-400 mb-1">Node Type</label>
-      <select 
+      <select
         className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
         value={newEnv.services.elasticache.nodeType}
         onChange={(e) => setNewEnv({
@@ -1099,8 +1099,8 @@ const ElastiCacheSettings = ({ newEnv, setNewEnv }) => (
     </div>
     <div>
       <label className="block text-xs text-gray-400 mb-1">Number of Nodes</label>
-      <input 
-        type="number" 
+      <input
+        type="number"
         className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
         value={newEnv.services.elasticache.numCacheNodes}
         onChange={(e) => setNewEnv({
@@ -1117,8 +1117,8 @@ const SQSSettings = ({ newEnv, setNewEnv }) => (
   <div className="grid grid-cols-2 gap-3 mt-3">
     <div>
       <label className="block text-xs text-gray-400 mb-1">Visibility Timeout (sec)</label>
-      <input 
-        type="number" 
+      <input
+        type="number"
         className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
         value={newEnv.services.sqs.defaultVisibilityTimeout}
         onChange={(e) => setNewEnv({
@@ -1129,8 +1129,8 @@ const SQSSettings = ({ newEnv, setNewEnv }) => (
     </div>
     <div>
       <label className="block text-xs text-gray-400 mb-1">Message Retention (sec)</label>
-      <input 
-        type="number" 
+      <input
+        type="number"
         className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
         value={newEnv.services.sqs.defaultMessageRetention}
         onChange={(e) => setNewEnv({
@@ -1146,8 +1146,8 @@ const SQSSettings = ({ newEnv, setNewEnv }) => (
 const SNSSettings = ({ newEnv, setNewEnv }) => (
   <div className="mt-3">
     <label className="block text-xs text-gray-400 mb-1">Default KMS Key ID</label>
-    <input 
-      type="text" 
+    <input
+      type="text"
       className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-white text-sm"
       placeholder="KMS Key ID (optional)"
       value={newEnv.services.sns.defaultKmsKeyId || ''}

@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import HomePage from './components/HomePage';
 import EnvironmentsPage from './components/EnvironmentsPage';
 import SettingsPage from './components/SettingsPage';
-import { initialEnvironments, createEmptyEnvironment } from './config/environmentsConfig';
+import { initialEnvironments } from './config/environmentsConfig';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -12,10 +13,14 @@ export default function App() {
   const handleCreateEnvironment = (newEnv) => {
     const newEnvironment = {
       ...newEnv,
-      id: environments.length + 1,
+      id: Math.max(...environments.map(e => e.id), 0) + 1,
       status: 'pending'
     };
     setEnvironments([...environments, newEnvironment]);
+  };
+
+  const handleDeleteEnvironment = (envId) => {
+    setEnvironments(environments.filter(env => env.id !== envId));
   };
 
   const renderPage = () => {
@@ -29,6 +34,7 @@ export default function App() {
             currentPage={currentPage}
             environments={environments}
             onCreateEnvironment={handleCreateEnvironment}
+            onDeleteEnvironment={handleDeleteEnvironment}
           />
         );
       case 'settings':
@@ -38,5 +44,9 @@ export default function App() {
     }
   };
 
-  return <>{renderPage()}</>;
+  return (
+    <ThemeProvider>
+      {renderPage()}
+    </ThemeProvider>
+  );
 }
