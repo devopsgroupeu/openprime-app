@@ -1,0 +1,125 @@
+// src/components/SettingsPage.js
+import React from 'react';
+import { Cloud, GitBranch, Shield, Terminal } from 'lucide-react';
+import Navigation from './Navigation';
+
+const SettingsPage = ({ setCurrentPage, currentPage }) => {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+      <Navigation setCurrentPage={setCurrentPage} currentPage={currentPage} />
+      <div className="max-w-7xl mx-auto px-8 py-8">
+        <h1 className="text-3xl font-bold text-white mb-8">Settings</h1>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+              <Cloud className="w-5 h-5 mr-2 text-purple-400" />
+              Cloud Providers
+            </h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg">
+                <div className="flex items-center">
+                  <Cloud className="w-6 h-6 text-orange-400 mr-3" />
+                  <div>
+                    <div className="text-white font-semibold">AWS</div>
+                    <div className="text-sm text-gray-400">Amazon Web Services</div>
+                  </div>
+                </div>
+                <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">Connected</span>
+              </div>
+              <div className="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg">
+                <div className="flex items-center">
+                  <Cloud className="w-6 h-6 text-blue-400 mr-3" />
+                  <div>
+                    <div className="text-white font-semibold">Azure</div>
+                    <div className="text-sm text-gray-400">Microsoft Azure</div>
+                  </div>
+                </div>
+                <button className="px-4 py-2 bg-purple-600/20 text-purple-400 rounded-lg hover:bg-purple-600/30 transition-all">
+                  Connect
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+              <GitBranch className="w-5 h-5 mr-2 text-purple-400" />
+              Git Integration
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Repository URL</label>
+                <input 
+                  type="text" 
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  placeholder="https://github.com/your-org/infrastructure"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Default Branch</label>
+                <input 
+                  type="text" 
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  defaultValue="main"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+              <Shield className="w-5 h-5 mr-2 text-purple-400" />
+              Security & Compliance
+            </h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-white font-medium">Enforce MFA</div>
+                  <div className="text-sm text-gray-400">Require multi-factor authentication</div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:bg-purple-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-white font-medium">Encryption at Rest</div>
+                  <div className="text-sm text-gray-400">Encrypt all data stored</div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:bg-purple-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+              <Terminal className="w-5 h-5 mr-2 text-purple-400" />
+              CLI Configuration
+            </h2>
+            <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs">
+              <div className="text-gray-400"># Install OpenPrime CLI</div>
+              <div className="text-green-400">$ npm install -g openprime-cli</div>
+              <div className="text-gray-400 mt-2"># Configure credentials</div>
+              <div className="text-green-400">$ openprime configure</div>
+              <div className="text-gray-400 mt-2"># Deploy environment</div>
+              <div className="text-green-400">$ openprime deploy production</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 flex justify-end">
+          <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all">
+            Save All Settings
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SettingsPage;
