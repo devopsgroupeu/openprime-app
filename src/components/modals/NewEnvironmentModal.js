@@ -3,7 +3,7 @@ import React from 'react';
 import {
   ChevronDown, ChevronUp, Network, Box, Database, Package,
   Search, Container, Archive, FunctionSquare, HardDrive, MessageSquare,
-  Bell, Globe, Lock, Shield, Plus, X
+  Bell, Plus, X
 } from 'lucide-react';
 import { helmChartDefaults } from '../../config/environmentsConfig';
 
@@ -14,7 +14,8 @@ const NewEnvironmentModal = ({
   setExpandedServices,
   onClose,
   onCreate,
-  onEditHelmValues
+  onEditHelmValues,
+  isEditMode = false
 }) => {
   const addECRRepository = () => {
     const newRepo = { name: '', scanOnPush: true, mutability: 'MUTABLE' };
@@ -79,7 +80,9 @@ const NewEnvironmentModal = ({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-gray-800 rounded-xl p-8 max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold text-white mb-6">Create New Environment</h2>
+        <h2 className="text-2xl font-bold text-white mb-6">
+          {isEditMode ? 'Edit Environment' : 'Create New Environment'}
+        </h2>
 
         <div className="space-y-6">
           {/* Basic Configuration */}
@@ -309,7 +312,7 @@ const NewEnvironmentModal = ({
             onClick={onCreate}
             className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all"
           >
-            Create Environment
+            {isEditMode ? 'Update Environment' : 'Create Environment'}
           </button>
         </div>
       </div>

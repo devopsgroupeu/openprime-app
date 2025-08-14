@@ -8,21 +8,33 @@ import HelmValuesModal from './modals/HelmValuesModal';
 import { createEmptyEnvironment } from '../config/environmentsConfig';
 import { useTheme } from '../contexts/ThemeContext';
 
-const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateEnvironment, onDeleteEnvironment }) => {
+const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateEnvironment, onDeleteEnvironment, onUpdateEnvironment }) => {
   const { isDark } = useTheme();
   const [showNewEnvModal, setShowNewEnvModal] = useState(false);
   const [showValuesEditor, setShowValuesEditor] = useState(null);
   const [editingHelmValues, setEditingHelmValues] = useState('');
   const [newEnv, setNewEnv] = useState(createEmptyEnvironment());
   const [expandedServices, setExpandedServices] = useState({});
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const handleCreateEnvironment = () => {
     if (newEnv.name) {
-      onCreateEnvironment(newEnv);
+      if (isEditMode) {
+        onUpdateEnvironment(newEnv);
+      } else {
+        onCreateEnvironment(newEnv);
+      }
       setShowNewEnvModal(false);
       setNewEnv(createEmptyEnvironment());
       setExpandedServices({});
+      setIsEditMode(false);
     }
+  };
+
+  const handleEditEnvironment = (environment) => {
+    setNewEnv({ ...environment });
+    setIsEditMode(true);
+    setShowNewEnvModal(true);
   };
 
   const handleSaveHelmValues = () => {
@@ -72,7 +84,7 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
             <EnvironmentCard
               key={env.id}
               environment={env}
-              onEdit={() => {}}
+              onEdit={handleEditEnvironment}
               onDelete={onDeleteEnvironment}
             />
           ))}
@@ -88,8 +100,10 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
           onClose={() => {
             setShowNewEnvModal(false);
             setExpandedServices({});
+            setIsEditMode(false);
           }}
           onCreate={handleCreateEnvironment}
+          isEditMode={isEditMode}
           onEditHelmValues={(chart, values) => {
             setShowValuesEditor(chart);
             setEditingHelmValues(values);

@@ -23,6 +23,12 @@ export default function App() {
     setEnvironments(environments.filter(env => env.id !== envId));
   };
 
+  const handleUpdateEnvironment = (updatedEnv) => {
+    setEnvironments(environments.map(env =>
+      env.id === updatedEnv.id ? updatedEnv : env
+    ));
+  };
+
   const renderPage = () => {
     switch(currentPage) {
       case 'home':
@@ -35,6 +41,7 @@ export default function App() {
             environments={environments}
             onCreateEnvironment={handleCreateEnvironment}
             onDeleteEnvironment={handleDeleteEnvironment}
+            onUpdateEnvironment={handleUpdateEnvironment}
           />
         );
       case 'settings':

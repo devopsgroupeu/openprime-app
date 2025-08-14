@@ -87,10 +87,16 @@ const SettingsPage = ({ setCurrentPage, currentPage }) => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Default Branch</label>
+                <label className={`block text-sm font-medium mb-2 transition-colors ${
+                  isDark ? 'text-gray-300' : 'text-gray-700'
+                }`}>Default Branch</label>
                 <input
                   type="text"
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  className={`w-full px-4 py-2 rounded-lg border transition-colors ${
+                    isDark
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
                   defaultValue="main"
                 />
               </div>
