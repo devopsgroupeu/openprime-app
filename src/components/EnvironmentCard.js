@@ -13,6 +13,7 @@ const EnvironmentCard = ({ environment, onEdit, onDelete }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const getServiceIcon = (service) => {
     const icons = {
+      // AWS Services
       vpc: <Network className="w-3 h-3 mr-1 text-purple-400" />,
       eks: <Box className="w-3 h-3 mr-1 text-purple-400" />,
       rds: <Database className="w-3 h-3 mr-1 text-purple-400" />,
@@ -26,13 +27,25 @@ const EnvironmentCard = ({ environment, onEdit, onDelete }) => {
       cloudfront: <Globe className="w-3 h-3 mr-1 text-purple-400" />,
       route53: <Globe className="w-3 h-3 mr-1 text-purple-400" />,
       secretsManager: <Lock className="w-3 h-3 mr-1 text-purple-400" />,
-      iam: <Shield className="w-3 h-3 mr-1 text-purple-400" />
+      iam: <Shield className="w-3 h-3 mr-1 text-purple-400" />,
+      // Azure Services
+      vnet: <Network className="w-3 h-3 mr-1 text-blue-400" />,
+      aks: <Box className="w-3 h-3 mr-1 text-blue-400" />,
+      sqlDatabase: <Database className="w-3 h-3 mr-1 text-blue-400" />,
+      cosmosDb: <Database className="w-3 h-3 mr-1 text-blue-400" />,
+      containerRegistry: <Container className="w-3 h-3 mr-1 text-blue-400" />,
+      storageAccount: <Archive className="w-3 h-3 mr-1 text-blue-400" />,
+      functions: <FunctionSquare className="w-3 h-3 mr-1 text-blue-400" />,
+      redis: <HardDrive className="w-3 h-3 mr-1 text-blue-400" />,
+      serviceBus: <MessageSquare className="w-3 h-3 mr-1 text-blue-400" />,
+      keyVault: <Lock className="w-3 h-3 mr-1 text-blue-400" />
     };
     return icons[service] || <Layers className="w-3 h-3 mr-1 text-purple-400" />;
   };
 
   const getServiceName = (service) => {
     const names = {
+      // AWS Services
       vpc: 'VPC',
       eks: 'EKS',
       rds: 'RDS',
@@ -46,7 +59,18 @@ const EnvironmentCard = ({ environment, onEdit, onDelete }) => {
       cloudfront: 'CloudFront',
       route53: 'Route53',
       secretsManager: 'Secrets',
-      iam: 'IAM'
+      iam: 'IAM',
+      // Azure Services
+      vnet: 'VNet',
+      aks: 'AKS',
+      sqlDatabase: 'SQL Database',
+      cosmosDb: 'Cosmos DB',
+      containerRegistry: 'Container Registry',
+      storageAccount: 'Storage Account',
+      functions: 'Functions',
+      redis: 'Redis Cache',
+      serviceBus: 'Service Bus',
+      keyVault: 'Key Vault'
     };
     return names[service] || service.toUpperCase();
   };
@@ -75,13 +99,17 @@ const EnvironmentCard = ({ environment, onEdit, onDelete }) => {
               <span className={`flex items-center transition-colors ${
                 isDark ? 'text-gray-400' : 'text-gray-600'
               }`}>
-                {environment.type === 'aws' ? <Cloud className="w-4 h-4 mr-1" /> : <Server className="w-4 h-4 mr-1" />}
-                {environment.type === 'aws' ? 'AWS Cloud' : 'On-Premise'}
+                {environment.type === 'aws' ? <Cloud className="w-4 h-4 mr-1" /> :
+                 environment.type === 'azure' ? <Cloud className="w-4 h-4 mr-1" /> :
+                 <Server className="w-4 h-4 mr-1" />}
+                {environment.type === 'aws' ? 'AWS Cloud' :
+                 environment.type === 'azure' ? 'Azure Cloud' :
+                 'On-Premise'}
               </span>
               <span className={`transition-colors ${
                 isDark ? 'text-gray-400' : 'text-gray-600'
               }`}>
-                {environment.type === 'aws' ? environment.region : environment.location}
+                {environment.type === 'aws' || environment.type === 'azure' ? environment.region : environment.location}
               </span>
             </div>
           </div>
@@ -92,12 +120,14 @@ const EnvironmentCard = ({ environment, onEdit, onDelete }) => {
           </span>
         </div>
 
-        {environment.type === 'aws' && enabledServices.length > 0 && (
+        {(environment.type === 'aws' || environment.type === 'azure') && enabledServices.length > 0 && (
           <div className="space-y-3 mb-4">
             <div className={`text-sm transition-colors ${
               isDark ? 'text-gray-300' : 'text-gray-700'
             }`}>
-              <div className="font-semibold mb-2">AWS Services ({enabledServices.length}):</div>
+              <div className="font-semibold mb-2">
+                {environment.type === 'azure' ? 'Azure' : 'AWS'} Services ({enabledServices.length}):
+              </div>
               <div className="grid grid-cols-3 gap-2">
                 {enabledServices.slice(0, 6).map(([service]) => (
                   <div key={service} className={`flex items-center rounded px-2 py-1 transition-colors ${
@@ -117,13 +147,14 @@ const EnvironmentCard = ({ environment, onEdit, onDelete }) => {
               </div>
             </div>
 
-            {environment.services.eks?.enabled && environment.services.eks.helmCharts && (
+            {((environment.services.eks?.enabled && environment.services.eks.helmCharts) ||
+              (environment.services.aks?.enabled && environment.services.aks.helmCharts)) && (
               <div className={`text-sm transition-colors ${
                 isDark ? 'text-gray-300' : 'text-gray-700'
               }`}>
                 <div className="font-semibold mb-2">Helm Charts:</div>
                 <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(environment.services.eks.helmCharts)
+                  {Object.entries((environment.services.eks || environment.services.aks)?.helmCharts || {})
                     .filter(([_, config]) => config.enabled)
                     .slice(0, 4)
                     .map(([chart, config]) => (
@@ -139,13 +170,13 @@ const EnvironmentCard = ({ environment, onEdit, onDelete }) => {
                         )}
                       </div>
                     ))}
-                  {Object.entries(environment.services.eks.helmCharts)
+                  {Object.entries((environment.services.eks || environment.services.aks)?.helmCharts || {})
                     .filter(([_, config]) => config.enabled).length > 4 && (
                     <div className={`flex items-center rounded px-2 py-1 transition-colors ${
                       isDark ? 'bg-gray-700/50 text-gray-400' : 'bg-gray-100 text-gray-600'
                     }`}>
                       <span className="text-xs">
-                        +{Object.entries(environment.services.eks.helmCharts)
+                        +{Object.entries((environment.services.eks || environment.services.aks)?.helmCharts || {})
                           .filter(([_, config]) => config.enabled).length - 4} more
                       </span>
                     </div>
@@ -154,13 +185,16 @@ const EnvironmentCard = ({ environment, onEdit, onDelete }) => {
               </div>
             )}
 
-            {environment.services.ecr?.enabled && environment.services.ecr.repositories?.length > 0 && (
+            {((environment.services.ecr?.enabled && environment.services.ecr.repositories?.length > 0) ||
+              (environment.services.containerRegistry?.enabled && environment.services.containerRegistry.repositories?.length > 0)) && (
               <div className={`text-sm transition-colors ${
                 isDark ? 'text-gray-300' : 'text-gray-700'
               }`}>
-                <div className="font-semibold mb-2">ECR Repositories:</div>
+                <div className="font-semibold mb-2">
+                  {environment.type === 'azure' ? 'Container Registry Repositories:' : 'ECR Repositories:'}
+                </div>
                 <div className="flex flex-wrap gap-1">
-                  {environment.services.ecr.repositories.map((repo, idx) => (
+                  {(environment.services.ecr?.repositories || environment.services.containerRegistry?.repositories || []).map((repo, idx) => (
                     <span key={idx} className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs">
                       {repo.name}
                     </span>

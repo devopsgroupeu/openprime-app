@@ -155,11 +155,54 @@ export const initialEnvironments = [
   }
 ];
 
-export const createEmptyEnvironment = () => ({
+// Provider configurations
+export const PROVIDERS = {
+  aws: {
+    name: 'Amazon Web Services',
+    type: 'aws',
+    defaultRegion: 'us-east-1',
+    regions: [
+      { value: 'us-east-1', label: 'US East (N. Virginia)' },
+      { value: 'us-west-2', label: 'US West (Oregon)' },
+      { value: 'eu-west-1', label: 'EU (Ireland)' },
+      { value: 'eu-central-1', label: 'EU (Frankfurt)' },
+      { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore)' },
+      { value: 'ap-northeast-1', label: 'Asia Pacific (Tokyo)' }
+    ]
+  },
+  azure: {
+    name: 'Microsoft Azure',
+    type: 'azure',
+    defaultRegion: 'East US',
+    regions: [
+      { value: 'East US', label: 'East US' },
+      { value: 'West US 2', label: 'West US 2' },
+      { value: 'West Europe', label: 'West Europe' },
+      { value: 'North Europe', label: 'North Europe' },
+      { value: 'Southeast Asia', label: 'Southeast Asia' },
+      { value: 'Japan East', label: 'Japan East' }
+    ]
+  }
+};
+
+export const createEmptyEnvironment = (providerType = 'aws') => ({
   name: '',
-  type: 'aws',
-  region: 'us-east-1',
-  services: {
+  type: providerType,
+  region: PROVIDERS[providerType].defaultRegion,
+  services: createEmptyServices(providerType)
+});
+
+const createEmptyServices = (providerType) => {
+  switch (providerType) {
+    case 'azure':
+      return createAzureServices();
+    case 'aws':
+    default:
+      return createAwsServices();
+  }
+};
+
+const createAwsServices = () => ({
     vpc: {
       enabled: false,
       cidr: '10.0.0.0/16',
@@ -294,6 +337,116 @@ export const createEmptyEnvironment = () => ({
       policies: [],
       assumeRolePolicyDocument: null
     }
+  });
+
+const createAzureServices = () => ({
+  vnet: {
+    enabled: false,
+    addressSpace: '10.0.0.0/16',
+    subnets: {
+      public: { enabled: true, cidr: '10.0.1.0/24' },
+      private: { enabled: true, cidr: '10.0.2.0/24' }
+    },
+    enableDdosProtection: false,
+    enableVmProtection: false
+  },
+  aks: {
+    enabled: false,
+    version: '1.28',
+    nodeGroups: 1,
+    minNodes: 2,
+    maxNodes: 5,
+    vmSize: 'Standard_D2s_v3',
+    diskSize: 50,
+    enableAutoScaling: true,
+    enableClusterAutoscaler: false,
+    enableMetricsServer: true,
+    addons: {
+      azureKeyvaultSecretsProvider: { enabled: false },
+      azurePolicyAddon: { enabled: false },
+      httpApplicationRouting: { enabled: false },
+      omsAgent: { enabled: true }
+    },
+    helmCharts: {
+      prometheus: { enabled: false, customValues: false },
+      grafana: { enabled: false, customValues: false },
+      argocd: { enabled: false, customValues: false },
+      loki: { enabled: false, customValues: false },
+      karpenter: { enabled: false, customValues: false },
+      certManager: { enabled: false, customValues: false },
+      externalDns: { enabled: false, customValues: false },
+      nginx: { enabled: false, customValues: false },
+      istio: { enabled: false, customValues: false },
+      fluxcd: { enabled: false, customValues: false },
+      velero: { enabled: false, customValues: false },
+      falco: { enabled: false, customValues: false },
+      trivy: { enabled: false, customValues: false }
+    }
+  },
+  sqlDatabase: {
+    enabled: false,
+    tier: 'Basic',
+    size: 'S0',
+    maxStorage: 2,
+    enableBackup: true,
+    backupRetention: 7,
+    enableEncryption: true,
+    enableAdvancedThreatProtection: false,
+    enableAudit: false
+  },
+  cosmosDb: {
+    enabled: false,
+    api: 'SQL',
+    consistencyLevel: 'Session',
+    enableAutomaticFailover: false,
+    enableMultipleWriteLocations: false,
+    maxThroughput: 4000,
+    enableBackup: true
+  },
+  containerRegistry: {
+    enabled: false,
+    sku: 'Basic',
+    enableAdminUser: false,
+    enablePublicAccess: true,
+    repositories: []
+  },
+  storageAccount: {
+    enabled: false,
+    accountType: 'Standard_LRS',
+    accessTier: 'Hot',
+    enableHttpsOnly: true,
+    enableBlobEncryption: true,
+    enableFileEncryption: true,
+    containers: []
+  },
+  functions: {
+    enabled: false,
+    plan: 'Consumption',
+    runtime: 'dotnet',
+    version: '6',
+    functions: []
+  },
+  redis: {
+    enabled: false,
+    sku: 'Basic',
+    family: 'C',
+    capacity: 0,
+    enableNonSslPort: false,
+    minimumTlsVersion: '1.2'
+  },
+  serviceBus: {
+    enabled: false,
+    sku: 'Basic',
+    queues: [],
+    topics: []
+  },
+  keyVault: {
+    enabled: false,
+    sku: 'Standard',
+    enableSoftDelete: true,
+    softDeleteRetention: 90,
+    enablePurgeProtection: false,
+    secrets: []
   }
 });
 

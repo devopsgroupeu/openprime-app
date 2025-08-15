@@ -13,7 +13,7 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
   const [showNewEnvModal, setShowNewEnvModal] = useState(false);
   const [showValuesEditor, setShowValuesEditor] = useState(null);
   const [editingHelmValues, setEditingHelmValues] = useState('');
-  const [newEnv, setNewEnv] = useState(createEmptyEnvironment());
+  const [newEnv, setNewEnv] = useState(createEmptyEnvironment('aws'));
   const [expandedServices, setExpandedServices] = useState({});
   const [isEditMode, setIsEditMode] = useState(false);
 
@@ -25,9 +25,12 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
         onCreateEnvironment(newEnv);
       }
       setShowNewEnvModal(false);
-      setNewEnv(createEmptyEnvironment());
+      setNewEnv(createEmptyEnvironment('aws'));
       setExpandedServices({});
       setIsEditMode(false);
+    } else {
+      // Show validation error
+      alert('Please enter an environment name');
     }
   };
 
@@ -38,16 +41,17 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
   };
 
   const handleSaveHelmValues = () => {
+    const kubernetesService = newEnv.type === 'azure' ? 'aks' : 'eks';
     setNewEnv({
       ...newEnv,
       services: {
         ...newEnv.services,
-        eks: {
-          ...newEnv.services.eks,
+        [kubernetesService]: {
+          ...newEnv.services[kubernetesService],
           helmCharts: {
-            ...newEnv.services.eks.helmCharts,
+            ...newEnv.services[kubernetesService].helmCharts,
             [showValuesEditor]: {
-              ...newEnv.services.eks.helmCharts[showValuesEditor],
+              ...newEnv.services[kubernetesService].helmCharts[showValuesEditor],
               customValues: true
             }
           }
