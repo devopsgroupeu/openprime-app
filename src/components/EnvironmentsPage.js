@@ -17,8 +17,89 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
   const [expandedServices, setExpandedServices] = useState({});
   const [isEditMode, setIsEditMode] = useState(false);
 
-  const handleCreateEnvironment = () => {
+  const convertToYaml = (obj, indent = 0) => {
+    const spaces = ' '.repeat(indent);
+    const lines = [];
+
+    for (const [key, value] of Object.entries(obj)) {
+      if (value === null || value === undefined) continue;
+
+      if (typeof value === 'object' && !Array.isArray(value)) {
+        lines.push(`${spaces}${key}:`);
+        lines.push(convertToYaml(value, indent + 2));
+      } else if (Array.isArray(value)) {
+        if (value.length === 0) continue;
+        lines.push(`${spaces}${key}:`);
+        for (const item of value) {
+          if (typeof item === 'object') {
+            lines.push(`${spaces}  -`);
+            lines.push(convertToYaml(item, indent + 4));
+          } else {
+            lines.push(`${spaces}  - ${item}`);
+          }
+        }
+      } else {
+        const formattedValue = typeof value === 'string' ? `"${value}"` : value;
+        lines.push(`${spaces}${key}: ${formattedValue}`);
+      }
+    }
+
+    return lines.join('\n');
+  };
+
+  const filterEnabledServices = (services) => {
+    const filtered = {};
+
+    for (const [serviceName, serviceConfig] of Object.entries(services)) {
+      if (serviceConfig.enabled) {
+        // Create a copy without the 'enabled' field
+        const { enabled, ...configWithoutEnabled } = serviceConfig;
+        filtered[serviceName] = configWithoutEnabled;
+      }
+    }
+
+    return filtered;
+  };
+
+  const handleCreateEnvironment = async () => {
     if (newEnv.name) {
+      const enabledServices = filterEnabledServices(newEnv.services);
+
+      if (Object.keys(enabledServices).length > 0) {
+        const environmentConfig = {
+          name: newEnv.name,
+          type: newEnv.type,
+          region: newEnv.region,
+          services: enabledServices
+        };
+
+        const yamlOutput = convertToYaml(environmentConfig);
+        console.log('Environment Configuration (YAML):\n' + yamlOutput);
+
+        // Send POST request to backend
+        try {
+          const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080/api';
+          const response = await fetch(`${backendUrl}/environments`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(environmentConfig)
+          });
+
+          if (!response.ok) {
+            throw new Error(`Backend responded with status: ${response.status}`);
+          }
+
+          console.log('Environment configuration sent to backend successfully');
+        } catch (error) {
+          console.error('Failed to send environment configuration to backend:', error);
+          alert(`Failed to send configuration to backend: ${error.message}`);
+        }
+      } else {
+        console.log('No services enabled in this environment');
+      }
+
       if (isEditMode) {
         onUpdateEnvironment(newEnv);
       } else {
@@ -29,7 +110,6 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
       setExpandedServices({});
       setIsEditMode(false);
     } else {
-      // Show validation error
       alert('Please enter an environment name');
     }
   };
