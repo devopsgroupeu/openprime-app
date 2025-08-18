@@ -12,8 +12,8 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
 
   const baseInputClasses = `w-full px-3 py-2 border rounded-lg transition-colors ${
     isDark
-      ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-500'
-      : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'
+      ? 'bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20'
+      : 'bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20'
   } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`;
 
   const labelClasses = `block text-sm font-medium mb-1 ${
@@ -44,7 +44,7 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
             disabled={disabled}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               value
-                ? 'bg-purple-600'
+                ? 'bg-teal-600'
                 : isDark
                 ? 'bg-gray-600'
                 : 'bg-gray-200'

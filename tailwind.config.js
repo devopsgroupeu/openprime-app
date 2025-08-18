@@ -5,7 +5,13 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      // Add smooth scrolling utilities
+      scrollBehavior: {
+        'smooth': 'smooth',
+        'auto': 'auto',
+      },
+    },
   },
   plugins: [],
 }

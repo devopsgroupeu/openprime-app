@@ -1,4 +1,5 @@
 // src/config/providersConfig.js
+import { SERVICES_CONFIG } from './servicesConfig';
 
 export const PROVIDERS_CONFIG = {
   aws: {
@@ -18,11 +19,6 @@ export const PROVIDERS_CONFIG = {
       { value: 'ap-northeast-2', label: 'Asia Pacific (Seoul)' },
       { value: 'ca-central-1', label: 'Canada (Central)' },
       { value: 'sa-east-1', label: 'South America (São Paulo)' }
-    ],
-    services: [
-      'vpc', 'eks', 'rds', 'opensearch', 'ecr', 's3',
-      'lambda', 'elasticache', 'sqs', 'sns', 'cloudfront',
-      'route53', 'secretsManager', 'iam'
     ]
   },
   azure: {
@@ -48,10 +44,6 @@ export const PROVIDERS_CONFIG = {
       { value: 'Japan West', label: 'Japan West' },
       { value: 'Australia East', label: 'Australia East' },
       { value: 'Australia Southeast', label: 'Australia Southeast' }
-    ],
-    services: [
-      'vnet', 'aks', 'sqlDatabase', 'cosmosDb', 'containerRegistry',
-      'storageAccount', 'functions', 'redis', 'serviceBus', 'keyVault'
     ]
   },
   gcp: {
@@ -73,11 +65,6 @@ export const PROVIDERS_CONFIG = {
       { value: 'asia-east1', label: 'Asia East (Taiwan)' },
       { value: 'asia-northeast1', label: 'Asia Northeast (Tokyo)' },
       { value: 'asia-southeast1', label: 'Asia Southeast (Singapore)' }
-    ],
-    services: [
-      'vpc', 'gke', 'cloudSql', 'bigQuery', 'gcr', 'gcs',
-      'functions', 'memorystore', 'pubsub', 'cdn', 'dns',
-      'secretManager', 'iam'
     ]
   },
   onpremise: {
@@ -89,9 +76,6 @@ export const PROVIDERS_CONFIG = {
       { value: 'datacenter-2', label: 'Datacenter 2' },
       { value: 'edge-location-1', label: 'Edge Location 1' },
       { value: 'edge-location-2', label: 'Edge Location 2' }
-    ],
-    services: [
-      'kubernetes', 'monitoring', 'logging', 'storage', 'networking'
     ]
   }
 };
@@ -114,6 +98,9 @@ export const getProviderRegions = (providerType) => {
 };
 
 export const getProviderServices = (providerType) => {
-  const provider = getProviderConfig(providerType);
-  return provider.services;
+  // Dynamically filter services based on the provider field in servicesConfig
+  return Object.keys(SERVICES_CONFIG).filter(serviceKey => {
+    const service = SERVICES_CONFIG[serviceKey];
+    return service.provider === providerType;
+  });
 };
