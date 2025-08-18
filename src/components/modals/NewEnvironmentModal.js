@@ -1,8 +1,7 @@
 // src/components/modals/NewEnvironmentModal.js
 import React from 'react';
 import { PROVIDERS, createEmptyEnvironment } from '../../config/environmentsConfig';
-import AwsServicesGrid from './AwsServicesGrid';
-import AzureServicesGrid from './AzureServicesGrid';
+import DynamicServicesGrid from '../DynamicServicesGrid';
 
 const NewEnvironmentModal = ({
   newEnv,
@@ -14,65 +13,6 @@ const NewEnvironmentModal = ({
   onEditHelmValues,
   isEditMode = false
 }) => {
-  const addECRRepository = () => {
-    const newRepo = { name: '', scanOnPush: true, mutability: 'MUTABLE' };
-    setNewEnv({
-      ...newEnv,
-      services: {
-        ...newEnv.services,
-        ecr: {
-          ...newEnv.services.ecr,
-          repositories: [...(newEnv.services.ecr.repositories || []), newRepo]
-        }
-      }
-    });
-  };
-
-  const removeECRRepository = (index) => {
-    const repos = [...newEnv.services.ecr.repositories];
-    repos.splice(index, 1);
-    setNewEnv({
-      ...newEnv,
-      services: {
-        ...newEnv.services,
-        ecr: { ...newEnv.services.ecr, repositories: repos }
-      }
-    });
-  };
-
-  const addS3Bucket = () => {
-    const newBucket = {
-      name: '',
-      versioning: true,
-      encryption: 'AES256',
-      publicAccess: false,
-      lifecycleRules: false,
-      cors: false,
-      replication: false
-    };
-    setNewEnv({
-      ...newEnv,
-      services: {
-        ...newEnv.services,
-        s3: {
-          ...newEnv.services.s3,
-          buckets: [...(newEnv.services.s3.buckets || []), newBucket]
-        }
-      }
-    });
-  };
-
-  const removeS3Bucket = (index) => {
-    const buckets = [...newEnv.services.s3.buckets];
-    buckets.splice(index, 1);
-    setNewEnv({
-      ...newEnv,
-      services: {
-        ...newEnv.services,
-        s3: { ...newEnv.services.s3, buckets }
-      }
-    });
-  };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -130,29 +70,15 @@ const NewEnvironmentModal = ({
           {/* Cloud Services */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-3">
-              {newEnv.type === 'azure' ? 'Azure Services' : 'AWS Services'}
+              {PROVIDERS[newEnv.type]?.name || 'Cloud'} Services
             </label>
-            {newEnv.type === 'azure' ? (
-              <AzureServicesGrid
-                newEnv={newEnv}
-                setNewEnv={setNewEnv}
-                expandedServices={expandedServices}
-                setExpandedServices={setExpandedServices}
-                onEditHelmValues={onEditHelmValues}
-              />
-            ) : (
-              <AwsServicesGrid
-                newEnv={newEnv}
-                setNewEnv={setNewEnv}
-                expandedServices={expandedServices}
-                setExpandedServices={setExpandedServices}
-                onEditHelmValues={onEditHelmValues}
-                addECRRepository={addECRRepository}
-                removeECRRepository={removeECRRepository}
-                addS3Bucket={addS3Bucket}
-                removeS3Bucket={removeS3Bucket}
-              />
-            )}
+            <DynamicServicesGrid
+              newEnv={newEnv}
+              setNewEnv={setNewEnv}
+              expandedServices={expandedServices}
+              setExpandedServices={setExpandedServices}
+              onEditHelmValues={onEditHelmValues}
+            />
           </div>
         </div>
 

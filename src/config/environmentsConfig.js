@@ -1,4 +1,7 @@
 // src/config/environmentsConfig.js
+import { PROVIDERS_CONFIG, getProviderConfig, getProviderServices } from './providersConfig';
+import { createDefaultServiceConfig } from './servicesConfig';
+
 export const initialEnvironments = [
   {
     id: 1,
@@ -155,300 +158,28 @@ export const initialEnvironments = [
   }
 ];
 
-// Provider configurations
-export const PROVIDERS = {
-  aws: {
-    name: 'Amazon Web Services',
-    type: 'aws',
-    defaultRegion: 'us-east-1',
-    regions: [
-      { value: 'us-east-1', label: 'US East (N. Virginia)' },
-      { value: 'us-west-2', label: 'US West (Oregon)' },
-      { value: 'eu-west-1', label: 'EU (Ireland)' },
-      { value: 'eu-central-1', label: 'EU (Frankfurt)' },
-      { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore)' },
-      { value: 'ap-northeast-1', label: 'Asia Pacific (Tokyo)' }
-    ]
-  },
-  azure: {
-    name: 'Microsoft Azure',
-    type: 'azure',
-    defaultRegion: 'East US',
-    regions: [
-      { value: 'East US', label: 'East US' },
-      { value: 'West US 2', label: 'West US 2' },
-      { value: 'West Europe', label: 'West Europe' },
-      { value: 'North Europe', label: 'North Europe' },
-      { value: 'Southeast Asia', label: 'Southeast Asia' },
-      { value: 'Japan East', label: 'Japan East' }
-    ]
-  }
-};
+// Re-export providers from the new configuration
+export const PROVIDERS = PROVIDERS_CONFIG;
 
 export const createEmptyEnvironment = (providerType = 'aws') => ({
   name: '',
   type: providerType,
-  region: PROVIDERS[providerType].defaultRegion,
+  region: getProviderConfig(providerType).defaultRegion,
   services: createEmptyServices(providerType)
 });
 
 const createEmptyServices = (providerType) => {
-  switch (providerType) {
-    case 'azure':
-      return createAzureServices();
-    case 'aws':
-    default:
-      return createAwsServices();
-  }
-};
+  const providerServices = getProviderServices(providerType);
+  const services = {};
 
-const createAwsServices = () => ({
-    vpc: {
-      enabled: false,
-      cidr: '10.0.0.0/16',
-      azCount: 2,
-      publicSubnets: 2,
-      privateSubnets: 2,
-      natGateway: 'single',
-      enableVpnGateway: false,
-      enableFlowLogs: true,
-      enableDnsHostnames: true,
-      enableDnsSupport: true
-    },
-    eks: {
-      enabled: false,
-      version: '1.28',
-      nodeGroups: 1,
-      minNodes: 2,
-      maxNodes: 5,
-      instanceTypes: ['t3.medium'],
-      diskSize: 50,
-      enableAutoScaling: true,
-      enableClusterAutoscaler: false,
-      enableMetricsServer: true,
-      addons: {
-        vpcCni: { enabled: true, version: 'latest' },
-        coreDns: { enabled: true, version: 'latest' },
-        kubeProxy: { enabled: true, version: 'latest' },
-        ebsCsiDriver: { enabled: false, version: 'latest' }
-      },
-      helmCharts: {
-        prometheus: { enabled: false, customValues: false },
-        grafana: { enabled: false, customValues: false },
-        argocd: { enabled: false, customValues: false },
-        loki: { enabled: false, customValues: false },
-        karpenter: { enabled: false, customValues: false },
-        certManager: { enabled: false, customValues: false },
-        externalDns: { enabled: false, customValues: false },
-        nginx: { enabled: false, customValues: false },
-        istio: { enabled: false, customValues: false },
-        fluxcd: { enabled: false, customValues: false },
-        velero: { enabled: false, customValues: false },
-        falco: { enabled: false, customValues: false },
-        trivy: { enabled: false, customValues: false }
-      }
-    },
-    rds: {
-      enabled: false,
-      engine: 'postgres',
-      version: '15.4',
-      instanceClass: 'db.t3.small',
-      allocatedStorage: 20,
-      maxAllocatedStorage: 100,
-      multiAz: false,
-      backupRetention: 7,
-      encrypted: true,
-      deletionProtection: false,
-      performanceInsights: false,
-      enhancedMonitoring: false
-    },
-    opensearch: {
-      enabled: false,
-      version: '2.11',
-      instanceType: 't3.small.search',
-      instanceCount: 1,
-      dedicatedMasterEnabled: false,
-      dedicatedMasterType: 't3.small.search',
-      dedicatedMasterCount: 0,
-      ebsVolumeSize: 10,
-      ebsVolumeType: 'gp3',
-      encrypted: true,
-      nodeToNodeEncryption: true,
-      fineGrainedAccessControl: false,
-      cognitoEnabled: false
-    },
-    ecr: {
-      enabled: false,
-      repositories: [],
-      lifecyclePolicy: true,
-      crossRegionReplication: false,
-      imageTagMutability: 'MUTABLE'
-    },
-    s3: {
-      enabled: false,
-      buckets: []
-    },
-    lambda: {
-      enabled: false,
-      functions: [],
-      defaultRuntime: 'nodejs18.x',
-      defaultMemory: 256,
-      defaultTimeout: 30
-    },
-    elasticache: {
-      enabled: false,
-      engine: 'redis',
-      version: '7.0',
-      nodeType: 'cache.t3.micro',
-      numCacheNodes: 1,
-      automaticFailover: false,
-      multiAz: false
-    },
-    sqs: {
-      enabled: false,
-      queues: [],
-      defaultVisibilityTimeout: 30,
-      defaultMessageRetention: 345600
-    },
-    sns: {
-      enabled: false,
-      topics: [],
-      defaultKmsKeyId: null
-    },
-    cloudfront: {
-      enabled: false,
-      distributions: [],
-      priceClass: 'PriceClass_100',
-      wafEnabled: false
-    },
-    route53: {
-      enabled: false,
-      hostedZones: [],
-      recordSets: []
-    },
-    secretsManager: {
-      enabled: false,
-      secrets: [],
-      automaticRotation: false
-    },
-    iam: {
-      enabled: false,
-      roles: [],
-      policies: [],
-      assumeRolePolicyDocument: null
-    }
+  providerServices.forEach(serviceName => {
+    services[serviceName] = createDefaultServiceConfig(serviceName);
   });
 
-const createAzureServices = () => ({
-  vnet: {
-    enabled: false,
-    addressSpace: '10.0.0.0/16',
-    subnets: {
-      public: { enabled: true, cidr: '10.0.1.0/24' },
-      private: { enabled: true, cidr: '10.0.2.0/24' }
-    },
-    enableDdosProtection: false,
-    enableVmProtection: false
-  },
-  aks: {
-    enabled: false,
-    version: '1.28',
-    nodeGroups: 1,
-    minNodes: 2,
-    maxNodes: 5,
-    vmSize: 'Standard_D2s_v3',
-    diskSize: 50,
-    enableAutoScaling: true,
-    enableClusterAutoscaler: false,
-    enableMetricsServer: true,
-    addons: {
-      azureKeyvaultSecretsProvider: { enabled: false },
-      azurePolicyAddon: { enabled: false },
-      httpApplicationRouting: { enabled: false },
-      omsAgent: { enabled: true }
-    },
-    helmCharts: {
-      prometheus: { enabled: false, customValues: false },
-      grafana: { enabled: false, customValues: false },
-      argocd: { enabled: false, customValues: false },
-      loki: { enabled: false, customValues: false },
-      karpenter: { enabled: false, customValues: false },
-      certManager: { enabled: false, customValues: false },
-      externalDns: { enabled: false, customValues: false },
-      nginx: { enabled: false, customValues: false },
-      istio: { enabled: false, customValues: false },
-      fluxcd: { enabled: false, customValues: false },
-      velero: { enabled: false, customValues: false },
-      falco: { enabled: false, customValues: false },
-      trivy: { enabled: false, customValues: false }
-    }
-  },
-  sqlDatabase: {
-    enabled: false,
-    tier: 'Basic',
-    size: 'S0',
-    maxStorage: 2,
-    enableBackup: true,
-    backupRetention: 7,
-    enableEncryption: true,
-    enableAdvancedThreatProtection: false,
-    enableAudit: false
-  },
-  cosmosDb: {
-    enabled: false,
-    api: 'SQL',
-    consistencyLevel: 'Session',
-    enableAutomaticFailover: false,
-    enableMultipleWriteLocations: false,
-    maxThroughput: 4000,
-    enableBackup: true
-  },
-  containerRegistry: {
-    enabled: false,
-    sku: 'Basic',
-    enableAdminUser: false,
-    enablePublicAccess: true,
-    repositories: []
-  },
-  storageAccount: {
-    enabled: false,
-    accountType: 'Standard_LRS',
-    accessTier: 'Hot',
-    enableHttpsOnly: true,
-    enableBlobEncryption: true,
-    enableFileEncryption: true,
-    containers: []
-  },
-  functions: {
-    enabled: false,
-    plan: 'Consumption',
-    runtime: 'dotnet',
-    version: '6',
-    functions: []
-  },
-  redis: {
-    enabled: false,
-    sku: 'Basic',
-    family: 'C',
-    capacity: 0,
-    enableNonSslPort: false,
-    minimumTlsVersion: '1.2'
-  },
-  serviceBus: {
-    enabled: false,
-    sku: 'Basic',
-    queues: [],
-    topics: []
-  },
-  keyVault: {
-    enabled: false,
-    sku: 'Standard',
-    enableSoftDelete: true,
-    softDeleteRetention: 90,
-    enablePurgeProtection: false,
-    secrets: []
-  }
-});
+  return services;
+};
+
+// Dynamic service creation - no need for hardcoded service functions
 
 export const helmChartDefaults = {
   prometheus: `# Prometheus Values
