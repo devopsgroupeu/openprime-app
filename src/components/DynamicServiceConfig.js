@@ -83,12 +83,24 @@ const DynamicServiceConfig = ({
 
         {enabledField && (
           <div onClick={(e) => e.stopPropagation()}>
-            <DynamicFieldRenderer
-              fieldConfig={enabledField}
-              value={serviceConfig.enabled}
-              onChange={handleFieldChange}
-              fieldName="enabled"
-            />
+            {/* Custom toggle for enabled field without text/description */}
+            <button
+              type="button"
+              onClick={() => handleFieldChange('enabled', !serviceConfig.enabled)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                serviceConfig.enabled
+                  ? 'bg-teal-600'
+                  : isDark
+                  ? 'bg-gray-600'
+                  : 'bg-gray-200'
+              } cursor-pointer`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  serviceConfig.enabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
         )}
       </div>

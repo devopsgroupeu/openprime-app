@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 import Navigation from './Navigation';
 import EnvironmentCard from './EnvironmentCard';
-import NewEnvironmentModal from './modals/NewEnvironmentModal';
+import EnvironmentWizard from './modals/EnvironmentWizard';
 import HelmValuesModal from './modals/HelmValuesModal';
 import { createEmptyEnvironment } from '../config/environmentsConfig';
 import { useTheme } from '../contexts/ThemeContext';
@@ -176,7 +176,7 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
       </div>
 
       {showNewEnvModal && (
-        <NewEnvironmentModal
+        <EnvironmentWizard
           newEnv={newEnv}
           setNewEnv={setNewEnv}
           expandedServices={expandedServices}

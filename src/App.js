@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import HomePage from './components/HomePage';
 import EnvironmentsPage from './components/EnvironmentsPage';
 import SettingsPage from './components/SettingsPage';
+import AuraChatButton from './components/AuraChatButton';
 import { initialEnvironments } from './config/environmentsConfig';
 import { ThemeProvider } from './contexts/ThemeContext';
 
@@ -54,6 +55,7 @@ export default function App() {
   return (
     <ThemeProvider>
       {renderPage()}
+      <AuraChatButton />
     </ThemeProvider>
   );
 }

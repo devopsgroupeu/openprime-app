@@ -2,76 +2,9 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Settings, Package } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { getHelmChartsByCategory } from '../config/helmChartsConfig';
 
-const HELM_CHARTS_INFO = {
-  prometheus: {
-    name: 'Prometheus',
-    description: 'Monitoring and alerting toolkit',
-    category: 'Monitoring'
-  },
-  grafana: {
-    name: 'Grafana',
-    description: 'Observability and data visualization platform',
-    category: 'Monitoring'
-  },
-  argocd: {
-    name: 'ArgoCD',
-    description: 'GitOps continuous delivery tool',
-    category: 'CI/CD'
-  },
-  loki: {
-    name: 'Loki',
-    description: 'Log aggregation system',
-    category: 'Monitoring'
-  },
-  karpenter: {
-    name: 'Karpenter',
-    description: 'Node provisioning and lifecycle management',
-    category: 'Infrastructure'
-  },
-  certManager: {
-    name: 'Cert-Manager',
-    description: 'Certificate management controller',
-    category: 'Security'
-  },
-  externalDns: {
-    name: 'External DNS',
-    description: 'DNS record management for Kubernetes',
-    category: 'Networking'
-  },
-  nginx: {
-    name: 'NGINX Ingress',
-    description: 'Ingress controller using NGINX',
-    category: 'Networking'
-  },
-  istio: {
-    name: 'Istio',
-    description: 'Service mesh platform',
-    category: 'Networking'
-  },
-  fluxcd: {
-    name: 'FluxCD',
-    description: 'GitOps toolkit for Kubernetes',
-    category: 'CI/CD'
-  },
-  velero: {
-    name: 'Velero',
-    description: 'Backup and disaster recovery',
-    category: 'Infrastructure'
-  },
-  falco: {
-    name: 'Falco',
-    description: 'Runtime security monitoring',
-    category: 'Security'
-  },
-  trivyOperator: {
-    name: 'Trivy Operator',
-    description: 'Vulnerability scanning operator',
-    category: 'Security'
-  }
-};
-
-const HelmChartsSelector = ({ value = {}, onChange, onEditHelmValues }) => {
+const HelmChartsSelector = ({ value = {}, onChange, onEditHelmValues, k8sServiceName }) => {
   const { isDark } = useTheme();
   const [expandedCategories, setExpandedCategories] = useState({});
 
@@ -93,23 +26,9 @@ const HelmChartsSelector = ({ value = {}, onChange, onEditHelmValues }) => {
     onChange(newValue);
   };
 
-  const handleCustomValuesToggle = (chartKey, customValues) => {
-    const newValue = {
-      ...value,
-      [chartKey]: {
-        ...value[chartKey],
-        customValues
-      }
-    };
-    onChange(newValue);
-  };
 
-  // Group charts by category
-  const chartsByCategory = Object.entries(HELM_CHARTS_INFO).reduce((acc, [key, info]) => {
-    if (!acc[info.category]) acc[info.category] = [];
-    acc[info.category].push({ key, ...info });
-    return acc;
-  }, {});
+  // Get charts available for this k8s service, grouped by category
+  const chartsByCategory = k8sServiceName ? getHelmChartsByCategory(k8sServiceName) : {};
 
   return (
     <div className="space-y-4">
@@ -192,7 +111,7 @@ const HelmChartsSelector = ({ value = {}, onChange, onEditHelmValues }) => {
                         <div className={`font-medium ${
                           isDark ? 'text-white' : 'text-gray-900'
                         }`}>
-                          {chart.name}
+                          {chart.displayName}
                         </div>
                         <div className={`text-sm ${
                           isDark ? 'text-gray-400' : 'text-gray-600'
@@ -202,34 +121,18 @@ const HelmChartsSelector = ({ value = {}, onChange, onEditHelmValues }) => {
                       </div>
                     </div>
 
-                    {chartConfig.enabled && (
-                      <div className="flex items-center space-x-2">
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            className="sr-only peer"
-                            checked={chartConfig.customValues}
-                            onChange={(e) => handleCustomValuesToggle(chart.key, e.target.checked)}
-                          />
-                          <div className={`w-9 h-5 rounded-full peer peer-checked:bg-blue-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all ${
-                            isDark ? 'bg-gray-600' : 'bg-gray-300'
-                          }`}></div>
-                        </label>
-                        <span className={`text-xs ${
-                          isDark ? 'text-gray-400' : 'text-gray-600'
-                        }`}>
-                          Custom Values
-                        </span>
-                        {chartConfig.customValues && onEditHelmValues && (
-                          <button
-                            onClick={() => onEditHelmValues(chart.key)}
-                            className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                            title="Edit custom values"
-                          >
-                            <Settings className="w-4 h-4 text-teal-500" />
-                          </button>
-                        )}
-                      </div>
+                    {chartConfig.enabled && onEditHelmValues && (
+                      <button
+                        onClick={() => onEditHelmValues(chart.key)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          isDark
+                            ? 'hover:bg-gray-600 text-gray-400 hover:text-white'
+                            : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'
+                        }`}
+                        title="Configure chart values"
+                      >
+                        <Settings className="w-4 h-4" />
+                      </button>
                     )}
                   </div>
                 );
