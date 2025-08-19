@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, Check, Settings, Package, Cloud } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import LoadingSpinner from '../LoadingSpinner';
 import BasicConfigStep from './wizard/BasicConfigStep';
 import ServicesConfigStep from './wizard/ServicesConfigStep';
 import HelmChartsStep from './wizard/HelmChartsStep';
@@ -14,7 +15,8 @@ const EnvironmentWizard = ({
   onClose,
   onCreate,
   onEditHelmValues,
-  isEditMode = false
+  isEditMode = false,
+  isLoading = false
 }) => {
   const { isDark } = useTheme();
   const [currentStep, setCurrentStep] = useState(1);
@@ -354,25 +356,34 @@ const EnvironmentWizard = ({
           {/* Next/Create Button */}
           <button
             onClick={handleNext}
-            disabled={!isStepValid(currentStep)}
+            disabled={!isStepValid(currentStep) || isLoading}
             className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-all font-medium shadow-lg ${
-              isStepValid(currentStep)
+              isStepValid(currentStep) && !isLoading
                 ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700 hover:shadow-xl transform hover:scale-105'
                 : isDark
                 ? 'bg-gray-700 text-gray-500 cursor-not-allowed shadow-none'
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
             }`}
           >
-            <span>
-              {currentStep === totalSteps
-                ? (isEditMode ? 'Update Environment' : 'Create Environment')
-                : 'Continue'
-              }
-            </span>
-            {currentStep < totalSteps ? (
-              <ChevronRight className="w-4 h-4" />
+            {isLoading && currentStep === totalSteps ? (
+              <>
+                <LoadingSpinner size="sm" />
+                <span>{isEditMode ? 'Updating...' : 'Creating...'}</span>
+              </>
             ) : (
-              <Check className="w-4 h-4" />
+              <>
+                <span>
+                  {currentStep === totalSteps
+                    ? (isEditMode ? 'Update Environment' : 'Create Environment')
+                    : 'Continue'
+                  }
+                </span>
+                {currentStep < totalSteps ? (
+                  <ChevronRight className="w-4 h-4" />
+                ) : (
+                  <Check className="w-4 h-4" />
+                )}
+              </>
             )}
           </button>
         </div>

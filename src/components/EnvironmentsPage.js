@@ -7,15 +7,18 @@ import EnvironmentWizard from './modals/EnvironmentWizard';
 import HelmValuesModal from './modals/HelmValuesModal';
 import { createEmptyEnvironment } from '../config/environmentsConfig';
 import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../contexts/ToastContext';
 
 const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateEnvironment, onDeleteEnvironment, onUpdateEnvironment }) => {
   const { isDark } = useTheme();
+  const { success, error } = useToast();
   const [showNewEnvModal, setShowNewEnvModal] = useState(false);
   const [showValuesEditor, setShowValuesEditor] = useState(null);
   const [editingHelmValues, setEditingHelmValues] = useState('');
   const [newEnv, setNewEnv] = useState(createEmptyEnvironment('aws'));
   const [expandedServices, setExpandedServices] = useState({});
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const convertToYaml = (obj, indent = 0) => {
     const spaces = ' '.repeat(indent);
@@ -62,7 +65,17 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
   };
 
   const handleCreateEnvironment = async () => {
-    if (newEnv.name) {
+    if (!newEnv.name) {
+      error('Please enter an environment name', {
+        title: 'Validation Error',
+        duration: 5000
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
       const enabledServices = filterEnabledServices(newEnv.services);
 
       if (Object.keys(enabledServices).length > 0) {
@@ -92,25 +105,48 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
           }
 
           console.log('Environment configuration sent to backend successfully');
-        } catch (error) {
-          console.error('Failed to send environment configuration to backend:', error);
-          alert(`Failed to send configuration to backend: ${error.message}`);
+          success('Configuration sent to backend successfully', {
+            title: 'Backend Sync',
+            duration: 3000
+          });
+        } catch (backendError) {
+          console.error('Failed to send environment configuration to backend:', backendError);
+          error(`Failed to send configuration to backend: ${backendError.message}`, {
+            title: 'Backend Error',
+            duration: 7000
+          });
         }
       } else {
         console.log('No services enabled in this environment');
       }
 
+      // Update the environment list
       if (isEditMode) {
         onUpdateEnvironment(newEnv);
+        success(`Environment "${newEnv.name}" updated successfully`, {
+          title: 'Environment Updated',
+          duration: 4000
+        });
       } else {
         onCreateEnvironment(newEnv);
+        success(`Environment "${newEnv.name}" created successfully`, {
+          title: 'Environment Created',
+          duration: 4000
+        });
       }
+
+      // Reset form state
       setShowNewEnvModal(false);
       setNewEnv(createEmptyEnvironment('aws'));
       setExpandedServices({});
       setIsEditMode(false);
-    } else {
-      alert('Please enter an environment name');
+    } catch (err) {
+      error(`Failed to ${isEditMode ? 'update' : 'create'} environment: ${err.message}`, {
+        title: 'Error',
+        duration: 7000
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -145,8 +181,8 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
   return (
     <div className={`min-h-screen transition-colors ${
       isDark
-        ? 'bg-gradient-to-br from-gray-900 to-gray-800'
-        : 'bg-gradient-to-br from-gray-50 via-white to-teal-50'
+        ? 'bg-gradient-to-br from-slate-900 via-gray-900 to-slate-900'
+        : 'bg-gradient-to-br from-gray-50 via-teal-50 to-cyan-50'
     }`}>
       <Navigation setCurrentPage={setCurrentPage} currentPage={currentPage} />
       <div className="max-w-7xl mx-auto px-8 py-8">
@@ -188,6 +224,7 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
           }}
           onCreate={handleCreateEnvironment}
           isEditMode={isEditMode}
+          isLoading={isLoading}
           onEditHelmValues={(chart, values) => {
             setShowValuesEditor(chart);
             setEditingHelmValues(values);

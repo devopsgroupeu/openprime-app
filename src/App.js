@@ -6,6 +6,7 @@ import SettingsPage from './components/SettingsPage';
 import AuraChatButton from './components/AuraChatButton';
 import { initialEnvironments } from './config/environmentsConfig';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { ToastProvider } from './contexts/ToastContext';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -54,8 +55,10 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      {renderPage()}
-      <AuraChatButton />
+      <ToastProvider>
+        {renderPage()}
+        <AuraChatButton />
+      </ToastProvider>
     </ThemeProvider>
   );
 }

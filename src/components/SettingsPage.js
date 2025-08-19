@@ -9,7 +9,7 @@ const SettingsPage = ({ setCurrentPage, currentPage }) => {
   return (
     <div className={`min-h-screen transition-colors ${
       isDark
-        ? 'bg-gradient-to-br from-gray-900 to-gray-800'
+        ? 'bg-gradient-to-br from-slate-900 via-gray-900 to-slate-900'
         : 'bg-gradient-to-br from-gray-50 via-teal-50 to-cyan-50'
     }`}>
       <Navigation setCurrentPage={setCurrentPage} currentPage={currentPage} />
