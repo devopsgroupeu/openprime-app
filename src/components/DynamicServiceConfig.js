@@ -10,7 +10,8 @@ const DynamicServiceConfig = ({
   serviceConfig,
   onServiceChange,
   expanded,
-  onToggleExpanded
+  onToggleExpanded,
+  onEditHelmValues
 }) => {
   const { isDark } = useTheme();
   const serviceDefinition = getServiceConfig(serviceName);
@@ -97,15 +98,20 @@ const DynamicServiceConfig = ({
           isDark ? 'border-gray-600' : 'border-gray-200'
         }`}>
           {otherFields.map(([fieldName, fieldConfig]) => {
-            // Skip complex object fields for now - they need special handling
-            if (fieldConfig.type === FIELD_TYPES.OBJECT || fieldConfig.type === FIELD_TYPES.ARRAY) {
+            // Skip complex object/array fields except for helm charts - they need special handling
+            if ((fieldConfig.type === FIELD_TYPES.OBJECT || fieldConfig.type === FIELD_TYPES.ARRAY) &&
+                fieldConfig.type !== FIELD_TYPES.HELM_CHARTS) {
               return null;
             }
+
+            // For helm charts, we need to pass the onEditHelmValues function
+            const enhancedFieldConfig = fieldConfig.type === FIELD_TYPES.HELM_CHARTS ?
+              { ...fieldConfig, onEditHelmValues } : fieldConfig;
 
             return (
               <DynamicFieldRenderer
                 key={fieldName}
-                fieldConfig={fieldConfig}
+                fieldConfig={enhancedFieldConfig}
                 value={serviceConfig[fieldName]}
                 onChange={handleFieldChange}
                 fieldName={fieldName}

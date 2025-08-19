@@ -8,7 +8,8 @@ export const FIELD_TYPES = {
   MULTISELECT: 'multiselect',
   TEXTAREA: 'textarea',
   ARRAY: 'array',
-  OBJECT: 'object'
+  OBJECT: 'object',
+  HELM_CHARTS: 'helm_charts'
 };
 
 export const SERVICES_CONFIG = {
@@ -51,7 +52,27 @@ export const SERVICES_CONFIG = {
       enableClusterAutoscaler: { type: FIELD_TYPES.TOGGLE, name: 'enableClusterAutoscaler', displayName: 'Cluster Autoscaler', description: 'Enable cluster autoscaler', defaultValue: false },
       enableMetricsServer: { type: FIELD_TYPES.TOGGLE, name: 'enableMetricsServer', displayName: 'Metrics Server', description: 'Enable metrics server', defaultValue: true },
       addons: { type: FIELD_TYPES.OBJECT, name: 'addons', displayName: 'EKS Addons', description: 'EKS managed addons' },
-      helmCharts: { type: FIELD_TYPES.OBJECT, name: 'helmCharts', displayName: 'Helm Charts', description: 'Helm chart configurations' }
+      helmCharts: {
+        type: FIELD_TYPES.HELM_CHARTS,
+        name: 'helmCharts',
+        displayName: 'Helm Charts',
+        description: 'Helm chart configurations',
+        defaultValue: {
+          prometheus: { enabled: false, customValues: false },
+          grafana: { enabled: false, customValues: false },
+          argocd: { enabled: false, customValues: false },
+          loki: { enabled: false, customValues: false },
+          karpenter: { enabled: false, customValues: false },
+          certManager: { enabled: false, customValues: false },
+          externalDns: { enabled: false, customValues: false },
+          nginx: { enabled: false, customValues: false },
+          istio: { enabled: false, customValues: false },
+          fluxcd: { enabled: false, customValues: false },
+          velero: { enabled: false, customValues: false },
+          falco: { enabled: false, customValues: false },
+          trivyOperator: { enabled: false, customValues: false }
+        }
+      }
     }
   },
 
@@ -111,7 +132,26 @@ export const SERVICES_CONFIG = {
       enableClusterAutoscaler: { type: FIELD_TYPES.TOGGLE, name: 'enableClusterAutoscaler', displayName: 'Cluster Autoscaler', description: 'Enable cluster autoscaler', defaultValue: false },
       enableMetricsServer: { type: FIELD_TYPES.TOGGLE, name: 'enableMetricsServer', displayName: 'Metrics Server', description: 'Enable metrics server', defaultValue: true },
       addons: { type: FIELD_TYPES.OBJECT, name: 'addons', displayName: 'AKS Addons', description: 'AKS managed addons' },
-      helmCharts: { type: FIELD_TYPES.OBJECT, name: 'helmCharts', displayName: 'Helm Charts', description: 'Helm chart configurations' }
+      helmCharts: {
+        type: FIELD_TYPES.HELM_CHARTS,
+        name: 'helmCharts',
+        displayName: 'Helm Charts',
+        description: 'Helm chart configurations',
+        defaultValue: {
+          prometheus: { enabled: false, customValues: false },
+          grafana: { enabled: false, customValues: false },
+          argocd: { enabled: false, customValues: false },
+          loki: { enabled: false, customValues: false },
+          certManager: { enabled: false, customValues: false },
+          externalDns: { enabled: false, customValues: false },
+          nginx: { enabled: false, customValues: false },
+          istio: { enabled: false, customValues: false },
+          fluxcd: { enabled: false, customValues: false },
+          velero: { enabled: false, customValues: false },
+          falco: { enabled: false, customValues: false },
+          trivyOperator: { enabled: false, customValues: false }
+        }
+      }
     }
   },
 
@@ -312,7 +352,27 @@ export const SERVICES_CONFIG = {
       machineType: { type: FIELD_TYPES.DROPDOWN, name: 'machineType', displayName: 'Machine Type', description: 'GCE machine type', defaultValue: 'e2-medium', options: [{ value: 'e2-micro', label: 'e2-micro' }, { value: 'e2-small', label: 'e2-small' }, { value: 'e2-medium', label: 'e2-medium' }, { value: 'e2-standard-2', label: 'e2-standard-2' }, { value: 'e2-standard-4', label: 'e2-standard-4' }] },
       diskSize: { type: FIELD_TYPES.NUMBER, name: 'diskSize', displayName: 'Disk Size (GB)', description: 'Boot disk size in GB', defaultValue: 50, min: 20, max: 1000 },
       enableAutoScaling: { type: FIELD_TYPES.TOGGLE, name: 'enableAutoScaling', displayName: 'Auto Scaling', description: 'Enable node auto scaling', defaultValue: true },
-      enableAutopilot: { type: FIELD_TYPES.TOGGLE, name: 'enableAutopilot', displayName: 'Autopilot Mode', description: 'Enable GKE Autopilot', defaultValue: false }
+      enableAutopilot: { type: FIELD_TYPES.TOGGLE, name: 'enableAutopilot', displayName: 'Autopilot Mode', description: 'Enable GKE Autopilot', defaultValue: false },
+      helmCharts: {
+        type: FIELD_TYPES.HELM_CHARTS,
+        name: 'helmCharts',
+        displayName: 'Helm Charts',
+        description: 'Helm chart configurations',
+        defaultValue: {
+          prometheus: { enabled: false, customValues: false },
+          grafana: { enabled: false, customValues: false },
+          argocd: { enabled: false, customValues: false },
+          loki: { enabled: false, customValues: false },
+          certManager: { enabled: false, customValues: false },
+          externalDns: { enabled: false, customValues: false },
+          nginx: { enabled: false, customValues: false },
+          istio: { enabled: false, customValues: false },
+          fluxcd: { enabled: false, customValues: false },
+          velero: { enabled: false, customValues: false },
+          falco: { enabled: false, customValues: false },
+          trivyOperator: { enabled: false, customValues: false }
+        }
+      }
     }
   },
 

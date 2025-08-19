@@ -2,6 +2,7 @@
 import React from 'react';
 import { FIELD_TYPES } from '../config/servicesConfig';
 import { useTheme } from '../contexts/ThemeContext';
+import HelmChartsSelector from './HelmChartsSelector';
 
 const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disabled = false }) => {
   const { isDark } = useTheme();
@@ -162,6 +163,17 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
               {fieldConfig.description}
             </p>
           )}
+        </div>
+      );
+
+    case FIELD_TYPES.HELM_CHARTS:
+      return (
+        <div>
+          <HelmChartsSelector
+            value={value || fieldConfig.defaultValue || {}}
+            onChange={handleChange}
+            onEditHelmValues={fieldConfig.onEditHelmValues}
+          />
         </div>
       );
 
