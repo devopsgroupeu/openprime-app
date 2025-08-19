@@ -1,6 +1,6 @@
 // src/components/DynamicServiceConfig.js
 import React from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, MessageCircle } from 'lucide-react';
 import { getServiceConfig, FIELD_TYPES } from '../config/servicesConfig';
 import { useTheme } from '../contexts/ThemeContext';
 import DynamicFieldRenderer from './DynamicFieldRenderer';
@@ -11,7 +11,8 @@ const DynamicServiceConfig = ({
   onServiceChange,
   expanded,
   onToggleExpanded,
-  onEditHelmValues
+  onEditHelmValues,
+  onAskAI
 }) => {
   const { isDark } = useTheme();
   const serviceDefinition = getServiceConfig(serviceName);
@@ -81,28 +82,40 @@ const DynamicServiceConfig = ({
           </div>
         </div>
 
-        {enabledField && (
-          <div onClick={(e) => e.stopPropagation()}>
-            {/* Custom toggle for enabled field without text/description */}
-            <button
-              type="button"
-              onClick={() => handleFieldChange('enabled', !serviceConfig.enabled)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                serviceConfig.enabled
-                  ? 'bg-teal-600'
-                  : isDark
-                  ? 'bg-gray-600'
-                  : 'bg-gray-200'
-              } cursor-pointer`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  serviceConfig.enabled ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
-        )}
+        <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
+          {/* Ask AI Button */}
+          <button
+            type="button"
+            onClick={() => onAskAI?.(serviceName, serviceDefinition.displayName)}
+            className="p-1.5 text-teal-400 hover:text-teal-300 transition-colors hover:bg-teal-500/10 rounded-md"
+            title="Ask AI about this service"
+          >
+            <MessageCircle className="w-4 h-4" />
+          </button>
+
+          {enabledField && (
+            <>
+              {/* Custom toggle for enabled field without text/description */}
+              <button
+                type="button"
+                onClick={() => handleFieldChange('enabled', !serviceConfig.enabled)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  serviceConfig.enabled
+                    ? 'bg-teal-600'
+                    : isDark
+                    ? 'bg-gray-600'
+                    : 'bg-gray-200'
+                } cursor-pointer`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    serviceConfig.enabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {expanded && serviceConfig.enabled && (

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import HomePage from './components/HomePage';
 import EnvironmentsPage from './components/EnvironmentsPage';
+import EnvironmentDetailPage from './components/EnvironmentDetailPage';
 import SettingsPage from './components/SettingsPage';
 import AuraChatButton from './components/AuraChatButton';
 import { initialEnvironments } from './config/environmentsConfig';
@@ -10,6 +11,7 @@ import { ToastProvider } from './contexts/ToastContext';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
+  const [selectedEnvironment, setSelectedEnvironment] = useState(null);
   const [environments, setEnvironments] = useState(initialEnvironments);
 
   const handleCreateEnvironment = (newEnv) => {
@@ -29,6 +31,24 @@ export default function App() {
     setEnvironments(environments.map(env =>
       env.id === updatedEnv.id ? updatedEnv : env
     ));
+    // Update selected environment if it's the one being updated
+    if (selectedEnvironment?.id === updatedEnv.id) {
+      setSelectedEnvironment(updatedEnv);
+    }
+  };
+
+  const handleViewEnvironment = (environment) => {
+    setSelectedEnvironment(environment);
+    setCurrentPage('environment-detail');
+  };
+
+  const handleBackToEnvironments = () => {
+    setSelectedEnvironment(null);
+    setCurrentPage('environments');
+  };
+
+  const handleClearSelectedEnvironment = () => {
+    setSelectedEnvironment(null);
   };
 
   const renderPage = () => {
@@ -44,6 +64,23 @@ export default function App() {
             onCreateEnvironment={handleCreateEnvironment}
             onDeleteEnvironment={handleDeleteEnvironment}
             onUpdateEnvironment={handleUpdateEnvironment}
+            onViewEnvironment={handleViewEnvironment}
+            selectedEnvironment={selectedEnvironment}
+            onClearSelectedEnvironment={handleClearSelectedEnvironment}
+          />
+        );
+      case 'environment-detail':
+        return (
+          <EnvironmentDetailPage
+            environment={selectedEnvironment}
+            onBack={handleBackToEnvironments}
+            onEdit={(env) => {
+              setSelectedEnvironment(env);
+              setCurrentPage('environments'); // Navigate to environments page to show edit modal
+            }}
+            onDelete={handleDeleteEnvironment}
+            setCurrentPage={setCurrentPage}
+            currentPage={currentPage}
           />
         );
       case 'settings':

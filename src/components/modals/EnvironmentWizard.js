@@ -6,6 +6,7 @@ import LoadingSpinner from '../LoadingSpinner';
 import BasicConfigStep from './wizard/BasicConfigStep';
 import ServicesConfigStep from './wizard/ServicesConfigStep';
 import HelmChartsStep from './wizard/HelmChartsStep';
+import AIChatModal from './AIChatModal';
 
 const EnvironmentWizard = ({
   newEnv,
@@ -21,6 +22,11 @@ const EnvironmentWizard = ({
   const { isDark } = useTheme();
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState(new Set());
+  const [aiChatModal, setAiChatModal] = useState({
+    isOpen: false,
+    service: null,
+    serviceTitle: null
+  });
 
   // Check if kubernetes service is enabled to show step 3
   const hasKubernetesService = () => {
@@ -128,6 +134,22 @@ const EnvironmentWizard = ({
     }
   };
 
+  const handleAskAI = (service, serviceTitle) => {
+    setAiChatModal({
+      isOpen: true,
+      service,
+      serviceTitle
+    });
+  };
+
+  const handleCloseAIChat = () => {
+    setAiChatModal({
+      isOpen: false,
+      service: null,
+      serviceTitle: null
+    });
+  };
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -145,6 +167,7 @@ const EnvironmentWizard = ({
             expandedServices={expandedServices}
             setExpandedServices={setExpandedServices}
             onEditHelmValues={onEditHelmValues}
+            onAskAI={handleAskAI}
           />
         );
       case 3:
@@ -387,6 +410,14 @@ const EnvironmentWizard = ({
             )}
           </button>
         </div>
+
+        {/* AI Chat Modal */}
+        <AIChatModal
+          isOpen={aiChatModal.isOpen}
+          onClose={handleCloseAIChat}
+          service={aiChatModal.service}
+          serviceTitle={aiChatModal.serviceTitle}
+        />
       </div>
     </div>
   );

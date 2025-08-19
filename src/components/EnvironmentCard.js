@@ -8,7 +8,7 @@ import {
 import { useTheme } from '../contexts/ThemeContext';
 import ConfirmDeleteModal from './modals/ConfirmDeleteModal';
 
-const EnvironmentCard = ({ environment, onEdit, onDelete }) => {
+const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
   const { isDark } = useTheme();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const getServiceIcon = (service) => {
@@ -85,11 +85,12 @@ const EnvironmentCard = ({ environment, onEdit, onDelete }) => {
 
   return (
     <>
-      <div className={`backdrop-blur-sm rounded-xl border p-6 transition-all ${
+      <div className={`backdrop-blur-sm rounded-xl border p-6 transition-all cursor-pointer ${
         isDark
-          ? 'bg-gray-800/50 border-gray-700 hover:bg-gray-800/70'
-          : 'bg-white/70 border-gray-200 hover:bg-white/90'
-      }`}>
+          ? 'bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 hover:border-gray-600'
+          : 'bg-white/70 border-gray-200 hover:bg-white/90 hover:border-gray-300'
+      } hover:shadow-lg hover:scale-[1.02]`}
+      onClick={() => onClick?.(environment)}>
         <div className="flex justify-between items-start mb-4">
           <div>
             <h3 className={`text-xl font-bold mb-1 transition-colors ${
@@ -205,7 +206,7 @@ const EnvironmentCard = ({ environment, onEdit, onDelete }) => {
           </div>
         )}
 
-        <div className="flex space-x-2">
+        <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => onEdit(environment)}
             className="flex-1 px-4 py-2 bg-teal-600/20 text-teal-400 rounded-lg hover:bg-teal-600/30 transition-all flex items-center justify-center"

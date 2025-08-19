@@ -9,7 +9,7 @@ import { createEmptyEnvironment } from '../config/environmentsConfig';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
 
-const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateEnvironment, onDeleteEnvironment, onUpdateEnvironment }) => {
+const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateEnvironment, onDeleteEnvironment, onUpdateEnvironment, onViewEnvironment, selectedEnvironment, onClearSelectedEnvironment }) => {
   const { isDark } = useTheme();
   const { success, error } = useToast();
   const [showNewEnvModal, setShowNewEnvModal] = useState(false);
@@ -19,6 +19,15 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
   const [expandedServices, setExpandedServices] = useState({});
   const [isEditMode, setIsEditMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if we should automatically open the edit modal for a selected environment
+  React.useEffect(() => {
+    if (selectedEnvironment && !showNewEnvModal) {
+      setNewEnv({ ...selectedEnvironment });
+      setIsEditMode(true);
+      setShowNewEnvModal(true);
+    }
+  }, [selectedEnvironment, showNewEnvModal]);
 
   const convertToYaml = (obj, indent = 0) => {
     const spaces = ' '.repeat(indent);
@@ -206,6 +215,7 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
               environment={env}
               onEdit={handleEditEnvironment}
               onDelete={onDeleteEnvironment}
+              onClick={onViewEnvironment}
             />
           ))}
         </div>
@@ -221,6 +231,7 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
             setShowNewEnvModal(false);
             setExpandedServices({});
             setIsEditMode(false);
+            onClearSelectedEnvironment?.(); // Clear selected environment when closing modal
           }}
           onCreate={handleCreateEnvironment}
           isEditMode={isEditMode}

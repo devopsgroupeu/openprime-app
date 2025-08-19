@@ -8,7 +8,8 @@ const DynamicServicesGrid = ({
   setNewEnv,
   expandedServices,
   setExpandedServices,
-  onEditHelmValues
+  onEditHelmValues,
+  onAskAI
 }) => {
   const providerServices = getProviderServices(newEnv.type);
 
@@ -44,6 +45,7 @@ const DynamicServicesGrid = ({
             expanded={expandedServices[serviceName]}
             onToggleExpanded={() => handleToggleExpanded(serviceName)}
             onEditHelmValues={onEditHelmValues}
+            onAskAI={onAskAI}
           />
         );
       })}

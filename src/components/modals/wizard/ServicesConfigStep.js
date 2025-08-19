@@ -10,7 +10,8 @@ const ServicesConfigStep = ({
   setNewEnv,
   expandedServices,
   setExpandedServices,
-  onEditHelmValues
+  onEditHelmValues,
+  onAskAI
 }) => {
   const { isDark } = useTheme();
 
@@ -240,6 +241,7 @@ const ServicesConfigStep = ({
           expandedServices={expandedServices}
           setExpandedServices={setExpandedServices}
           onEditHelmValues={onEditHelmValues}
+          onAskAI={onAskAI}
         />
       </div>
 
