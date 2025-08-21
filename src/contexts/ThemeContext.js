@@ -12,12 +12,13 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
   const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('openprime-theme');
-    return saved ? JSON.parse(saved) : true;
+    // Force light theme as default for new design
+    const saved = localStorage.getItem('openprime-theme-v2');
+    return saved ? JSON.parse(saved) : false;
   });
 
   useEffect(() => {
-    localStorage.setItem('openprime-theme', JSON.stringify(isDark));
+    localStorage.setItem('openprime-theme-v2', JSON.stringify(isDark));
     if (isDark) {
       document.documentElement.classList.add('dark');
     } else {

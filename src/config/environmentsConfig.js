@@ -1,4 +1,7 @@
 // src/config/environmentsConfig.js
+import { PROVIDERS_CONFIG, getProviderConfig, getProviderServices } from './providersConfig';
+import { createDefaultServiceConfig } from './servicesConfig';
+
 export const initialEnvironments = [
   {
     id: 1,
@@ -155,147 +158,28 @@ export const initialEnvironments = [
   }
 ];
 
-export const createEmptyEnvironment = () => ({
+// Re-export providers from the new configuration
+export const PROVIDERS = PROVIDERS_CONFIG;
+
+export const createEmptyEnvironment = (providerType = 'aws') => ({
   name: '',
-  type: 'aws',
-  region: 'us-east-1',
-  services: {
-    vpc: {
-      enabled: false,
-      cidr: '10.0.0.0/16',
-      azCount: 2,
-      publicSubnets: 2,
-      privateSubnets: 2,
-      natGateway: 'single',
-      enableVpnGateway: false,
-      enableFlowLogs: true,
-      enableDnsHostnames: true,
-      enableDnsSupport: true
-    },
-    eks: {
-      enabled: false,
-      version: '1.28',
-      nodeGroups: 1,
-      minNodes: 2,
-      maxNodes: 5,
-      instanceTypes: ['t3.medium'],
-      diskSize: 50,
-      enableAutoScaling: true,
-      enableClusterAutoscaler: false,
-      enableMetricsServer: true,
-      addons: {
-        vpcCni: { enabled: true, version: 'latest' },
-        coreDns: { enabled: true, version: 'latest' },
-        kubeProxy: { enabled: true, version: 'latest' },
-        ebsCsiDriver: { enabled: false, version: 'latest' }
-      },
-      helmCharts: {
-        prometheus: { enabled: false, customValues: false },
-        grafana: { enabled: false, customValues: false },
-        argocd: { enabled: false, customValues: false },
-        loki: { enabled: false, customValues: false },
-        karpenter: { enabled: false, customValues: false },
-        certManager: { enabled: false, customValues: false },
-        externalDns: { enabled: false, customValues: false },
-        nginx: { enabled: false, customValues: false },
-        istio: { enabled: false, customValues: false },
-        fluxcd: { enabled: false, customValues: false },
-        velero: { enabled: false, customValues: false },
-        falco: { enabled: false, customValues: false },
-        trivy: { enabled: false, customValues: false }
-      }
-    },
-    rds: {
-      enabled: false,
-      engine: 'postgres',
-      version: '15.4',
-      instanceClass: 'db.t3.small',
-      allocatedStorage: 20,
-      maxAllocatedStorage: 100,
-      multiAz: false,
-      backupRetention: 7,
-      encrypted: true,
-      deletionProtection: false,
-      performanceInsights: false,
-      enhancedMonitoring: false
-    },
-    opensearch: {
-      enabled: false,
-      version: '2.11',
-      instanceType: 't3.small.search',
-      instanceCount: 1,
-      dedicatedMasterEnabled: false,
-      dedicatedMasterType: 't3.small.search',
-      dedicatedMasterCount: 0,
-      ebsVolumeSize: 10,
-      ebsVolumeType: 'gp3',
-      encrypted: true,
-      nodeToNodeEncryption: true,
-      fineGrainedAccessControl: false,
-      cognitoEnabled: false
-    },
-    ecr: {
-      enabled: false,
-      repositories: [],
-      lifecyclePolicy: true,
-      crossRegionReplication: false,
-      imageTagMutability: 'MUTABLE'
-    },
-    s3: {
-      enabled: false,
-      buckets: []
-    },
-    lambda: {
-      enabled: false,
-      functions: [],
-      defaultRuntime: 'nodejs18.x',
-      defaultMemory: 256,
-      defaultTimeout: 30
-    },
-    elasticache: {
-      enabled: false,
-      engine: 'redis',
-      version: '7.0',
-      nodeType: 'cache.t3.micro',
-      numCacheNodes: 1,
-      automaticFailover: false,
-      multiAz: false
-    },
-    sqs: {
-      enabled: false,
-      queues: [],
-      defaultVisibilityTimeout: 30,
-      defaultMessageRetention: 345600
-    },
-    sns: {
-      enabled: false,
-      topics: [],
-      defaultKmsKeyId: null
-    },
-    cloudfront: {
-      enabled: false,
-      distributions: [],
-      priceClass: 'PriceClass_100',
-      wafEnabled: false
-    },
-    route53: {
-      enabled: false,
-      hostedZones: [],
-      recordSets: []
-    },
-    secretsManager: {
-      enabled: false,
-      secrets: [],
-      automaticRotation: false
-    },
-    iam: {
-      enabled: false,
-      roles: [],
-      policies: [],
-      assumeRolePolicyDocument: null
-    }
-  }
+  type: providerType,
+  region: getProviderConfig(providerType).defaultRegion,
+  services: createEmptyServices(providerType)
 });
+
+const createEmptyServices = (providerType) => {
+  const providerServices = getProviderServices(providerType);
+  const services = {};
+
+  providerServices.forEach(serviceName => {
+    services[serviceName] = createDefaultServiceConfig(serviceName);
+  });
+
+  return services;
+};
+
+// Dynamic service creation - no need for hardcoded service functions
 
 export const helmChartDefaults = {
   prometheus: `# Prometheus Values
