@@ -5,6 +5,7 @@ import EnvironmentsPage from './components/EnvironmentsPage';
 import EnvironmentDetailPage from './components/EnvironmentDetailPage';
 import SettingsPage from './components/SettingsPage';
 import AuraChatButton from './components/AuraChatButton';
+import ErrorBoundary from './components/ErrorBoundary';
 import { initialEnvironments } from './config/environmentsConfig';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -91,11 +92,13 @@ export default function App() {
   };
 
   return (
-    <ThemeProvider>
-      <ToastProvider>
-        {renderPage()}
-        <AuraChatButton />
-      </ToastProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <ToastProvider>
+          {renderPage()}
+          <AuraChatButton />
+        </ToastProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }

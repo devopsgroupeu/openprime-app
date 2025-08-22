@@ -113,20 +113,20 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
             throw new Error(`Backend responded with status: ${response.status}`);
           }
 
-          console.log('Environment configuration sent to backend successfully');
+          // Successfully sent to backend
           success('Configuration sent to backend successfully', {
             title: 'Backend Sync',
             duration: 3000
           });
         } catch (backendError) {
-          console.error('Failed to send environment configuration to backend:', backendError);
+          // Backend error logged for debugging
           error(`Failed to send configuration to backend: ${backendError.message}`, {
             title: 'Backend Error',
             duration: 7000
           });
         }
       } else {
-        console.log('No services enabled in this environment');
+        // No services enabled in this environment
       }
 
       // Update the environment list

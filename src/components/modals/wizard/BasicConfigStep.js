@@ -4,8 +4,12 @@ import { Cloud, MapPin, Type } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { PROVIDERS, createEmptyEnvironment } from '../../../config/environmentsConfig';
 
-const BasicConfigStep = ({ newEnv, setNewEnv }) => {
+const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
   const { isDark } = useTheme();
+
+  const getFieldError = (fieldName) => {
+    return validationErrors.find(error => error.field === fieldName);
+  };
 
   const handleProviderChange = (providerType) => {
     const emptyEnv = createEmptyEnvironment(providerType);
@@ -56,7 +60,9 @@ const BasicConfigStep = ({ newEnv, setNewEnv }) => {
         <input
           type="text"
           className={`w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 text-lg ${
-            isDark
+            getFieldError('name')
+              ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+              : isDark
               ? 'bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20'
               : 'bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20'
           }`}
@@ -64,11 +70,17 @@ const BasicConfigStep = ({ newEnv, setNewEnv }) => {
           value={newEnv.name}
           onChange={(e) => setNewEnv({...newEnv, name: e.target.value})}
         />
-        <p className={`text-xs mt-2 ${
-          isDark ? 'text-gray-400' : 'text-gray-500'
-        }`}>
-          Choose a descriptive name that identifies the purpose of this environment
-        </p>
+        {getFieldError('name') ? (
+          <p className="text-red-500 text-xs mt-2">
+            {getFieldError('name').message}
+          </p>
+        ) : (
+          <p className={`text-xs mt-2 ${
+            isDark ? 'text-gray-400' : 'text-gray-500'
+          }`}>
+            Choose a descriptive name that identifies the purpose of this environment
+          </p>
+        )}
       </div>
 
       {/* Cloud Provider */}
