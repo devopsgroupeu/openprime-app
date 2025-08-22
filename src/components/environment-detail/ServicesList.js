@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import {
   Database, Network, Container, Archive, Shield, Box, Lock,
-  CheckCircle, Clock, Package, ChevronDown, ChevronRight,
-  Copy, ExternalLink, Info
+  Package, ChevronDown, ChevronRight,
+  Copy, Info
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -29,17 +29,17 @@ const ServicesList = ({ environment }) => {
     return icons[serviceName] || Box;
   };
 
-  const getServiceStatus = (serviceConfig) => {
-    if (!serviceConfig?.enabled) return 'disabled';
-    return 'enabled';
-  };
+  // const getServiceStatus = (serviceConfig) => {
+  //   if (!serviceConfig?.enabled) return 'disabled';
+  //   return 'enabled';
+  // };
 
-  const getStatusIcon = (status) => {
-    if (status === 'enabled') {
-      return <CheckCircle className="w-4 h-4 text-green-400" />;
-    }
-    return <Clock className="w-4 h-4 text-gray-400" />;
-  };
+  // const getStatusIcon = (status) => {
+  //   if (status === 'enabled') {
+  //     return <CheckCircle className="w-4 h-4 text-green-400" />;
+  //   }
+  //   return <Clock className="w-4 h-4 text-gray-400" />;
+  // };
 
   const enabledServices = Object.entries(environment.services || {})
     .filter(([_, config]) => config?.enabled)
