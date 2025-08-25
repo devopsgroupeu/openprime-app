@@ -18,13 +18,6 @@ const INITIAL_MESSAGES = [
   }
 ];
 
-const SAMPLE_RESPONSES = [
-  "I'd be happy to help you with that! However, I'm currently a demo version. In a full implementation, I would connect to an AI service to provide detailed infrastructure guidance.",
-  "That's a great question about infrastructure! In a production version, I would analyze your configuration and provide specific recommendations.",
-  "I can see you're interested in that topic. A real AI integration would give you detailed explanations and step-by-step guidance.",
-  "Excellent question! When fully integrated with an AI backend, I could provide comprehensive answers about cloud infrastructure and best practices."
-];
-
 const AuraChatWindow = ({ onClose }) => {
   const { isDark } = useTheme();
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
@@ -48,33 +41,86 @@ const AuraChatWindow = ({ onClose }) => {
     }
   }, [isMinimized]);
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+const handleSendMessage = async () => {
+  if (!inputMessage.trim()) return;
 
-    const userMessage = {
-      id: Date.now(),
-      type: 'user',
-      message: inputMessage,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
-    setIsTyping(true);
-
-    // Simulate AI response delay
-    setTimeout(() => {
-      const randomResponse = SAMPLE_RESPONSES[Math.floor(Math.random() * SAMPLE_RESPONSES.length)];
-      const botMessage = {
-        id: Date.now() + 1,
-        type: 'bot',
-        message: randomResponse,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, botMessage]);
-      setIsTyping(false);
-    }, 1000 + Math.random() * 2000);
+  const userMessage = {
+    id: Date.now(),
+    type: 'user',
+    message: inputMessage,
+    timestamp: new Date(),
   };
+
+  setMessages(prev => [...prev, userMessage]);
+  setInputMessage('');
+  setIsTyping(true);
+
+  const botMessageId = Date.now() + 1;
+  let botMessage = {
+    id: botMessageId,
+    type: 'bot',
+    message: '',
+    timestamp: new Date(),
+  };
+
+  setMessages(prev => [...prev, botMessage]);
+
+  try {
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:3001/api";
+    // POST request to AI chat endpoint
+    const response = await fetch(`${backendUrl}/ai/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [...messages, userMessage] }),
+    });
+
+    if (!response.ok || !response.body) {
+      throw new Error('Failed to connect to AI service');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+
+      chunk.split('\n').forEach(line => {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.replace(/^data: /, ''));
+            if (data.chunk) {
+              botMessage.message += data.chunk;
+              setMessages(prev =>
+                prev.map(msg =>
+                  msg.id === botMessageId ? { ...msg, message: botMessage.message } : msg
+                )
+              );
+            }
+            if (data.done) setIsTyping(false);
+          } catch (err) {
+            console.error('Parse error:', err);
+          }
+        }
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    setMessages(prev =>
+      prev.map(msg =>
+        msg.id === botMessageId
+          ? { ...msg, message: "⚠️ Sorry, I couldn't connect to Aura AI right now." }
+          : msg
+      )
+    );
+  } finally {
+    // Ensure typing indicator is off
+    setIsTyping(false);
+  }
+};
+
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
