@@ -9,6 +9,11 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle }) => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
+  const systemMessage = {
+  type: 'system',
+  message: `You are an AI assistant specialized in ${serviceTitle}. Always answer in the context of ${serviceTitle}, including best practices, common issues, security, and cost optimization.`
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -29,44 +34,83 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle }) => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!inputText.trim() || isLoading) return;
+    // Handle submitting a question
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!inputText.trim() || isLoading) return;
 
-    const userMessage = {
-      id: Date.now(),
-      type: 'user',
-      content: inputText.trim()
-    };
+  const userMessage = { id: Date.now(), type: 'user', content: inputText.trim() };
+  setMessages(prev => [...prev, userMessage]);
+  setInputText('');
+  setIsLoading(true);
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputText('');
-    setIsLoading(true);
+  const aiMessageId = Date.now() + 1;
+  let aiMessage = { id: aiMessageId, type: 'ai', content: '' };
+  setMessages(prev => [...prev, aiMessage]);
 
-    try {
-      // Simulate AI response (in a real implementation, this would call an AI API)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+  try {
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:3001/api";
+    // POST request to AI chat endpoint
+    // Prepare messages with system context
+    const payloadMessages = [
+      systemMessage,
+      ...messages
+        .filter(m => m.content && m.content.trim() !== '')
+        .map(m => ({ type: m.type === 'ai' ? 'assistant' : m.type, message: m.content })),
+      { type: 'user', message: userMessage.content }
+    ];
 
-      const aiResponse = generateAIResponse(inputText.trim(), service, serviceTitle);
+    const response = await fetch(`${backendUrl}/ai/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: payloadMessages })
+    });
 
-      const aiMessage = {
-        id: Date.now() + 1,
-        type: 'ai',
-        content: aiResponse
-      };
+    if (!response.ok || !response.body) throw new Error('Failed to connect to AI service');
 
-      setMessages(prev => [...prev, aiMessage]);
-    } catch (error) {
-      const errorMessage = {
-        id: Date.now() + 1,
-        type: 'ai',
-        content: 'Sorry, I encountered an error while processing your request. Please try again.'
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      chunk.split('\n').forEach(line => {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.replace(/^data: /, ''));
+            if (data.chunk) {
+              aiMessage.content += data.chunk;
+              setMessages(prev =>
+                prev.map(msg =>
+                  msg.id === aiMessageId ? { ...msg, content: aiMessage.content } : msg
+                )
+              );
+            }
+            if (data.done) setIsLoading(false);
+          } catch (err) {
+            console.error('Parse error:', err);
+          }
+        }
+      });
     }
-  };
+
+    // Ensure loading indicator disappears after stream ends
+    setIsLoading(false);
+
+  } catch (err) {
+    console.error(err);
+    setMessages(prev =>
+      prev.map(msg =>
+        msg.id === aiMessageId
+          ? { ...msg, content: "⚠️ Sorry, I couldn't connect to AI service right now." }
+          : msg
+      )
+    );
+    setIsLoading(false);
+  }
+};
 
   const handleClose = () => {
     setMessages([]);
@@ -227,6 +271,7 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle }) => {
 };
 
 // AI response generator (simplified - in a real app this would call an actual AI service)
+/*
 const generateAIResponse = (question, service, serviceTitle) => {
   const serviceInfo = {
     vpc: {
@@ -300,5 +345,6 @@ const generateAIResponse = (question, service, serviceTitle) => {
   // Default response
   return `**About ${serviceTitle}:**\n\n${info.description}\n\n**Key considerations:**\n${info.bestPractices.slice(0, 3).map(practice => `• ${practice}`).join('\n')}\n\nWhat specific aspect would you like to explore? I can help with configuration, best practices, troubleshooting, or cost optimization.`;
 };
+*/
 
 export default AIChatModal;
