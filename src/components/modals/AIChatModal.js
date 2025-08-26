@@ -9,11 +9,6 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle }) => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const systemMessage = {
-  type: 'system',
-  message: `You are an AI assistant specialized in ${serviceTitle}. Always answer in the context of ${serviceTitle}, including best practices, common issues, security, and cost optimization.`
-  };
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -53,7 +48,6 @@ const handleSubmit = async (e) => {
     // POST request to AI chat endpoint
     // Prepare messages with system context
     const payloadMessages = [
-      systemMessage,
       ...messages
         .filter(m => m.content && m.content.trim() !== '')
         .map(m => ({ type: m.type === 'ai' ? 'assistant' : m.type, message: m.content })),
@@ -63,7 +57,10 @@ const handleSubmit = async (e) => {
     const response = await fetch(`${backendUrl}/ai/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: payloadMessages })
+      body: JSON.stringify({ 
+        messages: payloadMessages,
+        topic: serviceTitle
+       })
     });
 
     if (!response.ok || !response.body) throw new Error('Failed to connect to AI service');
