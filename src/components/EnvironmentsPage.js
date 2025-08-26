@@ -19,15 +19,22 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
   const [expandedServices, setExpandedServices] = useState({});
   const [isEditMode, setIsEditMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [shouldAutoOpenEdit, setShouldAutoOpenEdit] = useState(false);
+
+  // Reset auto-open flag when component mounts or when navigating
+  React.useEffect(() => {
+    setShouldAutoOpenEdit(false);
+  }, []);
 
   // Check if we should automatically open the edit modal for a selected environment
   React.useEffect(() => {
-    if (selectedEnvironment && !showNewEnvModal) {
+    if (selectedEnvironment && !showNewEnvModal && shouldAutoOpenEdit) {
       setNewEnv({ ...selectedEnvironment });
       setIsEditMode(true);
       setShowNewEnvModal(true);
+      setShouldAutoOpenEdit(false); // Reset the flag
     }
-  }, [selectedEnvironment, showNewEnvModal]);
+  }, [selectedEnvironment, showNewEnvModal, shouldAutoOpenEdit]);
 
   const convertToYaml = (obj, indent = 0) => {
     const spaces = ' '.repeat(indent);
@@ -160,6 +167,7 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
   };
 
   const handleEditEnvironment = (environment) => {
+    setShouldAutoOpenEdit(true);
     setNewEnv({ ...environment });
     setIsEditMode(true);
     setShowNewEnvModal(true);
@@ -200,7 +208,11 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
             isDark ? 'text-white' : 'text-gray-900'
           }`}>Environments</h1>
           <button
-            onClick={() => setShowNewEnvModal(true)}
+            onClick={() => {
+              setNewEnv(createEmptyEnvironment('aws'));
+              setIsEditMode(false);
+              setShowNewEnvModal(true);
+            }}
             className="px-6 py-3 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg font-semibold hover:from-teal-700 hover:to-cyan-700 transition-all flex items-center shadow-lg hover:shadow-xl"
           >
             <Plus className="w-5 h-5 mr-2" />
@@ -231,6 +243,8 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
             setShowNewEnvModal(false);
             setExpandedServices({});
             setIsEditMode(false);
+            setShouldAutoOpenEdit(false); // Clear the auto-open flag
+            setNewEnv(createEmptyEnvironment('aws')); // Reset to empty environment
             onClearSelectedEnvironment?.(); // Clear selected environment when closing modal
           }}
           onCreate={handleCreateEnvironment}

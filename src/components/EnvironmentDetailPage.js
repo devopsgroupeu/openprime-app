@@ -5,7 +5,10 @@ import {
 } from 'lucide-react';
 import Navigation from './Navigation';
 import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../contexts/ToastContext';
 import ConfirmDeleteModal from './modals/ConfirmDeleteModal';
+import EnvironmentWizard from './modals/EnvironmentWizard';
+import HelmValuesModal from './modals/HelmValuesModal';
 import EnvironmentHeader from './environment-detail/EnvironmentHeader';
 import ServicesList from './environment-detail/ServicesList';
 import ServicesOverview from './environment-detail/ServicesOverview';
@@ -22,9 +25,16 @@ const EnvironmentDetailPage = ({
   currentPage
 }) => {
   const { isDark } = useTheme();
+  const { success, error } = useToast();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showValuesEditor, setShowValuesEditor] = useState(null);
+  const [editingHelmValues, setEditingHelmValues] = useState('');
+  const [editEnv, setEditEnv] = useState(null);
+  const [expandedServices, setExpandedServices] = useState({});
   const [activeTab, setActiveTab] = useState('overview');
   const [refreshing, setRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const handleRefresh = async () => {
@@ -51,6 +61,11 @@ const EnvironmentDetailPage = ({
 
   const providerConfig = getProviderConfig(environment.type);
 
+  const handleEdit = () => {
+    setEditEnv({ ...environment });
+    setShowEditModal(true);
+  };
+
   const handleDelete = () => {
     setShowDeleteModal(true);
   };
@@ -59,6 +74,59 @@ const EnvironmentDetailPage = ({
     onDelete(environment.id);
     setShowDeleteModal(false);
     onBack();
+  };
+
+  const handleUpdateEnvironment = async () => {
+    if (!editEnv.name) {
+      error('Please enter an environment name', {
+        title: 'Validation Error',
+        duration: 5000
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      onEdit(editEnv);
+      success(`Environment "${editEnv.name}" updated successfully`, {
+        title: 'Environment Updated',
+        duration: 4000
+      });
+
+      setShowEditModal(false);
+      setEditEnv(null);
+      setExpandedServices({});
+    } catch (err) {
+      error(`Failed to update environment: ${err.message}`, {
+        title: 'Error',
+        duration: 7000
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveHelmValues = () => {
+    const kubernetesService = editEnv.type === 'azure' ? 'aks' : 'eks';
+    setEditEnv({
+      ...editEnv,
+      services: {
+        ...editEnv.services,
+        [kubernetesService]: {
+          ...editEnv.services[kubernetesService],
+          helmCharts: {
+            ...editEnv.services[kubernetesService].helmCharts,
+            [showValuesEditor]: {
+              ...editEnv.services[kubernetesService].helmCharts[showValuesEditor],
+              customValues: true
+            }
+          }
+        }
+      }
+    });
+    setShowValuesEditor(null);
+    setEditingHelmValues('');
   };
 
   const getResourceStats = () => {
@@ -234,7 +302,7 @@ const EnvironmentDetailPage = ({
             </h3>
             <div className="space-y-3">
               <button
-                onClick={() => onEdit(environment)}
+                onClick={handleEdit}
                 className={`w-full p-3 rounded-lg flex items-center space-x-3 transition-colors ${
                   isDark
                     ? 'bg-teal-600/20 hover:bg-teal-600/30 text-teal-400'
@@ -276,7 +344,7 @@ const EnvironmentDetailPage = ({
         environment={environment}
         providerConfig={providerConfig}
         onBack={onBack}
-        onEdit={onEdit}
+        onEdit={handleEdit}
         onDelete={handleDelete}
       />
 
@@ -350,11 +418,40 @@ const EnvironmentDetailPage = ({
 
       {showDeleteModal && (
         <ConfirmDeleteModal
-          isOpen={showDeleteModal}
+          environment={environment}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={confirmDelete}
-          title="Delete Environment"
-          message={`Are you sure you want to delete "${environment.name}"? This action cannot be undone.`}
+        />
+      )}
+
+      {showEditModal && editEnv && (
+        <EnvironmentWizard
+          newEnv={editEnv}
+          setNewEnv={setEditEnv}
+          expandedServices={expandedServices}
+          setExpandedServices={setExpandedServices}
+          onClose={() => {
+            setShowEditModal(false);
+            setExpandedServices({});
+            setEditEnv(null);
+          }}
+          onCreate={handleUpdateEnvironment}
+          isEditMode={true}
+          isLoading={isLoading}
+          onEditHelmValues={(chart, values) => {
+            setShowValuesEditor(chart);
+            setEditingHelmValues(values);
+          }}
+        />
+      )}
+
+      {showValuesEditor && (
+        <HelmValuesModal
+          chartName={showValuesEditor}
+          values={editingHelmValues}
+          onChange={setEditingHelmValues}
+          onClose={() => setShowValuesEditor(null)}
+          onSave={handleSaveHelmValues}
         />
       )}
     </div>
