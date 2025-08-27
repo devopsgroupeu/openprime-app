@@ -28,7 +28,7 @@ const WizardContainer = ({
   const [aiChatModal, setAiChatModal] = useState({
     isOpen: false,
     service: null,
-    serviceTitle: null
+    serviceTitle: null,
   });
 
   // Check if kubernetes service is enabled to show step 3
@@ -161,7 +161,8 @@ const WizardContainer = ({
     setAiChatModal({
       isOpen: true,
       service,
-      serviceTitle
+      serviceTitle,
+      wizardValues: newEnv
     });
   };
 
@@ -445,6 +446,7 @@ const WizardContainer = ({
           onClose={() => setAiChatModal({ isOpen: false, service: null, serviceTitle: null })}
           service={aiChatModal.service}
           serviceTitle={aiChatModal.serviceTitle}
+          wizardValues={newEnv} 
         />
       )}
     </>

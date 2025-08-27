@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, MessageCircle, Bot, User } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
-const AIChatModal = ({ isOpen, onClose, service, serviceTitle }) => {
+const AIChatModal = ({ isOpen, onClose, service, serviceTitle, wizardValues }) => {
   const { isDark } = useTheme();
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -30,84 +30,89 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle }) => {
   }, [messages]);
 
     // Handle submitting a question
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!inputText.trim() || isLoading) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!inputText.trim() || isLoading) return;
 
-  const userMessage = { id: Date.now(), type: 'user', content: inputText.trim() };
-  setMessages(prev => [...prev, userMessage]);
-  setInputText('');
-  setIsLoading(true);
+    const userMessage = { id: Date.now(), type: 'user', content: inputText.trim() };
+    setMessages(prev => [...prev, userMessage]);
+    setInputText('');
+    setIsLoading(true);
 
-  const aiMessageId = Date.now() + 1;
-  let aiMessage = { id: aiMessageId, type: 'ai', content: '' };
-  setMessages(prev => [...prev, aiMessage]);
+    const aiMessageId = Date.now() + 1;
+    let aiMessage = { id: aiMessageId, type: 'ai', content: '' };
+    setMessages(prev => [...prev, aiMessage]);
 
-  try {
-    const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:3001/api";
-    // POST request to AI chat endpoint
-    // Prepare messages with system context
-    const payloadMessages = [
-      ...messages
-        .filter(m => m.content && m.content.trim() !== '')
-        .map(m => ({ type: m.type === 'ai' ? 'assistant' : m.type, message: m.content })),
-      { type: 'user', message: userMessage.content }
-    ];
+    try {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:3001/api";
+      // POST request to AI chat endpoint
+      // Prepare messages with system context
+      const payloadMessages = [
+          {
+            type: 'system',
+            message: `The current environment configuration is: ${JSON.stringify(wizardValues)}`
+          },
+          ...messages
+            .filter(m => m.content && m.content.trim() !== '')
+            .map(m => ({ type: m.type === 'ai' ? 'assistant' : m.type, message: m.content })),
+          { type: 'user', message: userMessage.content }
+        ];
 
-    const response = await fetch(`${backendUrl}/ai/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        messages: payloadMessages,
-        topic: serviceTitle
-       })
-    });
-
-    if (!response.ok || !response.body) throw new Error('Failed to connect to AI service');
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value, { stream: true });
-      chunk.split('\n').forEach(line => {
-        if (line.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(line.replace(/^data: /, ''));
-            if (data.chunk) {
-              aiMessage.content += data.chunk;
-              setMessages(prev =>
-                prev.map(msg =>
-                  msg.id === aiMessageId ? { ...msg, content: aiMessage.content } : msg
-                )
-              );
-            }
-            if (data.done) setIsLoading(false);
-          } catch (err) {
-            console.error('Parse error:', err);
-          }
-        }
+      const response = await fetch(`${backendUrl}/ai/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          messages: payloadMessages,
+          topic: serviceTitle,
+          wizardValues
+        })
       });
+
+      if (!response.ok || !response.body) throw new Error('Failed to connect to AI service');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        chunk.split('\n').forEach(line => {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.replace(/^data: /, ''));
+              if (data.chunk) {
+                aiMessage.content += data.chunk;
+                setMessages(prev =>
+                  prev.map(msg =>
+                    msg.id === aiMessageId ? { ...msg, content: aiMessage.content } : msg
+                  )
+                );
+              }
+              if (data.done) setIsLoading(false);
+            } catch (err) {
+              console.error('Parse error:', err);
+            }
+          }
+        });
+      }
+
+      // Ensure loading indicator disappears after stream ends
+      setIsLoading(false);
+
+    } catch (err) {
+      console.error(err);
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === aiMessageId
+            ? { ...msg, content: "⚠️ Sorry, I couldn't connect to AI service right now." }
+            : msg
+        )
+      );
+      setIsLoading(false);
     }
-
-    // Ensure loading indicator disappears after stream ends
-    setIsLoading(false);
-
-  } catch (err) {
-    console.error(err);
-    setMessages(prev =>
-      prev.map(msg =>
-        msg.id === aiMessageId
-          ? { ...msg, content: "⚠️ Sorry, I couldn't connect to AI service right now." }
-          : msg
-      )
-    );
-    setIsLoading(false);
-  }
-};
+  };
 
   const handleClose = () => {
     setMessages([]);
