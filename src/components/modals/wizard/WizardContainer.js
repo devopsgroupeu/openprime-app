@@ -31,6 +31,8 @@ const WizardContainer = ({
     serviceTitle: null,
   });
 
+  const [aiChatMessages, setAiChatMessages] = useState({});
+
   // Check if kubernetes service is enabled to show step 3
   const hasKubernetesService = () => {
     return newEnv.services?.eks?.enabled ||
@@ -440,6 +442,8 @@ const WizardContainer = ({
       </div>
 
       {/* AI Chat Modal */}
+      
+
       {aiChatModal.isOpen && (
         <AIChatModal
           isOpen={aiChatModal.isOpen}
@@ -447,6 +451,15 @@ const WizardContainer = ({
           service={aiChatModal.service}
           serviceTitle={aiChatModal.serviceTitle}
           wizardValues={newEnv} 
+          messages={aiChatMessages[aiChatModal.service] || []}
+          setMessages={(update) =>
+            setAiChatMessages(prev => {
+              const current = prev[aiChatModal.service] || [];
+              const newMessages =
+                typeof update === "function" ? update(current) : update;
+              return { ...prev, [aiChatModal.service]: newMessages };
+            })
+          }
         />
       )}
     </>

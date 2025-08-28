@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, MessageCircle, Bot, User } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
-const AIChatModal = ({ isOpen, onClose, service, serviceTitle, wizardValues }) => {
+const AIChatModal = ({ isOpen, onClose, service, serviceTitle, wizardValues, messages, setMessages }) => {
   const { isDark } = useTheme();
-  const [messages, setMessages] = useState([]);
+  //const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
@@ -14,8 +14,7 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle, wizardValues }) =
   };
 
   useEffect(() => {
-    if (isOpen && service) {
-      // Initialize conversation with a welcome message
+    if (isOpen && service && messages.length === 0) {
       const welcomeMessage = {
         id: Date.now(),
         type: 'ai',
@@ -23,7 +22,7 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle, wizardValues }) =
       };
       setMessages([welcomeMessage]);
     }
-  }, [isOpen, service, serviceTitle]);
+  }, [isOpen, service, serviceTitle, messages.length, setMessages]);
 
   useEffect(() => {
     scrollToBottom();
@@ -115,7 +114,7 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle, wizardValues }) =
   };
 
   const handleClose = () => {
-    setMessages([]);
+    //setMessages([]);
     setInputText('');
     setIsLoading(false);
     onClose();
