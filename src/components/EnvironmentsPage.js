@@ -100,7 +100,11 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
 
         // Send POST request to backend
         try {
-          const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080/api';
+          const backendUrl =
+            (typeof window !== 'undefined' && window._env_ && window._env_.BACKEND_URL) ||
+            process.env.REACT_APP_BACKEND_URL ||
+            'http://localhost:8080/api';
+
           const response = await fetch(`${backendUrl}/environments`, {
             method: 'POST',
             headers: {

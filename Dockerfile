@@ -21,6 +21,9 @@ FROM nginx:alpine AS production
 # Copy custom nginx config if needed (optional)
 # COPY nginx.conf /etc/nginx/nginx.conf
 
+# Add envsubst for runtime env injection
+RUN apk add --no-cache gettext
+
 # Copy built app from build stage
 COPY --from=build /app/build /usr/share/nginx/html
 
@@ -53,5 +56,6 @@ RUN echo "server { \
 # Switch to non-root user
 USER nginx
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# On container start, inject env vars into env.js and start nginx
+# CMD ["nginx", "-g", "daemon off;"]
+CMD ["/bin/sh","-c","envsubst < /usr/share/nginx/html/env.js > /usr/share/nginx/html/env.js.tmp && mv /usr/share/nginx/html/env.js.tmp /usr/share/nginx/html/env.js && nginx -g 'daemon off;'"]
