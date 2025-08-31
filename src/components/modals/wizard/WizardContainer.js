@@ -451,6 +451,7 @@ const WizardContainer = ({
           service={aiChatModal.service}
           serviceTitle={aiChatModal.serviceTitle}
           wizardValues={newEnv} 
+          setNewEnv={setNewEnv} 
           messages={aiChatMessages[aiChatModal.service] || []}
           setMessages={(update) =>
             setAiChatMessages(prev => {

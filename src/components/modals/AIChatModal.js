@@ -1,12 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, MessageCircle, Bot, User } from 'lucide-react';
+import { X, Send, MessageCircle, Bot, User, Check } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { SERVICES_CONFIG } from '../../config/servicesConfig';
 
-const AIChatModal = ({ isOpen, onClose, service, serviceTitle, wizardValues, messages, setMessages }) => {
+const AIChatModal = ({
+  isOpen,
+  onClose,
+  service,
+  serviceTitle,
+  wizardValues,
+  messages,
+  setMessages,
+  setNewEnv 
+}) => {
   const { isDark } = useTheme();
-  //const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [suggestion, setSuggestion] = useState(null);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -26,9 +36,109 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle, wizardValues, mes
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, suggestion]);
 
-    // Handle submitting a question
+  // Find service by display name (serviceTitle)
+  const findServiceByDisplayName = (displayName) => {
+    
+    for (const [serviceName, serviceConfig] of Object.entries(SERVICES_CONFIG)) {
+      if (serviceConfig.displayName === displayName) {
+        return serviceName;
+      }
+    }
+    
+    return null;
+  };
+
+  const extractSuggestionsFromText = (text, currentServiceName) => {
+    
+    // Only look for JSON - no text parsing at all
+    const match = text.match(/```json([\s\S]*?)```/);
+    if (match) {
+      try {
+        const parsed = JSON.parse(match[1].trim());
+        return parsed;
+      } catch (err) {
+        console.warn("Invalid JSON suggestion:", err);
+      }
+    }
+    
+    return {};
+  };
+
+  // Clear/deny suggestion
+  const denySuggestion = () => {
+    setSuggestion(null);
+        
+    const dismissMessage = {
+      id: Date.now(),
+      type: 'ai',
+      content: '👍 Suggestion dismissed.'
+    };
+    setMessages(prev => [...prev, dismissMessage]);
+  };
+
+  // Apply suggestion
+  const applySuggestion = () => {
+    if (!suggestion) {
+      return;
+    }
+
+    let currentServiceName = service;
+
+    // If service prop doesn't work, try to find by serviceTitle (displayName)
+    if (!currentServiceName || !SERVICES_CONFIG[currentServiceName]) {
+      currentServiceName = findServiceByDisplayName(serviceTitle);
+    }
+
+    if (!currentServiceName) {
+      return;
+    }
+
+    const serviceConfig = SERVICES_CONFIG[currentServiceName];
+    
+    // Build applied fields list BEFORE state update to avoid duplicates
+    const appliedFields = [];
+    Object.entries(suggestion).forEach(([suggestedKey, suggestedValue]) => {
+      if (serviceConfig && serviceConfig.fields[suggestedKey]) {
+        appliedFields.push(`${suggestedKey}: ${suggestedValue}`);
+      }
+    });
+
+    setNewEnv(prev => {
+      const updatedEnv = { ...prev };
+      const updatedServices = { ...(prev.services || {}) };
+      
+      // Ensure the service exists in updatedServices
+      if (!updatedServices[currentServiceName]) {
+        updatedServices[currentServiceName] = {};
+      }
+      
+      // Apply suggestions directly
+      Object.entries(suggestion).forEach(([suggestedKey, suggestedValue]) => {
+        if (serviceConfig && serviceConfig.fields[suggestedKey]) {
+          updatedServices[currentServiceName][suggestedKey] = suggestedValue;
+        } 
+      });
+      
+      return { ...updatedEnv, services: updatedServices };
+    });
+
+    // Add success message (outside of setNewEnv to avoid React error)
+    setTimeout(() => {
+      const successMessage = {
+        id: Date.now(),
+        type: 'ai',
+        content: `✅ Configuration applied successfully!\n\nUpdated fields:\n${appliedFields.map(field => `• ${field}`).join('\n')}`
+      };
+      setMessages(prev => [...prev, successMessage]);
+    }, 0);
+
+    // Clear the suggestion box
+    setSuggestion(null);
+  };
+
+  // Handle submitting a question
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputText.trim() || isLoading) return;
@@ -44,26 +154,33 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle, wizardValues, mes
 
     try {
       const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:3001/api";
-      // POST request to AI chat endpoint
-      // Prepare messages with system context
+      
+      // Find the actual service name for the backend
+      let currentServiceName = service;
+      if (!currentServiceName || !SERVICES_CONFIG[currentServiceName]) {
+        currentServiceName = findServiceByDisplayName(serviceTitle);
+      }
+      
       const payloadMessages = [
-          {
-            type: 'system',
-            message: `The current environment configuration is: ${JSON.stringify(wizardValues)}`
-          },
-          ...messages
-            .filter(m => m.content && m.content.trim() !== '')
-            .map(m => ({ type: m.type === 'ai' ? 'assistant' : m.type, message: m.content })),
-          { type: 'user', message: userMessage.content }
-        ];
+        { type: 'system', message: `The current environment configuration is: ${JSON.stringify(wizardValues)}` },
+        { type: 'system', message: `Available service options: ${Object.keys(SERVICES_CONFIG).join(', ')}` },
+        { type: 'system', message: `Current service: ${currentServiceName || serviceTitle}` },
+        { type: 'system', message: currentServiceName && SERVICES_CONFIG[currentServiceName] ? `Available fields for ${currentServiceName}: ${Object.keys(SERVICES_CONFIG[currentServiceName].fields).join(', ')}` : '' },
+        { type: 'system', message: `When making suggestions, use JSON code blocks with exact field names from the available fields list. Example: \`\`\`json\n{"instanceCount": 3, "instanceType": "t3.medium"}\n\`\`\`` },
+        ...messages
+          .filter(m => m.content && m.content.trim() !== '')
+          .map(m => ({ type: m.type === 'ai' ? 'assistant' : m.type, message: m.content })),
+        { type: 'user', message: userMessage.content }
+      ];
 
       const response = await fetch(`${backendUrl}/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           messages: payloadMessages,
           topic: serviceTitle,
-          wizardValues
+          wizardValues,
+          currentService: currentServiceName
         })
       });
 
@@ -83,6 +200,14 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle, wizardValues, mes
               const data = JSON.parse(line.replace(/^data: /, ''));
               if (data.chunk) {
                 aiMessage.content += data.chunk;
+
+                // Detect JSON suggestion
+                const currentServiceName = service || findServiceByDisplayName(serviceTitle);
+                const newSuggestion = extractSuggestionsFromText(aiMessage.content, currentServiceName);
+                if (Object.keys(newSuggestion).length > 0) {
+                  setSuggestion(newSuggestion);
+                }
+
                 setMessages(prev =>
                   prev.map(msg =>
                     msg.id === aiMessageId ? { ...msg, content: aiMessage.content } : msg
@@ -97,11 +222,10 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle, wizardValues, mes
         });
       }
 
-      // Ensure loading indicator disappears after stream ends
       setIsLoading(false);
 
     } catch (err) {
-      console.error(err);
+      console.error('Error in handleSubmit:', err);
       setMessages(prev =>
         prev.map(msg =>
           msg.id === aiMessageId
@@ -114,9 +238,9 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle, wizardValues, mes
   };
 
   const handleClose = () => {
-    //setMessages([]);
     setInputText('');
     setIsLoading(false);
+    setSuggestion(null);
     onClose();
   };
 
@@ -124,104 +248,71 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle, wizardValues, mes
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className={`rounded-xl w-full max-w-2xl h-[600px] flex flex-col overflow-hidden shadow-2xl ${
-        isDark ? 'bg-gray-800' : 'bg-white'
-      }`}>
+      <div className={`rounded-xl w-full max-w-2xl h-[600px] flex flex-col overflow-hidden shadow-2xl ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
         {/* Header */}
-        <div className={`flex items-center justify-between p-4 border-b ${
-          isDark ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50/50'
-        }`}>
+        <div className={`flex items-center justify-between p-4 border-b ${isDark ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50/50'}`}>
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-teal-500/20 rounded-lg">
               <MessageCircle className="w-5 h-5 text-teal-400" />
             </div>
             <div>
-              <h2 className={`text-lg font-semibold ${
-                isDark ? 'text-white' : 'text-gray-900'
-              }`}>
+              <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 Ask AI about {serviceTitle}
               </h2>
-              <p className={`text-sm ${
-                isDark ? 'text-gray-400' : 'text-gray-600'
-              }`}>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 Get help with configuration and best practices
               </p>
             </div>
           </div>
-          <button
-            onClick={handleClose}
-            className={`p-2 rounded-lg transition-colors ${
-              isDark
-                ? 'hover:bg-gray-700 text-gray-400'
-                : 'hover:bg-gray-100 text-gray-500'
-            }`}
-          >
+          <button onClick={handleClose} className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}>
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Messages */}
-        <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${
-          isDark ? 'bg-gray-900/30' : 'bg-gray-50/30'
-        }`}>
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex items-start space-x-3 ${
-                message.type === 'user' ? 'justify-end' : 'justify-start'
-              }`}
-            >
-              {message.type === 'ai' && (
-                <div className="p-2 bg-teal-500/20 rounded-lg flex-shrink-0">
-                  <Bot className="w-4 h-4 text-teal-400" />
-                </div>
-              )}
+        <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${isDark ? 'bg-gray-900/30' : 'bg-gray-50/30'}`}>
+          {messages.map((message) => {
+            // Check if this is a status message (success/dismiss)
+            const isStatusMessage = message.type === 'ai' && (
+              message.content.startsWith('✅ Configuration applied successfully!') ||
+              message.content.startsWith('👍 Suggestion dismissed.')
+            );
 
-              <div className={`max-w-[80%] p-3 rounded-lg ${
-                message.type === 'user'
-                  ? isDark
-                    ? 'bg-teal-600 text-white'
-                    : 'bg-teal-500 text-white'
-                  : isDark
-                  ? 'bg-gray-700 text-gray-100'
-                  : 'bg-white text-gray-900 border border-gray-200'
-              }`}>
-                <div className="prose prose-sm max-w-none">
-                  {message.content.split('\n').map((line, index) => {
-                    if (line.startsWith('•')) {
-                      return <div key={index} className="ml-2">{line}</div>;
-                    }
-                    if (line.includes('**') && line.includes('**')) {
-                      const parts = line.split('**');
-                      return (
-                        <div key={index}>
-                          {parts.map((part, i) =>
-                            i % 2 === 1 ? <strong key={i}>{part}</strong> : part
-                          )}
-                        </div>
-                      );
-                    }
-                    return line ? <div key={index}>{line}</div> : <div key={index} className="h-2"></div>;
-                  })}
+            return (
+              <div key={message.id} className={`flex items-start space-x-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {message.type === 'ai' && (
+                  <div className={`p-2 rounded-lg flex-shrink-0 ${isStatusMessage ? 'bg-green-500/20' : 'bg-teal-500/20'}`}>
+                    <Bot className={`w-4 h-4 ${isStatusMessage ? 'text-green-400' : 'text-teal-400'}`} />
+                  </div>
+                )}
+
+                <div className={`max-w-[80%] p-3 rounded-lg ${
+                  message.type === 'user' 
+                    ? (isDark ? 'bg-teal-600 text-white' : 'bg-teal-500 text-white')
+                    : isStatusMessage
+                      ? (isDark ? 'bg-green-800 text-green-100 border border-green-700' : 'bg-green-50 text-green-800 border border-green-200')
+                      : (isDark ? 'bg-gray-700 text-gray-100' : 'bg-white text-gray-900 border border-gray-200')
+                }`}>
+                  <div className="prose prose-sm max-w-none whitespace-pre-wrap">
+                    {message.content}
+                  </div>
                 </div>
+
+                {message.type === 'user' && (
+                  <div className="p-2 bg-gray-500/20 rounded-lg flex-shrink-0">
+                    <User className="w-4 h-4 text-gray-400" />
+                  </div>
+                )}
               </div>
-
-              {message.type === 'user' && (
-                <div className="p-2 bg-gray-500/20 rounded-lg flex-shrink-0">
-                  <User className="w-4 h-4 text-gray-400" />
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
 
           {isLoading && (
             <div className="flex items-start space-x-3">
               <div className="p-2 bg-teal-500/20 rounded-lg">
                 <Bot className="w-4 h-4 text-teal-400" />
               </div>
-              <div className={`p-3 rounded-lg ${
-                isDark ? 'bg-gray-700' : 'bg-white border border-gray-200'
-              }`}>
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-white border border-gray-200'}`}>
                 <div className="flex space-x-2">
                   <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce"></div>
                   <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -231,13 +322,41 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle, wizardValues, mes
             </div>
           )}
 
+          {/* Suggestion preview box */}
+          {suggestion && (
+            <div className="flex items-start space-x-3 max-w-md">
+              <div className="p-2 bg-teal-500/20 rounded-lg flex-shrink-0 relative">
+                <Bot className="w-4 h-4 text-teal-400" />
+              </div>
+
+              <div className="relative p-4 rounded-lg border bg-amber-50 text-amber-800 border-amber-200 shadow flex-1">
+                <strong>💡 Suggested config changes:</strong>
+                <pre className="mt-2 text-sm">{JSON.stringify(suggestion, null, 2)}</pre>
+                <div className="mt-3 flex space-x-2">
+                  <button
+                    onClick={applySuggestion}
+                    className="px-3 py-1 rounded-lg bg-teal-600 text-white hover:bg-teal-700 flex items-center space-x-2"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>Apply</span>
+                  </button>
+                  <button
+                    onClick={denySuggestion}
+                    className="px-3 py-1 rounded-lg bg-gray-500 text-white hover:bg-gray-600 flex items-center space-x-2"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>Dismiss</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
 
         {/* Input */}
-        <div className={`p-4 border-t ${
-          isDark ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50/50'
-        }`}>
+        <div className={`p-4 border-t ${isDark ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50/50'}`}>
           <form onSubmit={handleSubmit} className="flex space-x-3">
             <input
               type="text"
@@ -245,22 +364,12 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle, wizardValues, mes
               onChange={(e) => setInputText(e.target.value)}
               placeholder={`Ask about ${serviceTitle}...`}
               disabled={isLoading}
-              className={`flex-1 px-3 py-2 rounded-lg border transition-colors ${
-                isDark
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-teal-500'
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-teal-500'
-              } focus:outline-none focus:ring-2 focus:ring-teal-500/20`}
+              className={`flex-1 px-3 py-2 rounded-lg border transition-colors ${isDark ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-teal-500' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-teal-500'} focus:outline-none focus:ring-2 focus:ring-teal-500/20`}
             />
             <button
               type="submit"
               disabled={!inputText.trim() || isLoading}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                !inputText.trim() || isLoading
-                  ? isDark
-                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-teal-600 text-white hover:bg-teal-700'
-              }`}
+              className={`px-4 py-2 rounded-lg transition-colors ${!inputText.trim() || isLoading ? (isDark ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-200 text-gray-400 cursor-not-allowed') : 'bg-teal-600 text-white hover:bg-teal-700'}`}
             >
               <Send className="w-4 h-4" />
             </button>
@@ -270,82 +379,5 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle, wizardValues, mes
     </div>
   );
 };
-
-// AI response generator (simplified - in a real app this would call an actual AI service)
-/*
-const generateAIResponse = (question, service, serviceTitle) => {
-  const serviceInfo = {
-    vpc: {
-      description: "AWS VPC (Virtual Private Cloud) provides isolated network resources in the AWS cloud.",
-      bestPractices: [
-        "Use private subnets for application and database tiers",
-        "Implement proper security group rules",
-        "Enable VPC Flow Logs for monitoring",
-        "Use NAT Gateways for outbound internet access from private subnets"
-      ],
-      commonIssues: [
-        "Insufficient IP address space planning",
-        "Overly permissive security groups",
-        "Missing route table configurations"
-      ]
-    },
-    eks: {
-      description: "Amazon EKS is a managed Kubernetes service that makes it easy to run Kubernetes on AWS.",
-      bestPractices: [
-        "Use managed node groups for better maintenance",
-        "Implement proper RBAC and pod security policies",
-        "Enable cluster logging and monitoring",
-        "Use Spot instances for cost optimization"
-      ],
-      commonIssues: [
-        "Insufficient resource limits on pods",
-        "Poor cluster autoscaling configuration",
-        "Missing network policies"
-      ]
-    },
-    rds: {
-      description: "Amazon RDS provides managed relational database services with automated backups, patching, and scaling.",
-      bestPractices: [
-        "Enable automated backups with appropriate retention",
-        "Use Multi-AZ deployments for high availability",
-        "Implement encryption at rest and in transit",
-        "Monitor performance with CloudWatch and Performance Insights"
-      ],
-      commonIssues: [
-        "Inadequate backup strategy",
-        "Poor connection pooling",
-        "Insufficient monitoring and alerting"
-      ]
-    }
-  };
-
-  const info = serviceInfo[service] || {
-    description: `${serviceTitle} is a cloud service that provides various capabilities for your infrastructure.`,
-    bestPractices: ["Follow security best practices", "Monitor resource usage", "Implement proper access controls"],
-    commonIssues: ["Configuration complexity", "Cost optimization", "Integration challenges"]
-  };
-
-  const lowerQuestion = question.toLowerCase();
-
-  if (lowerQuestion.includes('cost') || lowerQuestion.includes('price') || lowerQuestion.includes('billing')) {
-    return `For **${serviceTitle}** cost optimization:\n\n• Use appropriate instance sizes based on actual usage\n• Implement auto-scaling to handle variable workloads\n• Consider Reserved Instances for predictable workloads\n• Monitor usage with AWS Cost Explorer\n• Set up billing alerts and budgets\n\nWould you like specific recommendations for cost optimization?`;
-  }
-
-  if (lowerQuestion.includes('security') || lowerQuestion.includes('secure')) {
-    return `**Security best practices for ${serviceTitle}:**\n\n• Enable encryption at rest and in transit\n• Implement least-privilege access principles\n• Use VPC security groups and NACLs appropriately\n• Enable logging and monitoring\n• Regular security audits and updates\n\nWhat specific security aspect would you like to know more about?`;
-  }
-
-  if (lowerQuestion.includes('best practice') || lowerQuestion.includes('recommend')) {
-    return `**Best practices for ${serviceTitle}:**\n\n${info.bestPractices.map(practice => `• ${practice}`).join('\n')}\n\nThese practices will help ensure optimal performance, security, and cost-effectiveness. Need more details on any of these?`;
-  }
-
-  if (lowerQuestion.includes('problem') || lowerQuestion.includes('issue') || lowerQuestion.includes('troubleshoot')) {
-    return `**Common issues with ${serviceTitle}:**\n\n${info.commonIssues.map(issue => `• ${issue}`).join('\n')}\n\nI can help you troubleshoot specific issues. What problem are you experiencing?`;
-  }
-
-  // Default response
-  return `**About ${serviceTitle}:**\n\n${info.description}\n\n**Key considerations:**\n${info.bestPractices.slice(0, 3).map(practice => `• ${practice}`).join('\n')}\n\nWhat specific aspect would you like to explore? I can help with configuration, best practices, troubleshooting, or cost optimization.`;
-};
-*/
 
 export default AIChatModal;
