@@ -129,7 +129,7 @@ const AIChatModal = ({
       const successMessage = {
         id: Date.now(),
         type: 'ai',
-        content: `✅ Configuration applied successfully!\n\nUpdated fields:\n${appliedFields.map(field => `• ${field}`).join('\n')}`
+        content: `✅ Configuration applied successfully!`
       };
       setMessages(prev => [...prev, successMessage]);
     }, 0);
