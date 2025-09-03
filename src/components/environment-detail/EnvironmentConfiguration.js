@@ -11,7 +11,7 @@ const EnvironmentConfiguration = ({ environment }) => {
   const generateConfiguration = () => {
     return {
       name: environment.name,
-      type: environment.type,
+      provider: environment.provider,
       region: environment.region,
       status: environment.status,
       services: environment.services || {},

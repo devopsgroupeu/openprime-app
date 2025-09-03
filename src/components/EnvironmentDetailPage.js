@@ -59,7 +59,7 @@ const EnvironmentDetailPage = ({
     );
   }
 
-  const providerConfig = getProviderConfig(environment.type);
+  const providerConfig = getProviderConfig(environment.provider);
 
   const handleEdit = () => {
     setEditEnv({ ...environment });
@@ -108,7 +108,7 @@ const EnvironmentDetailPage = ({
   };
 
   const handleSaveHelmValues = () => {
-    const kubernetesService = editEnv.type === 'azure' ? 'aks' : 'eks';
+    const kubernetesService = editEnv.provider === 'azure' ? 'aks' : 'eks';
     setEditEnv({
       ...editEnv,
       services: {

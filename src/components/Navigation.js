@@ -1,10 +1,27 @@
 // src/components/Navigation.js
-import React from 'react';
-import { Box, Sun, Moon } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Box, Sun, Moon, User, LogOut, Settings } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const Navigation = ({ setCurrentPage, currentPage }) => {
   const { isDark, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
   return (
     <nav
       className={`relative z-10 px-8 py-6 backdrop-blur-md border-b transition-colors ${
@@ -73,6 +90,68 @@ const Navigation = ({ setCurrentPage, currentPage }) => {
           >
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
+
+          <div className="relative" ref={userMenuRef}>
+            <button
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              className={`flex items-center space-x-2 p-2 rounded-lg transition-colors ${
+                isDark
+                  ? 'bg-gray-800 text-white hover:bg-gray-700'
+                  : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+              }`}
+            >
+              <User className="w-5 h-5" />
+              <span className="text-sm font-medium">{user?.fullName || user?.username || 'User'}</span>
+            </button>
+
+            {isUserMenuOpen && (
+              <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg z-50 ${
+                isDark
+                  ? 'bg-gray-800 border border-gray-700'
+                  : 'bg-white border border-gray-200'
+              }`}>
+                <div className="py-1">
+                  <div className={`px-4 py-2 text-sm border-b ${
+                    isDark
+                      ? 'text-gray-300 border-gray-700'
+                      : 'text-gray-700 border-gray-200'
+                  }`}>
+                    <div className="font-medium">{user?.fullName || user?.username}</div>
+                    {user?.email && (
+                      <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {user.email}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setCurrentPage('settings');
+                      setIsUserMenuOpen(false);
+                    }}
+                    className={`flex items-center w-full px-4 py-2 text-sm transition-colors ${
+                      isDark
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Settings
+                  </button>
+                  <button
+                    onClick={logout}
+                    className={`flex items-center w-full px-4 py-2 text-sm transition-colors ${
+                      isDark
+                        ? 'text-red-400 hover:bg-gray-700'
+                        : 'text-red-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </nav>

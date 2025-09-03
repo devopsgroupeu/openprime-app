@@ -8,6 +8,7 @@ import HelmValuesModal from './modals/HelmValuesModal';
 import { createEmptyEnvironment } from '../config/environmentsConfig';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
+import authService from '../services/authService';
 
 const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateEnvironment, onDeleteEnvironment, onUpdateEnvironment, onViewEnvironment, selectedEnvironment, onClearSelectedEnvironment }) => {
   const { isDark } = useTheme();
@@ -36,49 +37,7 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
     }
   }, [selectedEnvironment, showNewEnvModal, shouldAutoOpenEdit]);
 
-  const convertToYaml = (obj, indent = 0) => {
-    const spaces = ' '.repeat(indent);
-    const lines = [];
 
-    for (const [key, value] of Object.entries(obj)) {
-      if (value === null || value === undefined) continue;
-
-      if (typeof value === 'object' && !Array.isArray(value)) {
-        lines.push(`${spaces}${key}:`);
-        lines.push(convertToYaml(value, indent + 2));
-      } else if (Array.isArray(value)) {
-        if (value.length === 0) continue;
-        lines.push(`${spaces}${key}:`);
-        for (const item of value) {
-          if (typeof item === 'object') {
-            lines.push(`${spaces}  -`);
-            lines.push(convertToYaml(item, indent + 4));
-          } else {
-            lines.push(`${spaces}  - ${item}`);
-          }
-        }
-      } else {
-        const formattedValue = typeof value === 'string' ? `"${value}"` : value;
-        lines.push(`${spaces}${key}: ${formattedValue}`);
-      }
-    }
-
-    return lines.join('\n');
-  };
-
-  const filterEnabledServices = (services) => {
-    const filtered = {};
-
-    for (const [serviceName, serviceConfig] of Object.entries(services)) {
-      if (serviceConfig.enabled) {
-        // Create a copy without the 'enabled' field
-        const { enabled, ...configWithoutEnabled } = serviceConfig;
-        filtered[serviceName] = configWithoutEnabled;
-      }
-    }
-
-    return filtered;
-  };
 
   const handleCreateEnvironment = async () => {
     if (!newEnv.name) {
@@ -92,64 +51,48 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
     setIsLoading(true);
 
     try {
-      const enabledServices = filterEnabledServices(newEnv.services);
+      // Send all services (enabled and disabled) to maintain complete configuration
+      const environmentConfig = {
+        name: newEnv.name,
+        provider: newEnv.provider,
+        region: newEnv.region,
+        services: newEnv.services || {}
+      };
 
-      if (Object.keys(enabledServices).length > 0) {
-        const environmentConfig = {
-          name: newEnv.name,
-          type: newEnv.type,
-          region: newEnv.region,
-          services: enabledServices
-        };
-
-        const yamlOutput = convertToYaml(environmentConfig);
-        console.log('Environment Configuration (YAML):\n' + yamlOutput);
+      // Only proceed if we have some configuration
+      if (Object.keys(environmentConfig.services).length > 0) {
 
         // Send POST request to backend
         try {
-          const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080/api';
-          const response = await fetch(`${backendUrl}/environments`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(environmentConfig)
-          });
-
-          if (!response.ok) {
-            throw new Error(`Backend responded with status: ${response.status}`);
-          }
+          const createdEnvironment = await authService.post('/environments', environmentConfig);
 
           // Successfully sent to backend
           success('Configuration sent to backend successfully', {
             title: 'Backend Sync',
             duration: 3000
           });
+
+          // Use the actual created environment from backend
+          if (isEditMode) {
+            onUpdateEnvironment({ ...newEnv, ...createdEnvironment });
+          } else {
+            onCreateEnvironment(createdEnvironment);
+          }
         } catch (backendError) {
           // Backend error logged for debugging
           error(`Failed to send configuration to backend: ${backendError.message}`, {
             title: 'Backend Error',
             duration: 7000
           });
+          return; // Don't proceed with UI updates if backend failed
         }
-      } else {
-        // No services enabled in this environment
       }
 
-      // Update the environment list
-      if (isEditMode) {
-        onUpdateEnvironment(newEnv);
-        success(`Environment "${newEnv.name}" updated successfully`, {
-          title: 'Environment Updated',
-          duration: 4000
-        });
-      } else {
-        onCreateEnvironment(newEnv);
-        success(`Environment "${newEnv.name}" created successfully`, {
-          title: 'Environment Created',
-          duration: 4000
-        });
-      }
+      // Environment creation/update is handled in the backend success block above
+      success(`Environment "${newEnv.name}" ${isEditMode ? 'updated' : 'created'} successfully`, {
+        title: `Environment ${isEditMode ? 'Updated' : 'Created'}`,
+        duration: 4000
+      });
 
       // Reset form state
       setShowNewEnvModal(false);
@@ -174,7 +117,7 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
   };
 
   const handleSaveHelmValues = () => {
-    const kubernetesService = newEnv.type === 'azure' ? 'aks' : 'eks';
+    const kubernetesService = newEnv.provider === 'azure' ? 'aks' : 'eks';
     setNewEnv({
       ...newEnv,
       services: {

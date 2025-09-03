@@ -146,18 +146,18 @@ export const validateEnvironmentConfig = (environment) => {
     errors.push(new ConfigValidationError('Environment name is required', 'name'));
   }
 
-  if (!environment.type) {
-    errors.push(new ConfigValidationError('Environment type is required', 'type'));
-  } else if (!PROVIDERS_CONFIG[environment.type]) {
-    errors.push(new ConfigValidationError(`Invalid provider type: ${environment.type}`, 'type', environment.type));
+  if (!environment.provider) {
+    errors.push(new ConfigValidationError('Environment provider is required', 'provider'));
+  } else if (!PROVIDERS_CONFIG[environment.provider]) {
+    errors.push(new ConfigValidationError(`Invalid provider type: ${environment.provider}`, 'provider', environment.provider));
   }
 
   if (!environment.region) {
     errors.push(new ConfigValidationError('Environment region is required', 'region'));
-  } else if (environment.type && PROVIDERS_CONFIG[environment.type]) {
-    const validRegions = PROVIDERS_CONFIG[environment.type].regions?.map(r => r.value) || [];
+  } else if (environment.provider && PROVIDERS_CONFIG[environment.provider]) {
+    const validRegions = PROVIDERS_CONFIG[environment.provider].regions?.map(r => r.value) || [];
     if (validRegions.length > 0 && !validRegions.includes(environment.region)) {
-      errors.push(new ConfigValidationError(`Invalid region for ${environment.type}: ${environment.region}`, 'region', environment.region));
+      errors.push(new ConfigValidationError(`Invalid region for ${environment.provider}: ${environment.region}`, 'region', environment.region));
     }
   }
 
@@ -200,7 +200,7 @@ export const getValidationSummary = (errors) => {
   }
 
   const criticalErrors = errors.filter(error =>
-    error.field === 'name' || error.field === 'type' || error.field === 'region'
+    error.field === 'name' || error.field === 'provider' || error.field === 'region'
   );
 
   const warnings = errors.filter(error =>

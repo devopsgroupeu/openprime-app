@@ -5,6 +5,7 @@ export const PROVIDERS_CONFIG = {
   aws: {
     name: 'Amazon Web Services',
     type: 'aws',
+    enabled: true,
     defaultRegion: 'us-east-1',
     regions: [
       { value: 'us-east-1', label: 'US East (N. Virginia)' },
@@ -24,6 +25,7 @@ export const PROVIDERS_CONFIG = {
   azure: {
     name: 'Microsoft Azure',
     type: 'azure',
+    enabled: false,
     defaultRegion: 'East US',
     regions: [
       { value: 'East US', label: 'East US' },
@@ -49,6 +51,7 @@ export const PROVIDERS_CONFIG = {
   gcp: {
     name: 'Google Cloud Platform',
     type: 'gcp',
+    enabled: false,
     defaultRegion: 'us-central1',
     regions: [
       { value: 'us-central1', label: 'US Central (Iowa)' },
@@ -70,6 +73,7 @@ export const PROVIDERS_CONFIG = {
   onpremise: {
     name: 'On-Premise',
     type: 'onpremise',
+    enabled: true,
     defaultRegion: 'datacenter-1',
     regions: [
       { value: 'datacenter-1', label: 'Datacenter 1' },

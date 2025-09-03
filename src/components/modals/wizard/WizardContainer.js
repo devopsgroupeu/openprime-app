@@ -83,7 +83,7 @@ const WizardContainer = ({
 
       switch (currentStep) {
         case 1: // Basic Configuration
-          return Boolean(newEnv.name?.trim() && newEnv.type && newEnv.region);
+          return Boolean(newEnv.name?.trim() && newEnv.provider && newEnv.region);
 
         case 2: // Services Configuration
           // Allow progression even without services for now
@@ -99,7 +99,7 @@ const WizardContainer = ({
       console.warn('Validation error:', err);
       setValidationErrors([]);
       // Allow progression if validation fails
-      return currentStep === 1 ? Boolean(newEnv.name?.trim() && newEnv.type && newEnv.region) : true;
+      return currentStep === 1 ? Boolean(newEnv.name?.trim() && newEnv.provider && newEnv.region) : true;
     }
   }, [newEnv, currentStep]);
 
@@ -176,7 +176,7 @@ const WizardContainer = ({
             newEnv={newEnv}
             setNewEnv={setNewEnv}
             validationErrors={validationErrors.filter(e =>
-              ['name', 'type', 'region'].includes(e.field)
+              ['name', 'provider', 'region'].includes(e.field)
             )}
           />
         );
@@ -190,7 +190,7 @@ const WizardContainer = ({
             setExpandedServices={setExpandedServices}
             onAskAI={handleAskAI}
             validationErrors={validationErrors.filter(e =>
-              !['name', 'type', 'region'].includes(e.field)
+              !['name', 'provider', 'region'].includes(e.field)
             )}
           />
         );

@@ -52,7 +52,7 @@ const EnvironmentHeader = ({
             </button>
 
             <div className="flex items-center space-x-3">
-              {getProviderIcon(environment.type)}
+              {getProviderIcon(environment.provider)}
               <div>
                 <h1 className={`text-3xl font-bold ${
                   isDark ? 'text-white' : 'text-gray-900'
@@ -63,7 +63,7 @@ const EnvironmentHeader = ({
                   <span className={`text-sm ${
                     isDark ? 'text-gray-400' : 'text-gray-600'
                   }`}>
-                    {providerConfig?.name || environment.type}
+                    {providerConfig?.name || environment.provider}
                   </span>
                   <div className="flex items-center space-x-1">
                     <MapPin className="w-4 h-4 text-gray-400" />

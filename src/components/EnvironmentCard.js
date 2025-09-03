@@ -100,17 +100,17 @@ const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
               <span className={`flex items-center transition-colors ${
                 isDark ? 'text-gray-400' : 'text-gray-600'
               }`}>
-                {environment.type === 'aws' ? <Cloud className="w-4 h-4 mr-1" /> :
-                 environment.type === 'azure' ? <Cloud className="w-4 h-4 mr-1" /> :
+                {environment.provider === 'aws' ? <Cloud className="w-4 h-4 mr-1" /> :
+                 environment.provider === 'azure' ? <Cloud className="w-4 h-4 mr-1" /> :
                  <Server className="w-4 h-4 mr-1" />}
-                {environment.type === 'aws' ? 'AWS Cloud' :
-                 environment.type === 'azure' ? 'Azure Cloud' :
+                {environment.provider === 'aws' ? 'AWS Cloud' :
+                 environment.provider === 'azure' ? 'Azure Cloud' :
                  'On-Premise'}
               </span>
               <span className={`transition-colors ${
                 isDark ? 'text-gray-400' : 'text-gray-600'
               }`}>
-                {environment.type === 'aws' || environment.type === 'azure' ? environment.region : environment.location}
+                {environment.provider === 'aws' || environment.provider === 'azure' ? environment.region : environment.location}
               </span>
             </div>
           </div>
@@ -121,13 +121,13 @@ const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
           </span>
         </div>
 
-        {(environment.type === 'aws' || environment.type === 'azure') && enabledServices.length > 0 && (
+        {(environment.provider === 'aws' || environment.provider === 'azure') && enabledServices.length > 0 && (
           <div className="space-y-3 mb-4">
             <div className={`text-sm transition-colors ${
               isDark ? 'text-gray-300' : 'text-gray-700'
             }`}>
               <div className="font-semibold mb-2">
-                {environment.type === 'azure' ? 'Azure' : 'AWS'} Services ({enabledServices.length}):
+                {environment.provider === 'azure' ? 'Azure' : 'AWS'} Services ({enabledServices.length}):
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {enabledServices.slice(0, 6).map(([service]) => (
@@ -192,7 +192,7 @@ const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
                 isDark ? 'text-gray-300' : 'text-gray-700'
               }`}>
                 <div className="font-semibold mb-2">
-                  {environment.type === 'azure' ? 'Container Registry Repositories:' : 'ECR Repositories:'}
+                  {environment.provider === 'azure' ? 'Container Registry Repositories:' : 'ECR Repositories:'}
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {(environment.services.ecr?.repositories || environment.services.containerRegistry?.repositories || []).map((repo, idx) => (

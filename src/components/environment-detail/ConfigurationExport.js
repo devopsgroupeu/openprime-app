@@ -12,7 +12,7 @@ const ConfigurationExport = ({ environment }) => {
     const config = {
       environment: {
         name: environment.name,
-        type: environment.type,
+        provider: environment.provider,
         region: environment.region,
         status: environment.status
       },
