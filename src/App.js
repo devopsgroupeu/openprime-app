@@ -77,8 +77,7 @@ export default function App() {
             onBack={handleBackToEnvironments}
             onEdit={(env) => {
               setSelectedEnvironment(env);
-              setCurrentPage('environments'); // Navigate to environments page to show edit modal
-              
+              setCurrentPage('environments'); // Navigate to environments page to show edit modal              
             }}
             onDelete={handleDeleteEnvironment}
             setCurrentPage={setCurrentPage}
