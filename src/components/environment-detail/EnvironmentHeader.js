@@ -1,15 +1,16 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit2, Trash2, Cloud, Server, MapPin } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const EnvironmentHeader = ({
   environment,
   providerConfig,
-  onBack,
   onEdit,
   onDelete
 }) => {
   const { isDark } = useTheme();
+  const navigate = useNavigate();
 
   const getProviderIcon = (type) => {
     const iconColors = {
@@ -43,7 +44,7 @@ const EnvironmentHeader = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
-              onClick={onBack}
+              onClick={() => navigate('/environments')}
               className={`p-2 rounded-lg transition-colors ${
                 isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
               }`}

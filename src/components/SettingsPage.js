@@ -5,7 +5,7 @@ import Navigation from './Navigation';
 import { useTheme } from '../contexts/ThemeContext';
 import authService from '../services/authService';
 
-const SettingsPage = ({ setCurrentPage, currentPage }) => {
+const SettingsPage = () => {
   const { isDark } = useTheme();
   const [userPreferences, setUserPreferences] = useState({
     theme: 'light',
@@ -84,7 +84,7 @@ const SettingsPage = ({ setCurrentPage, currentPage }) => {
           ? 'bg-gradient-to-br from-slate-900 via-gray-900 to-slate-900'
           : 'bg-gradient-to-br from-gray-50 via-teal-50 to-cyan-50'
       }`}>
-        <Navigation setCurrentPage={setCurrentPage} currentPage={currentPage} />
+        <Navigation />
         <div className="max-w-7xl mx-auto px-8 py-8">
           <div className="flex items-center justify-center min-h-[50vh]">
             <div className="text-center">
@@ -103,7 +103,7 @@ const SettingsPage = ({ setCurrentPage, currentPage }) => {
         ? 'bg-gradient-to-br from-slate-900 via-gray-900 to-slate-900'
         : 'bg-gradient-to-br from-gray-50 via-teal-50 to-cyan-50'
     }`}>
-      <Navigation setCurrentPage={setCurrentPage} currentPage={currentPage} />
+      <Navigation />
       <div className="max-w-7xl mx-auto px-8 py-8">
         <h1 className={`text-3xl font-bold mb-8 transition-colors ${
           isDark ? 'text-white' : 'text-gray-900'

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Activity, TrendingUp, Settings, Download, Eye, BarChart3, Shield,
   Database, Container
@@ -6,6 +7,7 @@ import {
 import Navigation from './Navigation';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
+import authService from '../services/authService';
 import ConfirmDeleteModal from './modals/ConfirmDeleteModal';
 import EnvironmentWizard from './modals/EnvironmentWizard';
 import HelmValuesModal from './modals/HelmValuesModal';
@@ -17,13 +19,13 @@ import EnvironmentConfiguration from './environment-detail/EnvironmentConfigurat
 import { getProviderConfig } from '../config/providersConfig';
 
 const EnvironmentDetailPage = ({
-  environment,
-  onBack,
   onEdit,
-  onDelete,
-  setCurrentPage,
-  currentPage
+  onDelete
 }) => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [environment, setEnvironment] = useState(null);
+  const [loading, setLoading] = useState(true);
   const { isDark } = useTheme();
   const { success, error } = useToast();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -37,6 +39,25 @@ const EnvironmentDetailPage = ({
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    const fetchEnvironment = async () => {
+      if (id) {
+        try {
+          setLoading(true);
+          const envData = await authService.get(`/environments/${id}`);
+          setEnvironment(envData);
+        } catch (error) {
+          console.error('Failed to fetch environment:', error);
+          setEnvironment(null);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchEnvironment();
+  }, [id]);
+
+  useEffect(() => {
     const handleRefresh = async () => {
       setRefreshing(true);
       setTimeout(() => setRefreshing(false), 1000);
@@ -46,12 +67,26 @@ const EnvironmentDetailPage = ({
     return () => clearInterval(interval);
   }, []);
 
+  if (loading) {
+    return (
+      <div className={`min-h-screen ${
+        isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'
+      }`}>
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-8 py-16 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
+          <p>Loading environment...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!environment) {
     return (
       <div className={`min-h-screen ${
         isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'
       }`}>
-        <Navigation setCurrentPage={setCurrentPage} currentPage={currentPage} />
+        <Navigation />
         <div className="max-w-7xl mx-auto px-8 py-16 text-center">
           <p>Environment not found</p>
         </div>
@@ -73,7 +108,7 @@ const EnvironmentDetailPage = ({
   const confirmDelete = () => {
     onDelete(environment.id);
     setShowDeleteModal(false);
-    onBack();
+    navigate('/environments');
   };
 
   const handleUpdateEnvironment = async () => {
@@ -339,11 +374,10 @@ const EnvironmentDetailPage = ({
     <div className={`min-h-screen ${
       isDark ? 'bg-gray-900' : 'bg-gray-50'
     }`}>
-      <Navigation setCurrentPage={setCurrentPage} currentPage={currentPage} />
+      <Navigation />
       <EnvironmentHeader
         environment={environment}
         providerConfig={providerConfig}
-        onBack={onBack}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />

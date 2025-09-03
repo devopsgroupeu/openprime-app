@@ -1,14 +1,16 @@
 // src/components/Navigation.js
 import React, { useState, useRef, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Box, Sun, Moon, User, LogOut, Settings } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 
-const Navigation = ({ setCurrentPage, currentPage }) => {
+const Navigation = () => {
   const { isDark, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
+  const location = useLocation();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -41,42 +43,30 @@ const Navigation = ({ setCurrentPage, currentPage }) => {
         </div>
         <div className="flex items-center space-x-8">
           <div className="flex space-x-8" role="menubar">
-            <button
-              onClick={() => setCurrentPage('home')}
+            <Link
+              to="/environments"
               className={`font-medium transition-colors ${
-                currentPage === 'home'
+                location.pathname.startsWith('/environments')
                   ? (isDark ? 'text-teal-400' : 'text-teal-600')
                   : (isDark ? 'text-gray-300 hover:text-teal-400' : 'text-gray-600 hover:text-teal-600')
               }`}
-              aria-current={currentPage === 'home' ? 'page' : undefined}
-              role="menuitem"
-            >
-              Home
-            </button>
-            <button
-              onClick={() => setCurrentPage('environments')}
-              className={`font-medium transition-colors ${
-                currentPage === 'environments'
-                  ? (isDark ? 'text-teal-400' : 'text-teal-600')
-                  : (isDark ? 'text-gray-300 hover:text-teal-400' : 'text-gray-600 hover:text-teal-600')
-              }`}
-              aria-current={currentPage === 'environments' ? 'page' : undefined}
+              aria-current={location.pathname.startsWith('/environments') ? 'page' : undefined}
               role="menuitem"
             >
               Environments
-            </button>
-            <button
-              onClick={() => setCurrentPage('settings')}
+            </Link>
+            <Link
+              to="/settings"
               className={`font-medium transition-colors ${
-                currentPage === 'settings'
+                location.pathname === '/settings'
                   ? (isDark ? 'text-teal-400' : 'text-teal-600')
                   : (isDark ? 'text-gray-300 hover:text-teal-400' : 'text-gray-600 hover:text-teal-600')
               }`}
-              aria-current={currentPage === 'settings' ? 'page' : undefined}
+              aria-current={location.pathname === '/settings' ? 'page' : undefined}
               role="menuitem"
             >
               Settings
-            </button>
+            </Link>
           </div>
           <button
             onClick={toggleTheme}
@@ -123,11 +113,9 @@ const Navigation = ({ setCurrentPage, currentPage }) => {
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={() => {
-                      setCurrentPage('settings');
-                      setIsUserMenuOpen(false);
-                    }}
+                  <Link
+                    to="/settings"
+                    onClick={() => setIsUserMenuOpen(false)}
                     className={`flex items-center w-full px-4 py-2 text-sm transition-colors ${
                       isDark
                         ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
@@ -136,7 +124,7 @@ const Navigation = ({ setCurrentPage, currentPage }) => {
                   >
                     <Settings className="w-4 h-4 mr-2" />
                     Settings
-                  </button>
+                  </Link>
                   <button
                     onClick={logout}
                     className={`flex items-center w-full px-4 py-2 text-sm transition-colors ${

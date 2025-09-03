@@ -1,6 +1,6 @@
 // src/App.js
 import React, { useState, useEffect } from 'react';
-import HomePage from './components/HomePage';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import EnvironmentsPage from './components/EnvironmentsPage';
 import EnvironmentDetailPage from './components/EnvironmentDetailPage';
 import SettingsPage from './components/SettingsPage';
@@ -14,8 +14,6 @@ import { AuthProvider } from './contexts/AuthContext';
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
-  const [currentPage, setCurrentPage] = useState('home');
-  const [selectedEnvironment, setSelectedEnvironment] = useState(null);
   const [environments, setEnvironments] = useState([]);
   const [environmentsLoading, setEnvironmentsLoading] = useState(true);
 
@@ -64,10 +62,6 @@ function AppContent() {
       setEnvironments(environments.map(env =>
         env.id === updated.id ? updated : env
       ));
-      // Update selected environment if it's the one being updated
-      if (selectedEnvironment?.id === updated.id) {
-        setSelectedEnvironment(updated);
-      }
       return updated;
     } catch (error) {
       console.error('Failed to update environment:', error);
@@ -75,19 +69,6 @@ function AppContent() {
     }
   };
 
-  const handleViewEnvironment = (environment) => {
-    setSelectedEnvironment(environment);
-    setCurrentPage('environment-detail');
-  };
-
-  const handleBackToEnvironments = () => {
-    setSelectedEnvironment(null);
-    setCurrentPage('environments');
-  };
-
-  const handleClearSelectedEnvironment = () => {
-    setSelectedEnvironment(null);
-  };
 
   if (isLoading || environmentsLoading) {
     return (
@@ -100,50 +81,40 @@ function AppContent() {
     );
   }
 
-  const renderPage = () => {
-    switch(currentPage) {
-      case 'home':
-        return <HomePage setCurrentPage={setCurrentPage} currentPage={currentPage} />;
-      case 'environments':
-        return (
-          <EnvironmentsPage
-            setCurrentPage={setCurrentPage}
-            currentPage={currentPage}
-            environments={environments}
-            onCreateEnvironment={handleCreateEnvironment}
-            onDeleteEnvironment={handleDeleteEnvironment}
-            onUpdateEnvironment={handleUpdateEnvironment}
-            onViewEnvironment={handleViewEnvironment}
-            selectedEnvironment={selectedEnvironment}
-            onClearSelectedEnvironment={handleClearSelectedEnvironment}
-          />
-        );
-      case 'environment-detail':
-        return (
-          <EnvironmentDetailPage
-            environment={selectedEnvironment}
-            onBack={handleBackToEnvironments}
-            onEdit={(env) => {
-              setSelectedEnvironment(env);
-              setCurrentPage('environments'); // Navigate to environments page to show edit modal              
-            }}
-            onDelete={handleDeleteEnvironment}
-            setCurrentPage={setCurrentPage}
-            currentPage={currentPage}
-          />
-        );
-      case 'settings':
-        return <SettingsPage setCurrentPage={setCurrentPage} currentPage={currentPage} />;
-      default:
-        return <HomePage setCurrentPage={setCurrentPage} currentPage={currentPage} />;
-    }
-  };
 
   return (
     <ThemeProvider>
       <ToastProvider>
-        {renderPage()}
-        <AuraChatButton />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Navigate to="/environments" replace />} />
+            <Route
+              path="/environments"
+              element={
+                <EnvironmentsPage
+                  environments={environments}
+                  onCreateEnvironment={handleCreateEnvironment}
+                  onDeleteEnvironment={handleDeleteEnvironment}
+                  onUpdateEnvironment={handleUpdateEnvironment}
+                />
+              }
+            />
+            <Route
+              path="/environments/:id"
+              element={
+                <EnvironmentDetailPage
+                  onEdit={handleUpdateEnvironment}
+                  onDelete={handleDeleteEnvironment}
+                />
+              }
+            />
+            <Route
+              path="/settings"
+              element={<SettingsPage />}
+            />
+          </Routes>
+          <AuraChatButton />
+        </BrowserRouter>
       </ToastProvider>
     </ThemeProvider>
   );

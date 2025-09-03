@@ -1,5 +1,6 @@
 // src/components/EnvironmentsPage.js
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import Navigation from './Navigation';
 import EnvironmentCard from './EnvironmentCard';
@@ -10,9 +11,10 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
 import authService from '../services/authService';
 
-const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateEnvironment, onDeleteEnvironment, onUpdateEnvironment, onViewEnvironment, selectedEnvironment, onClearSelectedEnvironment }) => {
+const EnvironmentsPage = ({ environments, onCreateEnvironment, onDeleteEnvironment, onUpdateEnvironment }) => {
   const { isDark } = useTheme();
   const { success, error } = useToast();
+  const navigate = useNavigate();
   const [showNewEnvModal, setShowNewEnvModal] = useState(false);
   const [showValuesEditor, setShowValuesEditor] = useState(null);
   const [editingHelmValues, setEditingHelmValues] = useState('');
@@ -20,22 +22,8 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
   const [expandedServices, setExpandedServices] = useState({});
   const [isEditMode, setIsEditMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [shouldAutoOpenEdit, setShouldAutoOpenEdit] = useState(false);
 
-  // Reset auto-open flag when component mounts or when navigating
-  React.useEffect(() => {
-    setShouldAutoOpenEdit(false);
-  }, []);
 
-  // Check if we should automatically open the edit modal for a selected environment
-  React.useEffect(() => {
-    if (selectedEnvironment && !showNewEnvModal && shouldAutoOpenEdit) {
-      setNewEnv({ ...selectedEnvironment });
-      setIsEditMode(true);
-      setShowNewEnvModal(true);
-      setShouldAutoOpenEdit(false); // Reset the flag
-    }
-  }, [selectedEnvironment, showNewEnvModal, shouldAutoOpenEdit]);
 
 
 
@@ -110,7 +98,6 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
   };
 
   const handleEditEnvironment = (environment) => {
-    setShouldAutoOpenEdit(true);
     setNewEnv({ ...environment });
     setIsEditMode(true);
     setShowNewEnvModal(true);
@@ -144,7 +131,7 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
         ? 'bg-gradient-to-br from-slate-900 via-gray-900 to-slate-900'
         : 'bg-gradient-to-br from-gray-50 via-teal-50 to-cyan-50'
     }`}>
-      <Navigation setCurrentPage={setCurrentPage} currentPage={currentPage} />
+      <Navigation />
       <div className="max-w-7xl mx-auto px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className={`text-3xl font-bold transition-colors ${
@@ -170,7 +157,7 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
               environment={env}
               onEdit={handleEditEnvironment}
               onDelete={onDeleteEnvironment}
-              onClick={onViewEnvironment}
+              onClick={(env) => navigate(`/environments/${env.id}`)}
             />
           ))}
         </div>
@@ -186,9 +173,7 @@ const EnvironmentsPage = ({ setCurrentPage, currentPage, environments, onCreateE
             setShowNewEnvModal(false);
             setExpandedServices({});
             setIsEditMode(false);
-            setShouldAutoOpenEdit(false); // Clear the auto-open flag
             setNewEnv(createEmptyEnvironment('aws')); // Reset to empty environment
-            onClearSelectedEnvironment?.(); // Clear selected environment when closing modal
           }}
           onCreate={handleCreateEnvironment}
           isEditMode={isEditMode}
