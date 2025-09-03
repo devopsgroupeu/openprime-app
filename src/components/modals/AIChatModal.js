@@ -1,77 +1,295 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, MessageCircle, Bot, User } from 'lucide-react';
+import { X, Send, MessageCircle, Bot, User, Check } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { SERVICES_CONFIG } from '../../config/servicesConfig';
 
-const AIChatModal = ({ isOpen, onClose, service, serviceTitle }) => {
+/**
+ * AI Chat Modal Component
+ * Provides an interactive chat interface for getting AI assistance with service configurations
+ */
+const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, messages, setMessages, setNewEnv }) => {
+
   const { isDark } = useTheme();
-  const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [suggestion, setSuggestion] = useState(null);
   const messagesEndRef = useRef(null);
 
+  // Auto-scroll to bottom of chat
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Initialize welcome message when modal opens
   useEffect(() => {
-    if (isOpen && service) {
-      // Initialize conversation with a welcome message
+    if (isOpen && service && messages.length === 0) {
       const welcomeMessage = {
         id: Date.now(),
         type: 'ai',
-        content: `Hi! I'm here to help you with **${serviceTitle}**. I can provide information about:\n\n• Configuration best practices\n• Common use cases and patterns\n• Security recommendations\n• Cost optimization tips\n• Integration with other services\n\nWhat would you like to know?`
+        content: `Hi! I'm here to help you with <strong>${serviceTitle}</strong>. I can provide information about:\n\n• Configuration best practices\n• Common use cases and patterns\n• Security recommendations\n• Cost optimization tips\n• Integration with other services\n\nWhat would you like to know?`,
+        isHtml: true 
       };
       setMessages([welcomeMessage]);
     }
-  }, [isOpen, service, serviceTitle]);
+  }, [isOpen, service, serviceTitle, messages.length, setMessages]);
 
+  // Auto-scroll when messages or suggestions change
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, suggestion]);
 
+  /**
+   * Find service configuration by display name
+   * Converts human-readable names back to service keys
+   */
+  const findServiceByDisplayName = (displayName) => {
+    for (const [serviceName, serviceConfig] of Object.entries(SERVICES_CONFIG)) {
+      if (serviceConfig.displayName === displayName) {
+        return serviceName;
+      }
+    }
+    return null;
+  };
+
+  /**
+   * Extract configuration suggestions from AI response text
+   * Looks for JSON code blocks with suggestion keywords and validates against service fields
+   */
+  const extractSuggestionsFromText = (text, currentServiceName) => {
+    // Keywords that indicate the AI is making a suggestion (not just showing examples)
+    const suggestionKeywords = [
+      'suggested config', 'recommendation', 'i recommend', 'suggested',
+      'here\'s a config', 'try this config', 'optimal config', 'better config'
+    ];
+    
+    const textLower = text.toLowerCase();
+    const hasSuggestionKeyword = suggestionKeywords.some(keyword => 
+      textLower.includes(keyword)
+    );
+    
+    if (!hasSuggestionKeyword) {
+      return {};
+    }
+    
+    // Extract JSON code blocks
+    const match = text.match(/```json([\s\S]*?)```/);
+    if (match) {
+      try {
+        const parsed = JSON.parse(match[1].trim());
+        
+        const serviceConfig = SERVICES_CONFIG[currentServiceName];
+        if (!serviceConfig) return {};
+        
+        const validFields = Object.keys(serviceConfig.fields);
+        
+        let configToCheck = parsed;
+        const keys = Object.keys(parsed);
+        if (keys.length === 1 && typeof parsed[keys[0]] === 'object' && parsed[keys[0]] !== null) {
+          configToCheck = parsed[keys[0]]; // Use nested object
+        }
+        
+        const hasValidFields = Object.keys(configToCheck).some(key => validFields.includes(key));
+        if (!hasValidFields) return {};
+        
+        // Check if suggested config is different from current config
+        const currentServiceConfig = wizardValues?.services?.[currentServiceName] || {};
+        let isDifferent = false;
+        for (const [key, value] of Object.entries(configToCheck)) {
+          if (validFields.includes(key) && currentServiceConfig[key] !== value) {
+            isDifferent = true;
+            break;
+          }
+        }
+        
+        // Only return suggestion if it's actually different
+        return isDifferent ? configToCheck : {};
+        
+      } catch (err) {
+        console.warn("Invalid JSON suggestion:", err);
+      }
+    }
+    
+    return {};
+  };
+
+  /**
+   * Handle dismissing a configuration suggestion
+   */
+  const denySuggestion = () => {
+    setSuggestion(null);
+    
+    const dismissMessage = {
+      id: Date.now(),
+      type: 'ai',
+      content: '👍 Suggestion dismissed.'
+    };
+    setMessages(prev => [...prev, dismissMessage]);
+  };
+
+  /**
+   * Apply the suggested configuration to the environment
+   */
+  const applySuggestion = () => {
+    if (!suggestion) return;
+
+    // Prevent double-application by immediately clearing suggestion
+    const suggestionToApply = suggestion;
+    setSuggestion(null);
+
+    let currentServiceName = service;
+    if (!currentServiceName || !SERVICES_CONFIG[currentServiceName]) {
+      currentServiceName = findServiceByDisplayName(serviceTitle);
+    }
+    if (!currentServiceName) return;
+
+    const serviceConfig = SERVICES_CONFIG[currentServiceName];
+
+    // Update environment configuration
+    setNewEnv(prev => {
+      const updatedEnv = { ...prev };
+      const updatedServices = { ...(prev.services || {}) };
+      
+      // Ensure service exists in configuration
+      if (!updatedServices[currentServiceName]) {
+        updatedServices[currentServiceName] = {};
+      }
+      
+      // Apply each suggested field
+      Object.entries(suggestionToApply).forEach(([key, value]) => {
+        if (serviceConfig && serviceConfig.fields[key]) {
+          updatedServices[currentServiceName][key] = value;
+        } 
+      });
+      
+      return { ...updatedEnv, services: updatedServices };
+    });
+
+    setTimeout(() => {
+      const successMessage = {
+        id: Date.now(),
+        type: 'ai',
+        content: `✅ Configuration applied successfully!`
+      };
+      setMessages(prev => [...prev, successMessage]);
+    }, 100);
+  };
+
+  /**
+   * Handle form submission and communicate with AI backend
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputText.trim() || isLoading) return;
 
-    const userMessage = {
-      id: Date.now(),
-      type: 'user',
-      content: inputText.trim()
-    };
+    setSuggestion(null);
 
+    const userMessage = { id: Date.now(), type: 'user', content: inputText.trim() };
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
     setIsLoading(true);
 
+    const aiMessageId = Date.now() + 1;
+    let aiMessage = { id: aiMessageId, type: 'ai', content: '' };
+    setMessages(prev => [...prev, aiMessage]);
+
     try {
-      // Simulate AI response (in a real implementation, this would call an AI API)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:3001/api";
+      
+      let currentServiceName = service;
+      if (!currentServiceName || !SERVICES_CONFIG[currentServiceName]) {
+        currentServiceName = findServiceByDisplayName(serviceTitle);
+      }
+      
+      // Build context for AI (system messages + conversation history)
+      const payloadMessages = [
+        { type: 'system', message: `The current environment configuration is: ${JSON.stringify(wizardValues)}` },
+        { type: 'system', message: `Available service options: ${Object.keys(SERVICES_CONFIG).join(', ')}` },
+        { type: 'system', message: `Current service: ${currentServiceName || serviceTitle}` },
+        { type: 'system', message: currentServiceName && SERVICES_CONFIG[currentServiceName] ? `Available fields for ${currentServiceName}: ${Object.keys(SERVICES_CONFIG[currentServiceName].fields).join(', ')}` : '' },
+        { type: 'system', message: `Current ${currentServiceName} configuration: ${JSON.stringify(wizardValues?.services?.[currentServiceName] || {})}` },
+        { type: 'system', message: `When making configuration suggestions: 1) First analyze if the current config is already optimal for the user's needs. 2) If current config is already good, just explain why it's optimal instead of suggesting changes. 3) Only suggest changes when there's a meaningful improvement. 4) When suggesting changes, use JSON code blocks with exact field names and include suggestion keywords like "I recommend". 5) Avoid suggesting minor variations (like different CIDR ranges) of essentially the same configuration strategy.` },
+        // Add conversation history
+        ...messages
+          .filter(m => m.content && m.content.trim() !== '')
+          .map(m => ({ type: m.type === 'ai' ? 'assistant' : m.type, message: m.content })),
+        { type: 'user', message: userMessage.content }
+      ];
 
-      const aiResponse = generateAIResponse(inputText.trim(), service, serviceTitle);
+      const response = await fetch(`${backendUrl}/ai/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: payloadMessages,
+          topic: serviceTitle,
+          wizardValues,
+          currentService: currentServiceName
+        })
+      });
 
-      const aiMessage = {
-        id: Date.now() + 1,
-        type: 'ai',
-        content: aiResponse
-      };
+      if (!response.ok || !response.body) throw new Error('Failed to connect to AI service');
 
-      setMessages(prev => [...prev, aiMessage]);
-    } catch (error) {
-      const errorMessage = {
-        id: Date.now() + 1,
-        type: 'ai',
-        content: 'Sorry, I encountered an error while processing your request. Please try again.'
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        
+        chunk.split('\n').forEach(line => {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.replace(/^data: /, ''));
+              
+              if (data.chunk) {
+                aiMessage.content += data.chunk;
+                setMessages(prev =>
+                  prev.map(msg =>
+                    msg.id === aiMessageId ? { ...msg, content: aiMessage.content } : msg
+                  )
+                );
+              }
+              
+              if (data.done) {
+                const currentServiceName = service || findServiceByDisplayName(serviceTitle);
+                const newSuggestion = extractSuggestionsFromText(aiMessage.content, currentServiceName);
+                
+                if (Object.keys(newSuggestion).length > 0) {
+                  setSuggestion(newSuggestion);
+                } 
+                setIsLoading(false);
+              }
+            } catch (err) {
+              console.error('Parse error:', err, 'Line:', line);
+            }
+          }
+        });
+      }
+
+      setIsLoading(false);
+
+    } catch (err) {
+      console.error('Error in handleSubmit:', err);
+      // Show error message
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === aiMessageId
+            ? { ...msg, content: "⚠️ Sorry, I couldn't connect to AI service right now." }
+            : msg
+        )
+      );
       setIsLoading(false);
     }
   };
 
+  /**
+   * Clean up and close modal
+   */
   const handleClose = () => {
-    setMessages([]);
     setInputText('');
     setIsLoading(false);
+    setSuggestion(null);
     onClose();
   };
 
@@ -79,104 +297,81 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className={`rounded-xl w-full max-w-2xl h-[600px] flex flex-col overflow-hidden shadow-2xl ${
-        isDark ? 'bg-gray-800' : 'bg-white'
-      }`}>
-        {/* Header */}
-        <div className={`flex items-center justify-between p-4 border-b ${
-          isDark ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50/50'
-        }`}>
+      <div className={`rounded-xl w-full max-w-2xl h-[600px] flex flex-col overflow-hidden shadow-2xl ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+        
+        {/* Modal Header */}
+        <div className={`flex items-center justify-between p-4 border-b ${isDark ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50/50'}`}>
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-teal-500/20 rounded-lg">
               <MessageCircle className="w-5 h-5 text-teal-400" />
             </div>
             <div>
-              <h2 className={`text-lg font-semibold ${
-                isDark ? 'text-white' : 'text-gray-900'
-              }`}>
+              <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 Ask AI about {serviceTitle}
               </h2>
-              <p className={`text-sm ${
-                isDark ? 'text-gray-400' : 'text-gray-600'
-              }`}>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 Get help with configuration and best practices
               </p>
             </div>
           </div>
-          <button
-            onClick={handleClose}
-            className={`p-2 rounded-lg transition-colors ${
-              isDark
-                ? 'hover:bg-gray-700 text-gray-400'
-                : 'hover:bg-gray-100 text-gray-500'
-            }`}
-          >
+          <button onClick={handleClose} className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}>
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Messages */}
-        <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${
-          isDark ? 'bg-gray-900/30' : 'bg-gray-50/30'
-        }`}>
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex items-start space-x-3 ${
-                message.type === 'user' ? 'justify-end' : 'justify-start'
-              }`}
-            >
-              {message.type === 'ai' && (
-                <div className="p-2 bg-teal-500/20 rounded-lg flex-shrink-0">
-                  <Bot className="w-4 h-4 text-teal-400" />
-                </div>
-              )}
+        {/* Messages Area */}
+        <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${isDark ? 'bg-gray-900/30' : 'bg-gray-50/30'}`}>
+          {messages.map((message) => {
+            // Check if this is a status message (success/dismiss notifications)
+            const isStatusMessage = message.type === 'ai' && (
+              message.content.startsWith('✅ Configuration applied successfully!') ||
+              message.content.startsWith('👍 Suggestion dismissed.')
+            );
 
-              <div className={`max-w-[80%] p-3 rounded-lg ${
-                message.type === 'user'
-                  ? isDark
-                    ? 'bg-teal-600 text-white'
-                    : 'bg-teal-500 text-white'
-                  : isDark
-                  ? 'bg-gray-700 text-gray-100'
-                  : 'bg-white text-gray-900 border border-gray-200'
-              }`}>
-                <div className="prose prose-sm max-w-none">
-                  {message.content.split('\n').map((line, index) => {
-                    if (line.startsWith('•')) {
-                      return <div key={index} className="ml-2">{line}</div>;
-                    }
-                    if (line.includes('**') && line.includes('**')) {
-                      const parts = line.split('**');
-                      return (
-                        <div key={index}>
-                          {parts.map((part, i) =>
-                            i % 2 === 1 ? <strong key={i}>{part}</strong> : part
-                          )}
-                        </div>
-                      );
-                    }
-                    return line ? <div key={index}>{line}</div> : <div key={index} className="h-2"></div>;
-                  })}
+            return (
+              <div key={message.id} className={`flex items-start space-x-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {/* AI Avatar */}
+                {message.type === 'ai' && (
+                  <div className={`p-2 rounded-lg flex-shrink-0 ${isStatusMessage ? 'bg-green-500/20' : 'bg-teal-500/20'}`}>
+                    <Bot className={`w-4 h-4 ${isStatusMessage ? 'text-green-400' : 'text-teal-400'}`} />
+                  </div>
+                )}
+
+                {/* Message Bubble */}
+                <div className={`max-w-[80%] p-3 rounded-lg ${
+                  message.type === 'user' 
+                    ? (isDark ? 'bg-teal-600 text-white' : 'bg-teal-500 text-white')
+                    : isStatusMessage
+                      ? (isDark ? 'bg-green-800 text-green-100 border border-green-700' : 'bg-green-50 text-green-800 border border-green-200')
+                      : (isDark ? 'bg-gray-700 text-gray-100' : 'bg-white text-gray-900 border border-gray-200')
+                }`}>
+                  <div className="prose prose-sm max-w-none whitespace-pre-wrap">
+                    {/* Render HTML content for welcome message, plain text for others */}
+                    {message.isHtml ? (
+                      <div dangerouslySetInnerHTML={{ __html: message.content }} />
+                    ) : (
+                      message.content
+                    )}
+                  </div>
                 </div>
+
+                {/* User Avatar */}
+                {message.type === 'user' && (
+                  <div className="p-2 bg-gray-500/20 rounded-lg flex-shrink-0">
+                    <User className="w-4 h-4 text-gray-400" />
+                  </div>
+                )}
               </div>
+            );
+          })}
 
-              {message.type === 'user' && (
-                <div className="p-2 bg-gray-500/20 rounded-lg flex-shrink-0">
-                  <User className="w-4 h-4 text-gray-400" />
-                </div>
-              )}
-            </div>
-          ))}
-
+          {/* Loading Indicator */}
           {isLoading && (
             <div className="flex items-start space-x-3">
               <div className="p-2 bg-teal-500/20 rounded-lg">
                 <Bot className="w-4 h-4 text-teal-400" />
               </div>
-              <div className={`p-3 rounded-lg ${
-                isDark ? 'bg-gray-700' : 'bg-white border border-gray-200'
-              }`}>
+              <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-white border border-gray-200'}`}>
                 <div className="flex space-x-2">
                   <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce"></div>
                   <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -186,13 +381,44 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle }) => {
             </div>
           )}
 
+          {/* Configuration Suggestion Box */}
+          {suggestion && (
+            <div className="flex items-start space-x-3 max-w-md">
+              <div className="p-2 bg-teal-500/20 rounded-lg flex-shrink-0 relative">
+                <Bot className="w-4 h-4 text-teal-400" />
+              </div>
+
+              <div className="relative p-4 rounded-lg border bg-amber-50 text-amber-800 border-amber-200 shadow flex-1">
+                <strong>💡 Suggested config changes:</strong>
+                <pre className="mt-2 text-sm">{JSON.stringify(suggestion, null, 2)}</pre>
+                <div className="mt-3 flex space-x-2">
+                  {/* Apply Button */}
+                  <button
+                    onClick={applySuggestion}
+                    className="px-3 py-1 rounded-lg bg-teal-600 text-white hover:bg-teal-700 flex items-center space-x-2"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>Apply</span>
+                  </button>
+                  {/* Dismiss Button */}
+                  <button
+                    onClick={denySuggestion}
+                    className="px-3 py-1 rounded-lg bg-gray-500 text-white hover:bg-gray-600 flex items-center space-x-2"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>Dismiss</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Scroll target for auto-scroll */}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
-        <div className={`p-4 border-t ${
-          isDark ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50/50'
-        }`}>
+        {/* Input Form */}
+        <div className={`p-4 border-t ${isDark ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50/50'}`}>
           <form onSubmit={handleSubmit} className="flex space-x-3">
             <input
               type="text"
@@ -200,22 +426,12 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle }) => {
               onChange={(e) => setInputText(e.target.value)}
               placeholder={`Ask about ${serviceTitle}...`}
               disabled={isLoading}
-              className={`flex-1 px-3 py-2 rounded-lg border transition-colors ${
-                isDark
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-teal-500'
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-teal-500'
-              } focus:outline-none focus:ring-2 focus:ring-teal-500/20`}
+              className={`flex-1 px-3 py-2 rounded-lg border transition-colors ${isDark ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-teal-500' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-teal-500'} focus:outline-none focus:ring-2 focus:ring-teal-500/20`}
             />
             <button
               type="submit"
               disabled={!inputText.trim() || isLoading}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                !inputText.trim() || isLoading
-                  ? isDark
-                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-teal-600 text-white hover:bg-teal-700'
-              }`}
+              className={`px-4 py-2 rounded-lg transition-colors ${!inputText.trim() || isLoading ? (isDark ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-200 text-gray-400 cursor-not-allowed') : 'bg-teal-600 text-white hover:bg-teal-700'}`}
             >
               <Send className="w-4 h-4" />
             </button>
@@ -224,81 +440,6 @@ const AIChatModal = ({ isOpen, onClose, service, serviceTitle }) => {
       </div>
     </div>
   );
-};
-
-// AI response generator (simplified - in a real app this would call an actual AI service)
-const generateAIResponse = (question, service, serviceTitle) => {
-  const serviceInfo = {
-    vpc: {
-      description: "AWS VPC (Virtual Private Cloud) provides isolated network resources in the AWS cloud.",
-      bestPractices: [
-        "Use private subnets for application and database tiers",
-        "Implement proper security group rules",
-        "Enable VPC Flow Logs for monitoring",
-        "Use NAT Gateways for outbound internet access from private subnets"
-      ],
-      commonIssues: [
-        "Insufficient IP address space planning",
-        "Overly permissive security groups",
-        "Missing route table configurations"
-      ]
-    },
-    eks: {
-      description: "Amazon EKS is a managed Kubernetes service that makes it easy to run Kubernetes on AWS.",
-      bestPractices: [
-        "Use managed node groups for better maintenance",
-        "Implement proper RBAC and pod security policies",
-        "Enable cluster logging and monitoring",
-        "Use Spot instances for cost optimization"
-      ],
-      commonIssues: [
-        "Insufficient resource limits on pods",
-        "Poor cluster autoscaling configuration",
-        "Missing network policies"
-      ]
-    },
-    rds: {
-      description: "Amazon RDS provides managed relational database services with automated backups, patching, and scaling.",
-      bestPractices: [
-        "Enable automated backups with appropriate retention",
-        "Use Multi-AZ deployments for high availability",
-        "Implement encryption at rest and in transit",
-        "Monitor performance with CloudWatch and Performance Insights"
-      ],
-      commonIssues: [
-        "Inadequate backup strategy",
-        "Poor connection pooling",
-        "Insufficient monitoring and alerting"
-      ]
-    }
-  };
-
-  const info = serviceInfo[service] || {
-    description: `${serviceTitle} is a cloud service that provides various capabilities for your infrastructure.`,
-    bestPractices: ["Follow security best practices", "Monitor resource usage", "Implement proper access controls"],
-    commonIssues: ["Configuration complexity", "Cost optimization", "Integration challenges"]
-  };
-
-  const lowerQuestion = question.toLowerCase();
-
-  if (lowerQuestion.includes('cost') || lowerQuestion.includes('price') || lowerQuestion.includes('billing')) {
-    return `For **${serviceTitle}** cost optimization:\n\n• Use appropriate instance sizes based on actual usage\n• Implement auto-scaling to handle variable workloads\n• Consider Reserved Instances for predictable workloads\n• Monitor usage with AWS Cost Explorer\n• Set up billing alerts and budgets\n\nWould you like specific recommendations for cost optimization?`;
-  }
-
-  if (lowerQuestion.includes('security') || lowerQuestion.includes('secure')) {
-    return `**Security best practices for ${serviceTitle}:**\n\n• Enable encryption at rest and in transit\n• Implement least-privilege access principles\n• Use VPC security groups and NACLs appropriately\n• Enable logging and monitoring\n• Regular security audits and updates\n\nWhat specific security aspect would you like to know more about?`;
-  }
-
-  if (lowerQuestion.includes('best practice') || lowerQuestion.includes('recommend')) {
-    return `**Best practices for ${serviceTitle}:**\n\n${info.bestPractices.map(practice => `• ${practice}`).join('\n')}\n\nThese practices will help ensure optimal performance, security, and cost-effectiveness. Need more details on any of these?`;
-  }
-
-  if (lowerQuestion.includes('problem') || lowerQuestion.includes('issue') || lowerQuestion.includes('troubleshoot')) {
-    return `**Common issues with ${serviceTitle}:**\n\n${info.commonIssues.map(issue => `• ${issue}`).join('\n')}\n\nI can help you troubleshoot specific issues. What problem are you experiencing?`;
-  }
-
-  // Default response
-  return `**About ${serviceTitle}:**\n\n${info.description}\n\n**Key considerations:**\n${info.bestPractices.slice(0, 3).map(practice => `• ${practice}`).join('\n')}\n\nWhat specific aspect would you like to explore? I can help with configuration, best practices, troubleshooting, or cost optimization.`;
 };
 
 export default AIChatModal;

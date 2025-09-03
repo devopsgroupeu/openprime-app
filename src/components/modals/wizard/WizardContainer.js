@@ -28,8 +28,10 @@ const WizardContainer = ({
   const [aiChatModal, setAiChatModal] = useState({
     isOpen: false,
     service: null,
-    serviceTitle: null
+    serviceTitle: null,
   });
+
+  const [aiChatMessages, setAiChatMessages] = useState({});
 
   // Check if kubernetes service is enabled to show step 3
   const hasKubernetesService = () => {
@@ -161,7 +163,8 @@ const WizardContainer = ({
     setAiChatModal({
       isOpen: true,
       service,
-      serviceTitle
+      serviceTitle,
+      wizardValues: newEnv
     });
   };
 
@@ -439,12 +442,25 @@ const WizardContainer = ({
       </div>
 
       {/* AI Chat Modal */}
+      
+
       {aiChatModal.isOpen && (
         <AIChatModal
           isOpen={aiChatModal.isOpen}
           onClose={() => setAiChatModal({ isOpen: false, service: null, serviceTitle: null })}
           service={aiChatModal.service}
           serviceTitle={aiChatModal.serviceTitle}
+          wizardValues={newEnv} 
+          setNewEnv={setNewEnv} 
+          messages={aiChatMessages[aiChatModal.service] || []}
+          setMessages={(update) =>
+            setAiChatMessages(prev => {
+              const current = prev[aiChatModal.service] || [];
+              const newMessages =
+                typeof update === "function" ? update(current) : update;
+              return { ...prev, [aiChatModal.service]: newMessages };
+            })
+          }
         />
       )}
     </>
