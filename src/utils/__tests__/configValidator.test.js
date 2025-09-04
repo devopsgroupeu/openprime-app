@@ -99,7 +99,7 @@ describe('configValidator', () => {
     test('validates complete environment config', () => {
       const environment = {
         name: 'Test Environment',
-        type: 'aws',
+        provider: 'aws',
         region: 'us-east-1',
         services: {
           vpc: {
@@ -124,7 +124,7 @@ describe('configValidator', () => {
     test('validates cross-service dependencies', () => {
       const environment = {
         name: 'Test Environment',
-        type: 'aws',
+        provider: 'aws',
         region: 'us-east-1',
         services: {
           eks: { enabled: true, version: '1.28' },
