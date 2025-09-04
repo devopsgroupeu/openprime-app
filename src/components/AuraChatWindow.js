@@ -4,7 +4,7 @@ import { Send, Bot, User, Sparkles, Minimize2 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { getApiUrl } from '../utils/envValidator';
 
-const INITIAL_MESSAGES = [
+export const INITIAL_MESSAGES = [
   {
     id: 1,
     type: 'bot',
@@ -19,9 +19,8 @@ const INITIAL_MESSAGES = [
   }
 ];
 
-const AuraChatWindow = ({ onClose }) => {
+const AuraChatWindow = ({ onClose, messages, setMessages }) => {
   const { isDark } = useTheme();
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
