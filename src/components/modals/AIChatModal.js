@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, MessageCircle, Bot, User, Check } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { SERVICES_CONFIG } from '../../config/servicesConfig';
 import { getApiUrl } from '../../utils/envValidator';
+import { SERVICES_CONFIG, FIELD_TYPES } from '../../config/servicesConfig';
 
 /**
  * AI Chat Modal Component
@@ -53,8 +53,54 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
   };
 
   /**
+   * Validate that a value is appropriate for a given field configuration
+   */
+  const isValidFieldValue = (value, fieldConfig) => {
+    if (value === null || value === undefined) {
+      return true; // Allow null/undefined values
+    }
+    
+    switch (fieldConfig.type) {
+      case FIELD_TYPES.TOGGLE:
+        return typeof value === 'boolean';
+        
+      case FIELD_TYPES.NUMBER:
+        if (typeof value !== 'number') return false;
+        if (fieldConfig.min !== undefined && value < fieldConfig.min) return false;
+        if (fieldConfig.max !== undefined && value > fieldConfig.max) return false;
+        return true;
+        
+      case FIELD_TYPES.DROPDOWN:
+        if (!fieldConfig.options) return true; // No options defined, allow any value
+        return fieldConfig.options.some(option => option.value === value);
+        
+      case FIELD_TYPES.MULTISELECT:
+        if (!Array.isArray(value)) return false;
+        if (!fieldConfig.options) return true; // No options defined, allow any values
+        return value.every(v => fieldConfig.options.some(option => option.value === v));
+        
+      case FIELD_TYPES.TEXT:
+      case FIELD_TYPES.TEXTAREA:
+        if (typeof value !== 'string') return false;
+        if (fieldConfig.validation?.pattern) {
+          return fieldConfig.validation.pattern.test(value);
+        }
+        return true;
+        
+      case FIELD_TYPES.ARRAY:
+        return Array.isArray(value);
+        
+      case FIELD_TYPES.OBJECT:
+        return typeof value === 'object' && value !== null && !Array.isArray(value);
+        
+      default:
+        return true; // Unknown field type, allow any value
+    }
+  };
+
+  /**
    * Extract configuration suggestions from AI response text
-   * Looks for JSON code blocks with suggestion keywords and validates against service fields
+   * Looks for JSON code blocks with suggestion keywords and validates against service fields AND values
    */
   const extractSuggestionsFromText = (text, currentServiceName) => {
     // Keywords that indicate the AI is making a suggestion (not just showing examples)
@@ -86,25 +132,42 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
         let configToCheck = parsed;
         const keys = Object.keys(parsed);
         if (keys.length === 1 && typeof parsed[keys[0]] === 'object' && parsed[keys[0]] !== null) {
-          configToCheck = parsed[keys[0]]; // Use nested object
+          configToCheck = parsed[keys[0]]; 
         }
-
-        const hasValidFields = Object.keys(configToCheck).some(key => validFields.includes(key));
+        
+        // Validate both field names AND field values
+        const validatedConfig = {};
+        let hasValidFields = false;
+        
+        for (const [key, value] of Object.entries(configToCheck)) {
+          if (!validFields.includes(key)) continue;
+          
+          const fieldConfig = serviceConfig.fields[key];
+          
+          // Validate the value based on field type
+          if (isValidFieldValue(value, fieldConfig)) {
+            validatedConfig[key] = value;
+            hasValidFields = true;
+          } else {
+            console.warn(`Invalid value "${value}" for field "${key}" of type "${fieldConfig.type}". Skipping field.`);
+          }
+        }
+        
         if (!hasValidFields) return {};
 
         // Check if suggested config is different from current config
         const currentServiceConfig = wizardValues?.services?.[currentServiceName] || {};
         let isDifferent = false;
-        for (const [key, value] of Object.entries(configToCheck)) {
-          if (validFields.includes(key) && currentServiceConfig[key] !== value) {
+        for (const [key, value] of Object.entries(validatedConfig)) {
+          if (currentServiceConfig[key] !== value) {
             isDifferent = true;
             break;
           }
         }
 
         // Only return suggestion if it's actually different
-        return isDifferent ? configToCheck : {};
-
+        return isDifferent ? validatedConfig : {};
+        
       } catch (err) {
         console.warn("Invalid JSON suggestion:", err);
       }
@@ -200,15 +263,25 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
       if (!currentServiceName || !SERVICES_CONFIG[currentServiceName]) {
         currentServiceName = findServiceByDisplayName(serviceTitle);
       }
-
+      
+      // Build dropdown field constraints message
+      const dropdownConstraints = currentServiceName && SERVICES_CONFIG[currentServiceName] 
+        ? Object.entries(SERVICES_CONFIG[currentServiceName].fields)
+            .filter(([_, field]) => field.type === FIELD_TYPES.DROPDOWN && field.options)
+            .map(([fieldName, field]) => 
+              `${fieldName}: [${field.options.map(opt => opt.value).join(', ')}]`
+            ).join('; ')
+        : '';
+      
       // Build context for AI (system messages + conversation history)
       const payloadMessages = [
         { type: 'system', message: `The current environment configuration is: ${JSON.stringify(wizardValues)}` },
         { type: 'system', message: `Available service options: ${Object.keys(SERVICES_CONFIG).join(', ')}` },
         { type: 'system', message: `Current service: ${currentServiceName || serviceTitle}` },
         { type: 'system', message: currentServiceName && SERVICES_CONFIG[currentServiceName] ? `Available fields for ${currentServiceName}: ${Object.keys(SERVICES_CONFIG[currentServiceName].fields).join(', ')}` : '' },
+        { type: 'system', message: dropdownConstraints ? `Dropdown field constraints for ${currentServiceName}: ${dropdownConstraints}` : '' },
         { type: 'system', message: `Current ${currentServiceName} configuration: ${JSON.stringify(wizardValues?.services?.[currentServiceName] || {})}` },
-        { type: 'system', message: `When making configuration suggestions: 1) First analyze if the current config is already optimal for the user's needs. 2) If current config is already good, just explain why it's optimal instead of suggesting changes. 3) Only suggest changes when there's a meaningful improvement. 4) When suggesting changes, use JSON code blocks with exact field names and include suggestion keywords like "I recommend". 5) Avoid suggesting minor variations (like different CIDR ranges) of essentially the same configuration strategy.` },
+        { type: 'system', message: `When making configuration suggestions: 1) First analyze if the current config is already optimal for the user's needs. 2) If current config is already good, just explain why it's optimal instead of suggesting changes. 3) Only suggest changes when there's a meaningful improvement. 4) When suggesting changes, use JSON code blocks with exact field names and ONLY use valid field values (especially for dropdown fields - stick to the allowed options). 5) Include suggestion keywords like "I recommend". 6) Avoid suggesting minor variations (like different CIDR ranges) of essentially the same configuration strategy.` },
         // Add conversation history
         ...messages
           .filter(m => m.content && m.content.trim() !== '')
