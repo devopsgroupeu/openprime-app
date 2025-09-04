@@ -154,6 +154,22 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
         }
         
         if (!hasValidFields) return {};
+        
+        for (const [key, value] of Object.entries(configToCheck)) {
+          if (!validFields.includes(key)) continue;
+          
+          const fieldConfig = serviceConfig.fields[key];
+          
+          // Validate the value based on field type
+          if (isValidFieldValue(value, fieldConfig)) {
+            validatedConfig[key] = value;
+            hasValidFields = true;
+          } else {
+            console.warn(`Invalid value "${value}" for field "${key}" of type "${fieldConfig.type}". Skipping field.`);
+          }
+        }
+        
+        if (!hasValidFields) return {};
 
         // Check if suggested config is different from current config
         const currentServiceConfig = wizardValues?.services?.[currentServiceName] || {};
