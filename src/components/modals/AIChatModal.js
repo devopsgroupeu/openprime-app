@@ -105,8 +105,8 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
   const extractSuggestionsFromText = (text, currentServiceName) => {
     // Keywords that indicate the AI is making a suggestion (not just showing examples)
     const suggestionKeywords = [
-      'suggested config', 'recommendation', 'i recommend', 'suggested',
-      'here\'s a config', 'try this config', 'optimal config', 'better config'
+      'suggested config', 'recommendation', 'i recommend', 'suggested', 'change', 'changes',
+      'here\'s a config', 'try this config', 'optimal config', 'better config', 'modify to', 'key changes'
     ];
 
     const textLower = text.toLowerCase();
@@ -132,7 +132,7 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
         let configToCheck = parsed;
         const keys = Object.keys(parsed);
         if (keys.length === 1 && typeof parsed[keys[0]] === 'object' && parsed[keys[0]] !== null) {
-          configToCheck = parsed[keys[0]]; 
+          configToCheck = parsed[keys[0]]; // Use nested object
         }
         
         // Validate both field names AND field values
@@ -191,6 +191,145 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
   };
 
   /**
+   * Generic validation system that works across all services based on field definitions
+   */
+  const validateServiceConfiguration = (serviceName, config) => {
+    const warnings = [];
+    const fixes = {};
+    
+    const serviceConfig = SERVICES_CONFIG[serviceName];
+    if (!serviceConfig) return { warnings, fixes };
+
+    // Get field definitions for validation
+    const fields = serviceConfig.fields;
+    
+    // Validate each field against its constraints
+    Object.entries(config).forEach(([fieldName, value]) => {
+      const fieldDef = fields[fieldName];
+      if (!fieldDef) return;
+
+      // Validate number constraints
+      if (fieldDef.type === FIELD_TYPES.NUMBER && typeof value === 'number') {
+        if (fieldDef.min !== undefined && value < fieldDef.min) {
+          warnings.push(`${fieldDef.displayName || fieldName} is below minimum (${fieldDef.min})`);
+          fixes[fieldName] = fieldDef.min;
+        }
+        if (fieldDef.max !== undefined && value > fieldDef.max) {
+          warnings.push(`${fieldDef.displayName || fieldName} exceeds maximum (${fieldDef.max})`);
+          fixes[fieldName] = fieldDef.max;
+        }
+      }
+
+      // Validate dropdown values
+      if (fieldDef.type === FIELD_TYPES.DROPDOWN && fieldDef.options) {
+        const validValues = fieldDef.options.map(opt => opt.value);
+        if (!validValues.includes(value)) {
+          warnings.push(`Invalid ${fieldDef.displayName || fieldName}: "${value}". Using default.`);
+          fixes[fieldName] = fieldDef.defaultValue;
+        }
+      }
+
+      // Validate multiselect arrays
+      if (fieldDef.type === FIELD_TYPES.MULTISELECT && Array.isArray(value) && fieldDef.options) {
+        const validValues = fieldDef.options.map(opt => opt.value);
+        const invalidValues = value.filter(v => !validValues.includes(v));
+        if (invalidValues.length > 0) {
+          warnings.push(`Invalid ${fieldDef.displayName || fieldName} values: ${invalidValues.join(', ')}`);
+          fixes[fieldName] = value.filter(v => validValues.includes(v));
+          if (fixes[fieldName].length === 0 && fieldDef.defaultValue) {
+            fixes[fieldName] = fieldDef.defaultValue;
+          }
+        }
+      }
+
+      // Validate text patterns
+      if ((fieldDef.type === FIELD_TYPES.TEXT || fieldDef.type === FIELD_TYPES.TEXTAREA) && 
+          typeof value === 'string' && fieldDef.validation?.pattern) {
+        if (!fieldDef.validation.pattern.test(value)) {
+          warnings.push(`${fieldDef.displayName || fieldName} format is invalid`);
+          if (fieldDef.defaultValue) {
+            fixes[fieldName] = fieldDef.defaultValue;
+          }
+        }
+      }
+    });
+
+    // Generic cross-field validations using common naming patterns
+    const fieldNames = Object.keys(config);
+    
+    // Min/Max value pairs (works for any service with min*/max* fields)
+    fieldNames.forEach(fieldName => {
+      if (fieldName.startsWith('min')) {
+        const maxFieldName = fieldName.replace('min', 'max');
+        if (config[maxFieldName] !== undefined && config[fieldName] > config[maxFieldName]) {
+          warnings.push(`${fieldName} cannot exceed ${maxFieldName}`);
+          fixes[maxFieldName] = Math.max(config[fieldName], config[maxFieldName] || config[fieldName]);
+        }
+      }
+      
+      if (fieldName.startsWith('max') && fieldName !== 'maxNodes' && fieldName !== 'maxAllocatedStorage') {
+        const minFieldName = fieldName.replace('max', 'min');
+        if (config[minFieldName] !== undefined && config[fieldName] < config[minFieldName]) {
+          warnings.push(`${fieldName} cannot be less than ${minFieldName}`);
+          fixes[fieldName] = Math.max(config[minFieldName], config[fieldName] || config[minFieldName]);
+        }
+      }
+    });
+
+    // Auto-scaling logic (generic for any service with enableAutoScaling)
+    if (config.hasOwnProperty('enableAutoScaling') && !config.enableAutoScaling) {
+      // If auto-scaling is disabled, min and max should be equal
+      const minField = fieldNames.find(f => f.includes('min') && f.includes('Node'));
+      const maxField = fieldNames.find(f => f.includes('max') && f.includes('Node'));
+      
+      if (minField && maxField && config[minField] !== config[maxField]) {
+        warnings.push(`Auto-scaling disabled: ${minField} and ${maxField} should be equal`);
+        fixes[maxField] = config[minField];
+      }
+    }
+
+    // Storage validation (generic for allocated/max storage patterns)
+    if (config.allocatedStorage && config.maxAllocatedStorage && 
+        config.maxAllocatedStorage < config.allocatedStorage) {
+      warnings.push('Maximum storage cannot be less than allocated storage');
+      fixes.maxAllocatedStorage = Math.max(config.allocatedStorage * 2, config.maxAllocatedStorage);
+    }
+
+    // Disk size recommendations (generic minimum disk size check)
+    const diskFields = fieldNames.filter(f => f.toLowerCase().includes('disk') && 
+                                             fields[f]?.type === FIELD_TYPES.NUMBER);
+    diskFields.forEach(diskField => {
+      if (config[diskField] && config[diskField] < 20) {
+        warnings.push(`${fields[diskField].displayName || diskField} may be too small`);
+        fixes[diskField] = Math.max(50, fields[diskField].defaultValue || 50);
+      }
+    });
+
+    // Enable/disable dependency validation
+    Object.entries(config).forEach(([fieldName, value]) => {
+      if (typeof value === 'boolean' && value === true) {
+        // Look for related fields that might need to be enabled
+        const relatedFields = fieldNames.filter(f => 
+          f !== fieldName && 
+          (f.includes(fieldName.replace('enable', '').replace('Enable', '')) ||
+           fieldName.includes(f.replace('enable', '').replace('Enable', '')))
+        );
+        
+        relatedFields.forEach(relatedField => {
+          if (typeof config[relatedField] === 'boolean' && config[relatedField] === false) {
+            // Don't auto-enable, just warn about potential conflicts
+            const fieldDisplayName = fields[fieldName]?.displayName || fieldName;
+            const relatedDisplayName = fields[relatedField]?.displayName || relatedField;
+            warnings.push(`${fieldDisplayName} enabled but ${relatedDisplayName} is disabled - verify this is intentional`);
+          }
+        });
+      }
+    });
+
+    return { warnings, fixes };
+  };
+
+  /**
    * Apply the suggested configuration to the environment
    */
   const applySuggestion = () => {
@@ -207,6 +346,16 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
     if (!currentServiceName) return;
 
     const serviceConfig = SERVICES_CONFIG[currentServiceName];
+    
+    // Get current configuration and merge with suggestions
+    const currentConfig = wizardValues?.services?.[currentServiceName] || {};
+    const mergedConfig = { ...currentConfig, ...suggestionToApply };
+    
+    // Validate the complete merged configuration
+    const { warnings, fixes } = validateServiceConfiguration(currentServiceName, mergedConfig);
+    
+    // Apply suggestions and any necessary fixes
+    const finalConfig = { ...mergedConfig, ...fixes };
 
     // Update environment configuration
     setNewEnv(prev => {
@@ -217,9 +366,9 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
       if (!updatedServices[currentServiceName]) {
         updatedServices[currentServiceName] = {};
       }
-
-      // Apply each suggested field
-      Object.entries(suggestionToApply).forEach(([key, value]) => {
+      
+      // Apply the final validated configuration
+      Object.entries(finalConfig).forEach(([key, value]) => {
         if (serviceConfig && serviceConfig.fields[key]) {
           updatedServices[currentServiceName][key] = value;
         }
@@ -229,10 +378,21 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
     });
 
     setTimeout(() => {
+      let message = `✅ Configuration applied successfully!`;
+      
+      // Add warnings and auto-fixes to the message
+      if (warnings.length > 0) {
+        message += `\n\n⚠️ Compatibility issues detected and fixed:\n${warnings.map(w => `• ${w}`).join('\n')}`;
+      }
+      
+      if (Object.keys(fixes).length > 0) {
+        message += `\n\n🔧 Additional changes made for compatibility:\n${Object.entries(fixes).map(([key, value]) => `• ${key}: ${JSON.stringify(value)}`).join('\n')}`;
+      }
+
       const successMessage = {
         id: Date.now(),
         type: 'ai',
-        content: `✅ Configuration applied successfully!`
+        content: message
       };
       setMessages(prev => [...prev, successMessage]);
     }, 100);
