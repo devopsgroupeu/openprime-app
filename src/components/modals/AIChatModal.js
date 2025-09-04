@@ -132,7 +132,7 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
         let configToCheck = parsed;
         const keys = Object.keys(parsed);
         if (keys.length === 1 && typeof parsed[keys[0]] === 'object' && parsed[keys[0]] !== null) {
-          configToCheck = parsed[keys[0]]; 
+          configToCheck = parsed[keys[0]]; // Use nested object
         }
         
         // Validate both field names AND field values
