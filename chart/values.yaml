@@ -97,14 +97,15 @@ affinity:
 # Application specific configuration
 app:
   # Environment variables for the React app
+  # These are injected at runtime using the runtime environment injection system
   env:
-    # Backend API URL
-    REACT_APP_API_URL: "http://openprime-backend:3001"
-    # Keycloak configuration
+    # Backend API Configuration
+    REACT_APP_API_URL: "http://openprime-backend:3001/api"
+    # Keycloak Authentication Configuration
     REACT_APP_KEYCLOAK_URL: "http://keycloak:8080"
     REACT_APP_KEYCLOAK_REALM: "openprime"
     REACT_APP_KEYCLOAK_CLIENT_ID: "openprime-app"
-    # Additional environment variables can be added here
+    # Application Environment
     NODE_ENV: "production"
 
 # Health check configuration

@@ -18,6 +18,9 @@ RUN npm run build
 # Production stage
 FROM nginx:alpine AS production
 
+# Install envsubst for runtime environment variable injection
+RUN apk add --no-cache gettext
+
 # Copy custom nginx config if needed (optional)
 # COPY nginx.conf /etc/nginx/nginx.conf
 
@@ -49,6 +52,15 @@ RUN echo "server { \
         root /usr/share/nginx/html; \
     } \
 }" > /etc/nginx/conf.d/default.conf
+
+# Create environment injection script
+RUN echo '#!/bin/sh' > /docker-entrypoint.d/10-inject-env.sh && \
+    echo 'set -e' >> /docker-entrypoint.d/10-inject-env.sh && \
+    echo 'echo "🔧 Injecting runtime environment variables..."' >> /docker-entrypoint.d/10-inject-env.sh && \
+    echo 'envsubst < /usr/share/nginx/html/env.js > /tmp/env.js' >> /docker-entrypoint.d/10-inject-env.sh && \
+    echo 'mv /tmp/env.js /usr/share/nginx/html/env.js' >> /docker-entrypoint.d/10-inject-env.sh && \
+    echo 'echo "✅ Environment variables injected successfully"' >> /docker-entrypoint.d/10-inject-env.sh && \
+    chmod +x /docker-entrypoint.d/10-inject-env.sh
 
 # Switch to non-root user
 USER nginx

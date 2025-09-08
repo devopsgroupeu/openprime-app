@@ -1,8 +1,9 @@
 import keycloak from '../config/keycloak';
+import { getApiUrl } from '../utils/envValidator';
 
 export class AuthService {
   constructor() {
-    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+    this.baseURL = getApiUrl();
   }
 
   getAuthHeaders() {

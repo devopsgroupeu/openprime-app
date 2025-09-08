@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, MessageCircle, Bot, User, Check } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { SERVICES_CONFIG } from '../../config/servicesConfig';
+import { getApiUrl } from '../../utils/envValidator';
 
 /**
  * AI Chat Modal Component
@@ -27,7 +28,7 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
         id: Date.now(),
         type: 'ai',
         content: `Hi! I'm here to help you with <strong>${serviceTitle}</strong>. I can provide information about:\n\n• Configuration best practices\n• Common use cases and patterns\n• Security recommendations\n• Cost optimization tips\n• Integration with other services\n\nWhat would you like to know?`,
-        isHtml: true 
+        isHtml: true
       };
       setMessages([welcomeMessage]);
     }
@@ -61,36 +62,36 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
       'suggested config', 'recommendation', 'i recommend', 'suggested',
       'here\'s a config', 'try this config', 'optimal config', 'better config'
     ];
-    
+
     const textLower = text.toLowerCase();
-    const hasSuggestionKeyword = suggestionKeywords.some(keyword => 
+    const hasSuggestionKeyword = suggestionKeywords.some(keyword =>
       textLower.includes(keyword)
     );
-    
+
     if (!hasSuggestionKeyword) {
       return {};
     }
-    
+
     // Extract JSON code blocks
     const match = text.match(/```json([\s\S]*?)```/);
     if (match) {
       try {
         const parsed = JSON.parse(match[1].trim());
-        
+
         const serviceConfig = SERVICES_CONFIG[currentServiceName];
         if (!serviceConfig) return {};
-        
+
         const validFields = Object.keys(serviceConfig.fields);
-        
+
         let configToCheck = parsed;
         const keys = Object.keys(parsed);
         if (keys.length === 1 && typeof parsed[keys[0]] === 'object' && parsed[keys[0]] !== null) {
           configToCheck = parsed[keys[0]]; // Use nested object
         }
-        
+
         const hasValidFields = Object.keys(configToCheck).some(key => validFields.includes(key));
         if (!hasValidFields) return {};
-        
+
         // Check if suggested config is different from current config
         const currentServiceConfig = wizardValues?.services?.[currentServiceName] || {};
         let isDifferent = false;
@@ -100,15 +101,15 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
             break;
           }
         }
-        
+
         // Only return suggestion if it's actually different
         return isDifferent ? configToCheck : {};
-        
+
       } catch (err) {
         console.warn("Invalid JSON suggestion:", err);
       }
     }
-    
+
     return {};
   };
 
@@ -117,7 +118,7 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
    */
   const denySuggestion = () => {
     setSuggestion(null);
-    
+
     const dismissMessage = {
       id: Date.now(),
       type: 'ai',
@@ -148,19 +149,19 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
     setNewEnv(prev => {
       const updatedEnv = { ...prev };
       const updatedServices = { ...(prev.services || {}) };
-      
+
       // Ensure service exists in configuration
       if (!updatedServices[currentServiceName]) {
         updatedServices[currentServiceName] = {};
       }
-      
+
       // Apply each suggested field
       Object.entries(suggestionToApply).forEach(([key, value]) => {
         if (serviceConfig && serviceConfig.fields[key]) {
           updatedServices[currentServiceName][key] = value;
-        } 
+        }
       });
-      
+
       return { ...updatedEnv, services: updatedServices };
     });
 
@@ -193,13 +194,13 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
     setMessages(prev => [...prev, aiMessage]);
 
     try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:3001/api";
-      
+      const apiUrl = getApiUrl();
+
       let currentServiceName = service;
       if (!currentServiceName || !SERVICES_CONFIG[currentServiceName]) {
         currentServiceName = findServiceByDisplayName(serviceTitle);
       }
-      
+
       // Build context for AI (system messages + conversation history)
       const payloadMessages = [
         { type: 'system', message: `The current environment configuration is: ${JSON.stringify(wizardValues)}` },
@@ -215,7 +216,7 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
         { type: 'user', message: userMessage.content }
       ];
 
-      const response = await fetch(`${backendUrl}/ai/chat`, {
+      const response = await fetch(`${apiUrl}/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -236,12 +237,12 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        
+
         chunk.split('\n').forEach(line => {
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.replace(/^data: /, ''));
-              
+
               if (data.chunk) {
                 aiMessage.content += data.chunk;
                 setMessages(prev =>
@@ -250,14 +251,14 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
                   )
                 );
               }
-              
+
               if (data.done) {
                 const currentServiceName = service || findServiceByDisplayName(serviceTitle);
                 const newSuggestion = extractSuggestionsFromText(aiMessage.content, currentServiceName);
-                
+
                 if (Object.keys(newSuggestion).length > 0) {
                   setSuggestion(newSuggestion);
-                } 
+                }
                 setIsLoading(false);
               }
             } catch (err) {
@@ -298,7 +299,7 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className={`rounded-xl w-full max-w-2xl h-[600px] flex flex-col overflow-hidden shadow-2xl ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
-        
+
         {/* Modal Header */}
         <div className={`flex items-center justify-between p-4 border-b ${isDark ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50/50'}`}>
           <div className="flex items-center space-x-3">
@@ -339,7 +340,7 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
 
                 {/* Message Bubble */}
                 <div className={`max-w-[80%] p-3 rounded-lg ${
-                  message.type === 'user' 
+                  message.type === 'user'
                     ? (isDark ? 'bg-teal-600 text-white' : 'bg-teal-500 text-white')
                     : isStatusMessage
                       ? (isDark ? 'bg-green-800 text-green-100 border border-green-700' : 'bg-green-50 text-green-800 border border-green-200')

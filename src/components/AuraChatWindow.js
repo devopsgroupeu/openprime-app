@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, Minimize2 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { getApiUrl } from '../utils/envValidator';
 
 const INITIAL_MESSAGES = [
   {
@@ -66,9 +67,9 @@ const AuraChatWindow = ({ onClose }) => {
     setMessages(prev => [...prev, botMessage]);
 
     try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:3001/api";
+      const apiUrl = getApiUrl();
       // POST request to AI chat endpoint
-      const response = await fetch(`${backendUrl}/ai/chat`, {
+      const response = await fetch(`${apiUrl}/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: [...messages, userMessage] }),
@@ -122,7 +123,7 @@ const AuraChatWindow = ({ onClose }) => {
   };
 
 
-  const handleKeyPress = (e) => {
+  const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -284,7 +285,7 @@ const AuraChatWindow = ({ onClose }) => {
             ref={inputRef}
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder="Ask Aura anything about infrastructure..."
             rows={1}
             className={`flex-1 px-3 py-2 border rounded-lg resize-none transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500/20 ${
