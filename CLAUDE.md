@@ -18,16 +18,18 @@ OpenPrime is a React-based infrastructure management platform that allows users 
 - `npm test` - Interactive watch mode for all tests
 - `npm test -- --coverage` - Run tests with coverage report
 - `npm test -- --watchAll=false` - Run tests once without watch mode
-- `npm test -- --testPathPattern=wizard` - Run specific test patterns
+- `npm test -- --testPathPattern=wizard` - Run tests matching specific patterns (e.g., wizard tests)
+- `npm test src/components/modals/__tests__/` - Run tests in specific directory
 
 ### Docker Development
 - `docker build .` - Build Docker image (multi-stage: Node 24.5.0-alpine + Nginx)
-- `docker-compose up` - Run application in container with live reload
-- Production build serves from Nginx on port 8080 with non-root user
+- `docker-compose up` - Run application in container with live reload (port 3000)
+- Production Docker image serves from Nginx on port 8080 with non-root user
 
 ### Code Quality
 - Remove all `console.log` statements before committing: `grep -r "console.log" src/ --include="*.js"`
 - The codebase uses ESLint via react-scripts - errors will appear in development console
+- No additional linting commands needed - integrated with `npm start` and `npm run build`
 
 ## Architecture Overview
 
@@ -98,7 +100,7 @@ Built-in support for production-ready Helm charts with customizable values:
 - **Icons**: Lucide React for consistent iconography
 - **State Management**: React Context API (ThemeContext, ToastContext) with hooks
 - **Responsive Design**: Mobile-friendly layouts with grid systems
-- **Navigation**: Single-page app with programmatic routing (no React Router)
+- **Navigation**: React Router DOM for client-side routing between pages
 - **Modals**: Backdrop blur effects with accessibility features
 
 ## Important Implementation Details
@@ -186,7 +188,7 @@ Environments use a deeply nested JSONB-like structure optimized for flexibility:
 - **Build Tool**: React Scripts 5.0.1 with Create React App configuration
 - **Container**: Multi-stage Docker (Node.js 24.5.0-alpine + Nginx) for production deployment
 - **State Management**: React Context API only (AuthContext, ThemeContext, ToastContext)
-- **Routing**: Custom page state management without React Router
+- **Routing**: React Router DOM v6 with BrowserRouter for navigation
 - **Validation**: Custom validation utilities in `utils/configValidator.js`
 
 ## Development Workflow
