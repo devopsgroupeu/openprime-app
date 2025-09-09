@@ -102,23 +102,13 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
    * Extract configuration suggestions from AI response text
    * Looks for JSON code blocks with suggestion keywords and validates against service fields AND values
    */
+  /**
+ * Extract configuration suggestions from AI response text
+ * NOW: Looks for ANY JSON code blocks and validates against service fields AND values
+ * REMOVED: Keyword requirement - any JSON triggers a suggestion
+ */
   const extractSuggestionsFromText = (text, currentServiceName) => {
-    // Keywords that indicate the AI is making a suggestion (not just showing examples)
-    const suggestionKeywords = [
-      'suggested config', 'recommendation', 'i recommend', 'suggested', 'change', 'changes',
-      'here\'s a config', 'try this config', 'optimal config', 'better config', 'modify to', 'key changes'
-    ];
-
-    const textLower = text.toLowerCase();
-    const hasSuggestionKeyword = suggestionKeywords.some(keyword =>
-      textLower.includes(keyword)
-    );
-
-    if (!hasSuggestionKeyword) {
-      return {};
-    }
-
-    // Extract JSON code blocks
+    // Extract JSON code blocks (removed keyword check)
     const match = text.match(/```json([\s\S]*?)```/);
     if (match) {
       try {
@@ -533,6 +523,99 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
     }
   };
 
+  // Add this helper function before the component
+  const formatMessageContent = (content, isDark) => {
+    // Check if message contains JSON code blocks
+    const jsonCodeBlockRegex = /```json\n([\s\S]*?)\n```/g;
+    
+    if (!jsonCodeBlockRegex.test(content)) {
+      // No JSON code blocks, return as is
+      return <span>{content}</span>;
+    }
+
+    // Split content by JSON code blocks and format them
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    
+    // Reset regex
+    jsonCodeBlockRegex.lastIndex = 0;
+    
+    while ((match = jsonCodeBlockRegex.exec(content)) !== null) {
+      // Add text before the JSON block
+      if (match.index > lastIndex) {
+        parts.push(
+          <span key={`text-${lastIndex}`}>
+            {content.substring(lastIndex, match.index)}
+          </span>
+        );
+      }
+      
+      // Add formatted JSON block
+      try {
+        const jsonText = match[1].trim();
+        const parsedJson = JSON.parse(jsonText);
+        const formattedJson = JSON.stringify(parsedJson, null, 2);
+        
+        parts.push(
+          <div key={`json-${match.index}`} className={`my-3 rounded-lg border ${
+            isDark 
+              ? 'bg-gray-800 border-gray-600' 
+              : 'bg-gray-50 border-gray-200'
+          }`}>
+            <div className={`px-3 py-1 text-xs font-medium border-b ${
+              isDark 
+                ? 'bg-gray-700 text-gray-300 border-gray-600' 
+                : 'bg-gray-100 text-gray-600 border-gray-200'
+            }`}>
+              JSON Configuration
+            </div>
+            <pre className={`p-3 text-sm overflow-x-auto ${
+              isDark ? 'text-gray-200' : 'text-gray-800'
+            }`}>
+              <code>{formattedJson}</code>
+            </pre>
+          </div>
+        );
+      } catch (e) {
+        // If JSON parsing fails, show as regular code block
+        parts.push(
+          <div key={`code-${match.index}`} className={`my-3 rounded-lg border ${
+            isDark 
+              ? 'bg-gray-800 border-gray-600' 
+              : 'bg-gray-50 border-gray-200'
+          }`}>
+            <div className={`px-3 py-1 text-xs font-medium border-b ${
+              isDark 
+                ? 'bg-gray-700 text-gray-300 border-gray-600' 
+                : 'bg-gray-100 text-gray-600 border-gray-200'
+            }`}>
+              Code
+            </div>
+            <pre className={`p-3 text-sm overflow-x-auto ${
+              isDark ? 'text-gray-200' : 'text-gray-800'
+            }`}>
+              <code>{match[1]}</code>
+            </pre>
+          </div>
+        );
+      }
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining text after the last JSON block
+    if (lastIndex < content.length) {
+      parts.push(
+        <span key={`text-final`}>
+          {content.substring(lastIndex)}
+        </span>
+      );
+    }
+    
+    return <div>{parts}</div>;
+  };
+
   /**
    * Clean up and close modal
    */
@@ -600,7 +683,7 @@ const AIChatModal = ({isOpen, onClose, service, serviceTitle, wizardValues, mess
                     {message.isHtml ? (
                       <div dangerouslySetInnerHTML={{ __html: message.content }} />
                     ) : (
-                      message.content
+                      formatMessageContent(message.content, isDark)
                     )}
                   </div>
                 </div>
