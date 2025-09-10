@@ -2,11 +2,12 @@
 import React, { useState } from 'react';
 import { MessageCircle, X, Sparkles } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
-import AuraChatWindow from './AuraChatWindow';
+import AuraChatWindow, { INITIAL_MESSAGES } from './AuraChatWindow';
 
 const AuraChatButton = () => {
   const { isDark } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
+  const [auraMessages, setAuraMessages] = useState(INITIAL_MESSAGES);
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
@@ -16,7 +17,11 @@ const AuraChatButton = () => {
     <>
       {/* Chat Window */}
       {isOpen && (
-        <AuraChatWindow onClose={() => setIsOpen(false)} />
+        <AuraChatWindow 
+          messages={auraMessages}
+          setMessages={setAuraMessages}
+          onClose={() => setIsOpen(false)} 
+        />
       )}
 
       {/* Floating Button */}
