@@ -9,7 +9,6 @@ import HelmValuesModal from './modals/HelmValuesModal';
 import { createEmptyEnvironment } from '../config/environmentsConfig';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
-import authService from '../services/authService';
 
 const EnvironmentsPage = ({ environments, onCreateEnvironment, onDeleteEnvironment, onUpdateEnvironment }) => {
   const { isDark } = useTheme();
@@ -49,30 +48,24 @@ const EnvironmentsPage = ({ environments, onCreateEnvironment, onDeleteEnvironme
 
       // Only proceed if we have some configuration
       if (Object.keys(environmentConfig.services).length > 0) {
-
-        // Send POST request to backend
+        // Call parent component to handle creation (App.js handles the API call)
         try {
-          const createdEnvironment = await authService.post('/environments', environmentConfig);
+          if (isEditMode) {
+            await onUpdateEnvironment(environmentConfig);
+          } else {
+            await onCreateEnvironment(environmentConfig);
+          }
 
-          // Successfully sent to backend
-          success('Configuration sent to backend successfully', {
+          success('Environment synced with backend successfully', {
             title: 'Backend Sync',
             duration: 3000
           });
-
-          // Use the actual created environment from backend
-          if (isEditMode) {
-            onUpdateEnvironment({ ...newEnv, ...createdEnvironment });
-          } else {
-            onCreateEnvironment(createdEnvironment);
-          }
         } catch (backendError) {
-          // Backend error logged for debugging
-          error(`Failed to send configuration to backend: ${backendError.message}`, {
+          error(`Failed to sync with backend: ${backendError.message}`, {
             title: 'Backend Error',
             duration: 7000
           });
-          return; // Don't proceed with UI updates if backend failed
+          return;
         }
       }
 
