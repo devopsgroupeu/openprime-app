@@ -34,10 +34,10 @@ const DynamicServiceConfig = ({
   );
 
   return (
-    <div className={`border rounded-lg transition-colors shadow-sm hover:shadow-md ${
+    <div className={`border rounded-lg transition-colors ${
       isDark
         ? 'border-gray-600 bg-gray-800/50'
-        : 'border-gray-200 bg-white/80'
+        : 'border-gray-200 bg-white'
     }`}>
       <div
         className="flex items-center justify-between p-4 cursor-pointer"
@@ -94,26 +94,17 @@ const DynamicServiceConfig = ({
           </button>
 
           {enabledField && (
-            <>
-              {/* Custom toggle for enabled field without text/description */}
-              <button
-                type="button"
-                onClick={() => handleFieldChange('enabled', !serviceConfig.enabled)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  serviceConfig.enabled
-                    ? 'bg-teal-600'
-                    : isDark
-                    ? 'bg-gray-600'
-                    : 'bg-gray-200'
-                } cursor-pointer`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    serviceConfig.enabled ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={serviceConfig.enabled}
+                onChange={() => handleFieldChange('enabled', !serviceConfig.enabled)}
+                className="sr-only peer"
+              />
+              <div className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
+                isDark ? 'bg-gray-700' : 'bg-gray-300'
+              }`}></div>
+            </label>
           )}
         </div>
       </div>

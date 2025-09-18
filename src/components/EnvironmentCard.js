@@ -14,20 +14,20 @@ const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
   const getServiceIcon = (service) => {
     const icons = {
       // AWS Services
-      vpc: <Network className="w-3 h-3 mr-1 text-teal-500" />,
-      eks: <Box className="w-3 h-3 mr-1 text-teal-500" />,
-      rds: <Database className="w-3 h-3 mr-1 text-teal-500" />,
-      opensearch: <Search className="w-3 h-3 mr-1 text-teal-500" />,
-      ecr: <Container className="w-3 h-3 mr-1 text-teal-500" />,
-      s3: <Archive className="w-3 h-3 mr-1 text-teal-500" />,
-      lambda: <FunctionSquare className="w-3 h-3 mr-1 text-teal-500" />,
-      elasticache: <HardDrive className="w-3 h-3 mr-1 text-teal-500" />,
-      sqs: <MessageSquare className="w-3 h-3 mr-1 text-teal-500" />,
-      sns: <Bell className="w-3 h-3 mr-1 text-teal-500" />,
-      cloudfront: <Globe className="w-3 h-3 mr-1 text-teal-500" />,
-      route53: <Globe className="w-3 h-3 mr-1 text-teal-500" />,
-      secretsManager: <Lock className="w-3 h-3 mr-1 text-teal-500" />,
-      iam: <Shield className="w-3 h-3 mr-1 text-teal-500" />,
+      vpc: <Network className="w-3 h-3 mr-1 text-primary" />,
+      eks: <Box className="w-3 h-3 mr-1 text-primary" />,
+      rds: <Database className="w-3 h-3 mr-1 text-primary" />,
+      opensearch: <Search className="w-3 h-3 mr-1 text-primary" />,
+      ecr: <Container className="w-3 h-3 mr-1 text-primary" />,
+      s3: <Archive className="w-3 h-3 mr-1 text-primary" />,
+      lambda: <FunctionSquare className="w-3 h-3 mr-1 text-primary" />,
+      elasticache: <HardDrive className="w-3 h-3 mr-1 text-primary" />,
+      sqs: <MessageSquare className="w-3 h-3 mr-1 text-primary" />,
+      sns: <Bell className="w-3 h-3 mr-1 text-primary" />,
+      cloudfront: <Globe className="w-3 h-3 mr-1 text-primary" />,
+      route53: <Globe className="w-3 h-3 mr-1 text-primary" />,
+      secretsManager: <Lock className="w-3 h-3 mr-1 text-primary" />,
+      iam: <Shield className="w-3 h-3 mr-1 text-primary" />,
       // Azure Services
       vnet: <Network className="w-3 h-3 mr-1 text-blue-400" />,
       aks: <Box className="w-3 h-3 mr-1 text-blue-400" />,
@@ -40,7 +40,7 @@ const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
       serviceBus: <MessageSquare className="w-3 h-3 mr-1 text-blue-400" />,
       keyVault: <Lock className="w-3 h-3 mr-1 text-blue-400" />
     };
-    return icons[service] || <Layers className="w-3 h-3 mr-1 text-teal-500" />;
+    return icons[service] || <Layers className="w-3 h-3 mr-1 text-primary" />;
   };
 
   const getServiceName = (service) => {

@@ -148,7 +148,7 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
           }`}
         >
           <div className="flex items-center space-x-2">
-            <Bot className="w-4 h-4 text-teal-500" />
+            <Bot className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium">Aura</span>
             <Sparkles className="w-3 h-3 text-yellow-400" />
           </div>
@@ -167,7 +167,7 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
       } shadow-lg`}>
         <div className="flex items-center space-x-3">
           <div className="relative">
-            <Bot className="w-8 h-8 text-teal-500" />
+            <Bot className="w-8 h-8 text-primary" />
             <div className="absolute -top-1 -right-1">
               <Sparkles className="w-3 h-3 text-yellow-400 animate-pulse" />
             </div>
@@ -224,7 +224,7 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
                   {msg.type === 'user' ? (
                     <User className="w-3 h-3 text-white" />
                   ) : (
-                    <Bot className="w-3 h-3 text-teal-500" />
+                    <Bot className="w-3 h-3 text-primary" />
                   )}
                 </div>
                 <div className={`px-3 py-2 rounded-lg ${
@@ -255,7 +255,7 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
               <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
                 isDark ? 'bg-gray-700' : 'bg-white border border-gray-200'
               }`}>
-                <Bot className="w-3 h-3 text-teal-500" />
+                <Bot className="w-3 h-3 text-primary" />
               </div>
               <div className={`px-3 py-2 rounded-lg ${
                 isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'

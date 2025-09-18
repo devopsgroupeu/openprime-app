@@ -81,15 +81,15 @@ const SettingsPage = () => {
     return (
       <div className={`min-h-screen transition-colors ${
         isDark
-          ? 'bg-gradient-to-br from-slate-900 via-gray-900 to-slate-900'
-          : 'bg-gradient-to-br from-gray-50 via-teal-50 to-cyan-50'
+          ? 'bg-background'
+          : 'bg-background'
       }`}>
         <Navigation />
         <div className="max-w-7xl mx-auto px-8 py-8">
           <div className="flex items-center justify-center min-h-[50vh]">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
-              <p className={`text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>Loading settings...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className={`text-lg font-poppins ${isDark ? 'text-white' : 'text-primary'}`}>Loading settings...</p>
             </div>
           </div>
         </div>
@@ -100,13 +100,13 @@ const SettingsPage = () => {
   return (
     <div className={`min-h-screen transition-colors ${
       isDark
-        ? 'bg-gradient-to-br from-slate-900 via-gray-900 to-slate-900'
-        : 'bg-gradient-to-br from-gray-50 via-teal-50 to-cyan-50'
+        ? 'bg-background'
+        : 'bg-background'
     }`}>
       <Navigation />
       <div className="max-w-7xl mx-auto px-8 py-8">
-        <h1 className={`text-3xl font-bold mb-8 transition-colors ${
-          isDark ? 'text-white' : 'text-gray-900'
+        <h1 className={`text-3xl font-bold font-sora mb-8 transition-colors ${
+          isDark ? 'text-white' : 'text-primary'
         }`}>Settings</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -116,16 +116,16 @@ const SettingsPage = () => {
               ? 'bg-gray-800/50 border-gray-700'
               : 'bg-white/70 border-gray-200'
           }`}>
-            <h2 className={`text-xl font-bold mb-4 flex items-center transition-colors ${
-              isDark ? 'text-white' : 'text-gray-900'
+            <h2 className={`text-xl font-bold font-sora mb-4 flex items-center transition-colors ${
+              isDark ? 'text-white' : 'text-primary'
             }`}>
-              <User className="w-5 h-5 mr-2 text-teal-500" />
+              <User className="w-5 h-5 mr-2 text-primary" />
               User Profile
             </h2>
             <div className="space-y-4">
               <div>
-                <label className={`block text-sm font-medium mb-2 transition-colors ${
-                  isDark ? 'text-gray-300' : 'text-gray-700'
+                <label className={`block text-sm font-medium font-poppins mb-2 transition-colors ${
+                  isDark ? 'text-tertiary' : 'text-secondary'
                 }`}>First Name</label>
                 <input
                   type="text"
@@ -134,14 +134,14 @@ const SettingsPage = () => {
                   className={`w-full px-4 py-2 rounded-lg border transition-colors ${
                     isDark
                       ? 'bg-gray-700 border-gray-600 text-white'
-                      : 'bg-white border-gray-300 text-gray-900'
+                      : 'bg-white border-gray-300 text-primary'
                   }`}
                   placeholder="Enter your first name"
                 />
               </div>
               <div>
                 <label className={`block text-sm font-medium mb-2 transition-colors ${
-                  isDark ? 'text-gray-300' : 'text-gray-700'
+                  isDark ? 'text-tertiary' : 'text-secondary'
                 }`}>Last Name</label>
                 <input
                   type="text"
@@ -150,14 +150,14 @@ const SettingsPage = () => {
                   className={`w-full px-4 py-2 rounded-lg border transition-colors ${
                     isDark
                       ? 'bg-gray-700 border-gray-600 text-white'
-                      : 'bg-white border-gray-300 text-gray-900'
+                      : 'bg-white border-gray-300 text-primary'
                   }`}
                   placeholder="Enter your last name"
                 />
               </div>
               <div>
                 <label className={`block text-sm font-medium mb-2 transition-colors ${
-                  isDark ? 'text-gray-300' : 'text-gray-700'
+                  isDark ? 'text-tertiary' : 'text-secondary'
                 }`}>Email</label>
                 <input
                   type="email"
@@ -166,7 +166,7 @@ const SettingsPage = () => {
                   className={`w-full px-4 py-2 rounded-lg border transition-colors ${
                     isDark
                       ? 'bg-gray-700 border-gray-600 text-white'
-                      : 'bg-white border-gray-300 text-gray-900'
+                      : 'bg-white border-gray-300 text-primary'
                   }`}
                   placeholder="Enter your email"
                 />
@@ -181,15 +181,15 @@ const SettingsPage = () => {
               : 'bg-white/70 border-gray-200'
           }`}>
             <h2 className={`text-xl font-bold mb-4 flex items-center transition-colors ${
-              isDark ? 'text-white' : 'text-gray-900'
+              isDark ? 'text-white' : 'text-primary'
             }`}>
-              <Shield className="w-5 h-5 mr-2 text-teal-500" />
+              <Shield className="w-5 h-5 mr-2 text-primary" />
               Preferences
             </h2>
             <div className="space-y-4">
               <div>
                 <label className={`block text-sm font-medium mb-2 transition-colors ${
-                  isDark ? 'text-gray-300' : 'text-gray-700'
+                  isDark ? 'text-tertiary' : 'text-secondary'
                 }`}>Default Cloud Provider</label>
                 <select
                   value={userPreferences.defaultProvider}
@@ -197,7 +197,7 @@ const SettingsPage = () => {
                   className={`w-full px-4 py-2 rounded-lg border transition-colors ${
                     isDark
                       ? 'bg-gray-700 border-gray-600 text-white'
-                      : 'bg-white border-gray-300 text-gray-900'
+                      : 'bg-white border-gray-300 text-primary'
                   }`}
                 >
                   <option value="aws">AWS</option>
@@ -208,7 +208,7 @@ const SettingsPage = () => {
               </div>
               <div>
                 <label className={`block text-sm font-medium mb-2 transition-colors ${
-                  isDark ? 'text-gray-300' : 'text-gray-700'
+                  isDark ? 'text-tertiary' : 'text-secondary'
                 }`}>Default Region</label>
                 <input
                   type="text"
@@ -217,7 +217,7 @@ const SettingsPage = () => {
                   className={`w-full px-4 py-2 rounded-lg border transition-colors ${
                     isDark
                       ? 'bg-gray-700 border-gray-600 text-white'
-                      : 'bg-white border-gray-300 text-gray-900'
+                      : 'bg-white border-gray-300 text-primary'
                   }`}
                   placeholder="us-east-1"
                 />
@@ -225,7 +225,7 @@ const SettingsPage = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <div className={`font-medium transition-colors ${
-                    isDark ? 'text-white' : 'text-gray-900'
+                    isDark ? 'text-white' : 'text-primary'
                   }`}>Email Notifications</div>
                   <div className={`text-sm transition-colors ${
                     isDark ? 'text-gray-400' : 'text-gray-600'
@@ -238,7 +238,7 @@ const SettingsPage = () => {
                     checked={userPreferences.notifications}
                     onChange={(e) => handlePreferenceChange('notifications', e.target.checked)}
                   />
-                  <div className={`w-11 h-6 rounded-full peer peer-checked:bg-teal-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
+                  <div className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
                     isDark ? 'bg-gray-700' : 'bg-gray-300'
                   }`}></div>
                 </label>
@@ -251,9 +251,9 @@ const SettingsPage = () => {
               : 'bg-white/70 border-gray-200'
           }`}>
             <h2 className={`text-xl font-bold mb-4 flex items-center transition-colors ${
-              isDark ? 'text-white' : 'text-gray-900'
+              isDark ? 'text-white' : 'text-primary'
             }`}>
-              <Cloud className="w-5 h-5 mr-2 text-teal-500" />
+              <Cloud className="w-5 h-5 mr-2 text-primary" />
               Cloud Providers
             </h2>
             <div className="space-y-4">
@@ -264,7 +264,7 @@ const SettingsPage = () => {
                   <Cloud className="w-6 h-6 text-orange-400 mr-3" />
                   <div>
                     <div className={`font-semibold transition-colors ${
-                      isDark ? 'text-white' : 'text-gray-900'
+                      isDark ? 'text-white' : 'text-primary'
                     }`}>AWS</div>
                     <div className={`text-sm transition-colors ${
                       isDark ? 'text-gray-400' : 'text-gray-600'
@@ -280,7 +280,7 @@ const SettingsPage = () => {
                   <Cloud className="w-6 h-6 text-blue-400 mr-3" />
                   <div>
                     <div className={`font-semibold transition-colors ${
-                      isDark ? 'text-white' : 'text-gray-900'
+                      isDark ? 'text-white' : 'text-primary'
                     }`}>Azure</div>
                     <div className={`text-sm transition-colors ${
                       isDark ? 'text-gray-400' : 'text-gray-600'
@@ -300,36 +300,36 @@ const SettingsPage = () => {
               : 'bg-white/70 border-gray-200'
           }`}>
             <h2 className={`text-xl font-bold mb-4 flex items-center transition-colors ${
-              isDark ? 'text-white' : 'text-gray-900'
+              isDark ? 'text-white' : 'text-primary'
             }`}>
-              <GitBranch className="w-5 h-5 mr-2 text-teal-500" />
+              <GitBranch className="w-5 h-5 mr-2 text-primary" />
               Git Integration
             </h2>
             <div className="space-y-4">
               <div>
                 <label className={`block text-sm font-medium mb-2 transition-colors ${
-                  isDark ? 'text-gray-300' : 'text-gray-700'
+                  isDark ? 'text-tertiary' : 'text-secondary'
                 }`}>Repository URL</label>
                 <input
                   type="text"
                   className={`w-full px-4 py-2 rounded-lg border transition-colors ${
                     isDark
                       ? 'bg-gray-700 border-gray-600 text-white'
-                      : 'bg-white border-gray-300 text-gray-900'
+                      : 'bg-white border-gray-300 text-primary'
                   }`}
                   placeholder="https://github.com/your-org/infrastructure"
                 />
               </div>
               <div>
                 <label className={`block text-sm font-medium mb-2 transition-colors ${
-                  isDark ? 'text-gray-300' : 'text-gray-700'
+                  isDark ? 'text-tertiary' : 'text-secondary'
                 }`}>Default Branch</label>
                 <input
                   type="text"
                   className={`w-full px-4 py-2 rounded-lg border transition-colors ${
                     isDark
                       ? 'bg-gray-700 border-gray-600 text-white'
-                      : 'bg-white border-gray-300 text-gray-900'
+                      : 'bg-white border-gray-300 text-primary'
                   }`}
                   defaultValue="main"
                 />
@@ -343,16 +343,16 @@ const SettingsPage = () => {
               : 'bg-white/70 border-gray-200'
           }`}>
             <h2 className={`text-xl font-bold mb-4 flex items-center transition-colors ${
-              isDark ? 'text-white' : 'text-gray-900'
+              isDark ? 'text-white' : 'text-primary'
             }`}>
-              <Shield className="w-5 h-5 mr-2 text-teal-500" />
+              <Shield className="w-5 h-5 mr-2 text-primary" />
               Security & Compliance
             </h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <div className={`font-medium transition-colors ${
-                    isDark ? 'text-white' : 'text-gray-900'
+                    isDark ? 'text-white' : 'text-primary'
                   }`}>Enforce MFA</div>
                   <div className={`text-sm transition-colors ${
                     isDark ? 'text-gray-400' : 'text-gray-600'
@@ -360,7 +360,7 @@ const SettingsPage = () => {
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className={`w-11 h-6 rounded-full peer peer-checked:bg-teal-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
+                  <div className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
                     isDark ? 'bg-gray-700' : 'bg-gray-300'
                   }`}></div>
                 </label>
@@ -368,7 +368,7 @@ const SettingsPage = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <div className={`font-medium transition-colors ${
-                    isDark ? 'text-white' : 'text-gray-900'
+                    isDark ? 'text-white' : 'text-primary'
                   }`}>Encryption at Rest</div>
                   <div className={`text-sm transition-colors ${
                     isDark ? 'text-gray-400' : 'text-gray-600'
@@ -376,7 +376,7 @@ const SettingsPage = () => {
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className={`w-11 h-6 rounded-full peer peer-checked:bg-teal-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
+                  <div className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
                     isDark ? 'bg-gray-700' : 'bg-gray-300'
                   }`}></div>
                 </label>
@@ -390,9 +390,9 @@ const SettingsPage = () => {
               : 'bg-white/70 border-gray-200'
           }`}>
             <h2 className={`text-xl font-bold mb-4 flex items-center transition-colors ${
-              isDark ? 'text-white' : 'text-gray-900'
+              isDark ? 'text-white' : 'text-primary'
             }`}>
-              <Terminal className="w-5 h-5 mr-2 text-teal-500" />
+              <Terminal className="w-5 h-5 mr-2 text-primary" />
               CLI Configuration
             </h2>
             <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs">

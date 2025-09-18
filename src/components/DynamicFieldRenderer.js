@@ -10,19 +10,15 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
     onChange(fieldName, newValue);
   };
 
-  const baseInputClasses = `w-full px-3 py-2 border rounded-lg transition-colors ${
+  const baseInputClasses = `w-full px-4 py-2 rounded-lg border transition-colors ${
     isDark
-      ? 'bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20'
-      : 'bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20'
-  } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`;
+      ? 'bg-gray-700 border-gray-600 text-white focus:border-primary'
+      : 'bg-white border-gray-300 text-primary focus:border-primary'
+  } focus:ring-2 focus:ring-primary/20 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`;
 
-  const labelClasses = `block text-sm font-medium mb-1 ${
-    isDark ? 'text-gray-300' : 'text-gray-700'
-  }`;
+  const labelClasses = 'block text-sm font-medium mb-1 text-primary font-poppins';
 
-  const descriptionClasses = `text-xs mt-1 ${
-    isDark ? 'text-gray-400' : 'text-gray-500'
-  }`;
+  const descriptionClasses = 'text-xs mt-1 text-tertiary font-poppins';
 
   switch (fieldConfig.type) {
     case FIELD_TYPES.TOGGLE:
@@ -38,24 +34,18 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
               </p>
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => !disabled && handleChange(!value)}
-            disabled={disabled}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              value
-                ? 'bg-teal-600'
-                : isDark
-                ? 'bg-gray-600'
-                : 'bg-gray-200'
-            } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                value ? 'translate-x-6' : 'translate-x-1'
-              }`}
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={value}
+              onChange={() => !disabled && handleChange(!value)}
+              disabled={disabled}
+              className="sr-only peer"
             />
-          </button>
+            <div className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
+              isDark ? 'bg-gray-700' : 'bg-gray-300'
+            } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
+          </label>
         </div>
       );
 
@@ -107,7 +97,7 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
                   disabled={disabled}
                   className="mr-2 rounded"
                 />
-                <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>
+                <span className="text-primary font-poppins">
                   {option.label}
                 </span>
               </label>
