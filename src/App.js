@@ -1,16 +1,16 @@
 // src/App.js
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import EnvironmentsPage from './components/EnvironmentsPage';
-import EnvironmentDetailPage from './components/EnvironmentDetailPage';
-import SettingsPage from './components/SettingsPage';
-import AuraChatButton from './components/AuraChatButton';
-import ErrorBoundary from './components/ErrorBoundary';
-import authService from './services/authService';
-import { useAuth } from './contexts/AuthContext';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { ToastProvider } from './contexts/ToastContext';
-import { AuthProvider } from './contexts/AuthContext';
+import React, { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import EnvironmentsPage from "./components/EnvironmentsPage";
+import EnvironmentDetailPage from "./components/EnvironmentDetailPage";
+import SettingsPage from "./components/SettingsPage";
+import AuraChatButton from "./components/AuraChatButton";
+import ErrorBoundary from "./components/ErrorBoundary";
+import authService from "./services/authService";
+import { useAuth } from "./contexts/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { ToastProvider } from "./contexts/ToastContext";
+import { AuthProvider } from "./contexts/AuthContext";
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -26,10 +26,10 @@ function AppContent() {
   const loadEnvironments = async () => {
     try {
       setEnvironmentsLoading(true);
-      const userEnvironments = await authService.get('/environments');
+      const userEnvironments = await authService.get("/environments");
       setEnvironments(userEnvironments);
     } catch (error) {
-      console.error('Failed to load environments:', error);
+      console.error("Failed to load environments:", error);
     } finally {
       setEnvironmentsLoading(false);
     }
@@ -37,11 +37,11 @@ function AppContent() {
 
   const handleCreateEnvironment = async (newEnv) => {
     try {
-      const createdEnvironment = await authService.post('/environments', newEnv);
+      const createdEnvironment = await authService.post("/environments", newEnv);
       setEnvironments([createdEnvironment, ...environments]);
       return createdEnvironment;
     } catch (error) {
-      console.error('Failed to create environment:', error);
+      console.error("Failed to create environment:", error);
       throw error;
     }
   };
@@ -49,9 +49,9 @@ function AppContent() {
   const handleDeleteEnvironment = async (envId) => {
     try {
       await authService.delete(`/environments/${envId}`);
-      setEnvironments(environments.filter(env => env.id !== envId));
+      setEnvironments(environments.filter((env) => env.id !== envId));
     } catch (error) {
-      console.error('Failed to delete environment:', error);
+      console.error("Failed to delete environment:", error);
       throw error;
     }
   };
@@ -59,16 +59,13 @@ function AppContent() {
   const handleUpdateEnvironment = async (updatedEnv) => {
     try {
       const updated = await authService.put(`/environments/${updatedEnv.id}`, updatedEnv);
-      setEnvironments(environments.map(env =>
-        env.id === updated.id ? updated : env
-      ));
+      setEnvironments(environments.map((env) => (env.id === updated.id ? updated : env)));
       return updated;
     } catch (error) {
-      console.error('Failed to update environment:', error);
+      console.error("Failed to update environment:", error);
       throw error;
     }
   };
-
 
   if (isLoading || environmentsLoading) {
     return (
@@ -80,7 +77,6 @@ function AppContent() {
       </div>
     );
   }
-
 
   return (
     <ThemeProvider>
@@ -108,10 +104,7 @@ function AppContent() {
                 />
               }
             />
-            <Route
-              path="/settings"
-              element={<SettingsPage />}
-            />
+            <Route path="/settings" element={<SettingsPage />} />
           </Routes>
           <AuraChatButton />
         </BrowserRouter>
