@@ -1,5 +1,5 @@
-import keycloak from '../config/keycloak';
-import { getApiUrl } from '../utils/envValidator';
+import keycloak from "../config/keycloak";
+import { getApiUrl } from "../utils/envValidator";
 
 export class AuthService {
   constructor() {
@@ -9,8 +9,8 @@ export class AuthService {
   getAuthHeaders() {
     const token = keycloak.token;
     return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     };
   }
 
@@ -20,13 +20,13 @@ export class AuthService {
         ...options,
         headers: {
           ...this.getAuthHeaders(),
-          ...options.headers
-        }
+          ...options.headers,
+        },
       });
 
       if (response.status === 401) {
         keycloak.logout();
-        throw new Error('Session expired');
+        throw new Error("Session expired");
       }
 
       if (!response.ok) {
@@ -44,7 +44,7 @@ export class AuthService {
 
       return response;
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error("API request failed:", error);
       throw error;
     }
   }
@@ -56,12 +56,12 @@ export class AuthService {
 
   async post(url, data, options = {}) {
     const response = await this.makeAuthenticatedRequest(url, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(data),
-      ...options
+      ...options,
     });
 
-    if (options.responseType === 'blob') {
+    if (options.responseType === "blob") {
       return { data: await response.blob() };
     }
 
@@ -70,29 +70,29 @@ export class AuthService {
 
   async put(url, data) {
     const response = await this.makeAuthenticatedRequest(url, {
-      method: 'PUT',
-      body: JSON.stringify(data)
+      method: "PUT",
+      body: JSON.stringify(data),
     });
     return response.json();
   }
 
   async delete(url) {
     const response = await this.makeAuthenticatedRequest(url, {
-      method: 'DELETE'
+      method: "DELETE",
     });
     return response.json();
   }
 
   async uploadFile(url, file) {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
     const response = await this.makeAuthenticatedRequest(url, {
-      method: 'POST',
+      method: "POST",
       body: formData,
       headers: {
-        'Authorization': `Bearer ${keycloak.token}`
-      }
+        Authorization: `Bearer ${keycloak.token}`,
+      },
     });
     return response.json();
   }
