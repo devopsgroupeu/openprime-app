@@ -1,36 +1,36 @@
 // src/App.js
-import { useState } from "react";
-import HomePage from "./components/HomePage";
-import EnvironmentsPage from "./components/EnvironmentsPage";
-import EnvironmentDetailPage from "./components/EnvironmentDetailPage";
-import SettingsPage from "./components/SettingsPage";
-import AuraChatButton from "./components/AuraChatButton";
-import ProtectedRoute from "./components/ProtectedRoute";
-import { initialEnvironments } from "./config/environmentsConfig";
-import { ThemeProvider } from "./contexts/ThemeContext";
-import { ToastProvider } from "./contexts/ToastContext";
-import { AuthProvider } from "./contexts/AuthContext";
+import React, { useState } from 'react';
+import HomePage from './components/HomePage';
+import EnvironmentsPage from './components/EnvironmentsPage';
+import EnvironmentDetailPage from './components/EnvironmentDetailPage';
+import SettingsPage from './components/SettingsPage';
+import AuraChatButton from './components/AuraChatButton';
+import { initialEnvironments } from './config/environmentsConfig';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { ToastProvider } from './contexts/ToastContext';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState("home");
+  const [currentPage, setCurrentPage] = useState('home');
   const [selectedEnvironment, setSelectedEnvironment] = useState(null);
   const [environments, setEnvironments] = useState(initialEnvironments);
 
   const handleCreateEnvironment = (newEnv) => {
     const newEnvironment = {
       ...newEnv,
-      id: Math.max(...environments.map((e) => e.id), 0) + 1,
-      status: "pending",
+      id: Math.max(...environments.map(e => e.id), 0) + 1,
+      status: 'pending'
     };
     setEnvironments([...environments, newEnvironment]);
   };
 
   const handleDeleteEnvironment = (envId) => {
-    setEnvironments(environments.filter((env) => env.id !== envId));
+    setEnvironments(environments.filter(env => env.id !== envId));
   };
 
   const handleUpdateEnvironment = (updatedEnv) => {
-    setEnvironments(environments.map((env) => (env.id === updatedEnv.id ? updatedEnv : env)));
+    setEnvironments(environments.map(env =>
+      env.id === updatedEnv.id ? updatedEnv : env
+    ));
     // Update selected environment if it's the one being updated
     if (selectedEnvironment?.id === updatedEnv.id) {
       setSelectedEnvironment(updatedEnv);
@@ -39,12 +39,12 @@ export default function App() {
 
   const handleViewEnvironment = (environment) => {
     setSelectedEnvironment(environment);
-    setCurrentPage("environment-detail");
+    setCurrentPage('environment-detail');
   };
 
   const handleBackToEnvironments = () => {
     setSelectedEnvironment(null);
-    setCurrentPage("environments");
+    setCurrentPage('environments');
   };
 
   const handleClearSelectedEnvironment = () => {
@@ -52,10 +52,10 @@ export default function App() {
   };
 
   const renderPage = () => {
-    switch (currentPage) {
-      case "home":
+    switch(currentPage) {
+      case 'home':
         return <HomePage setCurrentPage={setCurrentPage} currentPage={currentPage} />;
-      case "environments":
+      case 'environments':
         return (
           <EnvironmentsPage
             setCurrentPage={setCurrentPage}
@@ -69,21 +69,21 @@ export default function App() {
             onClearSelectedEnvironment={handleClearSelectedEnvironment}
           />
         );
-      case "environment-detail":
+      case 'environment-detail':
         return (
           <EnvironmentDetailPage
             environment={selectedEnvironment}
             onBack={handleBackToEnvironments}
             onEdit={(env) => {
               setSelectedEnvironment(env);
-              setCurrentPage("environments"); // Navigate to environments page to show edit modal
+              setCurrentPage('environments'); // Navigate to environments page to show edit modal
             }}
             onDelete={handleDeleteEnvironment}
             setCurrentPage={setCurrentPage}
             currentPage={currentPage}
           />
         );
-      case "settings":
+      case 'settings':
         return <SettingsPage setCurrentPage={setCurrentPage} currentPage={currentPage} />;
       default:
         return <HomePage setCurrentPage={setCurrentPage} currentPage={currentPage} />;
@@ -91,15 +91,11 @@ export default function App() {
   };
 
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <ToastProvider>
-          <ProtectedRoute>
-            {renderPage()}
-            <AuraChatButton />
-          </ProtectedRoute>
-        </ToastProvider>
-      </ThemeProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        {renderPage()}
+        <AuraChatButton />
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
