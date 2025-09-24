@@ -21,7 +21,7 @@ const ServicesConfigStep = ({
   };
 
   const getProviderDisplayName = () => {
-    return PROVIDERS[newEnv.type]?.name || 'Cloud Provider';
+    return PROVIDERS[newEnv.provider]?.name || 'Cloud Provider';
   };
 
   return (
@@ -64,7 +64,7 @@ const ServicesConfigStep = ({
             <span className={`ml-4 text-sm ${
               isDark ? 'text-gray-400' : 'text-gray-600'
             }`}>
-              {getProviderDisplayName()} • {PROVIDERS[newEnv.type]?.regions.find(r => r.value === newEnv.region)?.label}
+              {getProviderDisplayName()} • {PROVIDERS[newEnv.provider]?.regions.find(r => r.value === newEnv.region)?.label}
             </span>
           </div>
           <div className={`text-sm px-3 py-1 rounded-full ${
@@ -115,7 +115,7 @@ const ServicesConfigStep = ({
               Need some suggestions?
             </h4>
             <div className="flex flex-wrap justify-center gap-2">
-              {newEnv.type === 'aws' && (
+              {newEnv.provider === 'aws' && (
                 <>
                   <button
                     onClick={() => {
@@ -158,7 +158,7 @@ const ServicesConfigStep = ({
                   </button>
                 </>
               )}
-              {newEnv.type === 'azure' && (
+              {newEnv.provider === 'azure' && (
                 <button
                   onClick={() => {
                     setNewEnv({
@@ -179,7 +179,7 @@ const ServicesConfigStep = ({
                   Enable VNet + AKS
                 </button>
               )}
-              {newEnv.type === 'gcp' && (
+              {newEnv.provider === 'gcp' && (
                 <button
                   onClick={() => {
                     setNewEnv({

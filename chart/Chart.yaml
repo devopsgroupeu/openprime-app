@@ -1,0 +1,21 @@
+apiVersion: v2
+name: openprime-app
+description: OpenPrime React frontend application for infrastructure management platform
+type: application
+version: 0.2.0
+appVersion: "0.2.0"
+home: https://github.com/devopsgroupeu/openprime-app
+sources:
+  - https://github.com/devopsgroupeu/openprime-app
+keywords:
+  - infrastructure
+  - kubernetes
+  - react
+  - frontend
+  - multi-cloud
+maintainers:
+  - name: DevOpsGroup
+    email: support@devopsgroup.eu
+annotations:
+  category: Frontend
+  licenses: MIT

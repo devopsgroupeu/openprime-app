@@ -2,8 +2,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, Minimize2 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { getApiUrl } from '../utils/envValidator';
 
-const INITIAL_MESSAGES = [
+export const INITIAL_MESSAGES = [
   {
     id: 1,
     type: 'bot',
@@ -18,16 +19,8 @@ const INITIAL_MESSAGES = [
   }
 ];
 
-const SAMPLE_RESPONSES = [
-  "I'd be happy to help you with that! However, I'm currently a demo version. In a full implementation, I would connect to an AI service to provide detailed infrastructure guidance.",
-  "That's a great question about infrastructure! In a production version, I would analyze your configuration and provide specific recommendations.",
-  "I can see you're interested in that topic. A real AI integration would give you detailed explanations and step-by-step guidance.",
-  "Excellent question! When fully integrated with an AI backend, I could provide comprehensive answers about cloud infrastructure and best practices."
-];
-
-const AuraChatWindow = ({ onClose }) => {
+const AuraChatWindow = ({ onClose, messages, setMessages }) => {
   const { isDark } = useTheme();
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -55,28 +48,81 @@ const AuraChatWindow = ({ onClose }) => {
       id: Date.now(),
       type: 'user',
       message: inputMessage,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
     setIsTyping(true);
 
-    // Simulate AI response delay
-    setTimeout(() => {
-      const randomResponse = SAMPLE_RESPONSES[Math.floor(Math.random() * SAMPLE_RESPONSES.length)];
-      const botMessage = {
-        id: Date.now() + 1,
-        type: 'bot',
-        message: randomResponse,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, botMessage]);
+    const botMessageId = Date.now() + 1;
+    let botMessage = {
+      id: botMessageId,
+      type: 'bot',
+      message: '',
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, botMessage]);
+
+    try {
+      const apiUrl = getApiUrl();
+      // POST request to AI chat endpoint
+      const response = await fetch(`${apiUrl}/ai/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [...messages, userMessage] }),
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error('Failed to connect to AI service');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+
+        chunk.split('\n').forEach(line => {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.replace(/^data: /, ''));
+              if (data.chunk) {
+                botMessage.message += data.chunk;
+                setMessages(prev =>
+                  prev.map(msg =>
+                    msg.id === botMessageId ? { ...msg, message: botMessage.message } : msg
+                  )
+                );
+              }
+              if (data.done) setIsTyping(false);
+            } catch (err) {
+              console.error('Parse error:', err);
+            }
+          }
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === botMessageId
+            ? { ...msg, message: "⚠️ Sorry, I couldn't connect to Aura AI right now." }
+            : msg
+        )
+      );
+    } finally {
+      // Ensure typing indicator is off
       setIsTyping(false);
-    }, 1000 + Math.random() * 2000);
+    }
   };
 
-  const handleKeyPress = (e) => {
+
+  const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -102,7 +148,7 @@ const AuraChatWindow = ({ onClose }) => {
           }`}
         >
           <div className="flex items-center space-x-2">
-            <Bot className="w-4 h-4 text-teal-500" />
+            <Bot className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium">Aura</span>
             <Sparkles className="w-3 h-3 text-yellow-400" />
           </div>
@@ -121,7 +167,7 @@ const AuraChatWindow = ({ onClose }) => {
       } shadow-lg`}>
         <div className="flex items-center space-x-3">
           <div className="relative">
-            <Bot className="w-8 h-8 text-teal-500" />
+            <Bot className="w-8 h-8 text-primary" />
             <div className="absolute -top-1 -right-1">
               <Sparkles className="w-3 h-3 text-yellow-400 animate-pulse" />
             </div>
@@ -178,7 +224,7 @@ const AuraChatWindow = ({ onClose }) => {
                   {msg.type === 'user' ? (
                     <User className="w-3 h-3 text-white" />
                   ) : (
-                    <Bot className="w-3 h-3 text-teal-500" />
+                    <Bot className="w-3 h-3 text-primary" />
                   )}
                 </div>
                 <div className={`px-3 py-2 rounded-lg ${
@@ -209,7 +255,7 @@ const AuraChatWindow = ({ onClose }) => {
               <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
                 isDark ? 'bg-gray-700' : 'bg-white border border-gray-200'
               }`}>
-                <Bot className="w-3 h-3 text-teal-500" />
+                <Bot className="w-3 h-3 text-primary" />
               </div>
               <div className={`px-3 py-2 rounded-lg ${
                 isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
@@ -238,7 +284,7 @@ const AuraChatWindow = ({ onClose }) => {
             ref={inputRef}
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder="Ask Aura anything about infrastructure..."
             rows={1}
             className={`flex-1 px-3 py-2 border rounded-lg resize-none transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500/20 ${

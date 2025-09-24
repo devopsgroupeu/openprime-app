@@ -11,7 +11,7 @@ const DynamicServicesGrid = ({
   onEditHelmValues,
   onAskAI
 }) => {
-  const providerServices = getProviderServices(newEnv.type);
+  const providerServices = getProviderServices(newEnv.provider);
 
   const handleServiceChange = (serviceName, newServiceConfig) => {
     setNewEnv({

@@ -1,101 +1,131 @@
 // src/App.js
-import React, { useState } from 'react';
-import HomePage from './components/HomePage';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import EnvironmentsPage from './components/EnvironmentsPage';
 import EnvironmentDetailPage from './components/EnvironmentDetailPage';
 import SettingsPage from './components/SettingsPage';
 import AuraChatButton from './components/AuraChatButton';
-import { initialEnvironments } from './config/environmentsConfig';
+import ErrorBoundary from './components/ErrorBoundary';
+import authService from './services/authService';
+import { useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { AuthProvider } from './contexts/AuthContext';
 
-export default function App() {
-  const [currentPage, setCurrentPage] = useState('home');
-  const [selectedEnvironment, setSelectedEnvironment] = useState(null);
-  const [environments, setEnvironments] = useState(initialEnvironments);
+function AppContent() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [environments, setEnvironments] = useState([]);
+  const [environmentsLoading, setEnvironmentsLoading] = useState(true);
 
-  const handleCreateEnvironment = (newEnv) => {
-    const newEnvironment = {
-      ...newEnv,
-      id: Math.max(...environments.map(e => e.id), 0) + 1,
-      status: 'pending'
-    };
-    setEnvironments([...environments, newEnvironment]);
-  };
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      loadEnvironments();
+    }
+  }, [isAuthenticated, isLoading]);
 
-  const handleDeleteEnvironment = (envId) => {
-    setEnvironments(environments.filter(env => env.id !== envId));
-  };
-
-  const handleUpdateEnvironment = (updatedEnv) => {
-    setEnvironments(environments.map(env =>
-      env.id === updatedEnv.id ? updatedEnv : env
-    ));
-    // Update selected environment if it's the one being updated
-    if (selectedEnvironment?.id === updatedEnv.id) {
-      setSelectedEnvironment(updatedEnv);
+  const loadEnvironments = async () => {
+    try {
+      setEnvironmentsLoading(true);
+      const userEnvironments = await authService.get('/environments');
+      setEnvironments(userEnvironments);
+    } catch (error) {
+      console.error('Failed to load environments:', error);
+    } finally {
+      setEnvironmentsLoading(false);
     }
   };
 
-  const handleViewEnvironment = (environment) => {
-    setSelectedEnvironment(environment);
-    setCurrentPage('environment-detail');
-  };
-
-  const handleBackToEnvironments = () => {
-    setSelectedEnvironment(null);
-    setCurrentPage('environments');
-  };
-
-  const handleClearSelectedEnvironment = () => {
-    setSelectedEnvironment(null);
-  };
-
-  const renderPage = () => {
-    switch(currentPage) {
-      case 'home':
-        return <HomePage setCurrentPage={setCurrentPage} currentPage={currentPage} />;
-      case 'environments':
-        return (
-          <EnvironmentsPage
-            setCurrentPage={setCurrentPage}
-            currentPage={currentPage}
-            environments={environments}
-            onCreateEnvironment={handleCreateEnvironment}
-            onDeleteEnvironment={handleDeleteEnvironment}
-            onUpdateEnvironment={handleUpdateEnvironment}
-            onViewEnvironment={handleViewEnvironment}
-            selectedEnvironment={selectedEnvironment}
-            onClearSelectedEnvironment={handleClearSelectedEnvironment}
-          />
-        );
-      case 'environment-detail':
-        return (
-          <EnvironmentDetailPage
-            environment={selectedEnvironment}
-            onBack={handleBackToEnvironments}
-            onEdit={(env) => {
-              setSelectedEnvironment(env);
-              setCurrentPage('environments'); // Navigate to environments page to show edit modal
-            }}
-            onDelete={handleDeleteEnvironment}
-            setCurrentPage={setCurrentPage}
-            currentPage={currentPage}
-          />
-        );
-      case 'settings':
-        return <SettingsPage setCurrentPage={setCurrentPage} currentPage={currentPage} />;
-      default:
-        return <HomePage setCurrentPage={setCurrentPage} currentPage={currentPage} />;
+  const handleCreateEnvironment = async (newEnv) => {
+    try {
+      const createdEnvironment = await authService.post('/environments', newEnv);
+      setEnvironments([createdEnvironment, ...environments]);
+      return createdEnvironment;
+    } catch (error) {
+      console.error('Failed to create environment:', error);
+      throw error;
     }
   };
+
+  const handleDeleteEnvironment = async (envId) => {
+    try {
+      await authService.delete(`/environments/${envId}`);
+      setEnvironments(environments.filter(env => env.id !== envId));
+    } catch (error) {
+      console.error('Failed to delete environment:', error);
+      throw error;
+    }
+  };
+
+  const handleUpdateEnvironment = async (updatedEnv) => {
+    try {
+      const updated = await authService.put(`/environments/${updatedEnv.id}`, updatedEnv);
+      setEnvironments(environments.map(env =>
+        env.id === updated.id ? updated : env
+      ));
+      return updated;
+    } catch (error) {
+      console.error('Failed to update environment:', error);
+      throw error;
+    }
+  };
+
+
+  if (isLoading || environmentsLoading) {
+    return (
+      <div className="min-h-screen bg-openprime-gradient flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-white text-lg font-poppins">Loading OpenPrime...</p>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <ThemeProvider>
       <ToastProvider>
-        {renderPage()}
-        <AuraChatButton />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Navigate to="/environments" replace />} />
+            <Route
+              path="/environments"
+              element={
+                <EnvironmentsPage
+                  environments={environments}
+                  onCreateEnvironment={handleCreateEnvironment}
+                  onDeleteEnvironment={handleDeleteEnvironment}
+                  onUpdateEnvironment={handleUpdateEnvironment}
+                />
+              }
+            />
+            <Route
+              path="/environments/:id"
+              element={
+                <EnvironmentDetailPage
+                  onEdit={handleUpdateEnvironment}
+                  onDelete={handleDeleteEnvironment}
+                />
+              }
+            />
+            <Route
+              path="/settings"
+              element={<SettingsPage />}
+            />
+          </Routes>
+          <AuraChatButton />
+        </BrowserRouter>
       </ToastProvider>
     </ThemeProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

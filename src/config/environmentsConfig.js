@@ -6,7 +6,7 @@ export const initialEnvironments = [
   {
     id: 1,
     name: 'Production',
-    type: 'aws',
+    provider: 'aws',
     status: 'running',
     region: 'us-east-1',
     services: {
@@ -147,7 +147,7 @@ export const initialEnvironments = [
   {
     id: 2,
     name: 'Development',
-    type: 'onpremise',
+    provider: 'onpremise',
     status: 'running',
     location: 'Datacenter EU-1',
     services: {
@@ -163,7 +163,7 @@ export const PROVIDERS = PROVIDERS_CONFIG;
 
 export const createEmptyEnvironment = (providerType = 'aws') => ({
   name: '',
-  type: providerType,
+  provider: providerType,
   region: getProviderConfig(providerType).defaultRegion,
   services: createEmptyServices(providerType)
 });

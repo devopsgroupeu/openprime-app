@@ -2,7 +2,7 @@ import React from 'react';
 import { X, AlertTriangle } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
-const ConfirmDeleteModal = ({ environment, onClose, onConfirm }) => {
+const ConfirmDeleteModal = ({ environment, onClose, onConfirm, isOpen, title, message }) => {
   const { isDark } = useTheme();
 
   return (
@@ -17,7 +17,7 @@ const ConfirmDeleteModal = ({ environment, onClose, onConfirm }) => {
             isDark ? 'text-white' : 'text-gray-900'
           }`}>
             <AlertTriangle className="w-6 h-6 text-red-500 mr-2" />
-            Delete Environment
+            {title || 'Delete Environment'}
           </h2>
           <button
             onClick={onClose}
@@ -35,7 +35,7 @@ const ConfirmDeleteModal = ({ environment, onClose, onConfirm }) => {
           <p className={`mb-4 transition-colors ${
             isDark ? 'text-gray-300' : 'text-gray-700'
           }`}>
-            Are you sure you want to delete the environment <strong>"{environment.name}"</strong>?
+            {message || `Are you sure you want to delete the environment "${environment?.name}"?`}
           </p>
           <p className={`mb-6 text-sm transition-colors ${
             isDark ? 'text-gray-400' : 'text-gray-600'

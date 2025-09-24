@@ -3,9 +3,14 @@ import React from 'react';
 import { Cloud, MapPin, Type } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { PROVIDERS, createEmptyEnvironment } from '../../../config/environmentsConfig';
+import { getAllProviders } from '../../../config/providersConfig';
 
-const BasicConfigStep = ({ newEnv, setNewEnv }) => {
+const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
   const { isDark } = useTheme();
+
+  const getFieldError = (fieldName) => {
+    return validationErrors.find(error => error.field === fieldName);
+  };
 
   const handleProviderChange = (providerType) => {
     const emptyEnv = createEmptyEnvironment(providerType);
@@ -56,7 +61,9 @@ const BasicConfigStep = ({ newEnv, setNewEnv }) => {
         <input
           type="text"
           className={`w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 text-lg ${
-            isDark
+            getFieldError('name')
+              ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+              : isDark
               ? 'bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20'
               : 'bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20'
           }`}
@@ -64,11 +71,17 @@ const BasicConfigStep = ({ newEnv, setNewEnv }) => {
           value={newEnv.name}
           onChange={(e) => setNewEnv({...newEnv, name: e.target.value})}
         />
-        <p className={`text-xs mt-2 ${
-          isDark ? 'text-gray-400' : 'text-gray-500'
-        }`}>
-          Choose a descriptive name that identifies the purpose of this environment
-        </p>
+        {getFieldError('name') ? (
+          <p className="text-red-500 text-xs mt-2">
+            {getFieldError('name').message}
+          </p>
+        ) : (
+          <p className={`text-xs mt-2 ${
+            isDark ? 'text-gray-400' : 'text-gray-500'
+          }`}>
+            Choose a descriptive name that identifies the purpose of this environment
+          </p>
+        )}
       </div>
 
       {/* Cloud Provider */}
@@ -86,36 +99,52 @@ const BasicConfigStep = ({ newEnv, setNewEnv }) => {
           </label>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {Object.entries(PROVIDERS).map(([key, provider]) => (
+          {getAllProviders().map((provider) => (
             <button
-              key={key}
-              onClick={() => handleProviderChange(key)}
-              className={`p-4 rounded-lg border-2 transition-all hover:scale-105 ${
-                newEnv.type === key
+              key={provider.value}
+              onClick={() => handleProviderChange(provider.value)}
+              disabled={!provider.enabled}
+              className={`p-4 rounded-lg border-2 transition-all ${
+                provider.enabled ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
+              } ${
+                newEnv.provider === provider.value
                   ? isDark
                     ? 'border-teal-500 bg-teal-500/20 text-white'
                     : 'border-teal-500 bg-teal-50 text-teal-700'
+                  : provider.enabled
+                  ? isDark
+                    ? 'border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
                   : isDark
-                  ? 'border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500'
-                  : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                  ? 'border-gray-700 bg-gray-800/30 text-gray-500'
+                  : 'border-gray-200 bg-gray-50 text-gray-400'
               }`}
             >
               <div className="text-center">
                 <div className={`w-8 h-8 mx-auto mb-2 rounded-full flex items-center justify-center ${
-                  newEnv.type === key
+                  newEnv.provider === provider.value
                     ? 'bg-teal-500 text-white'
-                    : isDark ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-600'
+                    : provider.enabled
+                    ? isDark ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-600'
+                    : isDark ? 'bg-gray-700 text-gray-500' : 'bg-gray-100 text-gray-400'
                 }`}>
                   <Cloud className="w-4 h-4" />
                 </div>
                 <div className="text-sm font-medium">{provider.name}</div>
                 <div className={`text-xs mt-1 ${
-                  isDark ? 'text-gray-400' : 'text-gray-500'
+                  provider.enabled
+                    ? isDark ? 'text-gray-400' : 'text-gray-500'
+                    : isDark ? 'text-gray-500' : 'text-gray-400'
                 }`}>
-                  {key === 'aws' ? 'Amazon Web Services' :
-                   key === 'azure' ? 'Microsoft Azure' :
-                   key === 'gcp' ? 'Google Cloud Platform' :
+                  {provider.value === 'aws' ? 'Amazon Web Services' :
+                   provider.value === 'azure' ? 'Microsoft Azure' :
+                   provider.value === 'gcp' ? 'Google Cloud Platform' :
                    'Self-managed'}
+                  {!provider.enabled && (
+                    <span className="block text-xs mt-1 font-medium text-orange-500">
+                      Disabled
+                    </span>
+                  )}
                 </div>
               </div>
             </button>
@@ -138,7 +167,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv }) => {
           </label>
         </div>
 
-        {newEnv.type && PROVIDERS[newEnv.type] ? (
+        {newEnv.provider && PROVIDERS[newEnv.provider] ? (
           <div>
             <select
               className={`w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 text-lg ${
@@ -149,7 +178,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv }) => {
               value={newEnv.region}
               onChange={(e) => setNewEnv({...newEnv, region: e.target.value})}
             >
-              {PROVIDERS[newEnv.type].regions.map((region) => (
+              {PROVIDERS[newEnv.provider].regions.map((region) => (
                 <option key={region.value} value={region.value}>
                   {region.label}
                 </option>
@@ -174,7 +203,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv }) => {
       </div>
 
       {/* Summary */}
-      {newEnv.name && newEnv.type && newEnv.region && (
+      {newEnv.name && newEnv.provider && newEnv.region && (
         <div className={`p-4 rounded-lg border ${
           isDark
             ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300'
@@ -183,7 +212,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv }) => {
           <div className="flex items-center">
             <div className="w-2 h-2 bg-emerald-500 rounded-full mr-3"></div>
             <span className="text-sm font-medium">
-              Ready to create "{newEnv.name}" on {PROVIDERS[newEnv.type]?.name} in {PROVIDERS[newEnv.type]?.regions.find(r => r.value === newEnv.region)?.label}
+              Ready to create "{newEnv.name}" on {PROVIDERS[newEnv.provider]?.name} in {PROVIDERS[newEnv.provider]?.regions.find(r => r.value === newEnv.region)?.label}
             </span>
           </div>
         </div>

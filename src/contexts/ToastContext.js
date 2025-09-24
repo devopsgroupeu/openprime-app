@@ -19,28 +19,28 @@ const ToastItem = ({ toast, onRemove }) => {
   const getIcon = () => {
     switch (toast.type) {
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-emerald-500" />;
+        return <CheckCircle className="w-5 h-5 text-success" />;
       case 'error':
-        return <XCircle className="w-5 h-5 text-red-500" />;
+        return <XCircle className="w-5 h-5 text-danger" />;
       case 'warning':
-        return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+        return <AlertCircle className="w-5 h-5 text-warning" />;
       case 'info':
       default:
-        return <Info className="w-5 h-5 text-blue-500" />;
+        return <Info className="w-5 h-5 text-info" />;
     }
   };
 
   const getBorderColor = () => {
     switch (toast.type) {
       case 'success':
-        return 'border-l-emerald-500';
+        return 'border-l-success';
       case 'error':
-        return 'border-l-red-500';
+        return 'border-l-danger';
       case 'warning':
-        return 'border-l-yellow-500';
+        return 'border-l-warning';
       case 'info':
       default:
-        return 'border-l-blue-500';
+        return 'border-l-info';
     }
   };
 
