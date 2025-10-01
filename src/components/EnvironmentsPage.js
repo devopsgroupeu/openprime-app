@@ -8,6 +8,7 @@ import EnvironmentWizard from './modals/EnvironmentWizard';
 import HelmValuesModal from './modals/HelmValuesModal';
 import { createEmptyEnvironment } from '../config/environmentsConfig';
 import { useToast } from '../contexts/ToastContext';
+import keycloak from '../config/keycloak';
 
 const EnvironmentsPage = ({ environments, onCreateEnvironment, onDeleteEnvironment, onUpdateEnvironment }) => {
   const { success, error } = useToast();
@@ -31,19 +32,19 @@ const EnvironmentsPage = ({ environments, onCreateEnvironment, onDeleteEnvironme
     }
 
     setIsLoading(true);
+    console.log(environments);
 
     try {
       // Send all services (enabled and disabled) to maintain complete configuration
       const environmentConfig = {
-        prefix: newEnv.name,
-        // name: newEnv.name,
-        // provider: newEnv.provider,
-        // region: newEnv.region,
-        // services: newEnv.services || {} Commented due to Demo mode
+        name: newEnv.name,
+        provider: newEnv.provider,
+        region: newEnv.region,
+        services: newEnv.services || {}
       };
-
+      const userName = keycloak.idTokenParsed.family_name.toLowerCase();
       try {
-        const deployedUrl = `${newEnv.name}.openprime.io`;
+        const deployedUrl = `https://apps.openprime.io/${newEnv.name}-${userName}`;
         if (isEditMode) {
           await onUpdateEnvironment(environmentConfig);
           setLastDeployedUrl(deployedUrl);
@@ -142,7 +143,7 @@ const EnvironmentsPage = ({ environments, onCreateEnvironment, onDeleteEnvironme
             <div className="flex gap-2">
               <button
                 onClick={() => window.open(lastDeployedUrl, '_blank', 'noopener')}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-inverse rounded-lg font-semibold font-poppins transition-all duration-200 shadow-elevation-2 hover:shadow-elevation-3"
               >
                 <ExternalLink className="w-4 h-4" />
                 Open app

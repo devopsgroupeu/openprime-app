@@ -37,7 +37,9 @@ function AppContent() {
 
   const handleCreateEnvironment = async (newEnv) => {
     try {
-      const createdEnvironment = await authService.post('/deployment/deploy', newEnv);
+      const prefix = {prefix: newEnv.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}
+      await authService.postJava('/deployment/deploy', prefix);
+      const createdEnvironment = await authService.post('/environments', newEnv);
       setEnvironments([createdEnvironment, ...environments]);
       return createdEnvironment;
     } catch (error) {

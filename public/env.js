@@ -14,7 +14,8 @@ window._env_ = {
   KEYCLOAK_CLIENT_ID: "$REACT_APP_KEYCLOAK_CLIENT_ID",
 
   // Backend API Configuration
-  API_URL: "$REACT_APP_API_URL"
+  API_URL: "$REACT_APP_API_URL",
+  JAVA_API_URL: "$JAVA_APP_API_URL"
 };
 
 // Development debugging - shows which variables are runtime vs build-time

@@ -40,6 +40,32 @@ export class AuthService {
     }
   }
 
+  async makeAuthenticatedRequestJava(url, options = {}) {
+    try {
+      const response = await fetch(`http://localhost:8082/api${url}`, {
+        ...options,
+        headers: {
+          ...this.getAuthHeaders(),
+          ...options.headers
+        }
+      });
+
+      if (response.status === 401) {
+        keycloak.logout();
+        throw new Error('Session expired');
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return response;
+    } catch (error) {
+      console.error('API request failed:', error);
+      throw error;
+    }
+  }
+
   async get(url) {
     const response = await this.makeAuthenticatedRequest(url);
     return response.json();
@@ -47,6 +73,13 @@ export class AuthService {
 
   async post(url, data) {
     const response = await this.makeAuthenticatedRequest(url, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    return response.json();
+  }
+  async postJava(url, data) {
+    const response = await this.makeAuthenticatedRequestJava(url, {
       method: 'POST',
       body: JSON.stringify(data)
     });
