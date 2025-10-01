@@ -1,7 +1,7 @@
 // src/components/EnvironmentsPage.js
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, ExternalLink, Copy } from 'lucide-react';
 import Navigation from './Navigation';
 import EnvironmentCard from './EnvironmentCard';
 import EnvironmentWizard from './modals/EnvironmentWizard';
@@ -19,6 +19,7 @@ const EnvironmentsPage = ({ environments, onCreateEnvironment, onDeleteEnvironme
   const [expandedServices, setExpandedServices] = useState({});
   const [isEditMode, setIsEditMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [lastDeployedUrl, setLastDeployedUrl] = useState(null);
 
   const handleCreateEnvironment = async () => {
     if (!newEnv.name) {
@@ -34,18 +35,21 @@ const EnvironmentsPage = ({ environments, onCreateEnvironment, onDeleteEnvironme
     try {
       // Send all services (enabled and disabled) to maintain complete configuration
       const environmentConfig = {
-        name: newEnv.name,
-        provider: newEnv.provider,
-        region: newEnv.region,
-        services: newEnv.services || {}
+        prefix: newEnv.name,
+        // name: newEnv.name,
+        // provider: newEnv.provider,
+        // region: newEnv.region,
+        // services: newEnv.services || {} Commented due to Demo mode
       };
 
-      // Call parent component to handle creation (App.js handles the API call)
       try {
+        const deployedUrl = `${newEnv.name}.openprime.io`;
         if (isEditMode) {
           await onUpdateEnvironment(environmentConfig);
+          setLastDeployedUrl(deployedUrl);
         } else {
           await onCreateEnvironment(environmentConfig);
+          setLastDeployedUrl(deployedUrl);
         }
 
         success('Environment synced with backend successfully', {
@@ -122,6 +126,44 @@ const EnvironmentsPage = ({ environments, onCreateEnvironment, onDeleteEnvironme
     <div className="min-h-screen transition-colors duration-200 bg-background">
       <Navigation />
       <div className="max-w-7xl mx-auto px-8 py-8">
+        {lastDeployedUrl && (
+          <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="font-semibold text-emerald-900">App deployed</span>
+              <a
+                href={lastDeployedUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-emerald-700 underline break-all"
+              >
+                {lastDeployedUrl}
+              </a>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => window.open(lastDeployedUrl, '_blank', 'noopener')}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Open app
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(lastDeployedUrl);
+                    success('Link copied to clipboard', { title: 'Copied', duration: 2000 });
+                  } catch {
+                    error('Could not copy link', { title: 'Clipboard Error', duration: 3000 });
+                  }
+                }}
+                className="inline-flex items-center gap-2 px-3 py-2 border border-emerald-300 rounded-lg text-emerald-800 hover:bg-emerald-100"
+              >
+                <Copy className="w-4 h-4" />
+                Copy link
+              </button>
+            </div>
+          </div>
+        )}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold font-sora transition-colors duration-200 text-primary">
             Environments

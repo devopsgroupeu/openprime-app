@@ -37,7 +37,7 @@ function AppContent() {
 
   const handleCreateEnvironment = async (newEnv) => {
     try {
-      const createdEnvironment = await authService.post('/environments', newEnv);
+      const createdEnvironment = await authService.post('/deployment/deploy', newEnv);
       setEnvironments([createdEnvironment, ...environments]);
       return createdEnvironment;
     } catch (error) {
