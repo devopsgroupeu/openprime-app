@@ -42,7 +42,7 @@ export class AuthService {
 
   async makeAuthenticatedRequestJava(url, options = {}) {
     try {
-      const response = await fetch(`http://localhost:8082/api${url}`, {
+      const response = await fetch(`https://app.openprime.io/api${url}`, {
         ...options,
         headers: {
           ...this.getAuthHeaders(),
