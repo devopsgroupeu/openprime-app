@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Download, Copy, Code, FileText } from 'lucide-react';
+import { Download, Copy, Code, FileText, Package } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
+import authService from '../../services/authService';
 
 const EnvironmentConfiguration = ({ environment }) => {
   const { isDark } = useTheme();
-  const { success } = useToast();
+  const { success, error: showError } = useToast();
   const [format, setFormat] = useState('json');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const generateConfiguration = () => {
     return {
@@ -80,6 +82,41 @@ const EnvironmentConfiguration = ({ environment }) => {
     });
   };
 
+  const generateInfrastructure = async () => {
+    try {
+      setIsGenerating(true);
+
+      const response = await authService.post(
+        `/environments/${environment.id}/generate`,
+        {},
+        {
+          responseType: 'blob',
+          timeout: 120000
+        }
+      );
+
+      const blob = new Blob([response.data], { type: 'application/zip' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${environment.name}-infrastructure.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      success('Infrastructure repository generated and downloaded successfully');
+    } catch (err) {
+      console.error('Error generating infrastructure:', err);
+      showError(
+        err.response?.data?.error ||
+        'Failed to generate infrastructure. Please try again.'
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const content = getFormattedContent();
 
   return (
@@ -144,6 +181,20 @@ const EnvironmentConfiguration = ({ environment }) => {
           >
             <Download className="w-4 h-4 inline mr-2" />
             Download
+          </button>
+          <button
+            onClick={generateInfrastructure}
+            disabled={isGenerating}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              isGenerating
+                ? 'bg-gray-500 cursor-not-allowed text-white'
+                : isDark
+                  ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                  : 'bg-purple-600 hover:bg-purple-700 text-white'
+            }`}
+          >
+            <Package className="w-4 h-4 inline mr-2" />
+            {isGenerating ? 'Generating...' : 'Generate Repository'}
           </button>
         </div>
       </div>
