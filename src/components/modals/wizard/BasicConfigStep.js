@@ -98,7 +98,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
             Cloud Provider
           </label>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
           {getAllProviders().map((provider) => (
             <button
               key={provider.value}

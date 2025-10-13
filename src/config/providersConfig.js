@@ -22,54 +22,54 @@ export const PROVIDERS_CONFIG = {
       { value: 'sa-east-1', label: 'South America (São Paulo)' }
     ]
   },
-  azure: {
-    name: 'Microsoft Azure',
-    type: 'azure',
-    enabled: false,
-    defaultRegion: 'East US',
-    regions: [
-      { value: 'East US', label: 'East US' },
-      { value: 'East US 2', label: 'East US 2' },
-      { value: 'West US', label: 'West US' },
-      { value: 'West US 2', label: 'West US 2' },
-      { value: 'West US 3', label: 'West US 3' },
-      { value: 'Central US', label: 'Central US' },
-      { value: 'North Central US', label: 'North Central US' },
-      { value: 'South Central US', label: 'South Central US' },
-      { value: 'West Europe', label: 'West Europe' },
-      { value: 'North Europe', label: 'North Europe' },
-      { value: 'UK South', label: 'UK South' },
-      { value: 'UK West', label: 'UK West' },
-      { value: 'Southeast Asia', label: 'Southeast Asia' },
-      { value: 'East Asia', label: 'East Asia' },
-      { value: 'Japan East', label: 'Japan East' },
-      { value: 'Japan West', label: 'Japan West' },
-      { value: 'Australia East', label: 'Australia East' },
-      { value: 'Australia Southeast', label: 'Australia Southeast' }
-    ]
-  },
-  gcp: {
-    name: 'Google Cloud Platform',
-    type: 'gcp',
-    enabled: false,
-    defaultRegion: 'us-central1',
-    regions: [
-      { value: 'us-central1', label: 'US Central (Iowa)' },
-      { value: 'us-east1', label: 'US East (South Carolina)' },
-      { value: 'us-east4', label: 'US East (Northern Virginia)' },
-      { value: 'us-west1', label: 'US West (Oregon)' },
-      { value: 'us-west2', label: 'US West (Los Angeles)' },
-      { value: 'us-west3', label: 'US West (Salt Lake City)' },
-      { value: 'us-west4', label: 'US West (Las Vegas)' },
-      { value: 'europe-west1', label: 'Europe West (Belgium)' },
-      { value: 'europe-west2', label: 'Europe West (London)' },
-      { value: 'europe-west3', label: 'Europe West (Frankfurt)' },
-      { value: 'europe-west4', label: 'Europe West (Netherlands)' },
-      { value: 'asia-east1', label: 'Asia East (Taiwan)' },
-      { value: 'asia-northeast1', label: 'Asia Northeast (Tokyo)' },
-      { value: 'asia-southeast1', label: 'Asia Southeast (Singapore)' }
-    ]
-  },
+  // azure: {
+  //   name: 'Microsoft Azure',
+  //   type: 'azure',
+  //   enabled: false,
+  //   defaultRegion: 'East US',
+  //   regions: [
+  //     { value: 'East US', label: 'East US' },
+  //     { value: 'East US 2', label: 'East US 2' },
+  //     { value: 'West US', label: 'West US' },
+  //     { value: 'West US 2', label: 'West US 2' },
+  //     { value: 'West US 3', label: 'West US 3' },
+  //     { value: 'Central US', label: 'Central US' },
+  //     { value: 'North Central US', label: 'North Central US' },
+  //     { value: 'South Central US', label: 'South Central US' },
+  //     { value: 'West Europe', label: 'West Europe' },
+  //     { value: 'North Europe', label: 'North Europe' },
+  //     { value: 'UK South', label: 'UK South' },
+  //     { value: 'UK West', label: 'UK West' },
+  //     { value: 'Southeast Asia', label: 'Southeast Asia' },
+  //     { value: 'East Asia', label: 'East Asia' },
+  //     { value: 'Japan East', label: 'Japan East' },
+  //     { value: 'Japan West', label: 'Japan West' },
+  //     { value: 'Australia East', label: 'Australia East' },
+  //     { value: 'Australia Southeast', label: 'Australia Southeast' }
+  //   ]
+  // },
+  // gcp: {
+  //   name: 'Google Cloud Platform',
+  //   type: 'gcp',
+  //   enabled: false,
+  //   defaultRegion: 'us-central1',
+  //   regions: [
+  //     { value: 'us-central1', label: 'US Central (Iowa)' },
+  //     { value: 'us-east1', label: 'US East (South Carolina)' },
+  //     { value: 'us-east4', label: 'US East (Northern Virginia)' },
+  //     { value: 'us-west1', label: 'US West (Oregon)' },
+  //     { value: 'us-west2', label: 'US West (Los Angeles)' },
+  //     { value: 'us-west3', label: 'US West (Salt Lake City)' },
+  //     { value: 'us-west4', label: 'US West (Las Vegas)' },
+  //     { value: 'europe-west1', label: 'Europe West (Belgium)' },
+  //     { value: 'europe-west2', label: 'Europe West (London)' },
+  //     { value: 'europe-west3', label: 'Europe West (Frankfurt)' },
+  //     { value: 'europe-west4', label: 'Europe West (Netherlands)' },
+  //     { value: 'asia-east1', label: 'Asia East (Taiwan)' },
+  //     { value: 'asia-northeast1', label: 'Asia Northeast (Tokyo)' },
+  //     { value: 'asia-southeast1', label: 'Asia Southeast (Singapore)' }
+  //   ]
+  // },
   onpremise: {
     name: 'On-Premise',
     type: 'onpremise',
