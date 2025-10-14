@@ -44,7 +44,7 @@ const EnvironmentsPage = ({ environments, onCreateEnvironment, onDeleteEnvironme
       };
       const userName = keycloak.idTokenParsed.family_name.toLowerCase();
       try {
-        const deployedUrl = `https://apps.openprime.io/${newEnv.name}-${userName}`;
+        const deployedUrl = `https://apps.openprime.io/${newEnv.name.toLowerCase()}-${userName}`;
         if (isEditMode) {
           await onUpdateEnvironment(environmentConfig);
           setLastDeployedUrl(deployedUrl);

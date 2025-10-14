@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Activity, TrendingUp, Settings, Download, Eye, BarChart3, Shield,
-  Database, Container
+  Database, Container, ExternalLink
 } from 'lucide-react';
 import Navigation from './Navigation';
 import { useTheme } from '../contexts/ThemeContext';
@@ -17,6 +17,7 @@ import ServicesOverview from './environment-detail/ServicesOverview';
 import HelmChartsList from './environment-detail/HelmChartsList';
 import EnvironmentConfiguration from './environment-detail/EnvironmentConfiguration';
 import { getProviderConfig } from '../config/providersConfig';
+import keycloak from '../config/keycloak';
 
 const EnvironmentDetailPage = ({
   onEdit,
@@ -91,6 +92,14 @@ const EnvironmentDetailPage = ({
   }
 
   const providerConfig = getProviderConfig(environment.provider);
+
+  const getAppUrl = () => {
+    
+    const family = keycloak.idTokenParsed.family_name || 'user';
+    const envSlug = String(environment.name || '').toLowerCase().replace(/\s+/g, '');
+    const familySlug = String(family).toLowerCase().replace(/\s+/g, '');
+    return `https://apps.openprime.io/${envSlug}-${familySlug}`;
+  };
 
   const handleEdit = () => {
     setEditEnv({ ...environment });
@@ -332,6 +341,19 @@ const EnvironmentDetailPage = ({
               Quick Actions
             </h3>
             <div className="space-y-3">
+              <a
+                href={getAppUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`w-full p-3 rounded-lg flex items-center space-x-3 transition-colors ${
+                  isDark
+                    ? 'bg-green-600/20 hover:bg-green-600/30 text-green-400'
+                    : 'bg-green-50 hover:bg-green-100 text-green-700'
+                }`}
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span>Open Deployed App</span>
+              </a>
               <button
                 onClick={handleEdit}
                 className={`w-full p-3 rounded-lg flex items-center space-x-3 transition-colors ${
