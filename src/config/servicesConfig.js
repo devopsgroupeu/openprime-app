@@ -80,7 +80,7 @@ export const SERVICES_CONFIG = {
         name: "natGateway",
         displayName: "NAT Gateway",
         description: "NAT Gateway configuration",
-        defaultValue: "single",
+        defaultValue: "SINGLE",
         options: [
           { value: "NO_NAT", label: "No NAT" },
           { value: "SINGLE", label: "Single NAT Gateway" },
