@@ -92,19 +92,6 @@ export const HELM_CHARTS_CONFIG = {
     version: '1.12.0',
     namespace: 'external-dns'
   },
-  nginx: {
-    name: 'nginx',
-    displayName: 'NGINX Ingress',
-    description: 'Ingress controller using NGINX',
-    category: 'Networking',
-    k8sServices: ['eks', 'aks', 'gke', 'kubernetes'],
-    defaultEnabled: false,
-    defaultCustomValues: false,
-    repository: 'ingress-nginx',
-    chart: 'ingress-nginx',
-    version: '4.4.2',
-    namespace: 'ingress-nginx'
-  },
   istio: {
     name: 'istio',
     displayName: 'Istio',
