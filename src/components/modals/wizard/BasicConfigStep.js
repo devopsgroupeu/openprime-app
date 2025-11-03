@@ -1,12 +1,34 @@
 // src/components/modals/wizard/BasicConfigStep.js
-import React from 'react';
-import { Cloud, MapPin, Type } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Cloud, MapPin, Type, Key } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { PROVIDERS, createEmptyEnvironment } from '../../../config/environmentsConfig';
 import { getAllProviders } from '../../../config/providersConfig';
+import authService from '../../../services/authService';
 
 const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
   const { isDark } = useTheme();
+  const [credentials, setCredentials] = useState([]);
+  const [loadingCredentials, setLoadingCredentials] = useState(false);
+
+  useEffect(() => {
+    if (newEnv.provider) {
+      loadCredentials(newEnv.provider);
+    }
+  }, [newEnv.provider]);
+
+  const loadCredentials = async (provider) => {
+    try {
+      setLoadingCredentials(true);
+      const response = await authService.get(`/cloud-credentials?provider=${provider}`);
+      setCredentials(response.credentials || []);
+    } catch (error) {
+      console.error('Failed to load credentials:', error);
+      setCredentials([]);
+    } finally {
+      setLoadingCredentials(false);
+    }
+  };
 
   const getFieldError = (fieldName) => {
     return validationErrors.find(error => error.field === fieldName);
@@ -16,7 +38,8 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
     const emptyEnv = createEmptyEnvironment(providerType);
     setNewEnv({
       ...emptyEnv,
-      name: newEnv.name // Preserve the environment name
+      name: newEnv.name,
+      cloudCredentialId: null
     });
   };
 
@@ -151,6 +174,67 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
           ))}
         </div>
       </div>
+
+      {/* Cloud Credentials Selection */}
+      {newEnv.provider && (
+        <div className={`p-6 rounded-xl border ${
+          isDark
+            ? 'bg-gray-800/50 border-gray-700'
+            : 'bg-white/70 border-gray-200'
+        }`}>
+          <div className="flex items-center mb-4">
+            <Key className="w-5 h-5 mr-2 text-teal-500" />
+            <label className={`text-sm font-medium ${
+              isDark ? 'text-gray-300' : 'text-gray-700'
+            }`}>
+              Cloud Credentials (Optional)
+            </label>
+          </div>
+
+          {loadingCredentials ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
+            </div>
+          ) : credentials.length > 0 ? (
+            <div>
+              <select
+                className={`w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 text-lg ${
+                  isDark
+                    ? 'bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20'
+                    : 'bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20'
+                }`}
+                value={newEnv.cloudCredentialId || ''}
+                onChange={(e) => setNewEnv({...newEnv, cloudCredentialId: e.target.value || null})}
+              >
+                <option value="">No credentials (manual configuration)</option>
+                {credentials.map((cred) => (
+                  <option key={cred.id} value={cred.id}>
+                    {cred.name} - {cred.identifier}
+                    {cred.isDefault ? ' (Default)' : ''}
+                  </option>
+                ))}
+              </select>
+              <p className={`text-xs mt-2 ${
+                isDark ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                Select saved credentials to use for this environment
+              </p>
+            </div>
+          ) : (
+            <div className={`p-4 rounded-lg border-2 border-dashed text-center ${
+              isDark
+                ? 'border-gray-600 bg-gray-700/30 text-gray-400'
+                : 'border-gray-300 bg-gray-50 text-gray-500'
+            }`}>
+              <Key className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p className="mb-2">No saved credentials found</p>
+              <p className="text-xs">
+                Add credentials in Settings to use them for deployments
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Region Selection */}
       <div className={`p-6 rounded-xl border ${

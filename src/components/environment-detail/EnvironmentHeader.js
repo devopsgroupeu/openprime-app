@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit2, Trash2, Cloud, Server, MapPin } from 'lucide-react';
+import { ArrowLeft, Edit2, Trash2, Cloud, Server, MapPin, Key } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const EnvironmentHeader = ({
@@ -74,6 +74,16 @@ const EnvironmentHeader = ({
                       {environment.region}
                     </span>
                   </div>
+                  {environment.cloudCredential && (
+                    <div className="flex items-center space-x-1">
+                      <Key className="w-4 h-4 text-gray-400" />
+                      <span className={`text-sm ${
+                        isDark ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
+                        {environment.cloudCredential.name} ({environment.cloudCredential.identifier})
+                      </span>
+                    </div>
+                  )}
                   <div className={`px-2 py-1 rounded-full border text-xs font-medium ${
                     getStatusColor(environment.status)
                   }`}>

@@ -11,7 +11,7 @@ const EnvironmentConfiguration = ({ environment }) => {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const generateConfiguration = () => {
-    return {
+    const config = {
       name: environment.name,
       provider: environment.provider,
       region: environment.region,
@@ -20,6 +20,16 @@ const EnvironmentConfiguration = ({ environment }) => {
       createdAt: environment.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
+
+    if (environment.cloudCredential) {
+      config.cloudCredential = {
+        name: environment.cloudCredential.name,
+        identifier: environment.cloudCredential.identifier,
+        provider: environment.cloudCredential.provider
+      };
+    }
+
+    return config;
   };
 
   const formatAsYAML = (obj, indent = 0) => {

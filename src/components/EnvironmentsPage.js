@@ -37,7 +37,8 @@ const EnvironmentsPage = ({ environments, onCreateEnvironment, onDeleteEnvironme
         name: newEnv.name,
         provider: newEnv.provider,
         region: newEnv.region,
-        services: newEnv.services || {}
+        services: newEnv.services || {},
+        cloudCredentialId: newEnv.cloudCredentialId || null
       };
 
       // Call parent component to handle creation (App.js handles the API call)
