@@ -1,15 +1,20 @@
 // src/components/modals/wizard/BasicConfigStep.js
 import React, { useState, useEffect } from 'react';
-import { Cloud, MapPin, Type, Key } from 'lucide-react';
+import { Cloud, MapPin, Type, Key, Database, Loader, CheckCircle } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useToast } from '../../../contexts/ToastContext';
 import { PROVIDERS, createEmptyEnvironment } from '../../../config/environmentsConfig';
 import { getAllProviders } from '../../../config/providersConfig';
 import authService from '../../../services/authService';
 
 const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
   const { isDark } = useTheme();
+  const toast = useToast();
   const [credentials, setCredentials] = useState([]);
   const [loadingCredentials, setLoadingCredentials] = useState(false);
+  const [creatingBackend, setCreatingBackend] = useState(false);
+  const [backendCreated, setBackendCreated] = useState(false);
+  const [createdBucketName, setCreatedBucketName] = useState(null);
 
   useEffect(() => {
     if (newEnv.provider) {
@@ -41,6 +46,56 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
       name: newEnv.name,
       cloudCredentialId: null
     });
+    setBackendCreated(false);
+    setCreatedBucketName(null);
+  };
+
+  const handleCreateBackend = async () => {
+    if (!newEnv.cloudCredentialId) {
+      toast.error('Please select AWS credentials first');
+      return;
+    }
+
+    if (!newEnv.name) {
+      toast.error('Please enter environment name first');
+      return;
+    }
+
+    if (newEnv.terraformBackend?.lockingMechanism === 'dynamodb' && !newEnv.terraformBackend?.tableName) {
+      toast.error('Please enter DynamoDB table name');
+      return;
+    }
+
+    setCreatingBackend(true);
+
+    try {
+      const response = await authService.post('/environments/terraform-backend/create', {
+        region: newEnv.region,
+        environmentName: newEnv.name,
+        lockingMechanism: newEnv.terraformBackend.lockingMechanism,
+        tableName: newEnv.terraformBackend.tableName,
+        cloudCredentialId: newEnv.cloudCredentialId
+      });
+
+      if (response.success) {
+        const bucketName = response.data?.bucketName;
+        setBackendCreated(true);
+        setCreatedBucketName(bucketName);
+
+        if (bucketName) {
+          toast.success(`Terraform backend created: ${bucketName}`, { duration: 8000 });
+        } else {
+          toast.success('Terraform backend resources created successfully');
+        }
+      } else {
+        toast.error(response.error || 'Failed to create backend resources');
+      }
+    } catch (error) {
+      const errorMessage = error.message || 'Failed to create backend resources';
+      toast.error(errorMessage);
+    } finally {
+      setCreatingBackend(false);
+    }
   };
 
   return (
@@ -285,6 +340,215 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
           </div>
         )}
       </div>
+
+      {/* Terraform Backend Configuration */}
+      {newEnv.provider === 'aws' && (
+        <div className={`p-6 rounded-xl border ${
+          isDark
+            ? 'bg-gray-800/50 border-gray-700'
+            : 'bg-white/70 border-gray-200'
+        }`}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <Database className="w-5 h-5 mr-2 text-teal-500" />
+              <label className={`text-sm font-medium ${
+                isDark ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Terraform Backend (Optional)
+              </label>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={newEnv.terraformBackend?.enabled || false}
+                onChange={(e) => setNewEnv({
+                  ...newEnv,
+                  terraformBackend: {
+                    ...newEnv.terraformBackend,
+                    enabled: e.target.checked,
+                    bucketName: newEnv.terraformBackend?.bucketName || '',
+                    lockingMechanism: newEnv.terraformBackend?.lockingMechanism || 's3',
+                    tableName: newEnv.terraformBackend?.tableName || ''
+                  }
+                })}
+              />
+              <div className={`w-11 h-6 rounded-full peer transition-colors ${
+                isDark
+                  ? 'bg-gray-600 peer-checked:bg-teal-500'
+                  : 'bg-gray-300 peer-checked:bg-teal-500'
+              }`}>
+                <div className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full transition-transform ${
+                  newEnv.terraformBackend?.enabled ? 'translate-x-5' : ''
+                }`}></div>
+              </div>
+            </label>
+          </div>
+
+          <p className={`text-xs mb-4 ${
+            isDark ? 'text-gray-400' : 'text-gray-500'
+          }`}>
+            Automatically create S3 bucket and optional DynamoDB table for Terraform state management
+          </p>
+
+          {newEnv.terraformBackend?.enabled && !newEnv.cloudCredentialId && (
+            <div className={`p-4 rounded-lg border mb-4 ${
+              isDark
+                ? 'bg-orange-500/10 border-orange-500/30 text-orange-300'
+                : 'bg-orange-50 border-orange-200 text-orange-700'
+            }`}>
+              <div className="flex items-center">
+                <Database className="w-4 h-4 mr-2" />
+                <span className="text-sm font-medium">
+                  AWS credentials are required to create Terraform backend resources
+                </span>
+              </div>
+              <p className="text-xs mt-1 ml-6">
+                Please select cloud credentials above before creating backend resources
+              </p>
+            </div>
+          )}
+
+          {newEnv.terraformBackend?.enabled && (
+            <div className="space-y-4 mt-4">
+              <div className={`p-4 rounded-lg border ${
+                isDark
+                  ? 'bg-blue-500/10 border-blue-500/30 text-blue-300'
+                  : 'bg-blue-50 border-blue-200 text-blue-700'
+              }`}>
+                <div className="flex items-start">
+                  <Database className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">S3 Bucket Name (Auto-generated)</p>
+                    <p className="text-xs mt-1">
+                      Format: <code className="font-mono">&lt;AWS_ACCOUNT_ID&gt;-terraform-&lt;environment-name&gt;</code>
+                    </p>
+                    {newEnv.name && credentials.find(c => c.id === newEnv.cloudCredentialId) && (
+                      <p className="text-xs mt-1 font-mono">
+                        Preview: {credentials.find(c => c.id === newEnv.cloudCredentialId)?.identifier}-terraform-{newEnv.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${
+                  isDark ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  State Locking Mechanism
+                </label>
+                <select
+                  className={`w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 ${
+                    isDark
+                      ? 'bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20'
+                      : 'bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20'
+                  } ${backendCreated || creatingBackend ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  value={newEnv.terraformBackend?.lockingMechanism || 's3'}
+                  disabled={backendCreated || creatingBackend}
+                  onChange={(e) => setNewEnv({
+                    ...newEnv,
+                    terraformBackend: {
+                      ...newEnv.terraformBackend,
+                      lockingMechanism: e.target.value
+                    }
+                  })}
+                >
+                  <option value="s3">S3 Native Locking (Terraform 1.11+)</option>
+                  <option value="dynamodb">DynamoDB Locking</option>
+                </select>
+                <p className={`text-xs mt-1 ${
+                  isDark ? 'text-gray-400' : 'text-gray-500'
+                }`}>
+                  {newEnv.terraformBackend?.lockingMechanism === 's3'
+                    ? 'Uses S3 native locking (requires Terraform 1.11 or higher)'
+                    : 'Creates DynamoDB table for state locking (works with all Terraform versions)'}
+                </p>
+              </div>
+
+              {newEnv.terraformBackend?.lockingMechanism === 'dynamodb' && (
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${
+                    isDark ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    DynamoDB Table Name
+                  </label>
+                  <input
+                    type="text"
+                    className={`w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 ${
+                      isDark
+                        ? 'bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20'
+                        : 'bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20'
+                    } ${backendCreated || creatingBackend ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    placeholder="e.g., terraform-state-lock"
+                    value={newEnv.terraformBackend?.tableName || ''}
+                    disabled={backendCreated || creatingBackend}
+                    onChange={(e) => setNewEnv({
+                      ...newEnv,
+                      terraformBackend: {
+                        ...newEnv.terraformBackend,
+                        tableName: e.target.value
+                      }
+                    })}
+                  />
+                  <p className={`text-xs mt-1 ${
+                    isDark ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
+                    DynamoDB table for managing Terraform state locks
+                  </p>
+                </div>
+              )}
+
+              {/* Create Backend Button */}
+              {backendCreated ? (
+                <div className={`p-4 rounded-lg border ${
+                  isDark
+                    ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                }`}>
+                  <div className="flex items-start">
+                    <CheckCircle className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium">Backend resources created successfully</p>
+                      {createdBucketName && (
+                        <p className="text-xs mt-1 font-mono opacity-90">
+                          S3 Bucket: {createdBucketName}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={handleCreateBackend}
+                  disabled={!newEnv.cloudCredentialId || creatingBackend}
+                  className={`w-full py-3 rounded-lg font-medium transition-colors flex items-center justify-center ${
+                    !newEnv.cloudCredentialId || creatingBackend
+                      ? isDark
+                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : isDark
+                      ? 'bg-teal-600 text-white hover:bg-teal-700'
+                      : 'bg-teal-500 text-white hover:bg-teal-600'
+                  }`}
+                >
+                  {creatingBackend ? (
+                    <>
+                      <Loader className="w-5 h-5 mr-2 animate-spin" />
+                      Creating Backend Resources...
+                    </>
+                  ) : (
+                    <>
+                      <Database className="w-5 h-5 mr-2" />
+                      Create Backend Resources
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Summary */}
       {newEnv.name && newEnv.provider && newEnv.region && (

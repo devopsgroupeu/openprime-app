@@ -30,7 +30,16 @@ export class AuthService {
       }
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+          // If response body is not JSON, use default error message
+        }
+        const error = new Error(errorMessage);
+        error.status = response.status;
+        throw error;
       }
 
       return response;
