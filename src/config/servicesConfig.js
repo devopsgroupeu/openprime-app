@@ -165,22 +165,64 @@ export const SERVICES_CONFIG = {
         type: FIELD_TYPES.TOGGLE,
         name: "enableClusterCreatorAdminPermissions",
         displayName: "Enable Cluster Creator Admin Permissions",
-        description: "Indicates whether or not to add the cluster creator (the identity used by Terraform) as an administrator via access entry",
+        description:
+          "Indicates whether or not to add the cluster creator (the identity used by Terraform) as an administrator via access entry",
         defaultValue: true,
       },
       enableIrsa: {
         type: FIELD_TYPES.TOGGLE,
         name: "enableIrsa",
         displayName: "Enable IRSA",
-        description: "Determines whether to create an OpenID Connect Provider for EKS to enable IRSA",
+        description:
+          "Determines whether to create an OpenID Connect Provider for EKS to enable IRSA",
         defaultValue: true,
       },
       endpointPublicAccess: {
         type: FIELD_TYPES.TOGGLE,
         name: "endpointPublicAccess",
         displayName: "Endpoint Public Access",
-        description: "Indicates whether or not the Amazon EKS public API server endpoint is enabled",
+        description:
+          "Indicates whether or not the Amazon EKS public API server endpoint is enabled",
         defaultValue: false,
+      },
+    },
+  },
+
+  karpenter: {
+    name: "karpenter",
+    displayName: "Karpenter",
+    description: "Kubernetes Node Autoscaler",
+    provider: "aws",
+    category: "Compute",
+    fields: {
+      enabled: {
+        type: FIELD_TYPES.TOGGLE,
+        name: "enabled",
+        displayName: "Enable Karpenter",
+        description: "Enable Karpenter autoscaler",
+        defaultValue: false,
+      },
+      defaultNodepoolArch: {
+        type: FIELD_TYPES.DROPDOWN,
+        name: "defaultNodepoolArch",
+        displayName: "Architecture",
+        description: "Default node pool architecture",
+        defaultValue: "arm64",
+        options: [
+          { value: "amd64", label: "AMD64 (x86_64)" },
+          { value: "arm64", label: "ARM64" },
+        ],
+      },
+      defaultNodepoolCapacityType: {
+        type: FIELD_TYPES.DROPDOWN,
+        name: "defaultNodepoolCapacityType",
+        displayName: "Capacity Type",
+        description: "Default capacity type",
+        defaultValue: "spot",
+        options: [
+          { value: "on-demand", label: "On-Demand" },
+          { value: "spot", label: "Spot" },
+        ],
       },
     },
   },
@@ -872,6 +914,121 @@ export const SERVICES_CONFIG = {
     },
   },
 
+  msk: {
+    name: "msk",
+    displayName: "Managed Streaming for Apache Kafka (MSK)",
+    description: "Fully managed Apache Kafka service",
+    provider: "aws",
+    category: "Integration",
+    fields: {
+      enabled: {
+        type: FIELD_TYPES.TOGGLE,
+        name: "enabled",
+        displayName: "Enable MSK",
+        description: "Enable MSK service",
+        defaultValue: false,
+      },
+      kafkaVersion: {
+        type: FIELD_TYPES.DROPDOWN,
+        name: "kafkaVersion",
+        displayName: "Kafka Version",
+        description: "Apache Kafka version",
+        defaultValue: "3.5.1",
+        options: [
+          { value: "3.5.1", label: "3.5.1" },
+          { value: "3.4.0", label: "3.4.0" },
+          { value: "3.3.2", label: "3.3.2" },
+          { value: "2.8.1", label: "2.8.1" },
+        ],
+      },
+      numberOfBrokerNodes: {
+        type: FIELD_TYPES.NUMBER,
+        name: "numberOfBrokerNodes",
+        displayName: "Number of Broker Nodes",
+        description: "Number of broker nodes in the cluster",
+        defaultValue: 2,
+        min: 2,
+        max: 30,
+      },
+      brokerNodeInstanceType: {
+        type: FIELD_TYPES.DROPDOWN,
+        name: "brokerNodeInstanceType",
+        displayName: "Broker Instance Type",
+        description: "EC2 instance type for broker nodes",
+        defaultValue: "kafka.t3.small",
+        options: [
+          { value: "kafka.t3.small", label: "kafka.t3.small" },
+          { value: "kafka.m5.large", label: "kafka.m5.large" },
+          { value: "kafka.m5.xlarge", label: "kafka.m5.xlarge" },
+          { value: "kafka.m5.2xlarge", label: "kafka.m5.2xlarge" },
+        ],
+      },
+    },
+  },
+
+  waf: {
+    name: "waf",
+    displayName: "Web Application Firewall (WAF)",
+    description: "AWS WAF web application firewall",
+    provider: "aws",
+    category: "Security",
+    fields: {
+      enabled: {
+        type: FIELD_TYPES.TOGGLE,
+        name: "enabled",
+        displayName: "Enable WAF",
+        description: "Enable WAF service",
+        defaultValue: false,
+      },
+      name: {
+        type: FIELD_TYPES.TEXT,
+        name: "name",
+        displayName: "WAF Name",
+        description: "Name of the WAF Web ACL",
+        defaultValue: "waf",
+      },
+      description: {
+        type: FIELD_TYPES.TEXT,
+        name: "description",
+        displayName: "Description",
+        description: "WAF Web ACL description",
+        defaultValue: "Default AWS WAF Managed rule set",
+      },
+      scope: {
+        type: FIELD_TYPES.DROPDOWN,
+        name: "scope",
+        displayName: "Scope",
+        description: "WAF scope (REGIONAL for ALB/API Gateway, CLOUDFRONT for CloudFront)",
+        defaultValue: "REGIONAL",
+        options: [
+          { value: "REGIONAL", label: "Regional (ALB, API Gateway)" },
+          { value: "CLOUDFRONT", label: "CloudFront" },
+        ],
+      },
+      cloudwatchMetricsEnabled: {
+        type: FIELD_TYPES.TOGGLE,
+        name: "cloudwatchMetricsEnabled",
+        displayName: "CloudWatch Metrics",
+        description: "Enable CloudWatch metrics",
+        defaultValue: true,
+      },
+      metricName: {
+        type: FIELD_TYPES.TEXT,
+        name: "metricName",
+        displayName: "Metric Name",
+        description: "CloudWatch metric name",
+        defaultValue: "WAF-metrics",
+      },
+      sampledRequestsEnabled: {
+        type: FIELD_TYPES.TOGGLE,
+        name: "sampledRequestsEnabled",
+        displayName: "Sampled Requests",
+        description: "Enable sampled requests",
+        defaultValue: true,
+      },
+    },
+  },
+
   sqs: {
     name: "sqs",
     displayName: "Simple Queue Service (SQS)",
@@ -1491,15 +1648,11 @@ export const getServiceConfig = (serviceName) => {
 };
 
 export const getServicesByProvider = (providerType) => {
-  return Object.values(SERVICES_CONFIG).filter(
-    (service) => service.provider === providerType
-  );
+  return Object.values(SERVICES_CONFIG).filter((service) => service.provider === providerType);
 };
 
 export const getServicesByCategory = (category) => {
-  return Object.values(SERVICES_CONFIG).filter(
-    (service) => service.category === category
-  );
+  return Object.values(SERVICES_CONFIG).filter((service) => service.category === category);
 };
 
 export const createDefaultServiceConfig = (serviceName) => {
