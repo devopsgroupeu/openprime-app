@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Copy, Code, FileText, Package } from 'lucide-react';
+import { Download, Copy, Code, FileText, Package, GitBranch, Database, Key, ExternalLink, Eye, EyeOff } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import authService from '../../services/authService';
@@ -9,6 +9,7 @@ const EnvironmentConfiguration = ({ environment }) => {
   const { success, error: showError } = useToast();
   const [format, setFormat] = useState('json');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showSshKey, setShowSshKey] = useState(false);
 
   const generateConfiguration = () => {
     const config = {
@@ -27,6 +28,14 @@ const EnvironmentConfiguration = ({ environment }) => {
         identifier: environment.cloudCredential.identifier,
         provider: environment.cloudCredential.provider
       };
+    }
+
+    if (environment.terraform_backend) {
+      config.terraformBackend = environment.terraform_backend;
+    }
+
+    if (environment.git_repository) {
+      config.gitRepository = environment.git_repository;
     }
 
     return config;
@@ -131,6 +140,153 @@ const EnvironmentConfiguration = ({ environment }) => {
 
   return (
     <div className="space-y-6">
+      {/* Terraform Backend Configuration */}
+      {environment.terraform_backend?.enabled && (
+        <div className={`p-6 rounded-xl border ${
+          isDark
+            ? 'bg-gray-800/50 border-gray-700'
+            : 'bg-white/70 border-gray-200'
+        }`}>
+          <div className="flex items-center mb-4">
+            <Database className="w-5 h-5 mr-2 text-teal-500" />
+            <h4 className={`text-base font-semibold ${
+              isDark ? 'text-white' : 'text-gray-900'
+            }`}>
+              Terraform Backend Configuration
+            </h4>
+          </div>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-4">
+              {environment.terraform_backend.bucketName && (
+                <div>
+                  <p className={`text-xs font-medium mb-1 ${
+                    isDark ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
+                    S3 Bucket
+                  </p>
+                  <div className="flex items-center space-x-2">
+                    <p className={`text-sm font-mono ${
+                      isDark ? 'text-gray-200' : 'text-gray-800'
+                    }`}>
+                      {environment.terraform_backend.bucketName}
+                    </p>
+                    <a
+                      href={`https://${environment.region}.console.aws.amazon.com/s3/buckets/${environment.terraform_backend.bucketName}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-teal-500 hover:text-teal-400"
+                      title="Open in AWS Console"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </div>
+                </div>
+              )}
+              <div>
+                <p className={`text-xs font-medium mb-1 ${
+                  isDark ? 'text-gray-400' : 'text-gray-600'
+                }`}>
+                  Locking Mechanism
+                </p>
+                <p className={`text-sm ${
+                  isDark ? 'text-gray-200' : 'text-gray-800'
+                }`}>
+                  {environment.terraform_backend.lockingMechanism === 's3' ? 'S3 Native Locking' : 'DynamoDB'}
+                </p>
+              </div>
+              {environment.terraform_backend.lockingMechanism === 'dynamodb' && environment.terraform_backend.tableName && (
+                <div>
+                  <p className={`text-xs font-medium mb-1 ${
+                    isDark ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
+                    DynamoDB Table
+                  </p>
+                  <p className={`text-sm font-mono ${
+                    isDark ? 'text-gray-200' : 'text-gray-800'
+                  }`}>
+                    {environment.terraform_backend.tableName}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Git Repository Configuration */}
+      {environment.git_repository?.enabled && (
+        <div className={`p-6 rounded-xl border ${
+          isDark
+            ? 'bg-gray-800/50 border-gray-700'
+            : 'bg-white/70 border-gray-200'
+        }`}>
+          <div className="flex items-center mb-4">
+            <GitBranch className="w-5 h-5 mr-2 text-teal-500" />
+            <h4 className={`text-base font-semibold ${
+              isDark ? 'text-white' : 'text-gray-900'
+            }`}>
+              Git Repository Configuration
+            </h4>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <p className={`text-xs font-medium mb-1 ${
+                isDark ? 'text-gray-400' : 'text-gray-600'
+              }`}>
+                Repository URL
+              </p>
+              <div className="flex items-center space-x-2">
+                <p className={`text-sm font-mono ${
+                  isDark ? 'text-gray-200' : 'text-gray-800'
+                }`}>
+                  {environment.git_repository.url}
+                </p>
+                {environment.git_repository.url.includes('github.com') && (
+                  <a
+                    href={environment.git_repository.url.replace('git@github.com:', 'https://github.com/').replace('.git', '')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-teal-500 hover:text-teal-400"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+            </div>
+            <div>
+              <p className={`text-xs font-medium mb-2 ${
+                isDark ? 'text-gray-400' : 'text-gray-600'
+              }`}>
+                SSH Private Key
+              </p>
+              <div className={`flex items-center space-x-2 p-3 rounded-lg ${
+                isDark ? 'bg-gray-900/50' : 'bg-gray-100'
+              }`}>
+                <Key className="w-4 h-4 text-teal-500 flex-shrink-0" />
+                <p className={`text-xs font-mono flex-1 ${
+                  isDark ? 'text-gray-400' : 'text-gray-600'
+                } ${showSshKey ? 'break-all' : ''}`}>
+                  {environment.git_repository.sshKey
+                    ? (showSshKey ? environment.git_repository.sshKey : '••••••••••••••••••••')
+                    : 'Not configured'}
+                </p>
+                {environment.git_repository.sshKey && (
+                  <button
+                    onClick={() => setShowSshKey(!showSshKey)}
+                    className={`p-1 rounded hover:bg-gray-700/50 transition-colors ${
+                      isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                    title={showSshKey ? 'Hide key' : 'Show key'}
+                  >
+                    {showSshKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <h3 className={`text-lg font-semibold ${
           isDark ? 'text-white' : 'text-gray-900'

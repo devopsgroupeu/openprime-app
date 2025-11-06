@@ -119,7 +119,8 @@ const EnvironmentDetailPage = ({
     setIsLoading(true);
 
     try {
-      onEdit(editEnv);
+      const updated = await onEdit(editEnv);
+      setEnvironment(updated);
       success(`Environment "${editEnv.name}" updated successfully`, {
         title: 'Environment Updated',
         duration: 4000

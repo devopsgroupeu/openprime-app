@@ -1,6 +1,6 @@
 // src/components/modals/wizard/BasicConfigStep.js
 import React, { useState, useEffect } from 'react';
-import { Cloud, MapPin, Type, Key, Database, Loader, CheckCircle } from 'lucide-react';
+import { Cloud, MapPin, Type, Key, Database, Loader, CheckCircle, GitBranch } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useToast } from '../../../contexts/ToastContext';
 import { PROVIDERS, createEmptyEnvironment } from '../../../config/environmentsConfig';
@@ -82,7 +82,15 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
         setBackendCreated(true);
         setCreatedBucketName(bucketName);
 
+        // Update newEnv with the bucket name
         if (bucketName) {
+          setNewEnv({
+            ...newEnv,
+            terraformBackend: {
+              ...newEnv.terraformBackend,
+              bucketName: bucketName
+            }
+          });
           toast.success(`Terraform backend created: ${bucketName}`, { duration: 8000 });
         } else {
           toast.success('Terraform backend resources created successfully');
@@ -549,6 +557,119 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
           )}
         </div>
       )}
+
+      {/* Git Repository Configuration */}
+      <div className={`p-6 rounded-xl border ${
+        isDark
+          ? 'bg-gray-800/50 border-gray-700'
+          : 'bg-white/70 border-gray-200'
+      }`}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <GitBranch className="w-5 h-5 mr-2 text-teal-500" />
+            <label className={`text-sm font-medium ${
+              isDark ? 'text-gray-300' : 'text-gray-700'
+            }`}>
+              Git Repository (Optional)
+            </label>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              className="sr-only peer"
+              checked={newEnv.gitRepository?.enabled || false}
+              onChange={(e) => setNewEnv({
+                ...newEnv,
+                gitRepository: {
+                  ...newEnv.gitRepository,
+                  enabled: e.target.checked,
+                  url: newEnv.gitRepository?.url || '',
+                  sshKey: newEnv.gitRepository?.sshKey || ''
+                }
+              })}
+            />
+            <div className={`w-11 h-6 rounded-full peer transition-colors ${
+              isDark
+                ? 'bg-gray-600 peer-checked:bg-teal-500'
+                : 'bg-gray-300 peer-checked:bg-teal-500'
+            }`}>
+              <div className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full transition-transform ${
+                newEnv.gitRepository?.enabled ? 'translate-x-5' : ''
+              }`}></div>
+            </div>
+          </label>
+        </div>
+
+        <p className={`text-xs mb-4 ${
+          isDark ? 'text-gray-400' : 'text-gray-500'
+        }`}>
+          Configure Git repository for infrastructure code storage and version control
+        </p>
+
+        {newEnv.gitRepository?.enabled && (
+          <div className="space-y-4 mt-4">
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${
+                isDark ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Repository URL
+              </label>
+              <input
+                type="text"
+                className={`w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 ${
+                  isDark
+                    ? 'bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20'
+                    : 'bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20'
+                }`}
+                placeholder="git@github.com:organization/repository.git"
+                value={newEnv.gitRepository?.url || ''}
+                onChange={(e) => setNewEnv({
+                  ...newEnv,
+                  gitRepository: {
+                    ...newEnv.gitRepository,
+                    url: e.target.value
+                  }
+                })}
+              />
+              <p className={`text-xs mt-1 ${
+                isDark ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                SSH URL of the Git repository for infrastructure code
+              </p>
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${
+                isDark ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                SSH Private Key (Deploy Key)
+              </label>
+              <textarea
+                className={`w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 font-mono text-xs ${
+                  isDark
+                    ? 'bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20'
+                    : 'bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20'
+                }`}
+                placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;...&#10;-----END OPENSSH PRIVATE KEY-----"
+                rows={8}
+                value={newEnv.gitRepository?.sshKey || ''}
+                onChange={(e) => setNewEnv({
+                  ...newEnv,
+                  gitRepository: {
+                    ...newEnv.gitRepository,
+                    sshKey: e.target.value
+                  }
+                })}
+              />
+              <p className={`text-xs mt-1 ${
+                isDark ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                Private SSH key with read access to the repository
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Summary */}
       {newEnv.name && newEnv.provider && newEnv.region && (

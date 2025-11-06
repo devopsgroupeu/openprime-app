@@ -38,6 +38,8 @@ const EnvironmentsPage = ({ environments, onCreateEnvironment, onDeleteEnvironme
         provider: newEnv.provider,
         region: newEnv.region,
         services: newEnv.services || {},
+        terraformBackend: newEnv.terraformBackend || null,
+        gitRepository: newEnv.gitRepository || null,
         cloudCredentialId: newEnv.cloudCredentialId || null
       };
 
