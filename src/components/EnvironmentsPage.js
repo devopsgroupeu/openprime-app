@@ -1,6 +1,6 @@
 // src/components/EnvironmentsPage.js
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Plus } from "lucide-react";
 import Navigation from "./Navigation";
 import EnvironmentCard from "./EnvironmentCard";

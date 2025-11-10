@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { ArrowLeft, Edit2, Trash2, Cloud, Server, MapPin, Key } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 

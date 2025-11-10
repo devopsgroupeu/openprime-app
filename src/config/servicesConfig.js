@@ -289,39 +289,29 @@ export const SERVICES_CONFIG = {
         displayName: "EKS Addons",
         description: "EKS managed addons",
       },
-    },
-  },
-
-  karpenter: {
-    name: "karpenter",
-    displayName: "Karpenter",
-    description: "Kubernetes Node Autoscaler",
-    provider: "aws",
-    category: "Compute",
-    fields: {
-      enabled: {
+      karpenterEnabled: {
         type: FIELD_TYPES.TOGGLE,
-        name: "enabled",
+        name: "karpenterEnabled",
         displayName: "Enable Karpenter",
-        description: "Enable Karpenter autoscaler",
-        defaultValue: false,
+        description: "Enable Karpenter node autoscaler",
+        defaultValue: true,
       },
-      defaultNodepoolArch: {
+      karpenterNodepoolArch: {
         type: FIELD_TYPES.DROPDOWN,
-        name: "defaultNodepoolArch",
-        displayName: "Architecture",
-        description: "Default node pool architecture",
+        name: "karpenterNodepoolArch",
+        displayName: "Karpenter Architecture",
+        description: "Default Karpenter nodepool architecture",
         defaultValue: "arm64",
         options: [
           { value: "amd64", label: "AMD64 (x86_64)" },
           { value: "arm64", label: "ARM64" },
         ],
       },
-      defaultNodepoolCapacityType: {
+      karpenterNodepoolCapacityType: {
         type: FIELD_TYPES.DROPDOWN,
-        name: "defaultNodepoolCapacityType",
-        displayName: "Capacity Type",
-        description: "Default capacity type",
+        name: "karpenterNodepoolCapacityType",
+        displayName: "Karpenter Capacity Type",
+        description: "Default Karpenter capacity type",
         defaultValue: "spot",
         options: [
           { value: "on-demand", label: "On-Demand" },
@@ -443,13 +433,6 @@ export const SERVICES_CONFIG = {
         description: "Preferred maintenance window (UTC)",
         defaultValue: "Mon:00:00-Mon:03:00",
       },
-      encrypted: {
-        type: FIELD_TYPES.TOGGLE,
-        name: "encrypted",
-        displayName: "Encryption",
-        description: "Enable encryption at rest",
-        defaultValue: true,
-      },
       deletionProtection: {
         type: FIELD_TYPES.TOGGLE,
         name: "deletionProtection",
@@ -530,34 +513,6 @@ export const SERVICES_CONFIG = {
           { value: 30, label: "30 seconds" },
           { value: 60, label: "60 seconds" },
         ],
-      },
-      createMonitoringRole: {
-        type: FIELD_TYPES.TOGGLE,
-        name: "createMonitoringRole",
-        displayName: "Create Monitoring Role",
-        description: "Create IAM role for enhanced monitoring",
-        defaultValue: true,
-      },
-      createCloudwatchLogGroup: {
-        type: FIELD_TYPES.TOGGLE,
-        name: "createCloudwatchLogGroup",
-        displayName: "Create CloudWatch Log Group",
-        description: "Create CloudWatch log group",
-        defaultValue: true,
-      },
-      createDbOptionGroup: {
-        type: FIELD_TYPES.TOGGLE,
-        name: "createDbOptionGroup",
-        displayName: "Create DB Option Group",
-        description: "Create database option group",
-        defaultValue: true,
-      },
-      createDbParameterGroup: {
-        type: FIELD_TYPES.TOGGLE,
-        name: "createDbParameterGroup",
-        displayName: "Create DB Parameter Group",
-        description: "Create database parameter group",
-        defaultValue: true,
       },
       deleteAutomatedBackups: {
         type: FIELD_TYPES.TOGGLE,
@@ -643,13 +598,6 @@ export const SERVICES_CONFIG = {
         defaultValue: 7,
         min: 1,
         max: 35,
-      },
-      encrypted: {
-        type: FIELD_TYPES.TOGGLE,
-        name: "encrypted",
-        displayName: "Encryption",
-        description: "Enable encryption at rest",
-        defaultValue: true,
       },
       deletionProtection: {
         type: FIELD_TYPES.TOGGLE,
@@ -1069,13 +1017,6 @@ export const SERVICES_CONFIG = {
         description: "Enable custom endpoint",
         defaultValue: false,
       },
-      encrypted: {
-        type: FIELD_TYPES.TOGGLE,
-        name: "encrypted",
-        displayName: "Encryption at Rest",
-        description: "Enable encryption at rest",
-        defaultValue: true,
-      },
       nodeToNodeEncryption: {
         type: FIELD_TYPES.TOGGLE,
         name: "nodeToNodeEncryption",
@@ -1154,7 +1095,7 @@ export const SERVICES_CONFIG = {
   ecr: {
     name: "ecr",
     displayName: "Elastic Container Registry (ECR)",
-    description: "Managed Docker container registry",
+    description: "Managed Docker container registry - supports multiple repositories",
     provider: "aws",
     category: "Storage",
     fields: {
@@ -1169,14 +1110,15 @@ export const SERVICES_CONFIG = {
         type: FIELD_TYPES.ARRAY,
         name: "repositories",
         displayName: "Repositories",
-        description: "Container repositories",
-        defaultValue: ["example-app"],
+        description:
+          "List of ECR repository names to create (e.g., ['frontend', 'backend', 'api'])",
+        defaultValue: [],
       },
       repositoryType: {
         type: FIELD_TYPES.DROPDOWN,
         name: "repositoryType",
         displayName: "Repository Type",
-        description: "Repository type",
+        description: "Repository type (applies to all repositories)",
         defaultValue: "private",
         options: [
           { value: "private", label: "Private" },
@@ -1187,18 +1129,36 @@ export const SERVICES_CONFIG = {
         type: FIELD_TYPES.DROPDOWN,
         name: "imageTagMutability",
         displayName: "Image Tag Mutability",
-        description: "Image tag mutability setting",
+        description: "Prevent image tags from being overwritten",
         defaultValue: "IMMUTABLE",
         options: [
           { value: "MUTABLE", label: "Mutable" },
           { value: "IMMUTABLE", label: "Immutable" },
         ],
       },
+      repositoryEncryptionType: {
+        type: FIELD_TYPES.DROPDOWN,
+        name: "repositoryEncryptionType",
+        displayName: "Encryption Type",
+        description: "Repository encryption type",
+        defaultValue: "AES256",
+        options: [
+          { value: "AES256", label: "AES256 (Server-side)" },
+          { value: "KMS", label: "KMS (Customer Managed Keys)" },
+        ],
+      },
+      repositoryReadWriteAccessArns: {
+        type: FIELD_TYPES.ARRAY,
+        name: "repositoryReadWriteAccessArns",
+        displayName: "Read/Write Access ARNs",
+        description: "List of IAM ARNs for read/write access to repositories",
+        defaultValue: [],
+      },
       createLifecyclePolicy: {
         type: FIELD_TYPES.TOGGLE,
         name: "createLifecyclePolicy",
         displayName: "Create Lifecycle Policy",
-        description: "Create lifecycle policy for image cleanup",
+        description: "Automatically clean up old images based on rules",
         defaultValue: true,
       },
       lifecyclePolicyRulePriority: {
@@ -1233,7 +1193,7 @@ export const SERVICES_CONFIG = {
         type: FIELD_TYPES.ARRAY,
         name: "lifecyclePolicyTagPrefixList",
         displayName: "Lifecycle Tag Prefix List",
-        description: "Tag prefixes to match",
+        description: "Tag prefixes to match (e.g., ['v', 'release'])",
         defaultValue: ["v"],
       },
       lifecyclePolicyCountType: {
@@ -1251,16 +1211,23 @@ export const SERVICES_CONFIG = {
         type: FIELD_TYPES.NUMBER,
         name: "lifecyclePolicyCountNumber",
         displayName: "Lifecycle Count Number",
-        description: "Count number threshold",
+        description: "Number of images to keep or days since pushed",
         defaultValue: 25,
         min: 1,
         max: 1000,
+      },
+      lifecyclePolicyActionType: {
+        type: FIELD_TYPES.TEXT,
+        name: "lifecyclePolicyActionType",
+        displayName: "Lifecycle Action Type",
+        description: "Action to take on matched images",
+        defaultValue: "expire",
       },
       enableScanning: {
         type: FIELD_TYPES.TOGGLE,
         name: "enableScanning",
         displayName: "Image Scanning",
-        description: "Enable image vulnerability scanning",
+        description: "Enable vulnerability scanning on image push",
         defaultValue: true,
       },
       scanType: {
@@ -1278,26 +1245,16 @@ export const SERVICES_CONFIG = {
         type: FIELD_TYPES.TOGGLE,
         name: "enableReplication",
         displayName: "Cross-Region Replication",
-        description: "Enable cross-region replication",
+        description: "Enable automatic replication to other regions",
         defaultValue: false,
       },
       replicationDestinations: {
         type: FIELD_TYPES.ARRAY,
         name: "replicationDestinations",
         displayName: "Replication Destinations",
-        description: "Replication destination regions",
+        description:
+          "List of AWS region codes for replication (e.g., ['us-west-2', 'eu-central-1'])",
         defaultValue: [],
-      },
-      repositoryEncryptionType: {
-        type: FIELD_TYPES.DROPDOWN,
-        name: "repositoryEncryptionType",
-        displayName: "Encryption Type",
-        description: "Repository encryption type",
-        defaultValue: "AES256",
-        options: [
-          { value: "AES256", label: "AES256" },
-          { value: "KMS", label: "KMS" },
-        ],
       },
     },
   },
@@ -1305,7 +1262,7 @@ export const SERVICES_CONFIG = {
   s3: {
     name: "s3",
     displayName: "Simple Storage Service (S3)",
-    description: "Scalable object storage service",
+    description: "Scalable object storage service - supports multiple buckets",
     provider: "aws",
     category: "Storage",
     fields: {
@@ -1320,7 +1277,8 @@ export const SERVICES_CONFIG = {
         type: FIELD_TYPES.ARRAY,
         name: "buckets",
         displayName: "Buckets",
-        description: "S3 buckets configuration",
+        description:
+          "List of S3 buckets to create (array of bucket objects with name and configuration)",
         defaultValue: [],
       },
     },
@@ -1724,74 +1682,74 @@ export const SERVICES_CONFIG = {
     },
   },
 
-  secretsManager: {
-    name: "secretsManager",
-    displayName: "Secrets Manager",
-    description: "Centralized secrets management",
-    provider: "aws",
-    category: "Security",
-    fields: {
-      enabled: {
-        type: FIELD_TYPES.TOGGLE,
-        name: "enabled",
-        displayName: "Enable Secrets Manager",
-        description: "Enable Secrets Manager service",
-        defaultValue: false,
-      },
-      secrets: {
-        type: FIELD_TYPES.ARRAY,
-        name: "secrets",
-        displayName: "Secrets",
-        description: "Managed secrets",
-        defaultValue: [],
-      },
-      automaticRotation: {
-        type: FIELD_TYPES.TOGGLE,
-        name: "automaticRotation",
-        displayName: "Automatic Rotation",
-        description: "Enable automatic secret rotation",
-        defaultValue: false,
-      },
-    },
-  },
+  // secretsManager: {
+  //   name: "secretsManager",
+  //   displayName: "Secrets Manager",
+  //   description: "Centralized secrets management",
+  //   provider: "aws",
+  //   category: "Security",
+  //   fields: {
+  //     enabled: {
+  //       type: FIELD_TYPES.TOGGLE,
+  //       name: "enabled",
+  //       displayName: "Enable Secrets Manager",
+  //       description: "Enable Secrets Manager service",
+  //       defaultValue: false,
+  //     },
+  //     secrets: {
+  //       type: FIELD_TYPES.ARRAY,
+  //       name: "secrets",
+  //       displayName: "Secrets",
+  //       description: "Managed secrets",
+  //       defaultValue: [],
+  //     },
+  //     automaticRotation: {
+  //       type: FIELD_TYPES.TOGGLE,
+  //       name: "automaticRotation",
+  //       displayName: "Automatic Rotation",
+  //       description: "Enable automatic secret rotation",
+  //       defaultValue: false,
+  //     },
+  //   },
+  // },
 
-  iam: {
-    name: "iam",
-    displayName: "Identity and Access Management (IAM)",
-    description: "Access control and identity management",
-    provider: "aws",
-    category: "Security",
-    fields: {
-      enabled: {
-        type: FIELD_TYPES.TOGGLE,
-        name: "enabled",
-        displayName: "Enable IAM",
-        description: "Enable IAM service",
-        defaultValue: false,
-      },
-      roles: {
-        type: FIELD_TYPES.ARRAY,
-        name: "roles",
-        displayName: "Roles",
-        description: "IAM roles configuration",
-        defaultValue: [],
-      },
-      policies: {
-        type: FIELD_TYPES.ARRAY,
-        name: "policies",
-        displayName: "Policies",
-        description: "IAM policies configuration",
-        defaultValue: [],
-      },
-      assumeRolePolicyDocument: {
-        type: FIELD_TYPES.TEXTAREA,
-        name: "assumeRolePolicyDocument",
-        displayName: "Assume Role Policy Document",
-        description: "JSON policy document for role assumption",
-        defaultValue: null,
-      },
-    },
-  },
+  // iam: {
+  //   name: "iam",
+  //   displayName: "Identity and Access Management (IAM)",
+  //   description: "Access control and identity management",
+  //   provider: "aws",
+  //   category: "Security",
+  //   fields: {
+  //     enabled: {
+  //       type: FIELD_TYPES.TOGGLE,
+  //       name: "enabled",
+  //       displayName: "Enable IAM",
+  //       description: "Enable IAM service",
+  //       defaultValue: false,
+  //     },
+  //     roles: {
+  //       type: FIELD_TYPES.ARRAY,
+  //       name: "roles",
+  //       displayName: "Roles",
+  //       description: "IAM roles configuration",
+  //       defaultValue: [],
+  //     },
+  //     policies: {
+  //       type: FIELD_TYPES.ARRAY,
+  //       name: "policies",
+  //       displayName: "Policies",
+  //       description: "IAM policies configuration",
+  //       defaultValue: [],
+  //     },
+  //     assumeRolePolicyDocument: {
+  //       type: FIELD_TYPES.TEXTAREA,
+  //       name: "assumeRolePolicyDocument",
+  //       displayName: "Assume Role Policy Document",
+  //       description: "JSON policy document for role assumption",
+  //       defaultValue: null,
+  //     },
+  //   },
+  // },
 
   // GCP Services
   gke: {

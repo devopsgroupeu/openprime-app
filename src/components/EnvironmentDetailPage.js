@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router";
 import {
   Activity,
   TrendingUp,
@@ -237,8 +237,8 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
             ? "bg-teal-500/20 text-teal-400 border border-teal-500/30"
             : "bg-teal-50 text-teal-600 border border-teal-200"
           : isDark
-          ? "text-gray-400 hover:text-gray-300 hover:bg-gray-800/50"
-          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/50"
+            ? "text-gray-400 hover:text-gray-300 hover:bg-gray-800/50"
+            : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/50"
       }`}
     >
       <Icon className="w-4 h-4" />
@@ -251,8 +251,8 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
                 ? "bg-teal-500/30 text-teal-300"
                 : "bg-teal-100 text-teal-700"
               : isDark
-              ? "bg-gray-700 text-gray-400"
-              : "bg-gray-200 text-gray-600"
+                ? "bg-gray-700 text-gray-400"
+                : "bg-gray-200 text-gray-600"
           }`}
         >
           {count}

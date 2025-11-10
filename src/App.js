@@ -1,6 +1,6 @@
 // src/App.js
 import React, { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import EnvironmentsPage from "./components/EnvironmentsPage";
 import EnvironmentDetailPage from "./components/EnvironmentDetailPage";
 import SettingsPage from "./components/SettingsPage";
