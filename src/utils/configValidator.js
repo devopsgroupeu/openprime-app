@@ -1,10 +1,10 @@
-import { SERVICES_CONFIG, FIELD_TYPES } from '../config/servicesConfig';
-import { PROVIDERS_CONFIG } from '../config/providersConfig';
+import { SERVICES_CONFIG, FIELD_TYPES } from "../config/servicesConfig";
+import { PROVIDERS_CONFIG } from "../config/providersConfig";
 
 export class ConfigValidationError extends Error {
   constructor(message, field = null, value = null) {
     super(message);
-    this.name = 'ConfigValidationError';
+    this.name = "ConfigValidationError";
     this.field = field;
     this.value = value;
   }
@@ -13,8 +13,10 @@ export class ConfigValidationError extends Error {
 export const validateField = (fieldConfig, value, fieldName) => {
   const errors = [];
 
-  if (fieldConfig.required && (value === null || value === undefined || value === '')) {
-    errors.push(new ConfigValidationError(`${fieldConfig.displayName} is required`, fieldName, value));
+  if (fieldConfig.required && (value === null || value === undefined || value === "")) {
+    errors.push(
+      new ConfigValidationError(`${fieldConfig.displayName} is required`, fieldName, value)
+    );
     return errors;
   }
 
@@ -24,71 +26,133 @@ export const validateField = (fieldConfig, value, fieldName) => {
 
   switch (fieldConfig.type) {
     case FIELD_TYPES.NUMBER:
-      if (typeof value !== 'number' || isNaN(value)) {
-        errors.push(new ConfigValidationError(`${fieldConfig.displayName} must be a number`, fieldName, value));
+      if (typeof value !== "number" || isNaN(value)) {
+        errors.push(
+          new ConfigValidationError(`${fieldConfig.displayName} must be a number`, fieldName, value)
+        );
       } else {
         if (fieldConfig.min !== undefined && value < fieldConfig.min) {
-          errors.push(new ConfigValidationError(`${fieldConfig.displayName} must be at least ${fieldConfig.min}`, fieldName, value));
+          errors.push(
+            new ConfigValidationError(
+              `${fieldConfig.displayName} must be at least ${fieldConfig.min}`,
+              fieldName,
+              value
+            )
+          );
         }
         if (fieldConfig.max !== undefined && value > fieldConfig.max) {
-          errors.push(new ConfigValidationError(`${fieldConfig.displayName} must be at most ${fieldConfig.max}`, fieldName, value));
+          errors.push(
+            new ConfigValidationError(
+              `${fieldConfig.displayName} must be at most ${fieldConfig.max}`,
+              fieldName,
+              value
+            )
+          );
         }
       }
       break;
 
     case FIELD_TYPES.TEXT:
     case FIELD_TYPES.TEXTAREA:
-      if (typeof value !== 'string') {
-        errors.push(new ConfigValidationError(`${fieldConfig.displayName} must be a string`, fieldName, value));
+      if (typeof value !== "string") {
+        errors.push(
+          new ConfigValidationError(`${fieldConfig.displayName} must be a string`, fieldName, value)
+        );
       } else {
         if (fieldConfig.validation?.pattern && !fieldConfig.validation.pattern.test(value)) {
-          errors.push(new ConfigValidationError(`${fieldConfig.displayName} format is invalid`, fieldName, value));
+          errors.push(
+            new ConfigValidationError(
+              `${fieldConfig.displayName} format is invalid`,
+              fieldName,
+              value
+            )
+          );
         }
         if (fieldConfig.minLength && value.length < fieldConfig.minLength) {
-          errors.push(new ConfigValidationError(`${fieldConfig.displayName} must be at least ${fieldConfig.minLength} characters`, fieldName, value));
+          errors.push(
+            new ConfigValidationError(
+              `${fieldConfig.displayName} must be at least ${fieldConfig.minLength} characters`,
+              fieldName,
+              value
+            )
+          );
         }
         if (fieldConfig.maxLength && value.length > fieldConfig.maxLength) {
-          errors.push(new ConfigValidationError(`${fieldConfig.displayName} must be at most ${fieldConfig.maxLength} characters`, fieldName, value));
+          errors.push(
+            new ConfigValidationError(
+              `${fieldConfig.displayName} must be at most ${fieldConfig.maxLength} characters`,
+              fieldName,
+              value
+            )
+          );
         }
       }
       break;
 
     case FIELD_TYPES.TOGGLE:
-      if (typeof value !== 'boolean') {
-        errors.push(new ConfigValidationError(`${fieldConfig.displayName} must be true or false`, fieldName, value));
+      if (typeof value !== "boolean") {
+        errors.push(
+          new ConfigValidationError(
+            `${fieldConfig.displayName} must be true or false`,
+            fieldName,
+            value
+          )
+        );
       }
       break;
 
     case FIELD_TYPES.DROPDOWN:
       if (fieldConfig.options) {
-        const validValues = fieldConfig.options.map(opt => opt.value);
+        const validValues = fieldConfig.options.map((opt) => opt.value);
         if (!validValues.includes(value)) {
-          errors.push(new ConfigValidationError(`${fieldConfig.displayName} must be one of: ${validValues.join(', ')}`, fieldName, value));
+          errors.push(
+            new ConfigValidationError(
+              `${fieldConfig.displayName} must be one of: ${validValues.join(", ")}`,
+              fieldName,
+              value
+            )
+          );
         }
       }
       break;
 
     case FIELD_TYPES.MULTISELECT:
       if (!Array.isArray(value)) {
-        errors.push(new ConfigValidationError(`${fieldConfig.displayName} must be an array`, fieldName, value));
+        errors.push(
+          new ConfigValidationError(`${fieldConfig.displayName} must be an array`, fieldName, value)
+        );
       } else if (fieldConfig.options) {
-        const validValues = fieldConfig.options.map(opt => opt.value);
-        const invalidValues = value.filter(v => !validValues.includes(v));
+        const validValues = fieldConfig.options.map((opt) => opt.value);
+        const invalidValues = value.filter((v) => !validValues.includes(v));
         if (invalidValues.length > 0) {
-          errors.push(new ConfigValidationError(`${fieldConfig.displayName} contains invalid values: ${invalidValues.join(', ')}`, fieldName, value));
+          errors.push(
+            new ConfigValidationError(
+              `${fieldConfig.displayName} contains invalid values: ${invalidValues.join(", ")}`,
+              fieldName,
+              value
+            )
+          );
         }
       }
       break;
 
     case FIELD_TYPES.ARRAY:
       if (!Array.isArray(value)) {
-        errors.push(new ConfigValidationError(`${fieldConfig.displayName} must be an array`, fieldName, value));
+        errors.push(
+          new ConfigValidationError(`${fieldConfig.displayName} must be an array`, fieldName, value)
+        );
       }
       break;
 
     case FIELD_TYPES.OBJECT:
-      if (typeof value !== 'object' || Array.isArray(value) || value === null) {
-        errors.push(new ConfigValidationError(`${fieldConfig.displayName} must be an object`, fieldName, value));
+      if (typeof value !== "object" || Array.isArray(value) || value === null) {
+        errors.push(
+          new ConfigValidationError(
+            `${fieldConfig.displayName} must be an object`,
+            fieldName,
+            value
+          )
+        );
       }
       break;
 
@@ -105,7 +169,9 @@ export const validateServiceConfig = (serviceName, serviceConfig) => {
   const serviceDefinition = SERVICES_CONFIG[serviceName];
 
   if (!serviceDefinition) {
-    errors.push(new ConfigValidationError(`Unknown service: ${serviceName}`, 'service', serviceName));
+    errors.push(
+      new ConfigValidationError(`Unknown service: ${serviceName}`, "service", serviceName)
+    );
     return errors;
   }
 
@@ -117,21 +183,25 @@ export const validateServiceConfig = (serviceName, serviceConfig) => {
   });
 
   // Custom validation rules for specific services
-  if (serviceName === 'vpc' && serviceConfig.enabled) {
+  if (serviceName === "vpc" && serviceConfig.enabled) {
     if (serviceConfig.publicSubnets + serviceConfig.privateSubnets === 0) {
-      errors.push(new ConfigValidationError('VPC must have at least one subnet', 'subnets'));
+      errors.push(new ConfigValidationError("VPC must have at least one subnet", "subnets"));
     }
   }
 
-  if (serviceName === 'eks' && serviceConfig.enabled) {
-    if (serviceConfig.minNodes > serviceConfig.maxNodes) {
-      errors.push(new ConfigValidationError('Min nodes cannot be greater than max nodes', 'nodeCount'));
+  if (serviceName === "eks" && serviceConfig.enabled) {
+    if (serviceConfig.defaultNodeGroupMinSize > serviceConfig.defaultNodeGroupMaxSize) {
+      errors.push(
+        new ConfigValidationError("Min nodes cannot be greater than max nodes", "nodeCount")
+      );
     }
   }
 
-  if (serviceName === 'rds' && serviceConfig.enabled) {
-    if (serviceConfig.multiAz && serviceConfig.instanceClass?.includes('t2.')) {
-      errors.push(new ConfigValidationError('Multi-AZ is not supported with t2 instance classes', 'multiAz'));
+  if (serviceName === "rds" && serviceConfig.enabled) {
+    if (serviceConfig.multiAz && serviceConfig.instanceClass?.includes("t2.")) {
+      errors.push(
+        new ConfigValidationError("Multi-AZ is not supported with t2 instance classes", "multiAz")
+      );
     }
   }
 
@@ -142,22 +212,34 @@ export const validateEnvironmentConfig = (environment) => {
   const errors = [];
 
   // Validate basic environment properties
-  if (!environment.name || environment.name.trim() === '') {
-    errors.push(new ConfigValidationError('Environment name is required', 'name'));
+  if (!environment.name || environment.name.trim() === "") {
+    errors.push(new ConfigValidationError("Environment name is required", "name"));
   }
 
   if (!environment.provider) {
-    errors.push(new ConfigValidationError('Environment provider is required', 'provider'));
+    errors.push(new ConfigValidationError("Environment provider is required", "provider"));
   } else if (!PROVIDERS_CONFIG[environment.provider]) {
-    errors.push(new ConfigValidationError(`Invalid provider type: ${environment.provider}`, 'provider', environment.provider));
+    errors.push(
+      new ConfigValidationError(
+        `Invalid provider type: ${environment.provider}`,
+        "provider",
+        environment.provider
+      )
+    );
   }
 
   if (!environment.region) {
-    errors.push(new ConfigValidationError('Environment region is required', 'region'));
+    errors.push(new ConfigValidationError("Environment region is required", "region"));
   } else if (environment.provider && PROVIDERS_CONFIG[environment.provider]) {
-    const validRegions = PROVIDERS_CONFIG[environment.provider].regions?.map(r => r.value) || [];
+    const validRegions = PROVIDERS_CONFIG[environment.provider].regions?.map((r) => r.value) || [];
     if (validRegions.length > 0 && !validRegions.includes(environment.region)) {
-      errors.push(new ConfigValidationError(`Invalid region for ${environment.provider}: ${environment.region}`, 'region', environment.region));
+      errors.push(
+        new ConfigValidationError(
+          `Invalid region for ${environment.provider}: ${environment.region}`,
+          "region",
+          environment.region
+        )
+      );
     }
   }
 
@@ -170,17 +252,17 @@ export const validateEnvironmentConfig = (environment) => {
 
     // Cross-service validation
     const enabledServices = Object.keys(environment.services).filter(
-      serviceName => environment.services[serviceName]?.enabled
+      (serviceName) => environment.services[serviceName]?.enabled
     );
 
     // EKS requires VPC
-    if (enabledServices.includes('eks') && !enabledServices.includes('vpc')) {
-      errors.push(new ConfigValidationError('EKS requires VPC to be enabled', 'eks'));
+    if (enabledServices.includes("eks") && !enabledServices.includes("vpc")) {
+      errors.push(new ConfigValidationError("EKS requires VPC to be enabled", "eks"));
     }
 
     // RDS requires VPC
-    if (enabledServices.includes('rds') && !enabledServices.includes('vpc')) {
-      errors.push(new ConfigValidationError('RDS requires VPC to be enabled', 'rds'));
+    if (enabledServices.includes("rds") && !enabledServices.includes("vpc")) {
+      errors.push(new ConfigValidationError("RDS requires VPC to be enabled", "rds"));
     }
   }
 
@@ -195,16 +277,16 @@ export const getValidationSummary = (errors) => {
       warnings: [],
       criticalErrors: [],
       totalErrors: 0,
-      hasBlockingErrors: false
+      hasBlockingErrors: false,
     };
   }
 
-  const criticalErrors = errors.filter(error =>
-    error.field === 'name' || error.field === 'provider' || error.field === 'region'
+  const criticalErrors = errors.filter(
+    (error) => error.field === "name" || error.field === "provider" || error.field === "region"
   );
 
-  const warnings = errors.filter(error =>
-    error.message.includes('recommended') || error.message.includes('should')
+  const warnings = errors.filter(
+    (error) => error.message.includes("recommended") || error.message.includes("should")
   );
 
   return {
@@ -213,7 +295,7 @@ export const getValidationSummary = (errors) => {
     warnings,
     criticalErrors,
     totalErrors: errors.length,
-    hasBlockingErrors: criticalErrors.length > 0
+    hasBlockingErrors: criticalErrors.length > 0,
   };
 };
 
@@ -246,7 +328,7 @@ const configValidator = {
   validateEnvironmentConfig,
   getValidationSummary,
   validateConfigStructure,
-  ConfigValidationError
+  ConfigValidationError,
 };
 
 export default configValidator;
