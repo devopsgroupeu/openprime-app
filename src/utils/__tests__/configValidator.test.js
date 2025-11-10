@@ -143,7 +143,9 @@ describe("configValidator", () => {
       const errors = validateServiceConfig("vpc", vpcConfig);
       const natError = errors.find((e) => e.field === "natGateway");
       expect(natError).toBeDefined();
-      expect(natError.message).toContain("must be one of: NONE, SINGLE, ONE_PER_AZ");
+      expect(natError.message).toContain(
+        "must be one of: NO_NAT, SINGLE, ONE_PER_SUBNET, ONE_PER_AZ"
+      );
     });
 
     test("validates VPC with invalid CIDR format", () => {
