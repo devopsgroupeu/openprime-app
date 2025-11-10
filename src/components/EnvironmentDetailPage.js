@@ -154,7 +154,9 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
           helmCharts: {
             ...editEnv.services[kubernetesService].helmCharts,
             [showValuesEditor]: {
-              ...editEnv.services[kubernetesService].helmCharts[showValuesEditor],
+              ...editEnv.services[kubernetesService].helmCharts[
+                showValuesEditor
+              ],
               customValues: true,
             },
           },
@@ -167,10 +169,12 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
 
   const getResourceStats = () => {
     const services = environment.services || {};
-    const enabledCount = Object.values(services).filter((s) => s?.enabled).length;
+    const enabledCount = Object.values(services).filter(
+      (s) => s?.enabled,
+    ).length;
     const totalCount = Object.keys(services).length;
     const helmCount = Object.values(services.eks?.helmCharts || {}).filter(
-      (c) => c?.enabled
+      (c) => c?.enabled,
     ).length;
 
     return { enabledCount, totalCount, helmCount };
@@ -187,7 +191,14 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
     return Math.round((healthyServices / enabledCount) * 100);
   };
 
-  const MetricCard = ({ icon: Icon, title, value, subtitle, trend, color = "teal" }) => (
+  const MetricCard = ({
+    icon: Icon,
+    title,
+    value,
+    subtitle,
+    trend,
+    color = "teal",
+  }) => (
     <div
       className={`rounded-xl border backdrop-blur-sm transition-all duration-200 hover:scale-[1.02] ${
         isDark
@@ -212,14 +223,20 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
           )}
         </div>
         <div>
-          <h3 className={`text-2xl font-bold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+          <h3
+            className={`text-2xl font-bold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}
+          >
             {value}
           </h3>
-          <p className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+          <p
+            className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}
+          >
             {title}
           </p>
           {subtitle && (
-            <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            <p
+              className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+            >
               {subtitle}
             </p>
           )}
@@ -301,12 +318,16 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div
           className={`lg:col-span-2 rounded-xl border backdrop-blur-sm ${
-            isDark ? "bg-gray-800/40 border-gray-700/50" : "bg-white/60 border-gray-200/50"
+            isDark
+              ? "bg-gray-800/40 border-gray-700/50"
+              : "bg-white/60 border-gray-200/50"
           }`}
         >
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+              <h3
+                className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+              >
                 Resource Overview
               </h3>
               <button
@@ -327,11 +348,15 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
 
         <div
           className={`rounded-xl border backdrop-blur-sm ${
-            isDark ? "bg-gray-800/40 border-gray-700/50" : "bg-white/60 border-gray-200/50"
+            isDark
+              ? "bg-gray-800/40 border-gray-700/50"
+              : "bg-white/60 border-gray-200/50"
           }`}
         >
           <div className="p-6">
-            <h3 className={`text-lg font-semibold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>
+            <h3
+              className={`text-lg font-semibold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}
+            >
               Quick Actions
             </h3>
             <div className="space-y-3">
@@ -387,11 +412,25 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
         <div className="mb-8">
           <div className="flex flex-wrap gap-2">
             <TabButton id="overview" label="Overview" icon={BarChart3} />
-            <TabButton id="services" label="Services" icon={Database} count={enabledCount} />
+            <TabButton
+              id="services"
+              label="Services"
+              icon={Database}
+              count={enabledCount}
+            />
             {environment.services?.eks?.enabled && (
-              <TabButton id="helm" label="Helm Charts" icon={Container} count={helmCount} />
+              <TabButton
+                id="helm"
+                label="Helm Charts"
+                icon={Container}
+                count={helmCount}
+              />
             )}
-            <TabButton id="configuration" label="Configuration" icon={Settings} />
+            <TabButton
+              id="configuration"
+              label="Configuration"
+              icon={Settings}
+            />
           </div>
         </div>
 
@@ -400,7 +439,9 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
           {activeTab === "services" && (
             <div
               className={`rounded-xl border backdrop-blur-sm ${
-                isDark ? "bg-gray-800/40 border-gray-700/50" : "bg-white/60 border-gray-200/50"
+                isDark
+                  ? "bg-gray-800/40 border-gray-700/50"
+                  : "bg-white/60 border-gray-200/50"
               }`}
             >
               <div className="p-6">
@@ -411,7 +452,9 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
           {activeTab === "helm" && environment.services?.eks?.enabled && (
             <div
               className={`rounded-xl border backdrop-blur-sm ${
-                isDark ? "bg-gray-800/40 border-gray-700/50" : "bg-white/60 border-gray-200/50"
+                isDark
+                  ? "bg-gray-800/40 border-gray-700/50"
+                  : "bg-white/60 border-gray-200/50"
               }`}
             >
               <div className="p-6">
@@ -422,7 +465,9 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
           {activeTab === "configuration" && (
             <div
               className={`rounded-xl border backdrop-blur-sm ${
-                isDark ? "bg-gray-800/40 border-gray-700/50" : "bg-white/60 border-gray-200/50"
+                isDark
+                  ? "bg-gray-800/40 border-gray-700/50"
+                  : "bg-white/60 border-gray-200/50"
               }`}
             >
               <div className="p-6">

@@ -1,41 +1,46 @@
-import React from 'react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext';
+import React from "react";
+import { AlertTriangle, RefreshCw, Home } from "lucide-react";
+import { useTheme } from "../contexts/ThemeContext";
 
 // Error display component that can use hooks
 const ErrorDisplay = ({ error, errorInfo, onRefresh, onGoHome }) => {
   const { isDark } = useTheme();
 
   return (
-    <div className={`min-h-screen flex items-center justify-center p-8 ${
-      isDark ? 'bg-gray-900' : 'bg-gray-50'
-    }`}>
+    <div
+      className={`min-h-screen flex items-center justify-center p-8 ${
+        isDark ? "bg-gray-900" : "bg-gray-50"
+      }`}
+    >
       <div className="max-w-md w-full text-center">
-        <div className={`rounded-lg p-8 shadow-xl border ${
-          isDark
-            ? 'bg-gray-800 border-gray-700'
-            : 'bg-white border-gray-200'
-        }`}>
+        <div
+          className={`rounded-lg p-8 shadow-xl border ${
+            isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+          }`}
+        >
           <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
 
-          <h1 className={`text-2xl font-bold mb-2 ${
-            isDark ? 'text-white' : 'text-gray-900'
-          }`}>
+          <h1
+            className={`text-2xl font-bold mb-2 ${
+              isDark ? "text-white" : "text-gray-900"
+            }`}
+          >
             Something went wrong
           </h1>
 
-          <p className={`mb-6 ${
-            isDark ? 'text-gray-400' : 'text-gray-600'
-          }`}>
-            An unexpected error occurred. Please try refreshing the page or return to the home page.
+          <p className={`mb-6 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            An unexpected error occurred. Please try refreshing the page or
+            return to the home page.
           </p>
 
-          {process.env.NODE_ENV === 'development' && error && (
-            <details className={`text-left mb-6 rounded p-3 text-sm ${
-              isDark
-                ? 'bg-gray-900 text-gray-300'
-                : 'bg-gray-100 text-gray-700'
-            }`}>
+          {process.env.NODE_ENV === "development" && error && (
+            <details
+              className={`text-left mb-6 rounded p-3 text-sm ${
+                isDark
+                  ? "bg-gray-900 text-gray-300"
+                  : "bg-gray-100 text-gray-700"
+              }`}
+            >
               <summary className="cursor-pointer text-red-400 mb-2">
                 Error Details (Development Mode)
               </summary>
@@ -59,8 +64,8 @@ const ErrorDisplay = ({ error, errorInfo, onRefresh, onGoHome }) => {
               onClick={onGoHome}
               className={`flex-1 px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2 ${
                 isDark
-                  ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                  : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
+                  ? "bg-gray-700 hover:bg-gray-600 text-white"
+                  : "bg-gray-200 hover:bg-gray-300 text-gray-900"
               }`}
             >
               <Home className="w-4 h-4" />
@@ -86,12 +91,12 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     this.setState({
       error: error,
-      errorInfo: errorInfo
+      errorInfo: errorInfo,
     });
 
     // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error caught by boundary:', error, errorInfo);
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error caught by boundary:", error, errorInfo);
     }
   }
 
@@ -100,7 +105,12 @@ class ErrorBoundary extends React.Component {
       const { fallback: Fallback } = this.props;
 
       if (Fallback) {
-        return <Fallback error={this.state.error} resetError={() => this.setState({ hasError: false })} />;
+        return (
+          <Fallback
+            error={this.state.error}
+            resetError={() => this.setState({ hasError: false })}
+          />
+        );
       }
 
       return (
@@ -108,7 +118,7 @@ class ErrorBoundary extends React.Component {
           error={this.state.error}
           errorInfo={this.state.errorInfo}
           onRefresh={() => window.location.reload()}
-          onGoHome={() => window.location.href = '/'}
+          onGoHome={() => (window.location.href = "/")}
         />
       );
     }
@@ -121,7 +131,7 @@ class ErrorBoundary extends React.Component {
 export const useErrorHandler = () => {
   return (error) => {
     // In a real app, you might want to log this to an error reporting service
-    console.error('Error caught:', error);
+    console.error("Error caught:", error);
     throw error; // Re-throw to be caught by Error Boundary
   };
 };

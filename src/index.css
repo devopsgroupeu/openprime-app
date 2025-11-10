@@ -1,6 +1,6 @@
 /* src/index.css */
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -11,50 +11,50 @@
   /* Light Mode - Using Official OpenPrime Design Manual Colors */
 
   /* Background Colors (60% rule - primary surfaces) */
-  --color-background: #F2F9F8; /* OpenPrime lightest shade from manual */
-  --color-background-secondary: #FFFFFF; /* Pure white for cards */
-  --color-background-tertiary: #C5E8E4; /* OpenPrime light shade */
-  --color-background-accent: #35B0A0; /* OpenPrime primary teal */
+  --color-background: #f2f9f8; /* OpenPrime lightest shade from manual */
+  --color-background-secondary: #ffffff; /* Pure white for cards */
+  --color-background-tertiary: #c5e8e4; /* OpenPrime light shade */
+  --color-background-accent: #35b0a0; /* OpenPrime primary teal */
 
   /* Surface Colors (elevation system) */
-  --color-surface: #FFFFFF; /* White surfaces */
-  --color-surface-elevated: #F2F9F8; /* OpenPrime lightest */
-  --color-surface-overlay: #FFFFFF; /* Modal backgrounds */
+  --color-surface: #ffffff; /* White surfaces */
+  --color-surface-elevated: #f2f9f8; /* OpenPrime lightest */
+  --color-surface-overlay: #ffffff; /* Modal backgrounds */
 
   /* Text Colors (high contrast, WCAG AA compliant) */
-  --color-text-primary: #04312C; /* OpenPrime primary dark */
-  --color-text-secondary: #1E7366; /* OpenPrime medium shade */
-  --color-text-tertiary: #2FA394; /* OpenPrime lighter shade */
-  --color-text-inverse: #FFFFFF; /* White text on dark backgrounds */
+  --color-text-primary: #04312c; /* OpenPrime primary dark */
+  --color-text-secondary: #1e7366; /* OpenPrime medium shade */
+  --color-text-tertiary: #2fa394; /* OpenPrime lighter shade */
+  --color-text-inverse: #ffffff; /* White text on dark backgrounds */
 
   /* Border Colors */
-  --color-border: #C5E8E4; /* OpenPrime light shade */
-  --color-border-subtle: #F2F9F8; /* OpenPrime lightest */
-  --color-border-strong: #35B0A0; /* OpenPrime primary */
+  --color-border: #c5e8e4; /* OpenPrime light shade */
+  --color-border-subtle: #f2f9f8; /* OpenPrime lightest */
+  --color-border-strong: #35b0a0; /* OpenPrime primary */
 
   /* Primary Brand Colors (30% rule - secondary elements) */
-  --color-primary: #35B0A0; /* OpenPrime primary teal */
-  --color-primary-hover: #268A7D; /* OpenPrime darker shade */
-  --color-primary-active: #04312C; /* OpenPrime primary dark */
-  --color-primary-muted: #C5E8E4; /* OpenPrime light shade */
+  --color-primary: #35b0a0; /* OpenPrime primary teal */
+  --color-primary-hover: #268a7d; /* OpenPrime darker shade */
+  --color-primary-active: #04312c; /* OpenPrime primary dark */
+  --color-primary-muted: #c5e8e4; /* OpenPrime light shade */
 
   /* Accent Colors (10% rule - highlights and CTAs) */
-  --color-accent: #00E081; /* OpenPrime complementary green */
-  --color-accent-hover: #207D72; /* OpenPrime medium shade */
-  --color-accent-muted: #F2F9F8; /* OpenPrime lightest */
+  --color-accent: #00e081; /* OpenPrime complementary green */
+  --color-accent-hover: #207d72; /* OpenPrime medium shade */
+  --color-accent-muted: #f2f9f8; /* OpenPrime lightest */
 
   /* Semantic Status Colors (from OpenPrime design manual) */
-  --color-success: #00E081; /* OpenPrime complementary green */
-  --color-success-muted: #F2F9F8; /* OpenPrime lightest */
+  --color-success: #00e081; /* OpenPrime complementary green */
+  --color-success-muted: #f2f9f8; /* OpenPrime lightest */
 
-  --color-warning: #FFDB29; /* OpenPrime complementary yellow */
-  --color-warning-muted: #F2F9F8; /* OpenPrime lightest */
+  --color-warning: #ffdb29; /* OpenPrime complementary yellow */
+  --color-warning-muted: #f2f9f8; /* OpenPrime lightest */
 
-  --color-danger: #DC2626; /* Semantic red (accessible) */
-  --color-danger-muted: #FEE2E2; /* Light error background */
+  --color-danger: #dc2626; /* Semantic red (accessible) */
+  --color-danger-muted: #fee2e2; /* Light error background */
 
-  --color-info: #60EFFF; /* OpenPrime complementary cyan */
-  --color-info-muted: #F2F9F8; /* OpenPrime lightest */
+  --color-info: #60efff; /* OpenPrime complementary cyan */
+  --color-info-muted: #f2f9f8; /* OpenPrime lightest */
 
   /* Shadow Colors */
   --color-shadow: #000000; /* Black shadows for light mode */
@@ -64,49 +64,49 @@
 .dark {
   /* Background Colors (improved dark hierarchy with preferred dark blue) */
   --color-background: #111827; /* Preferred dark blue background */
-  --color-background-secondary: #1F2937; /* Darker blue-gray for cards */
+  --color-background-secondary: #1f2937; /* Darker blue-gray for cards */
   --color-background-tertiary: #374151; /* Medium blue-gray for elevated surfaces */
-  --color-background-accent: #1E7366; /* OpenPrime medium shade for accents */
+  --color-background-accent: #1e7366; /* OpenPrime medium shade for accents */
 
   /* Surface Colors (cohesive blue-gray elevation system) */
-  --color-surface: #1F2937; /* Darker blue-gray for cards */
+  --color-surface: #1f2937; /* Darker blue-gray for cards */
   --color-surface-elevated: #374151; /* Medium blue-gray for elevated surfaces */
   --color-surface-overlay: #111827; /* Dark blue for modals */
 
   /* Text Colors (optimized for dark mode readability) */
-  --color-text-primary: #FFFFFF; /* Pure white for primary text */
-  --color-text-secondary: #C5E8E4; /* OpenPrime light shade */
-  --color-text-tertiary: #35C4A5; /* OpenPrime bright shade */
-  --color-text-inverse: #04312C; /* OpenPrime primary dark */
+  --color-text-primary: #ffffff; /* Pure white for primary text */
+  --color-text-secondary: #c5e8e4; /* OpenPrime light shade */
+  --color-text-tertiary: #35c4a5; /* OpenPrime bright shade */
+  --color-text-inverse: #04312c; /* OpenPrime primary dark */
 
   /* Border Colors (subtle blue-gray borders for cohesive dark theme) */
   --color-border: #374151; /* Medium blue-gray for borders */
-  --color-border-subtle: #1F2937; /* Darker blue-gray for subtle borders */
-  --color-border-strong: #35B0A0; /* OpenPrime primary for strong borders */
+  --color-border-subtle: #1f2937; /* Darker blue-gray for subtle borders */
+  --color-border-strong: #35b0a0; /* OpenPrime primary for strong borders */
 
   /* Primary Colors (using OpenPrime bright shades for visibility) */
-  --color-primary: #35B0A0; /* OpenPrime primary teal */
-  --color-primary-hover: #37D8A9; /* OpenPrime bright shade */
-  --color-primary-active: #35C4A5; /* OpenPrime bright shade */
+  --color-primary: #35b0a0; /* OpenPrime primary teal */
+  --color-primary-hover: #37d8a9; /* OpenPrime bright shade */
+  --color-primary-active: #35c4a5; /* OpenPrime bright shade */
   --color-primary-muted: #374151; /* Medium blue-gray for muted states */
 
   /* Accent Colors (using complementary colors from manual) */
-  --color-accent: #00E081; /* OpenPrime complementary green */
-  --color-accent-hover: #37D8A9; /* OpenPrime bright shade */
-  --color-accent-muted: #1F2937; /* Darker blue-gray for muted accents */
+  --color-accent: #00e081; /* OpenPrime complementary green */
+  --color-accent-hover: #37d8a9; /* OpenPrime bright shade */
+  --color-accent-muted: #1f2937; /* Darker blue-gray for muted accents */
 
   /* Status Colors (using complementary colors from manual) */
-  --color-success: #00E081; /* OpenPrime complementary green */
-  --color-success-muted: #1F2937; /* Darker blue-gray for success backgrounds */
+  --color-success: #00e081; /* OpenPrime complementary green */
+  --color-success-muted: #1f2937; /* Darker blue-gray for success backgrounds */
 
-  --color-warning: #FFDB29; /* OpenPrime complementary yellow */
-  --color-warning-muted: #1F2937; /* Darker blue-gray for warning backgrounds */
+  --color-warning: #ffdb29; /* OpenPrime complementary yellow */
+  --color-warning-muted: #1f2937; /* Darker blue-gray for warning backgrounds */
 
-  --color-danger: #EF4444; /* Accessible red for dark mode */
-  --color-danger-muted: #7F1D1D; /* Dark error background */
+  --color-danger: #ef4444; /* Accessible red for dark mode */
+  --color-danger-muted: #7f1d1d; /* Dark error background */
 
-  --color-info: #60EFFF; /* OpenPrime complementary cyan */
-  --color-info-muted: #1F2937; /* Darker blue-gray for info backgrounds */
+  --color-info: #60efff; /* OpenPrime complementary cyan */
+  --color-info-muted: #1f2937; /* Darker blue-gray for info backgrounds */
 
   /* Shadow Colors */
   --color-shadow: #000000; /* Deep black shadows */
@@ -124,8 +124,18 @@ html {
 
 body {
   margin: 0;
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  font-family:
+    "Poppins",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Roboto",
+    "Oxygen",
+    "Ubuntu",
+    "Cantarell",
+    "Fira Sans",
+    "Droid Sans",
+    "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -134,6 +144,6 @@ body {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }

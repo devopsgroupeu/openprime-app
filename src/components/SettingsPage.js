@@ -1,6 +1,16 @@
 // src/components/SettingsPage.js
 import React, { useState, useEffect } from "react";
-import { Cloud, GitBranch, Shield, Terminal, User, Save, Plus, Edit2, Trash2 } from "lucide-react";
+import {
+  Cloud,
+  GitBranch,
+  Shield,
+  Terminal,
+  User,
+  Save,
+  Plus,
+  Edit2,
+  Trash2,
+} from "lucide-react";
 import Navigation from "./Navigation";
 import { useTheme } from "../contexts/ThemeContext";
 import authService from "../services/authService";
@@ -100,7 +110,9 @@ const SettingsPage = () => {
 
   const handleEditCredential = async (credential) => {
     try {
-      const response = await authService.get(`/cloud-credentials/${credential.id}`);
+      const response = await authService.get(
+        `/cloud-credentials/${credential.id}`,
+      );
       setSelectedCredential(response.credential);
       setSelectedProvider(credential.provider);
       setShowCredentialModal(true);
@@ -128,7 +140,10 @@ const SettingsPage = () => {
   const handleSaveCredential = async (credentialData) => {
     try {
       if (selectedCredential) {
-        await authService.put(`/cloud-credentials/${selectedCredential.id}`, credentialData);
+        await authService.put(
+          `/cloud-credentials/${selectedCredential.id}`,
+          credentialData,
+        );
       } else {
         await authService.post("/cloud-credentials", credentialData);
       }
@@ -149,7 +164,9 @@ const SettingsPage = () => {
           <div className="flex items-center justify-center min-h-[50vh]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className={`text-lg font-poppins ${isDark ? "text-white" : "text-primary"}`}>
+              <p
+                className={`text-lg font-poppins ${isDark ? "text-white" : "text-primary"}`}
+              >
                 Loading settings...
               </p>
             </div>
@@ -160,7 +177,9 @@ const SettingsPage = () => {
   }
 
   return (
-    <div className={`min-h-screen transition-colors ${isDark ? "bg-background" : "bg-background"}`}>
+    <div
+      className={`min-h-screen transition-colors ${isDark ? "bg-background" : "bg-background"}`}
+    >
       <Navigation />
       <div className="max-w-7xl mx-auto px-8 py-8">
         <h1
@@ -175,7 +194,9 @@ const SettingsPage = () => {
           {/* User Profile Section */}
           <div
             className={`backdrop-blur-sm rounded-xl border p-6 transition-colors ${
-              isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
+              isDark
+                ? "bg-gray-800/50 border-gray-700"
+                : "bg-white/70 border-gray-200"
             }`}
           >
             <h2
@@ -198,7 +219,9 @@ const SettingsPage = () => {
                 <input
                   type="text"
                   value={profile.firstName}
-                  onChange={(e) => handleProfileChange("firstName", e.target.value)}
+                  onChange={(e) =>
+                    handleProfileChange("firstName", e.target.value)
+                  }
                   className={`w-full px-4 py-2 rounded-lg border transition-colors ${
                     isDark
                       ? "bg-gray-700 border-gray-600 text-white"
@@ -218,7 +241,9 @@ const SettingsPage = () => {
                 <input
                   type="text"
                   value={profile.lastName}
-                  onChange={(e) => handleProfileChange("lastName", e.target.value)}
+                  onChange={(e) =>
+                    handleProfileChange("lastName", e.target.value)
+                  }
                   className={`w-full px-4 py-2 rounded-lg border transition-colors ${
                     isDark
                       ? "bg-gray-700 border-gray-600 text-white"
@@ -253,7 +278,9 @@ const SettingsPage = () => {
           {/* User Preferences Section */}
           <div
             className={`backdrop-blur-sm rounded-xl border p-6 transition-colors ${
-              isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
+              isDark
+                ? "bg-gray-800/50 border-gray-700"
+                : "bg-white/70 border-gray-200"
             }`}
           >
             <h2
@@ -275,7 +302,9 @@ const SettingsPage = () => {
                 </label>
                 <select
                   value={userPreferences.defaultProvider}
-                  onChange={(e) => handlePreferenceChange("defaultProvider", e.target.value)}
+                  onChange={(e) =>
+                    handlePreferenceChange("defaultProvider", e.target.value)
+                  }
                   className={`w-full px-4 py-2 rounded-lg border transition-colors ${
                     isDark
                       ? "bg-gray-700 border-gray-600 text-white"
@@ -299,7 +328,9 @@ const SettingsPage = () => {
                 <input
                   type="text"
                   value={userPreferences.defaultRegion}
-                  onChange={(e) => handlePreferenceChange("defaultRegion", e.target.value)}
+                  onChange={(e) =>
+                    handlePreferenceChange("defaultRegion", e.target.value)
+                  }
                   className={`w-full px-4 py-2 rounded-lg border transition-colors ${
                     isDark
                       ? "bg-gray-700 border-gray-600 text-white"
@@ -330,7 +361,9 @@ const SettingsPage = () => {
                     type="checkbox"
                     className="sr-only peer"
                     checked={userPreferences.notifications}
-                    onChange={(e) => handlePreferenceChange("notifications", e.target.checked)}
+                    onChange={(e) =>
+                      handlePreferenceChange("notifications", e.target.checked)
+                    }
                   />
                   <div
                     className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
@@ -343,7 +376,9 @@ const SettingsPage = () => {
           </div>
           <div
             className={`backdrop-blur-sm rounded-xl border p-6 transition-colors ${
-              isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
+              isDark
+                ? "bg-gray-800/50 border-gray-700"
+                : "bg-white/70 border-gray-200"
             }`}
           >
             <div className="flex justify-between items-center mb-4">
@@ -364,7 +399,8 @@ const SettingsPage = () => {
               </button>
             </div>
             <div className="space-y-3">
-              {cloudCredentials.filter((c) => c.provider === "aws").length === 0 ? (
+              {cloudCredentials.filter((c) => c.provider === "aws").length ===
+              0 ? (
                 <div
                   className={`text-center py-8 transition-colors ${
                     isDark ? "text-gray-400" : "text-gray-600"
@@ -372,7 +408,9 @@ const SettingsPage = () => {
                 >
                   <Cloud className="w-12 h-12 mx-auto mb-2 opacity-50" />
                   <p>No AWS credentials configured</p>
-                  <p className="text-sm mt-1">Add your first credential to get started</p>
+                  <p className="text-sm mt-1">
+                    Add your first credential to get started
+                  </p>
                 </div>
               ) : (
                 cloudCredentials
@@ -440,7 +478,9 @@ const SettingsPage = () => {
 
           <div
             className={`backdrop-blur-sm rounded-xl border p-6 transition-colors ${
-              isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
+              isDark
+                ? "bg-gray-800/50 border-gray-700"
+                : "bg-white/70 border-gray-200"
             }`}
           >
             <h2
@@ -493,7 +533,9 @@ const SettingsPage = () => {
 
           <div
             className={`backdrop-blur-sm rounded-xl border p-6 transition-colors ${
-              isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
+              isDark
+                ? "bg-gray-800/50 border-gray-700"
+                : "bg-white/70 border-gray-200"
             }`}
           >
             <h2
@@ -523,7 +565,11 @@ const SettingsPage = () => {
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    defaultChecked
+                  />
                   <div
                     className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
                       isDark ? "bg-gray-700" : "bg-gray-300"
@@ -549,7 +595,11 @@ const SettingsPage = () => {
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    defaultChecked
+                  />
                   <div
                     className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
                       isDark ? "bg-gray-700" : "bg-gray-300"
@@ -562,7 +612,9 @@ const SettingsPage = () => {
 
           <div
             className={`backdrop-blur-sm rounded-xl border p-6 transition-colors ${
-              isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
+              isDark
+                ? "bg-gray-800/50 border-gray-700"
+                : "bg-white/70 border-gray-200"
             }`}
           >
             <h2
@@ -575,11 +627,15 @@ const SettingsPage = () => {
             </h2>
             <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs">
               <div className="text-gray-400"># Install OpenPrime CLI</div>
-              <div className="text-green-400">$ npm install -g openprime-cli</div>
+              <div className="text-green-400">
+                $ npm install -g openprime-cli
+              </div>
               <div className="text-gray-400 mt-2"># Configure credentials</div>
               <div className="text-green-400">$ openprime configure</div>
               <div className="text-gray-400 mt-2"># Deploy environment</div>
-              <div className="text-green-400">$ openprime deploy production</div>
+              <div className="text-green-400">
+                $ openprime deploy production
+              </div>
             </div>
           </div>
         </div>

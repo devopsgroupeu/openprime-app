@@ -1,10 +1,17 @@
-import React from 'react';
+import React from "react";
 import {
-  Database, Network, Container, Archive, Shield, Box, Lock,
-  CheckCircle, Package
-} from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
-import { getServiceConfig } from '../../config/servicesConfig';
+  Database,
+  Network,
+  Container,
+  Archive,
+  Shield,
+  Box,
+  Lock,
+  CheckCircle,
+  Package,
+} from "lucide-react";
+import { useTheme } from "../../contexts/ThemeContext";
+import { getServiceConfig } from "../../config/servicesConfig";
 
 const ServicesOverview = ({ environment }) => {
   const { isDark } = useTheme();
@@ -20,7 +27,7 @@ const ServicesOverview = ({ environment }) => {
       lambda: Box,
       elasticache: Database,
       secretsmanager: Lock,
-      iam: Shield
+      iam: Shield,
     };
     return icons[serviceName] || Box;
   };
@@ -34,24 +41,30 @@ const ServicesOverview = ({ environment }) => {
     const IconComponent = getServiceIcon(serviceName);
 
     return (
-      <div className={`p-4 rounded-lg border transition-colors ${
-        isDark
-          ? 'bg-gray-800/50 border-gray-700'
-          : 'bg-white/80 border-gray-200'
-      }`}>
+      <div
+        className={`p-4 rounded-lg border transition-colors ${
+          isDark
+            ? "bg-gray-800/50 border-gray-700"
+            : "bg-white/80 border-gray-200"
+        }`}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <IconComponent className="w-5 h-5 text-teal-500" />
             <div>
-              <h4 className={`font-medium ${
-                isDark ? 'text-white' : 'text-gray-900'
-              }`}>
+              <h4
+                className={`font-medium ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}
+              >
                 {serviceDefinition?.displayName || serviceName}
               </h4>
-              <p className={`text-sm ${
-                isDark ? 'text-gray-400' : 'text-gray-600'
-              }`}>
-                {serviceDefinition?.description || 'Service configuration'}
+              <p
+                className={`text-sm ${
+                  isDark ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                {serviceDefinition?.description || "Service configuration"}
               </p>
             </div>
           </div>
@@ -74,9 +87,11 @@ const ServicesOverview = ({ environment }) => {
           ))}
         </div>
       ) : (
-        <div className={`text-center py-8 ${
-          isDark ? 'text-gray-400' : 'text-gray-600'
-        }`}>
+        <div
+          className={`text-center py-8 ${
+            isDark ? "text-gray-400" : "text-gray-600"
+          }`}
+        >
           <Box className="w-12 h-12 mx-auto mb-3 opacity-50" />
           <p>No services are currently enabled</p>
         </div>

@@ -45,8 +45,12 @@ describe("configValidator", () => {
         ],
       };
 
-      expect(validateField(fieldConfig, "t3.micro", "instanceType")).toHaveLength(0);
-      expect(validateField(fieldConfig, "invalid", "instanceType")).toHaveLength(1);
+      expect(
+        validateField(fieldConfig, "t3.micro", "instanceType"),
+      ).toHaveLength(0);
+      expect(
+        validateField(fieldConfig, "invalid", "instanceType"),
+      ).toHaveLength(1);
     });
 
     test("validates pattern for text field", () => {
@@ -57,7 +61,9 @@ describe("configValidator", () => {
       };
 
       expect(validateField(fieldConfig, "10.0.0.0/16", "cidr")).toHaveLength(0);
-      expect(validateField(fieldConfig, "invalid-cidr", "cidr")).toHaveLength(1);
+      expect(validateField(fieldConfig, "invalid-cidr", "cidr")).toHaveLength(
+        1,
+      );
     });
 
     test("validates toggle (boolean) field", () => {
@@ -81,9 +87,15 @@ describe("configValidator", () => {
         ],
       };
 
-      expect(validateField(fieldConfig, ["t3.micro", "t3.small"], "instanceTypes")).toHaveLength(0);
-      expect(validateField(fieldConfig, ["invalid"], "instanceTypes")).toHaveLength(1);
-      expect(validateField(fieldConfig, "not-an-array", "instanceTypes")).toHaveLength(1);
+      expect(
+        validateField(fieldConfig, ["t3.micro", "t3.small"], "instanceTypes"),
+      ).toHaveLength(0);
+      expect(
+        validateField(fieldConfig, ["invalid"], "instanceTypes"),
+      ).toHaveLength(1);
+      expect(
+        validateField(fieldConfig, "not-an-array", "instanceTypes"),
+      ).toHaveLength(1);
     });
 
     test("validates array field", () => {
@@ -93,8 +105,12 @@ describe("configValidator", () => {
       };
 
       expect(validateField(fieldConfig, [], "buckets")).toHaveLength(0);
-      expect(validateField(fieldConfig, ["bucket1", "bucket2"], "buckets")).toHaveLength(0);
-      expect(validateField(fieldConfig, "not-an-array", "buckets")).toHaveLength(1);
+      expect(
+        validateField(fieldConfig, ["bucket1", "bucket2"], "buckets"),
+      ).toHaveLength(0);
+      expect(
+        validateField(fieldConfig, "not-an-array", "buckets"),
+      ).toHaveLength(1);
     });
 
     test("validates object field", () => {
@@ -104,7 +120,9 @@ describe("configValidator", () => {
       };
 
       expect(validateField(fieldConfig, {}, "tags")).toHaveLength(0);
-      expect(validateField(fieldConfig, { key: "value" }, "tags")).toHaveLength(0);
+      expect(validateField(fieldConfig, { key: "value" }, "tags")).toHaveLength(
+        0,
+      );
       expect(validateField(fieldConfig, [], "tags")).toHaveLength(1);
       expect(validateField(fieldConfig, null, "tags")).toHaveLength(0); // null is allowed when not required
     });
@@ -144,7 +162,7 @@ describe("configValidator", () => {
       const natError = errors.find((e) => e.field === "natGateway");
       expect(natError).toBeDefined();
       expect(natError.message).toContain(
-        "must be one of: NO_NAT, SINGLE, ONE_PER_SUBNET, ONE_PER_AZ"
+        "must be one of: NO_NAT, SINGLE, ONE_PER_SUBNET, ONE_PER_AZ",
       );
     });
 
@@ -406,7 +424,10 @@ describe("configValidator", () => {
         automaticRotation: false,
       };
 
-      const errors = validateServiceConfig("secretsManager", secretsManagerConfig);
+      const errors = validateServiceConfig(
+        "secretsManager",
+        secretsManagerConfig,
+      );
       expect(errors).toHaveLength(0);
     });
 
@@ -448,7 +469,9 @@ describe("configValidator", () => {
       };
 
       const errors = validateServiceConfig("eks", eksConfig);
-      const minSizeError = errors.find((e) => e.field === "defaultNodeGroupMinSize");
+      const minSizeError = errors.find(
+        (e) => e.field === "defaultNodeGroupMinSize",
+      );
       expect(minSizeError).toBeDefined();
     });
 
@@ -459,7 +482,9 @@ describe("configValidator", () => {
       };
 
       const errors = validateServiceConfig("eks", eksConfig);
-      const instanceTypesError = errors.find((e) => e.field === "defaultNodeGroupInstanceTypes");
+      const instanceTypesError = errors.find(
+        (e) => e.field === "defaultNodeGroupInstanceTypes",
+      );
       expect(instanceTypesError).toBeDefined();
     });
   });
@@ -628,7 +653,10 @@ describe("configValidator", () => {
 
     test("identifies warnings", () => {
       const errors = [
-        new ConfigValidationError("This is recommended for production", "setting"),
+        new ConfigValidationError(
+          "This is recommended for production",
+          "setting",
+        ),
         new ConfigValidationError("You should enable this feature", "feature"),
       ];
 

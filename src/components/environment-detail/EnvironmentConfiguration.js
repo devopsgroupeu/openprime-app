@@ -123,7 +123,7 @@ const EnvironmentConfiguration = ({ environment }) => {
         {
           responseType: "blob",
           timeout: 120000,
-        }
+        },
       );
 
       const blob = new Blob([response.data], { type: "application/zip" });
@@ -136,11 +136,14 @@ const EnvironmentConfiguration = ({ environment }) => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      success("Infrastructure repository generated and downloaded successfully");
+      success(
+        "Infrastructure repository generated and downloaded successfully",
+      );
     } catch (err) {
       console.error("Error generating infrastructure:", err);
       showError(
-        err.response?.data?.error || "Failed to generate infrastructure. Please try again."
+        err.response?.data?.error ||
+          "Failed to generate infrastructure. Please try again.",
       );
     } finally {
       setIsGenerating(false);
@@ -154,12 +157,16 @@ const EnvironmentConfiguration = ({ environment }) => {
       {environment.terraform_backend?.enabled && (
         <div
           className={`p-6 rounded-xl border ${
-            isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
+            isDark
+              ? "bg-gray-800/50 border-gray-700"
+              : "bg-white/70 border-gray-200"
           }`}
         >
           <div className="flex items-center mb-4">
             <Database className="w-5 h-5 mr-2 text-teal-500" />
-            <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+            <h4
+              className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+            >
               Terraform Backend Configuration
             </h4>
           </div>
@@ -200,7 +207,9 @@ const EnvironmentConfiguration = ({ environment }) => {
                 >
                   Locking Mechanism
                 </p>
-                <p className={`text-sm ${isDark ? "text-gray-200" : "text-gray-800"}`}>
+                <p
+                  className={`text-sm ${isDark ? "text-gray-200" : "text-gray-800"}`}
+                >
                   {environment.terraform_backend.lockingMechanism === "s3"
                     ? "S3 Native Locking"
                     : "DynamoDB"}
@@ -232,12 +241,16 @@ const EnvironmentConfiguration = ({ environment }) => {
       {environment.git_repository?.enabled && (
         <div
           className={`p-6 rounded-xl border ${
-            isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
+            isDark
+              ? "bg-gray-800/50 border-gray-700"
+              : "bg-white/70 border-gray-200"
           }`}
         >
           <div className="flex items-center mb-4">
             <GitBranch className="w-5 h-5 mr-2 text-teal-500" />
-            <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+            <h4
+              className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+            >
               Git Repository Configuration
             </h4>
           </div>
@@ -249,7 +262,9 @@ const EnvironmentConfiguration = ({ environment }) => {
                 Repository URL
               </p>
               <div className="flex items-center space-x-2">
-                <p className={`text-sm font-mono ${isDark ? "text-gray-200" : "text-gray-800"}`}>
+                <p
+                  className={`text-sm font-mono ${isDark ? "text-gray-200" : "text-gray-800"}`}
+                >
                   {environment.git_repository.url}
                 </p>
                 {environment.git_repository.url.includes("github.com") && (
@@ -299,7 +314,11 @@ const EnvironmentConfiguration = ({ environment }) => {
                     }`}
                     title={showSshKey ? "Hide key" : "Show key"}
                   >
-                    {showSshKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showSshKey ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 )}
               </div>
@@ -308,7 +327,9 @@ const EnvironmentConfiguration = ({ environment }) => {
         </div>
       )}
       <div className="flex items-center justify-between">
-        <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+        <h3
+          className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+        >
           Environment Configuration
         </h3>
         <div className="flex items-center space-x-3">
@@ -321,8 +342,8 @@ const EnvironmentConfiguration = ({ environment }) => {
                     ? "bg-teal-600 text-white"
                     : "bg-teal-600 text-white"
                   : isDark
-                  ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
               <Code className="w-4 h-4 inline mr-1" />
@@ -336,8 +357,8 @@ const EnvironmentConfiguration = ({ environment }) => {
                     ? "bg-teal-600 text-white"
                     : "bg-teal-600 text-white"
                   : isDark
-                  ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
               <FileText className="w-4 h-4 inline mr-1" />
@@ -373,8 +394,8 @@ const EnvironmentConfiguration = ({ environment }) => {
               isGenerating
                 ? "bg-gray-500 cursor-not-allowed text-white"
                 : isDark
-                ? "bg-purple-600 hover:bg-purple-700 text-white"
-                : "bg-purple-600 hover:bg-purple-700 text-white"
+                  ? "bg-purple-600 hover:bg-purple-700 text-white"
+                  : "bg-purple-600 hover:bg-purple-700 text-white"
             }`}
           >
             <Package className="w-4 h-4 inline mr-2" />
@@ -385,18 +406,24 @@ const EnvironmentConfiguration = ({ environment }) => {
 
       <div
         className={`rounded-lg border ${
-          isDark ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"
+          isDark
+            ? "bg-gray-900/50 border-gray-700"
+            : "bg-gray-50 border-gray-200"
         }`}
       >
         <div
           className={`px-4 py-3 border-b text-sm font-medium flex items-center justify-between ${
-            isDark ? "border-gray-700 text-gray-300" : "border-gray-200 text-gray-700"
+            isDark
+              ? "border-gray-700 text-gray-300"
+              : "border-gray-200 text-gray-700"
           }`}
         >
           <span>
             {environment.name} - {format.toUpperCase()} Configuration
           </span>
-          <span className="text-xs opacity-75">{content.split("\n").length} lines</span>
+          <span className="text-xs opacity-75">
+            {content.split("\n").length} lines
+          </span>
         </div>
         <div className="relative">
           <pre
@@ -421,9 +448,10 @@ const EnvironmentConfiguration = ({ environment }) => {
           <div>
             <p className="font-medium mb-1">Configuration Export</p>
             <p className="text-sm opacity-90">
-              This configuration represents the complete state of your environment including all
-              services, settings, and metadata. You can use this to backup, version control, or
-              recreate this environment.
+              This configuration represents the complete state of your
+              environment including all services, settings, and metadata. You
+              can use this to backup, version control, or recreate this
+              environment.
             </p>
           </div>
         </div>

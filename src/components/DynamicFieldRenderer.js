@@ -3,7 +3,13 @@ import React from "react";
 import { FIELD_TYPES } from "../config/servicesConfig";
 import { useTheme } from "../contexts/ThemeContext";
 
-const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disabled = false }) => {
+const DynamicFieldRenderer = ({
+  fieldConfig,
+  value,
+  onChange,
+  fieldName,
+  disabled = false,
+}) => {
   const { isDark } = useTheme();
 
   const handleChange = (newValue) => {
@@ -16,7 +22,8 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
       : "bg-white border-gray-300 text-primary focus:border-primary"
   } focus:ring-2 focus:ring-primary/20 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`;
 
-  const labelClasses = "block text-sm font-medium mb-1 text-primary font-poppins";
+  const labelClasses =
+    "block text-sm font-medium mb-1 text-primary font-poppins";
 
   const descriptionClasses = "text-xs mt-1 text-tertiary font-poppins";
 
@@ -89,7 +96,9 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
                   disabled={disabled}
                   className="mr-2 rounded"
                 />
-                <span className="text-primary font-poppins">{option.label}</span>
+                <span className="text-primary font-poppins">
+                  {option.label}
+                </span>
               </label>
             ))}
           </div>
@@ -142,7 +151,9 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
           <textarea
             value={Array.isArray(value) ? value.join("\n") : ""}
             onChange={(e) => {
-              const lines = e.target.value.split("\n").filter((line) => line.trim() !== "");
+              const lines = e.target.value
+                .split("\n")
+                .filter((line) => line.trim() !== "");
               handleChange(lines);
             }}
             disabled={disabled}
@@ -166,7 +177,9 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
         <div>
           <label className={labelClasses}>{fieldConfig.displayName}</label>
           <textarea
-            value={typeof value === "object" ? JSON.stringify(value, null, 2) : ""}
+            value={
+              typeof value === "object" ? JSON.stringify(value, null, 2) : ""
+            }
             onChange={(e) => {
               try {
                 const parsed = JSON.parse(e.target.value);

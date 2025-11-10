@@ -360,14 +360,16 @@ export const SERVICES_CONFIG = {
         type: FIELD_TYPES.TEXT,
         name: "majorEngineVersion",
         displayName: "Major Engine Version",
-        description: "Major database engine version (e.g., 15 for PostgreSQL, 8.0 for MySQL)",
+        description:
+          "Major database engine version (e.g., 15 for PostgreSQL, 8.0 for MySQL)",
         defaultValue: "15.4",
       },
       family: {
         type: FIELD_TYPES.TEXT,
         name: "family",
         displayName: "DB Parameter Group Family",
-        description: "Database parameter group family (e.g., postgres15, mysql8.0)",
+        description:
+          "Database parameter group family (e.g., postgres15, mysql8.0)",
         defaultValue: "postgres15",
       },
       instanceClass: {
@@ -1095,7 +1097,8 @@ export const SERVICES_CONFIG = {
   ecr: {
     name: "ecr",
     displayName: "Elastic Container Registry (ECR)",
-    description: "Managed Docker container registry - supports multiple repositories",
+    description:
+      "Managed Docker container registry - supports multiple repositories",
     provider: "aws",
     category: "Storage",
     fields: {
@@ -1501,7 +1504,8 @@ export const SERVICES_CONFIG = {
         type: FIELD_TYPES.DROPDOWN,
         name: "scope",
         displayName: "Scope",
-        description: "WAF scope (REGIONAL for ALB/API Gateway, CLOUDFRONT for CloudFront)",
+        description:
+          "WAF scope (REGIONAL for ALB/API Gateway, CLOUDFRONT for CloudFront)",
         defaultValue: "REGIONAL",
         options: [
           { value: "REGIONAL", label: "Regional (ALB, API Gateway)" },
@@ -2151,11 +2155,15 @@ export const getServiceConfig = (serviceName) => {
 };
 
 export const getServicesByProvider = (providerType) => {
-  return Object.values(SERVICES_CONFIG).filter((service) => service.provider === providerType);
+  return Object.values(SERVICES_CONFIG).filter(
+    (service) => service.provider === providerType,
+  );
 };
 
 export const getServicesByCategory = (category) => {
-  return Object.values(SERVICES_CONFIG).filter((service) => service.category === category);
+  return Object.values(SERVICES_CONFIG).filter(
+    (service) => service.category === category,
+  );
 };
 
 export const createDefaultServiceConfig = (serviceName) => {

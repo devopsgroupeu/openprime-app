@@ -1,7 +1,17 @@
-import React from 'react';
-import { ChevronDown, ChevronUp, MessageCircle } from 'lucide-react';
+import React from "react";
+import { ChevronDown, ChevronUp, MessageCircle } from "lucide-react";
 
-const ServiceConfiguration = ({ icon, title, enabled, expanded, onToggle, onExpand, onAskAI, service, children }) => (
+const ServiceConfiguration = ({
+  icon,
+  title,
+  enabled,
+  expanded,
+  onToggle,
+  onExpand,
+  onAskAI,
+  service,
+  children,
+}) => (
   <div className="bg-gray-700 rounded-lg overflow-hidden">
     <div className="flex items-center justify-between p-3">
       <div className="flex items-center">
@@ -28,15 +38,17 @@ const ServiceConfiguration = ({ icon, title, enabled, expanded, onToggle, onExpa
         {/* Expand/Collapse Button */}
         {enabled && (
           <button type="button" onClick={onExpand} className="p-1">
-            {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+            {expanded ? (
+              <ChevronUp className="w-4 h-4 text-gray-400" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-400" />
+            )}
           </button>
         )}
       </div>
     </div>
     {enabled && expanded && (
-      <div className="px-3 pb-3 border-t border-gray-600">
-        {children}
-      </div>
+      <div className="px-3 pb-3 border-t border-gray-600">{children}</div>
     )}
   </div>
 );

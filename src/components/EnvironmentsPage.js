@@ -69,10 +69,13 @@ const EnvironmentsPage = ({
       }
 
       // Environment creation/update is handled in the backend success block above
-      success(`Environment "${newEnv.name}" ${isEditMode ? "updated" : "created"} successfully`, {
-        title: `Environment ${isEditMode ? "Updated" : "Created"}`,
-        duration: 4000,
-      });
+      success(
+        `Environment "${newEnv.name}" ${isEditMode ? "updated" : "created"} successfully`,
+        {
+          title: `Environment ${isEditMode ? "Updated" : "Created"}`,
+          duration: 4000,
+        },
+      );
 
       // Reset form state
       setShowNewEnvModal(false);
@@ -80,10 +83,13 @@ const EnvironmentsPage = ({
       setExpandedServices({});
       setIsEditMode(false);
     } catch (err) {
-      error(`Failed to ${isEditMode ? "update" : "create"} environment: ${err.message}`, {
-        title: "Error",
-        duration: 7000,
-      });
+      error(
+        `Failed to ${isEditMode ? "update" : "create"} environment: ${err.message}`,
+        {
+          title: "Error",
+          duration: 7000,
+        },
+      );
     } finally {
       setIsLoading(false);
     }
@@ -100,7 +106,9 @@ const EnvironmentsPage = ({
 
     // Ensure the kubernetes service exists
     if (!newEnv.services || !newEnv.services[kubernetesService]) {
-      console.warn(`Kubernetes service ${kubernetesService} not found in environment services`);
+      console.warn(
+        `Kubernetes service ${kubernetesService} not found in environment services`,
+      );
       setShowValuesEditor(null);
       setEditingHelmValues("");
       return;
@@ -115,7 +123,9 @@ const EnvironmentsPage = ({
           helmCharts: {
             ...newEnv.services[kubernetesService]?.helmCharts,
             [showValuesEditor]: {
-              ...newEnv.services[kubernetesService]?.helmCharts?.[showValuesEditor],
+              ...newEnv.services[kubernetesService]?.helmCharts?.[
+                showValuesEditor
+              ],
               customValues: true,
             },
           },
