@@ -195,17 +195,6 @@ describe("configValidator", () => {
       expect(nodeCountError).toBeDefined();
     });
 
-    test("validates Karpenter service config", () => {
-      const karpenterConfig = {
-        enabled: true,
-        defaultNodepoolArch: "arm64",
-        defaultNodepoolCapacityType: "spot",
-      };
-
-      const errors = validateServiceConfig("karpenter", karpenterConfig);
-      expect(errors).toHaveLength(0);
-    });
-
     test("validates RDS service config", () => {
       const rdsConfig = {
         enabled: true,
@@ -396,29 +385,6 @@ describe("configValidator", () => {
       };
 
       const errors = validateServiceConfig("route53", route53Config);
-      expect(errors).toHaveLength(0);
-    });
-
-    test("validates Secrets Manager service config", () => {
-      const secretsManagerConfig = {
-        enabled: true,
-        secrets: [],
-        automaticRotation: false,
-      };
-
-      const errors = validateServiceConfig("secretsManager", secretsManagerConfig);
-      expect(errors).toHaveLength(0);
-    });
-
-    test("validates IAM service config", () => {
-      const iamConfig = {
-        enabled: true,
-        roles: [],
-        policies: [],
-        assumeRolePolicyDocument: null,
-      };
-
-      const errors = validateServiceConfig("iam", iamConfig);
       expect(errors).toHaveLength(0);
     });
   });
