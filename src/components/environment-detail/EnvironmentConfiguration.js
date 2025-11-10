@@ -123,7 +123,7 @@ const EnvironmentConfiguration = ({ environment }) => {
         {
           responseType: "blob",
           timeout: 120000,
-        }
+        },
       );
 
       const blob = new Blob([response.data], { type: "application/zip" });
@@ -140,7 +140,7 @@ const EnvironmentConfiguration = ({ environment }) => {
     } catch (err) {
       console.error("Error generating infrastructure:", err);
       showError(
-        err.response?.data?.error || "Failed to generate infrastructure. Please try again."
+        err.response?.data?.error || "Failed to generate infrastructure. Please try again.",
       );
     } finally {
       setIsGenerating(false);
@@ -277,7 +277,7 @@ const EnvironmentConfiguration = ({ environment }) => {
                   isDark ? "bg-gray-900/50" : "bg-gray-100"
                 }`}
               >
-                <Key className="w-4 h-4 text-teal-500 flex-shrink-0" />
+                <Key className="w-4 h-4 text-teal-500 shrink-0" />
                 <p
                   className={`text-xs font-mono flex-1 ${
                     isDark ? "text-gray-400" : "text-gray-600"
@@ -321,8 +321,8 @@ const EnvironmentConfiguration = ({ environment }) => {
                     ? "bg-teal-600 text-white"
                     : "bg-teal-600 text-white"
                   : isDark
-                  ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
               <Code className="w-4 h-4 inline mr-1" />
@@ -336,8 +336,8 @@ const EnvironmentConfiguration = ({ environment }) => {
                     ? "bg-teal-600 text-white"
                     : "bg-teal-600 text-white"
                   : isDark
-                  ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
               <FileText className="w-4 h-4 inline mr-1" />
@@ -373,8 +373,8 @@ const EnvironmentConfiguration = ({ environment }) => {
               isGenerating
                 ? "bg-gray-500 cursor-not-allowed text-white"
                 : isDark
-                ? "bg-purple-600 hover:bg-purple-700 text-white"
-                : "bg-purple-600 hover:bg-purple-700 text-white"
+                  ? "bg-purple-600 hover:bg-purple-700 text-white"
+                  : "bg-purple-600 hover:bg-purple-700 text-white"
             }`}
           >
             <Package className="w-4 h-4 inline mr-2" />
@@ -417,7 +417,7 @@ const EnvironmentConfiguration = ({ environment }) => {
         }`}
       >
         <div className="flex items-start space-x-3">
-          <FileText className="w-5 h-5 mt-0.5 flex-shrink-0" />
+          <FileText className="w-5 h-5 mt-0.5 shrink-0" />
           <div>
             <p className="font-medium mb-1">Configuration Export</p>
             <p className="text-sm opacity-90">

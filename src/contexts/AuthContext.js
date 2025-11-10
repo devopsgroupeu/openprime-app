@@ -1,12 +1,12 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import keycloak from '../config/keycloak';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import keycloak from "../config/keycloak";
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -21,9 +21,9 @@ export const AuthProvider = ({ children }) => {
     const initKeycloak = async () => {
       try {
         const authenticated = await keycloak.init({
-          onLoad: 'login-required',
+          onLoad: "login-required",
           checkLoginIframe: false,
-          pkceMethod: 'S256'
+          pkceMethod: "S256",
         });
 
         if (authenticated) {
@@ -35,19 +35,19 @@ export const AuthProvider = ({ children }) => {
             firstName: keycloak.tokenParsed?.given_name,
             lastName: keycloak.tokenParsed?.family_name,
             fullName: keycloak.tokenParsed?.name,
-            roles: keycloak.tokenParsed?.realm_access?.roles || []
+            roles: keycloak.tokenParsed?.realm_access?.roles || [],
           });
           setKeycloakInstance(keycloak);
 
           keycloak.onTokenExpired = () => {
             keycloak.updateToken(30).catch(() => {
-              console.log('Failed to refresh token, redirecting to login');
+              console.log("Failed to refresh token, redirecting to login");
               logout();
             });
           };
         }
       } catch (error) {
-        console.error('Keycloak initialization failed:', error);
+        console.error("Keycloak initialization failed:", error);
       } finally {
         setIsLoading(false);
       }
@@ -82,12 +82,12 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     getToken,
-    hasRole
+    hasRole,
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 via-gray-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
           <p className="text-white text-lg">Initializing authentication...</p>
@@ -96,9 +96,5 @@ export const AuthProvider = ({ children }) => {
     );
   }
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

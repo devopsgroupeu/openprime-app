@@ -1,7 +1,7 @@
 // src/components/DynamicFieldRenderer.js
-import React from 'react';
-import { FIELD_TYPES } from '../config/servicesConfig';
-import { useTheme } from '../contexts/ThemeContext';
+import React from "react";
+import { FIELD_TYPES } from "../config/servicesConfig";
+import { useTheme } from "../contexts/ThemeContext";
 
 const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disabled = false }) => {
   const { isDark } = useTheme();
@@ -12,26 +12,22 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
 
   const baseInputClasses = `w-full px-4 py-2 rounded-lg border transition-colors ${
     isDark
-      ? 'bg-gray-700 border-gray-600 text-white focus:border-primary'
-      : 'bg-white border-gray-300 text-primary focus:border-primary'
-  } focus:ring-2 focus:ring-primary/20 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`;
+      ? "bg-gray-700 border-gray-600 text-white focus:border-primary"
+      : "bg-white border-gray-300 text-primary focus:border-primary"
+  } focus:ring-2 focus:ring-primary/20 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`;
 
-  const labelClasses = 'block text-sm font-medium mb-1 text-primary font-poppins';
+  const labelClasses = "block text-sm font-medium mb-1 text-primary font-poppins";
 
-  const descriptionClasses = 'text-xs mt-1 text-tertiary font-poppins';
+  const descriptionClasses = "text-xs mt-1 text-tertiary font-poppins";
 
   switch (fieldConfig.type) {
     case FIELD_TYPES.TOGGLE:
       return (
         <div className="flex items-center justify-between">
           <div>
-            <label className={labelClasses}>
-              {fieldConfig.displayName}
-            </label>
+            <label className={labelClasses}>{fieldConfig.displayName}</label>
             {fieldConfig.description && (
-              <p className={descriptionClasses}>
-                {fieldConfig.description}
-              </p>
+              <p className={descriptionClasses}>{fieldConfig.description}</p>
             )}
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
@@ -42,9 +38,11 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
               disabled={disabled}
               className="sr-only peer"
             />
-            <div className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
-              isDark ? 'bg-gray-700' : 'bg-gray-300'
-            } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
+            <div
+              className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
+                isDark ? "bg-gray-700" : "bg-gray-300"
+              } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+            ></div>
           </label>
         </div>
       );
@@ -52,9 +50,7 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
     case FIELD_TYPES.DROPDOWN:
       return (
         <div>
-          <label className={labelClasses}>
-            {fieldConfig.displayName}
-          </label>
+          <label className={labelClasses}>{fieldConfig.displayName}</label>
           <select
             value={value}
             onChange={(e) => handleChange(e.target.value)}
@@ -68,9 +64,7 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
             ))}
           </select>
           {fieldConfig.description && (
-            <p className={descriptionClasses}>
-              {fieldConfig.description}
-            </p>
+            <p className={descriptionClasses}>{fieldConfig.description}</p>
           )}
         </div>
       );
@@ -78,9 +72,7 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
     case FIELD_TYPES.MULTISELECT:
       return (
         <div>
-          <label className={labelClasses}>
-            {fieldConfig.displayName}
-          </label>
+          <label className={labelClasses}>{fieldConfig.displayName}</label>
           <div className="space-y-2">
             {fieldConfig.options?.map((option) => (
               <label key={option.value} className="flex items-center">
@@ -91,22 +83,18 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
                     if (!Array.isArray(value)) return;
                     const newValue = e.target.checked
                       ? [...value, option.value]
-                      : value.filter(v => v !== option.value);
+                      : value.filter((v) => v !== option.value);
                     handleChange(newValue);
                   }}
                   disabled={disabled}
                   className="mr-2 rounded"
                 />
-                <span className="text-primary font-poppins">
-                  {option.label}
-                </span>
+                <span className="text-primary font-poppins">{option.label}</span>
               </label>
             ))}
           </div>
           {fieldConfig.description && (
-            <p className={descriptionClasses}>
-              {fieldConfig.description}
-            </p>
+            <p className={descriptionClasses}>{fieldConfig.description}</p>
           )}
         </div>
       );
@@ -114,9 +102,7 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
     case FIELD_TYPES.NUMBER:
       return (
         <div>
-          <label className={labelClasses}>
-            {fieldConfig.displayName}
-          </label>
+          <label className={labelClasses}>{fieldConfig.displayName}</label>
           <input
             type="number"
             value={value}
@@ -127,9 +113,7 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
             className={baseInputClasses}
           />
           {fieldConfig.description && (
-            <p className={descriptionClasses}>
-              {fieldConfig.description}
-            </p>
+            <p className={descriptionClasses}>{fieldConfig.description}</p>
           )}
         </div>
       );
@@ -137,9 +121,7 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
     case FIELD_TYPES.TEXTAREA:
       return (
         <div>
-          <label className={labelClasses}>
-            {fieldConfig.displayName}
-          </label>
+          <label className={labelClasses}>{fieldConfig.displayName}</label>
           <textarea
             value={value}
             onChange={(e) => handleChange(e.target.value)}
@@ -148,21 +130,16 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
             className={baseInputClasses}
           />
           {fieldConfig.description && (
-            <p className={descriptionClasses}>
-              {fieldConfig.description}
-            </p>
+            <p className={descriptionClasses}>{fieldConfig.description}</p>
           )}
         </div>
       );
-
 
     case FIELD_TYPES.TEXT:
     default:
       return (
         <div>
-          <label className={labelClasses}>
-            {fieldConfig.displayName}
-          </label>
+          <label className={labelClasses}>{fieldConfig.displayName}</label>
           <input
             type="text"
             value={value}
@@ -171,9 +148,7 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
             className={baseInputClasses}
           />
           {fieldConfig.description && (
-            <p className={descriptionClasses}>
-              {fieldConfig.description}
-            </p>
+            <p className={descriptionClasses}>{fieldConfig.description}</p>
           )}
         </div>
       );

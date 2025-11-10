@@ -15,7 +15,7 @@ export const validateField = (fieldConfig, value, fieldName) => {
 
   if (fieldConfig.required && (value === null || value === undefined || value === "")) {
     errors.push(
-      new ConfigValidationError(`${fieldConfig.displayName} is required`, fieldName, value)
+      new ConfigValidationError(`${fieldConfig.displayName} is required`, fieldName, value),
     );
     return errors;
   }
@@ -28,7 +28,11 @@ export const validateField = (fieldConfig, value, fieldName) => {
     case FIELD_TYPES.NUMBER:
       if (typeof value !== "number" || isNaN(value)) {
         errors.push(
-          new ConfigValidationError(`${fieldConfig.displayName} must be a number`, fieldName, value)
+          new ConfigValidationError(
+            `${fieldConfig.displayName} must be a number`,
+            fieldName,
+            value,
+          ),
         );
       } else {
         if (fieldConfig.min !== undefined && value < fieldConfig.min) {
@@ -36,8 +40,8 @@ export const validateField = (fieldConfig, value, fieldName) => {
             new ConfigValidationError(
               `${fieldConfig.displayName} must be at least ${fieldConfig.min}`,
               fieldName,
-              value
-            )
+              value,
+            ),
           );
         }
         if (fieldConfig.max !== undefined && value > fieldConfig.max) {
@@ -45,8 +49,8 @@ export const validateField = (fieldConfig, value, fieldName) => {
             new ConfigValidationError(
               `${fieldConfig.displayName} must be at most ${fieldConfig.max}`,
               fieldName,
-              value
-            )
+              value,
+            ),
           );
         }
       }
@@ -56,7 +60,11 @@ export const validateField = (fieldConfig, value, fieldName) => {
     case FIELD_TYPES.TEXTAREA:
       if (typeof value !== "string") {
         errors.push(
-          new ConfigValidationError(`${fieldConfig.displayName} must be a string`, fieldName, value)
+          new ConfigValidationError(
+            `${fieldConfig.displayName} must be a string`,
+            fieldName,
+            value,
+          ),
         );
       } else {
         if (fieldConfig.validation?.pattern && !fieldConfig.validation.pattern.test(value)) {
@@ -64,8 +72,8 @@ export const validateField = (fieldConfig, value, fieldName) => {
             new ConfigValidationError(
               `${fieldConfig.displayName} format is invalid`,
               fieldName,
-              value
-            )
+              value,
+            ),
           );
         }
         if (fieldConfig.minLength && value.length < fieldConfig.minLength) {
@@ -73,8 +81,8 @@ export const validateField = (fieldConfig, value, fieldName) => {
             new ConfigValidationError(
               `${fieldConfig.displayName} must be at least ${fieldConfig.minLength} characters`,
               fieldName,
-              value
-            )
+              value,
+            ),
           );
         }
         if (fieldConfig.maxLength && value.length > fieldConfig.maxLength) {
@@ -82,8 +90,8 @@ export const validateField = (fieldConfig, value, fieldName) => {
             new ConfigValidationError(
               `${fieldConfig.displayName} must be at most ${fieldConfig.maxLength} characters`,
               fieldName,
-              value
-            )
+              value,
+            ),
           );
         }
       }
@@ -95,8 +103,8 @@ export const validateField = (fieldConfig, value, fieldName) => {
           new ConfigValidationError(
             `${fieldConfig.displayName} must be true or false`,
             fieldName,
-            value
-          )
+            value,
+          ),
         );
       }
       break;
@@ -109,8 +117,8 @@ export const validateField = (fieldConfig, value, fieldName) => {
             new ConfigValidationError(
               `${fieldConfig.displayName} must be one of: ${validValues.join(", ")}`,
               fieldName,
-              value
-            )
+              value,
+            ),
           );
         }
       }
@@ -119,7 +127,11 @@ export const validateField = (fieldConfig, value, fieldName) => {
     case FIELD_TYPES.MULTISELECT:
       if (!Array.isArray(value)) {
         errors.push(
-          new ConfigValidationError(`${fieldConfig.displayName} must be an array`, fieldName, value)
+          new ConfigValidationError(
+            `${fieldConfig.displayName} must be an array`,
+            fieldName,
+            value,
+          ),
         );
       } else if (fieldConfig.options) {
         const validValues = fieldConfig.options.map((opt) => opt.value);
@@ -129,8 +141,8 @@ export const validateField = (fieldConfig, value, fieldName) => {
             new ConfigValidationError(
               `${fieldConfig.displayName} contains invalid values: ${invalidValues.join(", ")}`,
               fieldName,
-              value
-            )
+              value,
+            ),
           );
         }
       }
@@ -139,7 +151,11 @@ export const validateField = (fieldConfig, value, fieldName) => {
     case FIELD_TYPES.ARRAY:
       if (!Array.isArray(value)) {
         errors.push(
-          new ConfigValidationError(`${fieldConfig.displayName} must be an array`, fieldName, value)
+          new ConfigValidationError(
+            `${fieldConfig.displayName} must be an array`,
+            fieldName,
+            value,
+          ),
         );
       }
       break;
@@ -150,8 +166,8 @@ export const validateField = (fieldConfig, value, fieldName) => {
           new ConfigValidationError(
             `${fieldConfig.displayName} must be an object`,
             fieldName,
-            value
-          )
+            value,
+          ),
         );
       }
       break;
@@ -170,7 +186,7 @@ export const validateServiceConfig = (serviceName, serviceConfig) => {
 
   if (!serviceDefinition) {
     errors.push(
-      new ConfigValidationError(`Unknown service: ${serviceName}`, "service", serviceName)
+      new ConfigValidationError(`Unknown service: ${serviceName}`, "service", serviceName),
     );
     return errors;
   }
@@ -192,7 +208,7 @@ export const validateServiceConfig = (serviceName, serviceConfig) => {
   if (serviceName === "eks" && serviceConfig.enabled) {
     if (serviceConfig.defaultNodeGroupMinSize > serviceConfig.defaultNodeGroupMaxSize) {
       errors.push(
-        new ConfigValidationError("Min nodes cannot be greater than max nodes", "nodeCount")
+        new ConfigValidationError("Min nodes cannot be greater than max nodes", "nodeCount"),
       );
     }
   }
@@ -200,7 +216,7 @@ export const validateServiceConfig = (serviceName, serviceConfig) => {
   if (serviceName === "rds" && serviceConfig.enabled) {
     if (serviceConfig.multiAz && serviceConfig.instanceClass?.includes("t2.")) {
       errors.push(
-        new ConfigValidationError("Multi-AZ is not supported with t2 instance classes", "multiAz")
+        new ConfigValidationError("Multi-AZ is not supported with t2 instance classes", "multiAz"),
       );
     }
   }
@@ -223,8 +239,8 @@ export const validateEnvironmentConfig = (environment) => {
       new ConfigValidationError(
         `Invalid provider type: ${environment.provider}`,
         "provider",
-        environment.provider
-      )
+        environment.provider,
+      ),
     );
   }
 
@@ -237,8 +253,8 @@ export const validateEnvironmentConfig = (environment) => {
         new ConfigValidationError(
           `Invalid region for ${environment.provider}: ${environment.region}`,
           "region",
-          environment.region
-        )
+          environment.region,
+        ),
       );
     }
   }
@@ -252,7 +268,7 @@ export const validateEnvironmentConfig = (environment) => {
 
     // Cross-service validation
     const enabledServices = Object.keys(environment.services).filter(
-      (serviceName) => environment.services[serviceName]?.enabled
+      (serviceName) => environment.services[serviceName]?.enabled,
     );
 
     // EKS requires VPC
@@ -282,11 +298,11 @@ export const getValidationSummary = (errors) => {
   }
 
   const criticalErrors = errors.filter(
-    (error) => error.field === "name" || error.field === "provider" || error.field === "region"
+    (error) => error.field === "name" || error.field === "provider" || error.field === "region",
   );
 
   const warnings = errors.filter(
-    (error) => error.message.includes("recommended") || error.message.includes("should")
+    (error) => error.message.includes("recommended") || error.message.includes("should"),
   );
 
   return {

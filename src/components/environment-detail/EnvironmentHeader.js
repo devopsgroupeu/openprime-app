@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { ArrowLeft, Edit2, Trash2, Cloud, Server, MapPin, Key } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -76,7 +76,7 @@ const EnvironmentHeader = ({ environment, providerConfig, onEdit, onDelete }) =>
                   )}
                   <div
                     className={`px-2 py-1 rounded-full border text-xs font-medium ${getStatusColor(
-                      environment.status
+                      environment.status,
                     )}`}
                   >
                     {environment.status.charAt(0).toUpperCase() + environment.status.slice(1)}

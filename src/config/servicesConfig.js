@@ -213,10 +213,19 @@ export const SERVICES_CONFIG = {
         defaultValue: "BOTTLEROCKET_ARM_64",
         options: [
           { value: "AL2_x86_64", label: "Amazon Linux 2 (x86_64)" },
-          { value: "AL2_x86_64_GPU", label: "Amazon Linux 2 GPU (x86_64)" },
+          {
+            value: "AL2_x86_64_GPU",
+            label: "Amazon Linux 2 GPU (x86_64)",
+          },
           { value: "AL2_ARM_64", label: "Amazon Linux 2 (ARM64)" },
-          { value: "BOTTLEROCKET_ARM_64", label: "Bottlerocket (ARM64)" },
-          { value: "BOTTLEROCKET_x86_64", label: "Bottlerocket (x86_64)" },
+          {
+            value: "BOTTLEROCKET_ARM_64",
+            label: "Bottlerocket (ARM64)",
+          },
+          {
+            value: "BOTTLEROCKET_x86_64",
+            label: "Bottlerocket (x86_64)",
+          },
         ],
       },
       defaultNodeGroupInstanceTypes: {
@@ -1097,9 +1106,18 @@ export const SERVICES_CONFIG = {
         description: "TLS security policy",
         defaultValue: "Policy-Min-TLS-1-2-2019-07",
         options: [
-          { value: "Policy-Min-TLS-1-0-2019-07", label: "TLS 1.0 (Minimum)" },
-          { value: "Policy-Min-TLS-1-2-2019-07", label: "TLS 1.2 (Minimum)" },
-          { value: "Policy-Min-TLS-1-2-PFS-2023-10", label: "TLS 1.2 PFS" },
+          {
+            value: "Policy-Min-TLS-1-0-2019-07",
+            label: "TLS 1.0 (Minimum)",
+          },
+          {
+            value: "Policy-Min-TLS-1-2-2019-07",
+            label: "TLS 1.2 (Minimum)",
+          },
+          {
+            value: "Policy-Min-TLS-1-2-PFS-2023-10",
+            label: "TLS 1.2 PFS",
+          },
         ],
       },
       advancedSecurityEnabled: {
@@ -1243,7 +1261,10 @@ export const SERVICES_CONFIG = {
         description: "Count type for lifecycle policy",
         defaultValue: "imageCountMoreThan",
         options: [
-          { value: "imageCountMoreThan", label: "Image Count More Than" },
+          {
+            value: "imageCountMoreThan",
+            label: "Image Count More Than",
+          },
           { value: "sinceImagePushed", label: "Since Image Pushed" },
         ],
       },
@@ -1271,7 +1292,10 @@ export const SERVICES_CONFIG = {
         defaultValue: "BASIC",
         options: [
           { value: "BASIC", label: "Basic" },
-          { value: "ENHANCED", label: "Enhanced (ECR Enhanced Scanning)" },
+          {
+            value: "ENHANCED",
+            label: "Enhanced (ECR Enhanced Scanning)",
+          },
         ],
       },
       enableReplication: {
@@ -1675,12 +1699,18 @@ export const SERVICES_CONFIG = {
         description: "CloudFront price class",
         defaultValue: "PriceClass_100",
         options: [
-          { value: "PriceClass_100", label: "Use Only US, Canada and Europe" },
+          {
+            value: "PriceClass_100",
+            label: "Use Only US, Canada and Europe",
+          },
           {
             value: "PriceClass_200",
             label: "Use US, Canada, Europe, Asia, Middle East and Africa",
           },
-          { value: "PriceClass_All", label: "Use All Edge Locations" },
+          {
+            value: "PriceClass_All",
+            label: "Use All Edge Locations",
+          },
         ],
       },
       wafEnabled: {

@@ -94,7 +94,9 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
               bucketName: bucketName,
             },
           });
-          toast.success(`Terraform backend created: ${bucketName}`, { duration: 8000 });
+          toast.success(`Terraform backend created: ${bucketName}`, {
+            duration: 8000,
+          });
         } else {
           toast.success("Terraform backend resources created successfully");
         }
@@ -149,8 +151,8 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
             getFieldError("name")
               ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
               : isDark
-              ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
-              : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
+                ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
+                : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
           }`}
           placeholder="e.g., Production, Staging, Development"
           value={newEnv.name}
@@ -179,7 +181,9 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
         </div>
         <div
           className="grid gap-3"
-          style={{ gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))" }}
+          style={{
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+          }}
         >
           {getAllProviders().map((provider) => (
             <button
@@ -194,12 +198,12 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                     ? "border-teal-500 bg-teal-500/20 text-white"
                     : "border-teal-500 bg-teal-50 text-teal-700"
                   : provider.enabled
-                  ? isDark
-                    ? "border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500"
-                    : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
-                  : isDark
-                  ? "border-gray-700 bg-gray-800/30 text-gray-500"
-                  : "border-gray-200 bg-gray-50 text-gray-400"
+                    ? isDark
+                      ? "border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500"
+                      : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+                    : isDark
+                      ? "border-gray-700 bg-gray-800/30 text-gray-500"
+                      : "border-gray-200 bg-gray-50 text-gray-400"
               }`}
             >
               <div className="text-center">
@@ -208,12 +212,12 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                     newEnv.provider === provider.value
                       ? "bg-teal-500 text-white"
                       : provider.enabled
-                      ? isDark
-                        ? "bg-gray-600 text-gray-300"
-                        : "bg-gray-200 text-gray-600"
-                      : isDark
-                      ? "bg-gray-700 text-gray-500"
-                      : "bg-gray-100 text-gray-400"
+                        ? isDark
+                          ? "bg-gray-600 text-gray-300"
+                          : "bg-gray-200 text-gray-600"
+                        : isDark
+                          ? "bg-gray-700 text-gray-500"
+                          : "bg-gray-100 text-gray-400"
                   }`}
                 >
                   <Cloud className="w-4 h-4" />
@@ -226,17 +230,17 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                         ? "text-gray-400"
                         : "text-gray-500"
                       : isDark
-                      ? "text-gray-500"
-                      : "text-gray-400"
+                        ? "text-gray-500"
+                        : "text-gray-400"
                   }`}
                 >
                   {provider.value === "aws"
                     ? "Amazon Web Services"
                     : provider.value === "azure"
-                    ? "Microsoft Azure"
-                    : provider.value === "gcp"
-                    ? "Google Cloud Platform"
-                    : "Self-managed"}
+                      ? "Microsoft Azure"
+                      : provider.value === "gcp"
+                        ? "Google Cloud Platform"
+                        : "Self-managed"}
                   {!provider.enabled && (
                     <span className="block text-xs mt-1 font-medium text-orange-500">Disabled</span>
                   )}
@@ -275,7 +279,10 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                 }`}
                 value={newEnv.cloudCredentialId || ""}
                 onChange={(e) =>
-                  setNewEnv({ ...newEnv, cloudCredentialId: e.target.value || null })
+                  setNewEnv({
+                    ...newEnv,
+                    cloudCredentialId: e.target.value || null,
+                  })
                 }
               >
                 <option value="">No credentials (manual configuration)</option>
@@ -439,7 +446,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                 }`}
               >
                 <div className="flex items-start">
-                  <Database className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
+                  <Database className="w-4 h-4 mr-2 mt-0.5 shrink-0" />
                   <div>
                     <p className="text-sm font-medium">S3 Bucket Name (Auto-generated)</p>
                     <p className="text-xs mt-1">
@@ -452,7 +459,8 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                       <p className="text-xs mt-1 font-mono">
                         Preview:{" "}
                         {credentials.find((c) => c.id === newEnv.cloudCredentialId)?.identifier}
-                        -terraform-{newEnv.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}
+                        -terraform-
+                        {newEnv.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}
                       </p>
                     )}
                   </div>
@@ -540,7 +548,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                   }`}
                 >
                   <div className="flex items-start">
-                    <CheckCircle className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="w-5 h-5 mr-2 mt-0.5 shrink-0" />
                     <div>
                       <p className="text-sm font-medium">Backend resources created successfully</p>
                       {createdBucketName && (
@@ -561,8 +569,8 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                         ? "bg-gray-700 text-gray-500 cursor-not-allowed"
                         : "bg-gray-200 text-gray-400 cursor-not-allowed"
                       : isDark
-                      ? "bg-teal-600 text-white hover:bg-teal-700"
-                      : "bg-teal-500 text-white hover:bg-teal-600"
+                        ? "bg-teal-600 text-white hover:bg-teal-700"
+                        : "bg-teal-500 text-white hover:bg-teal-600"
                   }`}
                 >
                   {creatingBackend ? (

@@ -45,11 +45,13 @@ REACT_APP_BACKEND_URL=http://localhost:3001/api
 ### Method 1: Using envsubst (Recommended)
 
 1. **Build the Docker image** (variables are not needed at build time):
+
    ```bash
    docker build -t openprime-app .
    ```
 
 2. **Run with runtime environment injection**:
+
    ```bash
    # Using envsubst to process env.js template
    docker run -d \
@@ -73,7 +75,7 @@ REACT_APP_BACKEND_URL=http://localhost:3001/api
 
 ```yaml
 # docker-compose.yml
-version: '3.8'
+version: "3.8"
 services:
   openprime-app:
     build: .
@@ -111,40 +113,40 @@ spec:
         app: openprime-app
     spec:
       initContainers:
-      - name: env-injector
-        image: openprime-app
-        command:
-        - sh
-        - -c
-        - |
-          envsubst < /usr/share/nginx/html/env.js > /tmp/env.js &&
-          cp /tmp/env.js /shared/env.js
-        env:
-        - name: REACT_APP_KEYCLOAK_URL
-          value: "https://keycloak.yourdomain.com"
-        - name: REACT_APP_KEYCLOAK_REALM
-          value: "production"
-        - name: REACT_APP_KEYCLOAK_CLIENT_ID
-          value: "openprime-prod"
-        - name: REACT_APP_API_URL
-          value: "https://api.yourdomain.com/api"
-        - name: REACT_APP_BACKEND_URL
-          value: "https://api.yourdomain.com/api"
-        volumeMounts:
-        - name: shared-env
-          mountPath: /shared
+        - name: env-injector
+          image: openprime-app
+          command:
+            - sh
+            - -c
+            - |
+              envsubst < /usr/share/nginx/html/env.js > /tmp/env.js &&
+              cp /tmp/env.js /shared/env.js
+          env:
+            - name: REACT_APP_KEYCLOAK_URL
+              value: "https://keycloak.yourdomain.com"
+            - name: REACT_APP_KEYCLOAK_REALM
+              value: "production"
+            - name: REACT_APP_KEYCLOAK_CLIENT_ID
+              value: "openprime-prod"
+            - name: REACT_APP_API_URL
+              value: "https://api.yourdomain.com/api"
+            - name: REACT_APP_BACKEND_URL
+              value: "https://api.yourdomain.com/api"
+          volumeMounts:
+            - name: shared-env
+              mountPath: /shared
       containers:
-      - name: openprime-app
-        image: openprime-app
-        ports:
-        - containerPort: 80
-        volumeMounts:
-        - name: shared-env
-          mountPath: /usr/share/nginx/html/env.js
-          subPath: env.js
+        - name: openprime-app
+          image: openprime-app
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: shared-env
+              mountPath: /usr/share/nginx/html/env.js
+              subPath: env.js
       volumes:
-      - name: shared-env
-        emptyDir: {}
+        - name: shared-env
+          emptyDir: {}
 ```
 
 ## Enhanced Dockerfile Example
@@ -203,6 +205,7 @@ The application logs environment variable sources on startup:
 ### Verify Runtime Injection
 
 1. **Check if env.js is loaded**:
+
    ```javascript
    // Browser console
    console.log(window._env_);
@@ -236,13 +239,14 @@ The application logs environment variable sources on startup:
 If you currently use build-time variables only:
 
 1. **Current approach** (build-time only):
+
    ```javascript
-   const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001/api';
+   const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:3001/api";
    ```
 
 2. **New approach** (runtime + build-time):
    ```javascript
-   import { getBackendUrl } from '../utils/envValidator';
+   import { getBackendUrl } from "../utils/envValidator";
    const backendUrl = getBackendUrl();
    ```
 
