@@ -1,13 +1,5 @@
 import React from "react";
-import {
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  Settings,
-  Package,
-  Cloud,
-} from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Check, Settings, Package, Cloud } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 
 const WizardNavigation = ({
@@ -59,27 +51,15 @@ const WizardNavigation = ({
       {/* Header */}
       <div
         className={`flex items-center justify-between p-6 border-b ${
-          isDark
-            ? "border-gray-700 bg-gray-800/30"
-            : "border-gray-200 bg-gray-50/50"
+          isDark ? "border-gray-700 bg-gray-800/30" : "border-gray-200 bg-gray-50/50"
         }`}
       >
         <div>
-          <h2
-            className={`text-2xl font-bold ${
-              isDark ? "text-white" : "text-gray-900"
-            }`}
-          >
+          <h2 className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
             {isEditMode ? "Edit Environment" : "Create New Environment"}
           </h2>
-          <p
-            className={`mt-1 text-sm ${
-              isDark ? "text-gray-400" : "text-gray-600"
-            }`}
-          >
-            {isEditMode
-              ? `Editing "${newEnv.name}"`
-              : "Configure your infrastructure environment"}
+          <p className={`mt-1 text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            {isEditMode ? `Editing "${newEnv.name}"` : "Configure your infrastructure environment"}
           </p>
         </div>
         <button
@@ -96,10 +76,8 @@ const WizardNavigation = ({
 
       {/* Step Indicator */}
       <div
-        className={`flex-shrink-0 px-6 py-6 border-b ${
-          isDark
-            ? "border-gray-700 bg-gray-800/20"
-            : "border-gray-200 bg-gray-50/30"
+        className={`shrink-0 px-6 py-6 border-b ${
+          isDark ? "border-gray-700 bg-gray-800/20" : "border-gray-200 bg-gray-50/30"
         }`}
       >
         <div className="flex items-center justify-center">
@@ -120,9 +98,9 @@ const WizardNavigation = ({
                           : "cursor-not-allowed"
                       } ${
                         status === "current"
-                          ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg ring-4 ring-teal-500/30"
+                          ? "bg-linear-to-r from-teal-500 to-cyan-500 text-white shadow-lg ring-4 ring-teal-500/30"
                           : status === "completed"
-                            ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md"
+                            ? "bg-linear-to-r from-green-500 to-emerald-500 text-white shadow-md"
                             : isDark
                               ? "bg-gray-700 text-gray-400 hover:bg-gray-600"
                               : "bg-gray-200 text-gray-600 hover:bg-gray-300"
@@ -152,11 +130,7 @@ const WizardNavigation = ({
                       >
                         {step.title}
                       </p>
-                      <p
-                        className={`text-xs mt-1 ${
-                          isDark ? "text-gray-500" : "text-gray-400"
-                        }`}
-                      >
+                      <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
                         {step.description}
                       </p>
                     </div>
@@ -165,9 +139,8 @@ const WizardNavigation = ({
                   {index < totalSteps - 1 && (
                     <div
                       className={`flex-1 h-1 mx-6 rounded-full ${
-                        step.number < currentStep ||
-                        completedSteps.has(step.number + 1)
-                          ? "bg-gradient-to-r from-teal-500 to-cyan-500"
+                        step.number < currentStep || completedSteps.has(step.number + 1)
+                          ? "bg-linear-to-r from-teal-500 to-cyan-500"
                           : isDark
                             ? "bg-gray-700"
                             : "bg-gray-200"
@@ -184,9 +157,7 @@ const WizardNavigation = ({
       {/* Footer Navigation */}
       <div
         className={`flex items-center justify-between p-6 border-t ${
-          isDark
-            ? "border-gray-700 bg-gray-800/50"
-            : "border-gray-200 bg-gray-50/50"
+          isDark ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50/50"
         }`}
       >
         <button
@@ -204,9 +175,7 @@ const WizardNavigation = ({
           <span>Previous</span>
         </button>
 
-        <div
-          className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
-        >
+        <div className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
           Step {currentStep} of {totalSteps}
         </div>
 
@@ -246,9 +215,7 @@ const WizardNavigation = ({
             ) : (
               <>
                 <Check className="w-4 h-4" />
-                <span>
-                  {isEditMode ? "Save Changes" : "Create Environment"}
-                </span>
+                <span>{isEditMode ? "Save Changes" : "Create Environment"}</span>
               </>
             )}
           </button>

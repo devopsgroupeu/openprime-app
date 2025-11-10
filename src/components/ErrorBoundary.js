@@ -20,25 +20,18 @@ const ErrorDisplay = ({ error, errorInfo, onRefresh, onGoHome }) => {
         >
           <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
 
-          <h1
-            className={`text-2xl font-bold mb-2 ${
-              isDark ? "text-white" : "text-gray-900"
-            }`}
-          >
+          <h1 className={`text-2xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
             Something went wrong
           </h1>
 
           <p className={`mb-6 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-            An unexpected error occurred. Please try refreshing the page or
-            return to the home page.
+            An unexpected error occurred. Please try refreshing the page or return to the home page.
           </p>
 
           {process.env.NODE_ENV === "development" && error && (
             <details
               className={`text-left mb-6 rounded p-3 text-sm ${
-                isDark
-                  ? "bg-gray-900 text-gray-300"
-                  : "bg-gray-100 text-gray-700"
+                isDark ? "bg-gray-900 text-gray-300" : "bg-gray-100 text-gray-700"
               }`}
             >
               <summary className="cursor-pointer text-red-400 mb-2">

@@ -37,10 +37,7 @@ function AppContent() {
 
   const handleCreateEnvironment = async (newEnv) => {
     try {
-      const createdEnvironment = await authService.post(
-        "/environments",
-        newEnv,
-      );
+      const createdEnvironment = await authService.post("/environments", newEnv);
       setEnvironments([createdEnvironment, ...environments]);
       return createdEnvironment;
     } catch (error) {
@@ -61,13 +58,8 @@ function AppContent() {
 
   const handleUpdateEnvironment = async (updatedEnv) => {
     try {
-      const updated = await authService.put(
-        `/environments/${updatedEnv.id}`,
-        updatedEnv,
-      );
-      setEnvironments(
-        environments.map((env) => (env.id === updated.id ? updated : env)),
-      );
+      const updated = await authService.put(`/environments/${updatedEnv.id}`, updatedEnv);
+      setEnvironments(environments.map((env) => (env.id === updated.id ? updated : env)));
       return updated;
     } catch (error) {
       console.error("Failed to update environment:", error);
@@ -80,9 +72,7 @@ function AppContent() {
       <div className="min-h-screen bg-openprime-gradient flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-white text-lg font-poppins">
-            Loading OpenPrime...
-          </p>
+          <p className="text-white text-lg font-poppins">Loading OpenPrime...</p>
         </div>
       </div>
     );

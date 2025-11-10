@@ -50,11 +50,7 @@ const Navigation = () => {
                   ? "text-primary"
                   : "text-secondary hover:text-primary"
               }`}
-              aria-current={
-                location.pathname.startsWith("/environments")
-                  ? "page"
-                  : undefined
-              }
+              aria-current={location.pathname.startsWith("/environments") ? "page" : undefined}
               role="menuitem"
             >
               Environments
@@ -66,9 +62,7 @@ const Navigation = () => {
                   ? "text-primary"
                   : "text-secondary hover:text-primary"
               }`}
-              aria-current={
-                location.pathname === "/settings" ? "page" : undefined
-              }
+              aria-current={location.pathname === "/settings" ? "page" : undefined}
               role="menuitem"
             >
               Settings
@@ -80,11 +74,7 @@ const Navigation = () => {
             aria-label={`Switch to ${isDark ? "light" : "dark"} theme`}
             title={`Switch to ${isDark ? "light" : "dark"} theme`}
           >
-            {isDark ? (
-              <Sun className="w-5 h-5" />
-            ) : (
-              <Moon className="w-5 h-5" />
-            )}
+            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
           <div className="relative" ref={userMenuRef}>
             <button
@@ -92,9 +82,7 @@ const Navigation = () => {
               className="flex items-center space-x-2 p-2 rounded-lg transition-all duration-200 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 shadow-sm hover:shadow-md"
             >
               <User className="w-5 h-5" />
-              <span className="text-sm font-medium font-poppins">
-                {user?.username}
-              </span>
+              <span className="text-sm font-medium font-poppins">{user?.username}</span>
             </button>
 
             {isUserMenuOpen && (
@@ -105,9 +93,7 @@ const Navigation = () => {
                       {user?.fullName || user?.username}
                     </div>
                     {user?.email && (
-                      <div className="text-xs font-poppins text-tertiary">
-                        {user.email}
-                      </div>
+                      <div className="text-xs font-poppins text-tertiary">{user.email}</div>
                     )}
                   </div>
                   <Link

@@ -98,7 +98,10 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
                 setMessages((prev) =>
                   prev.map((msg) =>
                     msg.id === botMessageId
-                      ? { ...msg, message: botMessage.message }
+                      ? {
+                          ...msg,
+                          message: botMessage.message,
+                        }
                       : msg,
                   ),
                 );
@@ -144,7 +147,7 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
 
   if (isMinimized) {
     return (
-      <div className="fixed bottom-20 right-6 z-[60]">
+      <div className="fixed bottom-20 right-6 z-60">
         <div
           onClick={() => setIsMinimized(false)}
           className={`cursor-pointer px-4 py-2 rounded-lg shadow-lg transition-all hover:scale-105 ${
@@ -164,7 +167,7 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
   }
 
   return (
-    <div className="aura-chat-window fixed bottom-20 right-6 z-[60] w-96 h-[500px] flex flex-col">
+    <div className="aura-chat-window fixed bottom-20 right-6 z-60 w-96 h-[500px] flex flex-col">
       {/* Chat Header */}
       <div
         className={`flex items-center justify-between p-4 rounded-t-lg border-b ${
@@ -179,20 +182,10 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
             </div>
           </div>
           <div>
-            <h3
-              className={`font-semibold ${
-                isDark ? "text-white" : "text-gray-900"
-              }`}
-            >
-              Aura AI
-            </h3>
+            <h3 className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>Aura AI</h3>
             <div className="flex items-center space-x-1">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span
-                className={`text-xs ${
-                  isDark ? "text-gray-400" : "text-gray-500"
-                }`}
-              >
+              <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                 Online
               </span>
             </div>
@@ -220,18 +213,14 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
 
       {/* Messages Area */}
       <div
-        className={`flex-1 overflow-y-auto p-4 space-y-4 ${
-          isDark ? "bg-gray-900" : "bg-gray-50"
-        }`}
+        className={`flex-1 overflow-y-auto p-4 space-y-4 ${isDark ? "bg-gray-900" : "bg-gray-50"}`}
       >
         {messages.map((msg) => (
           <div
             key={msg.id}
             className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}
           >
-            <div
-              className={`max-w-xs ${msg.type === "user" ? "order-2" : "order-1"}`}
-            >
+            <div className={`max-w-xs ${msg.type === "user" ? "order-2" : "order-1"}`}>
               <div
                 className={`flex items-end space-x-2 ${msg.type === "user" ? "flex-row-reverse space-x-reverse" : ""}`}
               >
@@ -253,7 +242,7 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
                 <div
                   className={`px-3 py-2 rounded-lg ${
                     msg.type === "user"
-                      ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white"
+                      ? "bg-linear-to-r from-teal-500 to-cyan-500 text-white"
                       : isDark
                         ? "bg-gray-800 text-white border border-gray-700"
                         : "bg-white text-gray-900 border border-gray-200"
@@ -290,9 +279,7 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
               </div>
               <div
                 className={`px-3 py-2 rounded-lg ${
-                  isDark
-                    ? "bg-gray-800 border border-gray-700"
-                    : "bg-white border border-gray-200"
+                  isDark ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"
                 }`}
               >
                 <div className="flex space-x-1">
@@ -340,7 +327,7 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
             disabled={!inputMessage.trim() || isTyping}
             className={`px-3 py-2 rounded-lg transition-all ${
               inputMessage.trim() && !isTyping
-                ? "bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white shadow-md hover:shadow-lg"
+                ? "bg-linear-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white shadow-md hover:shadow-lg"
                 : isDark
                   ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"

@@ -66,9 +66,7 @@ const ServicesList = ({ environment }) => {
     navigator.clipboard
       .writeText(configText)
       .then(() => {
-        success(
-          `${serviceName.toUpperCase()} configuration copied to clipboard`,
-        );
+        success(`${serviceName.toUpperCase()} configuration copied to clipboard`);
       })
       .catch(() => {
         success("Failed to copy configuration");
@@ -115,8 +113,7 @@ const ServicesList = ({ environment }) => {
       iam: ["roleName", "policies"],
     };
 
-    const keys =
-      importantKeys[serviceName] || Object.keys(serviceConfig).slice(0, 3);
+    const keys = importantKeys[serviceName] || Object.keys(serviceConfig).slice(0, 3);
     return Object.entries(serviceConfig)
       .filter(([key]) => keys.includes(key) && key !== "enabled")
       .slice(0, 4);
@@ -149,12 +146,9 @@ const ServicesList = ({ environment }) => {
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-1">
                   <h4
-                    className={`text-lg font-semibold ${
-                      isDark ? "text-white" : "text-gray-900"
-                    }`}
+                    className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
                   >
-                    {serviceDefinition?.displayName ||
-                      serviceName.toUpperCase()}
+                    {serviceDefinition?.displayName || serviceName.toUpperCase()}
                   </h4>
                   <span
                     className={`px-2 py-1 text-xs font-medium rounded-full bg-green-500/10 text-green-500 border border-green-500/20`}
@@ -162,13 +156,8 @@ const ServicesList = ({ environment }) => {
                     Active
                   </span>
                 </div>
-                <p
-                  className={`text-sm ${
-                    isDark ? "text-gray-400" : "text-gray-600"
-                  }`}
-                >
-                  {serviceDefinition?.description ||
-                    "AWS service configuration"}
+                <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                  {serviceDefinition?.description || "AWS service configuration"}
                 </p>
               </div>
             </div>
@@ -208,9 +197,7 @@ const ServicesList = ({ environment }) => {
                 <div
                   key={key}
                   className={`p-3 rounded-lg border ${
-                    isDark
-                      ? "bg-gray-700/30 border-gray-600"
-                      : "bg-gray-50 border-gray-200"
+                    isDark ? "bg-gray-700/30 border-gray-600" : "bg-gray-50 border-gray-200"
                   }`}
                 >
                   <div
@@ -218,14 +205,10 @@ const ServicesList = ({ environment }) => {
                       isDark ? "text-gray-400" : "text-gray-600"
                     }`}
                   >
-                    {key
-                      .replace(/([A-Z])/g, " $1")
-                      .replace(/^./, (str) => str.toUpperCase())}
+                    {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
                   </div>
                   <div
-                    className={`text-sm font-mono ${
-                      isDark ? "text-gray-200" : "text-gray-800"
-                    }`}
+                    className={`text-sm font-mono ${isDark ? "text-gray-200" : "text-gray-800"}`}
                   >
                     {formatConfigValue(value).length > 30
                       ? formatConfigValue(value).substring(0, 30) + "..."
@@ -239,11 +222,7 @@ const ServicesList = ({ environment }) => {
 
         {/* Expanded Configuration */}
         {isExpanded && (
-          <div
-            className={`border-t px-6 pb-6 ${
-              isDark ? "border-gray-700" : "border-gray-200"
-            }`}
-          >
+          <div className={`border-t px-6 pb-6 ${isDark ? "border-gray-700" : "border-gray-200"}`}>
             <div className={`flex items-center justify-between mb-4 pt-4`}>
               <h5
                 className={`text-sm font-semibold flex items-center space-x-2 ${
@@ -253,11 +232,7 @@ const ServicesList = ({ environment }) => {
                 <Info className="w-4 h-4" />
                 <span>Complete Configuration</span>
               </h5>
-              <span
-                className={`text-xs ${
-                  isDark ? "text-gray-500" : "text-gray-400"
-                }`}
-              >
+              <span className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
                 {Object.keys(serviceConfig).length - 1} attributes
               </span>
             </div>
@@ -273,9 +248,7 @@ const ServicesList = ({ environment }) => {
                   <div
                     key={key}
                     className={`p-3 rounded-lg border ${
-                      isDark
-                        ? "bg-gray-800/40 border-gray-600"
-                        : "bg-white border-gray-200"
+                      isDark ? "bg-gray-800/40 border-gray-600" : "bg-white border-gray-200"
                     }`}
                   >
                     <div className="flex items-start justify-between mb-2">
@@ -284,9 +257,7 @@ const ServicesList = ({ environment }) => {
                           isDark ? "text-gray-300" : "text-gray-700"
                         }`}
                       >
-                        {key
-                          .replace(/([A-Z])/g, " $1")
-                          .replace(/^./, (str) => str.toUpperCase())}
+                        {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
                       </span>
                       <span
                         className={`text-xs px-2 py-1 rounded ${
@@ -372,22 +343,14 @@ const ServicesList = ({ environment }) => {
             ))}
           </div>
         ) : (
-          <div
-            className={`text-center py-12 ${
-              isDark ? "text-gray-400" : "text-gray-600"
-            }`}
-          >
+          <div className={`text-center py-12 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
             <Box className="w-16 h-16 mx-auto mb-4 opacity-50" />
             <h3
-              className={`text-lg font-medium mb-2 ${
-                isDark ? "text-gray-300" : "text-gray-700"
-              }`}
+              className={`text-lg font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
             >
               No Services Enabled
             </h3>
-            <p className="text-sm">
-              Enable services to see their configuration details here.
-            </p>
+            <p className="text-sm">Enable services to see their configuration details here.</p>
           </div>
         )}
       </div>

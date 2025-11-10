@@ -1,9 +1,5 @@
 import Keycloak from "keycloak-js";
-import {
-  getKeycloakUrl,
-  getKeycloakRealm,
-  getKeycloakClientId,
-} from "../utils/envValidator";
+import { getKeycloakUrl, getKeycloakRealm, getKeycloakClientId } from "../utils/envValidator";
 
 const keycloakConfig = {
   url: getKeycloakUrl(),

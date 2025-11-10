@@ -9,12 +9,14 @@ OpenPrime is a React-based infrastructure management platform that allows users 
 ## Development Commands
 
 ### Essential Commands
+
 - `npm start` - Run development server (http://localhost:3000)
 - `npm test` - Run test suite in watch mode
 - `npm run build` - Build production bundle
 - `npm install` - Install dependencies
 
 ### Testing Commands
+
 - `npm test` - Interactive watch mode for all tests
 - `npm test -- --coverage` - Run tests with coverage report
 - `npm test -- --watchAll=false` - Run tests once without watch mode
@@ -22,11 +24,13 @@ OpenPrime is a React-based infrastructure management platform that allows users 
 - `npm test src/components/modals/__tests__/` - Run tests in specific directory
 
 ### Docker Development
+
 - `docker build .` - Build Docker image (multi-stage: Node 24.5.0-alpine + Nginx)
 - `docker-compose up` - Run application in container with live reload (port 3000)
 - Production Docker image serves from Nginx on port 8080 with non-root user
 
 ### Code Quality
+
 - Remove all `console.log` statements before committing: `grep -r "console.log" src/ --include="*.js"`
 - The codebase uses ESLint via react-scripts - errors will appear in development console
 - No additional linting commands needed - integrated with `npm start` and `npm run build`
@@ -36,6 +40,7 @@ OpenPrime is a React-based infrastructure management platform that allows users 
 ### High-Level Architecture Patterns
 
 **Configuration-Driven Design**: The entire application is driven by configuration files that eliminate hardcoded service definitions:
+
 - `servicesConfig.js` - Schema-based service definitions with validation rules and field types
 - `providersConfig.js` - Multi-cloud provider configurations (AWS, Azure, GCP, On-premise)
 - `helmChartsConfig.js` - Kubernetes application templates with customizable values
@@ -44,22 +49,26 @@ OpenPrime is a React-based infrastructure management platform that allows users 
 **Dynamic Component System**: Uses `DynamicServiceConfig` and `DynamicFieldRenderer` to generate forms programmatically based on service schemas, eliminating the need for hardcoded UI components for each service.
 
 **Authentication Architecture**: Keycloak OIDC integration with PKCE flow:
+
 - `AuthContext.js` - React context managing authentication state and token refresh
 - `authService.js` - HTTP client with automatic JWT token handling
 - `keycloak.js` - Keycloak client configuration
 
 ### Core Application Structure
+
 - **App.js**: Main router component managing page navigation state and environment data with authentication wrapper
 - **Navigation.js**: Top-level navigation bar with routing between Home, Environments, and Settings
 - **Wizard System**: Multi-step environment creation with `WizardContainer`, `BasicConfigStep`, `ServicesConfigStep`, and `HelmChartsStep`
 
 ### Page Components
+
 - **HomePage**: Landing page with feature overview and call-to-action
 - **EnvironmentsPage**: Environment management with creation/editing capabilities
 - **EnvironmentDetailPage**: Detailed view of individual environments with service status
 - **SettingsPage**: Application settings management
 
 ### Environment Management
+
 - **EnvironmentCard**: Visual representation of infrastructure environments with service status
 - **EnvironmentWizard**: Multi-step wizard for creating/editing environments with three steps:
   - Basic configuration (name, provider, region)
@@ -68,6 +77,7 @@ OpenPrime is a React-based infrastructure management platform that allows users 
 - **HelmValuesModal**: YAML editor for customizing Helm chart values
 
 ### AI Integration
+
 - **AuraChatButton**: Floating chat button for AI assistance
 - **AuraChatWindow**: Chat interface for environment configuration help
 - **AIChatModal**: Context-aware AI chat for service-specific guidance
@@ -75,9 +85,11 @@ OpenPrime is a React-based infrastructure management platform that allows users 
 ## Key Features
 
 ### Multi-Cloud Infrastructure Configuration
+
 The application supports extensive cloud service configuration across providers:
 
 **AWS Services**:
+
 - **Core Infrastructure**: VPC, EKS, RDS, OpenSearch, ECR, S3
 - **Compute & Storage**: Lambda, ElastiCache, EFS
 - **Networking**: CloudFront, Route53, ALB/NLB
@@ -89,13 +101,16 @@ The application supports extensive cloud service configuration across providers:
 **On-Premise**: Kubernetes clusters, bare metal configurations
 
 ### Helm Chart Management
+
 Built-in support for production-ready Helm charts with customizable values:
+
 - **Monitoring Stack**: Prometheus, Grafana, Loki
 - **CI/CD**: ArgoCD, FluxCD
 - **Infrastructure**: Cert-Manager, External-DNS, NGINX Ingress, Istio
 - **Operations**: Karpenter, Velero, Falco, Trivy Operator
 
 ### UI/UX Patterns
+
 - **Styling**: Tailwind CSS with dark/light theme switching and glassmorphism effects
 - **Icons**: Lucide React for consistent iconography
 - **State Management**: React Context API (ThemeContext, ToastContext) with hooks
@@ -106,9 +121,11 @@ Built-in support for production-ready Helm charts with customizable values:
 ## Important Implementation Details
 
 ### Configuration Architecture
+
 The application's strength lies in its configuration-driven architecture that makes adding new services trivial:
 
 **Service Definition Pattern**:
+
 ```javascript
 // Adding a new service only requires configuration, no new components
 const newService = {
@@ -123,13 +140,16 @@ const newService = {
 ```
 
 **Key Configuration Files**:
+
 - `servicesConfig.js` (432 lines) - Schema-based service definitions with validation rules
 - `environmentsConfig.js` - Environment templates and Helm chart defaults with extensive examples
 - `providersConfig.js` - Multi-cloud provider configurations and region mappings
 - `helmChartsConfig.js` - Kubernetes application templates with production-ready defaults
 
 ### Environment Configuration Structure
+
 Environments use a deeply nested JSONB-like structure optimized for flexibility:
+
 ```javascript
 {
   name: 'environment-name',
@@ -152,34 +172,41 @@ Environments use a deeply nested JSONB-like structure optimized for flexibility:
 ```
 
 ### Component Architecture Patterns
+
 **Dynamic Rendering System**:
+
 - `DynamicServiceConfig` - Renders service configuration panels based on schema
 - `DynamicFieldRenderer` - Handles all field types (text, select, boolean, object, array)
 - `ServiceConfiguration` - Shared component for consistent service UI
 
 **Wizard Implementation**:
+
 - `WizardContainer` (455 lines) - Main wizard logic with validation and step management
 - `BasicConfigStep` - Provider and region selection
 - `ServicesConfigStep` - Dynamic service configuration forms
 - `HelmChartsStep` - Kubernetes application selection
 
 **State Management**:
+
 - React Context API with `AuthContext`, `ThemeContext`, `ToastContext`
 - Local component state for form data with validation
 - No external state management library (Redux, Zustand) - appropriate for app size
 
 ### Authentication Integration
+
 - **Keycloak OIDC**: PKCE flow with automatic token refresh
 - **JWT Handling**: Automatic token attachment to API requests
 - **Role-Based Access**: User roles available in context for authorization
 - **Token Lifecycle**: Automatic refresh on expiration with fallback to re-login
 
 ### Performance Considerations
+
 - **Large Components**: `EnvironmentDetailPage.js` (820 lines) needs refactoring
 - **Bundle Size**: React 19 + Tailwind CSS optimized build
 - **Memory Usage**: Context API suitable for current scale, monitor for larger datasets
 
 ## Technology Stack
+
 - **Frontend**: React 19.1.1 with modern hooks and Context API
 - **Authentication**: Keycloak JS 26.2.0 with OIDC/PKCE flow
 - **Styling**: Tailwind CSS 3.3.3 with PostCSS, dark/light themes, and glassmorphism effects
@@ -194,31 +221,38 @@ Environments use a deeply nested JSONB-like structure optimized for flexibility:
 ## Development Workflow
 
 ### Adding New Cloud Services
+
 1. **Define Service Schema**: Add service definition to `servicesConfig.js` with field types and validation
 2. **Update Provider Config**: Add service to appropriate provider in `providersConfig.js`
 3. **Test Dynamic Rendering**: The `DynamicServiceConfig` component will automatically render the new service
 4. **Add Validation Rules**: Include any custom validation logic in `configValidator.js`
 
 ### Adding New Cloud Providers
+
 1. **Provider Configuration**: Add provider definition to `providersConfig.js` with regions and services
 2. **Service Mappings**: Map provider-specific services to generic service types
 3. **Authentication**: Update `authService.js` if provider requires different auth handling
 4. **Testing**: Add provider-specific test cases in `__tests__/` directories
 
 ### Component Refactoring Guidelines
+
 When encountering large components (>400 lines):
+
 1. **Extract Sections**: Move logical sections to separate components in dedicated folders
 2. **Maintain Props**: Keep the same prop interface to avoid breaking parent components
 3. **Share State**: Use props or context for shared state, avoid prop drilling
 4. **Test Coverage**: Ensure extracted components maintain test coverage
 
 ### Environment Integration
+
 This frontend connects to:
+
 - **Backend API**: Express.js server with PostgreSQL for environment persistence
 - **Authentication**: Keycloak server for user management and OIDC flow
 - **Infrastructure**: Template processing system for Terraform/Helm generation
 
 ### Performance Optimization
+
 - **Large Lists**: Consider virtualization if environments exceed 100+ items
 - **Bundle Analysis**: Use `npm run build` and analyze bundle size regularly
 - **Context Optimization**: Split contexts if they become too large or change frequently

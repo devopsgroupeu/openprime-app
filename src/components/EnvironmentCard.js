@@ -94,9 +94,7 @@ const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
   };
 
   const enabledServices = environment.services
-    ? Object.entries(environment.services).filter(
-        ([_, config]) => config?.enabled,
-      )
+    ? Object.entries(environment.services).filter(([_, config]) => config?.enabled)
     : [];
 
   const handleDeleteConfirm = () => {
@@ -142,13 +140,8 @@ const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
                     ? "Azure Cloud"
                     : "On-Premise"}
               </span>
-              <span
-                className={`transition-colors ${
-                  isDark ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                {environment.provider === "aws" ||
-                environment.provider === "azure"
+              <span className={`transition-colors ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                {environment.provider === "aws" || environment.provider === "azure"
                   ? environment.region
                   : environment.location}
               </span>
@@ -174,8 +167,8 @@ const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
                 }`}
               >
                 <div className="font-semibold mb-2">
-                  {environment.provider === "azure" ? "Azure" : "AWS"} Services
-                  ({enabledServices.length}):
+                  {environment.provider === "azure" ? "Azure" : "AWS"} Services (
+                  {enabledServices.length}):
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   {enabledServices.slice(0, 6).map(([service]) => (
@@ -192,23 +185,17 @@ const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
                   {enabledServices.length > 6 && (
                     <div
                       className={`flex items-center rounded px-2 py-1 transition-colors ${
-                        isDark
-                          ? "bg-gray-700/50 text-gray-400"
-                          : "bg-gray-100 text-gray-600"
+                        isDark ? "bg-gray-700/50 text-gray-400" : "bg-gray-100 text-gray-600"
                       }`}
                     >
-                      <span className="text-xs">
-                        +{enabledServices.length - 6} more
-                      </span>
+                      <span className="text-xs">+{enabledServices.length - 6} more</span>
                     </div>
                   )}
                 </div>
               </div>
 
-              {((environment.services.eks?.enabled &&
-                environment.services.eks.helmCharts) ||
-                (environment.services.aks?.enabled &&
-                  environment.services.aks.helmCharts)) && (
+              {((environment.services.eks?.enabled && environment.services.eks.helmCharts) ||
+                (environment.services.aks?.enabled && environment.services.aks.helmCharts)) && (
                 <div
                   className={`text-sm transition-colors ${
                     isDark ? "text-gray-300" : "text-gray-700"
@@ -217,8 +204,7 @@ const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
                   <div className="font-semibold mb-2">Helm Charts:</div>
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(
-                      (environment.services.eks || environment.services.aks)
-                        ?.helmCharts || {},
+                      (environment.services.eks || environment.services.aks)?.helmCharts || {},
                     )
                       .filter(([_, config]) => config.enabled)
                       .slice(0, 4)
@@ -234,33 +220,24 @@ const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
                             <span className="text-xs">{chart}</span>
                           </span>
                           {config.customValues && (
-                            <Edit2
-                              className="w-3 h-3 text-yellow-400"
-                              title="Custom values"
-                            />
+                            <Edit2 className="w-3 h-3 text-yellow-400" title="Custom values" />
                           )}
                         </div>
                       ))}
                     {Object.entries(
-                      (environment.services.eks || environment.services.aks)
-                        ?.helmCharts || {},
+                      (environment.services.eks || environment.services.aks)?.helmCharts || {},
                     ).filter(([_, config]) => config.enabled).length > 4 && (
                       <div
                         className={`flex items-center rounded px-2 py-1 transition-colors ${
-                          isDark
-                            ? "bg-gray-700/50 text-gray-400"
-                            : "bg-gray-100 text-gray-600"
+                          isDark ? "bg-gray-700/50 text-gray-400" : "bg-gray-100 text-gray-600"
                         }`}
                       >
                         <span className="text-xs">
                           +
                           {Object.entries(
-                            (
-                              environment.services.eks ||
-                              environment.services.aks
-                            )?.helmCharts || {},
-                          ).filter(([_, config]) => config.enabled).length -
-                            4}{" "}
+                            (environment.services.eks || environment.services.aks)?.helmCharts ||
+                              {},
+                          ).filter(([_, config]) => config.enabled).length - 4}{" "}
                           more
                         </span>
                       </div>
@@ -272,8 +249,7 @@ const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
               {((environment.services.ecr?.enabled &&
                 environment.services.ecr.repositories?.length > 0) ||
                 (environment.services.containerRegistry?.enabled &&
-                  environment.services.containerRegistry.repositories?.length >
-                    0)) && (
+                  environment.services.containerRegistry.repositories?.length > 0)) && (
                 <div
                   className={`text-sm transition-colors ${
                     isDark ? "text-gray-300" : "text-gray-700"

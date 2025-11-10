@@ -213,10 +213,19 @@ export const SERVICES_CONFIG = {
         defaultValue: "BOTTLEROCKET_ARM_64",
         options: [
           { value: "AL2_x86_64", label: "Amazon Linux 2 (x86_64)" },
-          { value: "AL2_x86_64_GPU", label: "Amazon Linux 2 GPU (x86_64)" },
+          {
+            value: "AL2_x86_64_GPU",
+            label: "Amazon Linux 2 GPU (x86_64)",
+          },
           { value: "AL2_ARM_64", label: "Amazon Linux 2 (ARM64)" },
-          { value: "BOTTLEROCKET_ARM_64", label: "Bottlerocket (ARM64)" },
-          { value: "BOTTLEROCKET_x86_64", label: "Bottlerocket (x86_64)" },
+          {
+            value: "BOTTLEROCKET_ARM_64",
+            label: "Bottlerocket (ARM64)",
+          },
+          {
+            value: "BOTTLEROCKET_x86_64",
+            label: "Bottlerocket (x86_64)",
+          },
         ],
       },
       defaultNodeGroupInstanceTypes: {
@@ -360,16 +369,14 @@ export const SERVICES_CONFIG = {
         type: FIELD_TYPES.TEXT,
         name: "majorEngineVersion",
         displayName: "Major Engine Version",
-        description:
-          "Major database engine version (e.g., 15 for PostgreSQL, 8.0 for MySQL)",
+        description: "Major database engine version (e.g., 15 for PostgreSQL, 8.0 for MySQL)",
         defaultValue: "15.4",
       },
       family: {
         type: FIELD_TYPES.TEXT,
         name: "family",
         displayName: "DB Parameter Group Family",
-        description:
-          "Database parameter group family (e.g., postgres15, mysql8.0)",
+        description: "Database parameter group family (e.g., postgres15, mysql8.0)",
         defaultValue: "postgres15",
       },
       instanceClass: {
@@ -1040,9 +1047,18 @@ export const SERVICES_CONFIG = {
         description: "TLS security policy",
         defaultValue: "Policy-Min-TLS-1-2-2019-07",
         options: [
-          { value: "Policy-Min-TLS-1-0-2019-07", label: "TLS 1.0 (Minimum)" },
-          { value: "Policy-Min-TLS-1-2-2019-07", label: "TLS 1.2 (Minimum)" },
-          { value: "Policy-Min-TLS-1-2-PFS-2023-10", label: "TLS 1.2 PFS" },
+          {
+            value: "Policy-Min-TLS-1-0-2019-07",
+            label: "TLS 1.0 (Minimum)",
+          },
+          {
+            value: "Policy-Min-TLS-1-2-2019-07",
+            label: "TLS 1.2 (Minimum)",
+          },
+          {
+            value: "Policy-Min-TLS-1-2-PFS-2023-10",
+            label: "TLS 1.2 PFS",
+          },
         ],
       },
       advancedSecurityEnabled: {
@@ -1097,8 +1113,7 @@ export const SERVICES_CONFIG = {
   ecr: {
     name: "ecr",
     displayName: "Elastic Container Registry (ECR)",
-    description:
-      "Managed Docker container registry - supports multiple repositories",
+    description: "Managed Docker container registry - supports multiple repositories",
     provider: "aws",
     category: "Storage",
     fields: {
@@ -1206,7 +1221,10 @@ export const SERVICES_CONFIG = {
         description: "Count type for lifecycle policy",
         defaultValue: "imageCountMoreThan",
         options: [
-          { value: "imageCountMoreThan", label: "Image Count More Than" },
+          {
+            value: "imageCountMoreThan",
+            label: "Image Count More Than",
+          },
           { value: "sinceImagePushed", label: "Since Image Pushed" },
         ],
       },
@@ -1241,7 +1259,10 @@ export const SERVICES_CONFIG = {
         defaultValue: "BASIC",
         options: [
           { value: "BASIC", label: "Basic" },
-          { value: "ENHANCED", label: "Enhanced (ECR Enhanced Scanning)" },
+          {
+            value: "ENHANCED",
+            label: "Enhanced (ECR Enhanced Scanning)",
+          },
         ],
       },
       enableReplication: {
@@ -1504,8 +1525,7 @@ export const SERVICES_CONFIG = {
         type: FIELD_TYPES.DROPDOWN,
         name: "scope",
         displayName: "Scope",
-        description:
-          "WAF scope (REGIONAL for ALB/API Gateway, CLOUDFRONT for CloudFront)",
+        description: "WAF scope (REGIONAL for ALB/API Gateway, CLOUDFRONT for CloudFront)",
         defaultValue: "REGIONAL",
         options: [
           { value: "REGIONAL", label: "Regional (ALB, API Gateway)" },
@@ -1637,12 +1657,18 @@ export const SERVICES_CONFIG = {
         description: "CloudFront price class",
         defaultValue: "PriceClass_100",
         options: [
-          { value: "PriceClass_100", label: "Use Only US, Canada and Europe" },
+          {
+            value: "PriceClass_100",
+            label: "Use Only US, Canada and Europe",
+          },
           {
             value: "PriceClass_200",
             label: "Use US, Canada, Europe, Asia, Middle East and Africa",
           },
-          { value: "PriceClass_All", label: "Use All Edge Locations" },
+          {
+            value: "PriceClass_All",
+            label: "Use All Edge Locations",
+          },
         ],
       },
       wafEnabled: {
@@ -2155,15 +2181,11 @@ export const getServiceConfig = (serviceName) => {
 };
 
 export const getServicesByProvider = (providerType) => {
-  return Object.values(SERVICES_CONFIG).filter(
-    (service) => service.provider === providerType,
-  );
+  return Object.values(SERVICES_CONFIG).filter((service) => service.provider === providerType);
 };
 
 export const getServicesByCategory = (category) => {
-  return Object.values(SERVICES_CONFIG).filter(
-    (service) => service.category === category,
-  );
+  return Object.values(SERVICES_CONFIG).filter((service) => service.category === category);
 };
 
 export const createDefaultServiceConfig = (serviceName) => {

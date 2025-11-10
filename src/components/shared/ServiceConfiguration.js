@@ -47,9 +47,7 @@ const ServiceConfiguration = ({
         )}
       </div>
     </div>
-    {enabled && expanded && (
-      <div className="px-3 pb-3 border-t border-gray-600">{children}</div>
-    )}
+    {enabled && expanded && <div className="px-3 pb-3 border-t border-gray-600">{children}</div>}
   </div>
 );
 

@@ -52,9 +52,7 @@ const AIChatModal = ({
    * Converts human-readable names back to service keys
    */
   const findServiceByDisplayName = (displayName) => {
-    for (const [serviceName, serviceConfig] of Object.entries(
-      SERVICES_CONFIG,
-    )) {
+    for (const [serviceName, serviceConfig] of Object.entries(SERVICES_CONFIG)) {
       if (serviceConfig.displayName === displayName) {
         return serviceName;
       }
@@ -76,10 +74,8 @@ const AIChatModal = ({
 
       case FIELD_TYPES.NUMBER:
         if (typeof value !== "number") return false;
-        if (fieldConfig.min !== undefined && value < fieldConfig.min)
-          return false;
-        if (fieldConfig.max !== undefined && value > fieldConfig.max)
-          return false;
+        if (fieldConfig.min !== undefined && value < fieldConfig.min) return false;
+        if (fieldConfig.max !== undefined && value > fieldConfig.max) return false;
         return true;
 
       case FIELD_TYPES.DROPDOWN:
@@ -89,9 +85,7 @@ const AIChatModal = ({
       case FIELD_TYPES.MULTISELECT:
         if (!Array.isArray(value)) return false;
         if (!fieldConfig.options) return true; // No options defined, allow any values
-        return value.every((v) =>
-          fieldConfig.options.some((option) => option.value === v),
-        );
+        return value.every((v) => fieldConfig.options.some((option) => option.value === v));
 
       case FIELD_TYPES.TEXT:
       case FIELD_TYPES.TEXTAREA:
@@ -105,9 +99,7 @@ const AIChatModal = ({
         return Array.isArray(value);
 
       case FIELD_TYPES.OBJECT:
-        return (
-          typeof value === "object" && value !== null && !Array.isArray(value)
-        );
+        return typeof value === "object" && value !== null && !Array.isArray(value);
 
       default:
         return true; // Unknown field type, allow any value
@@ -137,11 +129,7 @@ const AIChatModal = ({
 
         let configToCheck = parsed;
         const keys = Object.keys(parsed);
-        if (
-          keys.length === 1 &&
-          typeof parsed[keys[0]] === "object" &&
-          parsed[keys[0]] !== null
-        ) {
+        if (keys.length === 1 && typeof parsed[keys[0]] === "object" && parsed[keys[0]] !== null) {
           configToCheck = parsed[keys[0]];
         }
 
@@ -186,8 +174,7 @@ const AIChatModal = ({
         if (!hasValidFields) return {};
 
         // Check if suggested config is different from current config
-        const currentServiceConfig =
-          wizardValues?.services?.[currentServiceName] || {};
+        const currentServiceConfig = wizardValues?.services?.[currentServiceName] || {};
         let isDifferent = false;
         for (const [key, value] of Object.entries(validatedConfig)) {
           if (currentServiceConfig[key] !== value) {
@@ -241,15 +228,11 @@ const AIChatModal = ({
       // Validate number constraints
       if (fieldDef.type === FIELD_TYPES.NUMBER && typeof value === "number") {
         if (fieldDef.min !== undefined && value < fieldDef.min) {
-          warnings.push(
-            `${fieldDef.displayName || fieldName} is below minimum (${fieldDef.min})`,
-          );
+          warnings.push(`${fieldDef.displayName || fieldName} is below minimum (${fieldDef.min})`);
           fixes[fieldName] = fieldDef.min;
         }
         if (fieldDef.max !== undefined && value > fieldDef.max) {
-          warnings.push(
-            `${fieldDef.displayName || fieldName} exceeds maximum (${fieldDef.max})`,
-          );
+          warnings.push(`${fieldDef.displayName || fieldName} exceeds maximum (${fieldDef.max})`);
           fixes[fieldName] = fieldDef.max;
         }
       }
@@ -258,19 +241,13 @@ const AIChatModal = ({
       if (fieldDef.type === FIELD_TYPES.DROPDOWN && fieldDef.options) {
         const validValues = fieldDef.options.map((opt) => opt.value);
         if (!validValues.includes(value)) {
-          warnings.push(
-            `Invalid ${fieldDef.displayName || fieldName}: "${value}". Using default.`,
-          );
+          warnings.push(`Invalid ${fieldDef.displayName || fieldName}: "${value}". Using default.`);
           fixes[fieldName] = fieldDef.defaultValue;
         }
       }
 
       // Validate multiselect arrays
-      if (
-        fieldDef.type === FIELD_TYPES.MULTISELECT &&
-        Array.isArray(value) &&
-        fieldDef.options
-      ) {
+      if (fieldDef.type === FIELD_TYPES.MULTISELECT && Array.isArray(value) && fieldDef.options) {
         const validValues = fieldDef.options.map((opt) => opt.value);
         const invalidValues = value.filter((v) => !validValues.includes(v));
         if (invalidValues.length > 0) {
@@ -286,15 +263,12 @@ const AIChatModal = ({
 
       // Validate text patterns
       if (
-        (fieldDef.type === FIELD_TYPES.TEXT ||
-          fieldDef.type === FIELD_TYPES.TEXTAREA) &&
+        (fieldDef.type === FIELD_TYPES.TEXT || fieldDef.type === FIELD_TYPES.TEXTAREA) &&
         typeof value === "string" &&
         fieldDef.validation?.pattern
       ) {
         if (!fieldDef.validation.pattern.test(value)) {
-          warnings.push(
-            `${fieldDef.displayName || fieldName} format is invalid`,
-          );
+          warnings.push(`${fieldDef.displayName || fieldName} format is invalid`);
           if (fieldDef.defaultValue) {
             fixes[fieldName] = fieldDef.defaultValue;
           }
@@ -309,10 +283,7 @@ const AIChatModal = ({
     fieldNames.forEach((fieldName) => {
       if (fieldName.startsWith("min")) {
         const maxFieldName = fieldName.replace("min", "max");
-        if (
-          config[maxFieldName] !== undefined &&
-          config[fieldName] > config[maxFieldName]
-        ) {
+        if (config[maxFieldName] !== undefined && config[fieldName] > config[maxFieldName]) {
           warnings.push(`${fieldName} cannot exceed ${maxFieldName}`);
           fixes[maxFieldName] = Math.max(
             config[fieldName],
@@ -327,10 +298,7 @@ const AIChatModal = ({
         fieldName !== "maxAllocatedStorage"
       ) {
         const minFieldName = fieldName.replace("max", "min");
-        if (
-          config[minFieldName] !== undefined &&
-          config[fieldName] < config[minFieldName]
-        ) {
+        if (config[minFieldName] !== undefined && config[fieldName] < config[minFieldName]) {
           warnings.push(`${fieldName} cannot be less than ${minFieldName}`);
           fixes[fieldName] = Math.max(
             config[minFieldName],
@@ -341,22 +309,13 @@ const AIChatModal = ({
     });
 
     // Auto-scaling logic (generic for any service with enableAutoScaling)
-    if (
-      config.hasOwnProperty("enableAutoScaling") &&
-      !config.enableAutoScaling
-    ) {
+    if (Object.hasOwn(config, "enableAutoScaling") && !config.enableAutoScaling) {
       // If auto-scaling is disabled, min and max should be equal
-      const minField = fieldNames.find(
-        (f) => f.includes("min") && f.includes("Node"),
-      );
-      const maxField = fieldNames.find(
-        (f) => f.includes("max") && f.includes("Node"),
-      );
+      const minField = fieldNames.find((f) => f.includes("min") && f.includes("Node"));
+      const maxField = fieldNames.find((f) => f.includes("max") && f.includes("Node"));
 
       if (minField && maxField && config[minField] !== config[maxField]) {
-        warnings.push(
-          `Auto-scaling disabled: ${minField} and ${maxField} should be equal`,
-        );
+        warnings.push(`Auto-scaling disabled: ${minField} and ${maxField} should be equal`);
         fixes[maxField] = config[minField];
       }
     }
@@ -368,23 +327,16 @@ const AIChatModal = ({
       config.maxAllocatedStorage < config.allocatedStorage
     ) {
       warnings.push("Maximum storage cannot be less than allocated storage");
-      fixes.maxAllocatedStorage = Math.max(
-        config.allocatedStorage * 2,
-        config.maxAllocatedStorage,
-      );
+      fixes.maxAllocatedStorage = Math.max(config.allocatedStorage * 2, config.maxAllocatedStorage);
     }
 
     // Disk size recommendations (generic minimum disk size check)
     const diskFields = fieldNames.filter(
-      (f) =>
-        f.toLowerCase().includes("disk") &&
-        fields[f]?.type === FIELD_TYPES.NUMBER,
+      (f) => f.toLowerCase().includes("disk") && fields[f]?.type === FIELD_TYPES.NUMBER,
     );
     diskFields.forEach((diskField) => {
       if (config[diskField] && config[diskField] < 20) {
-        warnings.push(
-          `${fields[diskField].displayName || diskField} may be too small`,
-        );
+        warnings.push(`${fields[diskField].displayName || diskField} may be too small`);
         fixes[diskField] = Math.max(50, fields[diskField].defaultValue || 50);
       }
     });
@@ -396,24 +348,15 @@ const AIChatModal = ({
         const relatedFields = fieldNames.filter(
           (f) =>
             f !== fieldName &&
-            (f.includes(
-              fieldName.replace("enable", "").replace("Enable", ""),
-            ) ||
-              fieldName.includes(
-                f.replace("enable", "").replace("Enable", ""),
-              )),
+            (f.includes(fieldName.replace("enable", "").replace("Enable", "")) ||
+              fieldName.includes(f.replace("enable", "").replace("Enable", ""))),
         );
 
         relatedFields.forEach((relatedField) => {
-          if (
-            typeof config[relatedField] === "boolean" &&
-            config[relatedField] === false
-          ) {
+          if (typeof config[relatedField] === "boolean" && config[relatedField] === false) {
             // Don't auto-enable, just warn about potential conflicts
-            const fieldDisplayName =
-              fields[fieldName]?.displayName || fieldName;
-            const relatedDisplayName =
-              fields[relatedField]?.displayName || relatedField;
+            const fieldDisplayName = fields[fieldName]?.displayName || fieldName;
+            const relatedDisplayName = fields[relatedField]?.displayName || relatedField;
             warnings.push(
               `${fieldDisplayName} enabled but ${relatedDisplayName} is disabled - verify this is intentional`,
             );
@@ -448,10 +391,7 @@ const AIChatModal = ({
     const mergedConfig = { ...currentConfig, ...suggestionToApply };
 
     // Validate the complete merged configuration
-    const { warnings, fixes } = validateServiceConfiguration(
-      currentServiceName,
-      mergedConfig,
-    );
+    const { warnings, fixes } = validateServiceConfiguration(currentServiceName, mergedConfig);
 
     // Apply suggestions and any necessary fixes
     const finalConfig = { ...mergedConfig, ...fixes };
@@ -485,9 +425,7 @@ const AIChatModal = ({
       }
 
       if (Object.keys(fixes).length > 0) {
-        message += `\n\n🔧 Additional changes made for compatibility:\n${Object.entries(
-          fixes,
-        )
+        message += `\n\n🔧 Additional changes made for compatibility:\n${Object.entries(fixes)
           .map(([key, value]) => `• ${key}: ${JSON.stringify(value)}`)
           .join("\n")}`;
       }
@@ -535,10 +473,7 @@ const AIChatModal = ({
       const dropdownConstraints =
         currentServiceName && SERVICES_CONFIG[currentServiceName]
           ? Object.entries(SERVICES_CONFIG[currentServiceName].fields)
-              .filter(
-                ([_, field]) =>
-                  field.type === FIELD_TYPES.DROPDOWN && field.options,
-              )
+              .filter(([_, field]) => field.type === FIELD_TYPES.DROPDOWN && field.options)
               .map(
                 ([fieldName, field]) =>
                   `${fieldName}: [${field.options.map((opt) => opt.value).join(", ")}]`,
@@ -602,8 +537,7 @@ const AIChatModal = ({
         }),
       });
 
-      if (!response.ok || !response.body)
-        throw new Error("Failed to connect to AI service");
+      if (!response.ok || !response.body) throw new Error("Failed to connect to AI service");
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -624,15 +558,17 @@ const AIChatModal = ({
                 setMessages((prev) =>
                   prev.map((msg) =>
                     msg.id === aiMessageId
-                      ? { ...msg, content: aiMessage.content }
+                      ? {
+                          ...msg,
+                          content: aiMessage.content,
+                        }
                       : msg,
                   ),
                 );
               }
 
               if (data.done) {
-                const currentServiceName =
-                  service || findServiceByDisplayName(serviceTitle);
+                const currentServiceName = service || findServiceByDisplayName(serviceTitle);
                 const newSuggestion = extractSuggestionsFromText(
                   aiMessage.content,
                   currentServiceName,
@@ -659,8 +595,7 @@ const AIChatModal = ({
           msg.id === aiMessageId
             ? {
                 ...msg,
-                content:
-                  "⚠️ Sorry, I couldn't connect to AI service right now.",
+                content: "⚠️ Sorry, I couldn't connect to AI service right now.",
               }
             : msg,
         ),
@@ -691,9 +626,7 @@ const AIChatModal = ({
       // Add text before the JSON block
       if (match.index > lastIndex) {
         parts.push(
-          <span key={`text-${lastIndex}`}>
-            {content.substring(lastIndex, match.index)}
-          </span>,
+          <span key={`text-${lastIndex}`}>{content.substring(lastIndex, match.index)}</span>,
         );
       }
 
@@ -707,9 +640,7 @@ const AIChatModal = ({
           <div
             key={`json-${match.index}`}
             className={`my-3 rounded-lg border ${
-              isDark
-                ? "bg-gray-800 border-gray-600"
-                : "bg-gray-50 border-gray-200"
+              isDark ? "bg-gray-800 border-gray-600" : "bg-gray-50 border-gray-200"
             }`}
           >
             <div
@@ -736,9 +667,7 @@ const AIChatModal = ({
           <div
             key={`code-${match.index}`}
             className={`my-3 rounded-lg border ${
-              isDark
-                ? "bg-gray-800 border-gray-600"
-                : "bg-gray-50 border-gray-200"
+              isDark ? "bg-gray-800 border-gray-600" : "bg-gray-50 border-gray-200"
             }`}
           >
             <div
@@ -766,9 +695,7 @@ const AIChatModal = ({
 
     // Add remaining text after the last JSON block
     if (lastIndex < content.length) {
-      parts.push(
-        <span key={`text-final`}>{content.substring(lastIndex)}</span>,
-      );
+      parts.push(<span key={`text-final`}>{content.substring(lastIndex)}</span>);
     }
 
     return <div>{parts}</div>;
@@ -800,14 +727,10 @@ const AIChatModal = ({
               <MessageCircle className="w-5 h-5 text-teal-400" />
             </div>
             <div>
-              <h2
-                className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
-              >
+              <h2 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                 Ask AI about {serviceTitle}
               </h2>
-              <p
-                className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}
-              >
+              <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                 Get help with configuration and best practices
               </p>
             </div>
@@ -828,9 +751,7 @@ const AIChatModal = ({
             // Check if this is a status message (success/dismiss notifications)
             const isStatusMessage =
               message.type === "ai" &&
-              (message.content.startsWith(
-                "✅ Configuration applied successfully!",
-              ) ||
+              (message.content.startsWith("✅ Configuration applied successfully!") ||
                 message.content.startsWith("👍 Suggestion dismissed."));
 
             return (
@@ -841,7 +762,7 @@ const AIChatModal = ({
                 {/* AI Avatar */}
                 {message.type === "ai" && (
                   <div
-                    className={`p-2 rounded-lg flex-shrink-0 ${isStatusMessage ? "bg-green-500/20" : "bg-teal-500/20"}`}
+                    className={`p-2 rounded-lg shrink-0 ${isStatusMessage ? "bg-green-500/20" : "bg-teal-500/20"}`}
                   >
                     <Bot
                       className={`w-4 h-4 ${isStatusMessage ? "text-green-400" : "text-teal-400"}`}
@@ -869,7 +790,9 @@ const AIChatModal = ({
                     {/* Render HTML content for welcome message, plain text for others */}
                     {message.isHtml ? (
                       <div
-                        dangerouslySetInnerHTML={{ __html: message.content }}
+                        dangerouslySetInnerHTML={{
+                          __html: message.content,
+                        }}
                       />
                     ) : (
                       formatMessageContent(message.content, isDark)
@@ -879,7 +802,7 @@ const AIChatModal = ({
 
                 {/* User Avatar */}
                 {message.type === "user" && (
-                  <div className="p-2 bg-gray-500/20 rounded-lg flex-shrink-0">
+                  <div className="p-2 bg-gray-500/20 rounded-lg shrink-0">
                     <User className="w-4 h-4 text-gray-400" />
                   </div>
                 )}
@@ -914,15 +837,13 @@ const AIChatModal = ({
           {/* Configuration Suggestion Box */}
           {suggestion && (
             <div className="flex items-start space-x-3 max-w-md">
-              <div className="p-2 bg-teal-500/20 rounded-lg flex-shrink-0 relative">
+              <div className="p-2 bg-teal-500/20 rounded-lg shrink-0 relative">
                 <Bot className="w-4 h-4 text-teal-400" />
               </div>
 
               <div className="relative p-4 rounded-lg border bg-amber-50 text-amber-800 border-amber-200 shadow flex-1">
                 <strong>💡 Suggested config changes:</strong>
-                <pre className="mt-2 text-sm">
-                  {JSON.stringify(suggestion, null, 2)}
-                </pre>
+                <pre className="mt-2 text-sm">{JSON.stringify(suggestion, null, 2)}</pre>
                 <div className="mt-3 flex space-x-2">
                   {/* Apply Button */}
                   <button

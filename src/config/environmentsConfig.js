@@ -1,9 +1,5 @@
 // src/config/environmentsConfig.js
-import {
-  PROVIDERS_CONFIG,
-  getProviderConfig,
-  getProviderServices,
-} from "./providersConfig";
+import { PROVIDERS_CONFIG, getProviderConfig, getProviderServices } from "./providersConfig";
 import { createDefaultServiceConfig } from "./servicesConfig";
 
 export const initialEnvironments = [
@@ -88,9 +84,21 @@ export const initialEnvironments = [
       ecr: {
         enabled: true,
         repositories: [
-          { name: "frontend", scanOnPush: true, mutability: "MUTABLE" },
-          { name: "backend", scanOnPush: true, mutability: "MUTABLE" },
-          { name: "worker", scanOnPush: true, mutability: "IMMUTABLE" },
+          {
+            name: "frontend",
+            scanOnPush: true,
+            mutability: "MUTABLE",
+          },
+          {
+            name: "backend",
+            scanOnPush: true,
+            mutability: "MUTABLE",
+          },
+          {
+            name: "worker",
+            scanOnPush: true,
+            mutability: "IMMUTABLE",
+          },
         ],
         lifecyclePolicy: true,
         crossRegionReplication: false,

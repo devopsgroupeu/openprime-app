@@ -1,22 +1,9 @@
 import React from "react";
 import { useNavigate } from "react-router";
-import {
-  ArrowLeft,
-  Edit2,
-  Trash2,
-  Cloud,
-  Server,
-  MapPin,
-  Key,
-} from "lucide-react";
+import { ArrowLeft, Edit2, Trash2, Cloud, Server, MapPin, Key } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 
-const EnvironmentHeader = ({
-  environment,
-  providerConfig,
-  onEdit,
-  onDelete,
-}) => {
+const EnvironmentHeader = ({ environment, providerConfig, onEdit, onDelete }) => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
 
@@ -47,9 +34,7 @@ const EnvironmentHeader = ({
   return (
     <div
       className={`backdrop-blur-md border-b transition-colors ${
-        isDark
-          ? "bg-gray-900/95 border-gray-700"
-          : "bg-white/95 border-gray-200"
+        isDark ? "bg-gray-900/95 border-gray-700" : "bg-white/95 border-gray-200"
       }`}
     >
       <div className="max-w-7xl mx-auto px-8 py-6">
@@ -67,33 +52,25 @@ const EnvironmentHeader = ({
             <div className="flex items-center space-x-3">
               {getProviderIcon(environment.provider)}
               <div>
-                <h1
-                  className={`text-3xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}
-                >
+                <h1 className={`text-3xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                   {environment.name}
                 </h1>
                 <div className="flex items-center space-x-4 mt-1">
-                  <span
-                    className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}
-                  >
+                  <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                     {providerConfig?.name || environment.provider}
                   </span>
                   <div className="flex items-center space-x-1">
                     <MapPin className="w-4 h-4 text-gray-400" />
-                    <span
-                      className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}
-                    >
+                    <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                       {environment.region}
                     </span>
                   </div>
                   {environment.cloudCredential && (
                     <div className="flex items-center space-x-1">
                       <Key className="w-4 h-4 text-gray-400" />
-                      <span
-                        className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}
-                      >
-                        {environment.cloudCredential.name} (
-                        {environment.cloudCredential.identifier})
+                      <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                        {environment.cloudCredential.name} ({environment.cloudCredential.identifier}
+                        )
                       </span>
                     </div>
                   )}
@@ -102,8 +79,7 @@ const EnvironmentHeader = ({
                       environment.status,
                     )}`}
                   >
-                    {environment.status.charAt(0).toUpperCase() +
-                      environment.status.slice(1)}
+                    {environment.status.charAt(0).toUpperCase() + environment.status.slice(1)}
                   </div>
                 </div>
               </div>

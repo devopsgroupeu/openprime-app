@@ -54,14 +54,10 @@ const ToastItem = ({ toast, onRemove }) => {
     >
       <div className="p-4">
         <div className="flex items-start">
-          <div className="flex-shrink-0">{getIcon()}</div>
+          <div className="shrink-0">{getIcon()}</div>
           <div className="ml-3 w-0 flex-1 pt-0.5">
             {toast.title && (
-              <p
-                className={`text-sm font-medium ${
-                  isDark ? "text-white" : "text-gray-900"
-                }`}
-              >
+              <p className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                 {toast.title}
               </p>
             )}
@@ -73,13 +69,11 @@ const ToastItem = ({ toast, onRemove }) => {
               {toast.message}
             </p>
           </div>
-          <div className="ml-4 flex-shrink-0 flex">
+          <div className="ml-4 shrink-0 flex">
             <button
               onClick={() => onRemove(toast.id)}
               className={`inline-flex rounded-md transition-colors ${
-                isDark
-                  ? "text-gray-400 hover:text-gray-200"
-                  : "text-gray-400 hover:text-gray-600"
+                isDark ? "text-gray-400 hover:text-gray-200" : "text-gray-400 hover:text-gray-600"
               }`}
               aria-label="Close notification"
             >
@@ -174,7 +168,7 @@ export const ToastProvider = ({ children }) => {
 
       {/* Toast Container */}
       <div
-        className="fixed top-4 right-4 z-[70] space-y-3 pointer-events-none"
+        className="fixed top-4 right-4 z-70 space-y-3 pointer-events-none"
         aria-live="polite"
         aria-label="Notifications"
         style={{ width: "min(400px, calc(100vw - 2rem))" }}

@@ -25,7 +25,7 @@ const AuraChatButton = () => {
       )}
 
       {/* Floating Button */}
-      <div className="fixed bottom-6 right-6 z-[60]">
+      <div className="fixed bottom-6 right-6 z-60">
         <button
           onClick={toggleChat}
           className={`aura-chat-button relative w-14 h-14 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 ${
@@ -66,12 +66,8 @@ const AuraChatButton = () => {
                 : "bg-white text-primary border border-subtle"
             }`}
           >
-            <div className="text-sm font-medium font-poppins">
-              Hi! I'm Aura 🤖
-            </div>
-            <div className="text-xs opacity-80 font-poppins">
-              Your AI assistant
-            </div>
+            <div className="text-sm font-medium font-poppins">Hi! I'm Aura 🤖</div>
+            <div className="text-xs opacity-80 font-poppins">Your AI assistant</div>
             {/* Tooltip arrow */}
             <div
               className={`absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent ${

@@ -20,13 +20,11 @@ const ConfigurationExport = ({ environment }) => {
     };
 
     // Add enabled services to configuration
-    Object.entries(environment.services || {}).forEach(
-      ([serviceName, serviceConfig]) => {
-        if (serviceConfig?.enabled) {
-          config.services[serviceName] = { ...serviceConfig };
-        }
-      },
-    );
+    Object.entries(environment.services || {}).forEach(([serviceName, serviceConfig]) => {
+      if (serviceConfig?.enabled) {
+        config.services[serviceName] = { ...serviceConfig };
+      }
+    });
 
     return config;
   };
@@ -92,16 +90,11 @@ const ConfigurationExport = ({ environment }) => {
             {indent}"{key}": [
           </div>
           {value.map((item, index) => (
-            <div
-              key={index}
-              className={`${isDark ? "text-green-300" : "text-green-600"}`}
-            >
+            <div key={index} className={`${isDark ? "text-green-300" : "text-green-600"}`}>
               {indent} "{item}"{index < value.length - 1 ? "," : ""}
             </div>
           ))}
-          <div className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>
-            {indent}],
-          </div>
+          <div className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>{indent}],</div>
         </div>
       );
     }
@@ -124,9 +117,7 @@ const ConfigurationExport = ({ environment }) => {
         <span className={valueColor}>
           {typeof value === "string" ? `"${displayValue}"` : displayValue}
         </span>
-        <span className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>
-          ,
-        </span>
+        <span className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>,</span>
       </div>
     );
   };
@@ -136,11 +127,7 @@ const ConfigurationExport = ({ environment }) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3
-          className={`text-lg font-semibold ${
-            isDark ? "text-white" : "text-gray-900"
-          }`}
-        >
+        <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
           Configuration Export
         </h3>
         <div className="flex items-center space-x-2">
@@ -196,15 +183,9 @@ const ConfigurationExport = ({ environment }) => {
             : "bg-gray-50 border-gray-200 text-gray-800"
         }`}
       >
-        <div className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>
-          {"{"}
-        </div>
-        {Object.entries(config).map(([key, value]) =>
-          renderConfigValue(key, value, 1),
-        )}
-        <div className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>
-          {"}"}
-        </div>
+        <div className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>{"{"}</div>
+        {Object.entries(config).map(([key, value]) => renderConfigValue(key, value, 1))}
+        <div className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>{"}"}</div>
       </div>
     </div>
   );

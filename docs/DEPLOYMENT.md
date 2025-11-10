@@ -5,6 +5,7 @@ This document provides comprehensive guidance for deploying the OpenPrime React 
 ## Overview
 
 The OpenPrime application now includes:
+
 - **Helm Chart** - Production-ready Kubernetes deployment configuration
 - **CI/CD Pipeline** - Automated building, testing, and publishing workflow
 - **Container Image** - Multi-stage Docker build optimized for production
@@ -51,17 +52,20 @@ chart/openprime-app/
 The pipeline (`.github/workflows/helm-chart.yml`) automatically:
 
 ### On Pull Request
+
 - Lints Helm chart
 - Tests chart templating
 - Validates configuration
 
 ### On Push to main/dev
+
 - Builds and publishes Docker image
 - Updates chart with new image version
 - Publishes Helm chart to OCI registry
 - Runs security scanning with Trivy
 
 ### On Release
+
 - Tags images and charts with release version
 - Creates release notes with installation instructions
 
@@ -156,6 +160,7 @@ ingress:
 ```
 
 Deploy:
+
 ```bash
 helm install openprime-app-dev ./chart/openprime-app -f values-dev.yaml
 ```
@@ -200,6 +205,7 @@ ingress:
 ```
 
 Deploy:
+
 ```bash
 helm install openprime-app-staging ./chart/openprime-app -f values-staging.yaml
 ```
@@ -212,7 +218,7 @@ Create `values-prod.yaml`:
 replicaCount: 3
 
 image:
-  tag: "v0.2.0"  # Use specific version for production
+  tag: "v0.2.0" # Use specific version for production
 
 app:
   env:
@@ -271,6 +277,7 @@ networkPolicy:
 ```
 
 Deploy:
+
 ```bash
 helm install openprime-app ./chart/openprime-app -f values-prod.yaml
 ```
@@ -303,6 +310,7 @@ docker run -p 8080:8080 openprime-app:local
 ### Health Checks
 
 The chart includes built-in health checks:
+
 - **Liveness Probe**: HTTP GET on `/` (port 8080)
 - **Readiness Probe**: HTTP GET on `/` (port 8080)
 
@@ -369,6 +377,7 @@ The chart is designed to work with the broader OpenPrime ecosystem:
 ## Support
 
 For issues and questions:
+
 - Check the chart README: `chart/openprime-app/README.md`
 - Review the troubleshooting section above
 - Create an issue in the repository

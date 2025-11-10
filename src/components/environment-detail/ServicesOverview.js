@@ -43,27 +43,17 @@ const ServicesOverview = ({ environment }) => {
     return (
       <div
         className={`p-4 rounded-lg border transition-colors ${
-          isDark
-            ? "bg-gray-800/50 border-gray-700"
-            : "bg-white/80 border-gray-200"
+          isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/80 border-gray-200"
         }`}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <IconComponent className="w-5 h-5 text-teal-500" />
             <div>
-              <h4
-                className={`font-medium ${
-                  isDark ? "text-white" : "text-gray-900"
-                }`}
-              >
+              <h4 className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                 {serviceDefinition?.displayName || serviceName}
               </h4>
-              <p
-                className={`text-sm ${
-                  isDark ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
+              <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                 {serviceDefinition?.description || "Service configuration"}
               </p>
             </div>
@@ -87,11 +77,7 @@ const ServicesOverview = ({ environment }) => {
           ))}
         </div>
       ) : (
-        <div
-          className={`text-center py-8 ${
-            isDark ? "text-gray-400" : "text-gray-600"
-          }`}
-        >
+        <div className={`text-center py-8 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
           <Box className="w-12 h-12 mx-auto mb-3 opacity-50" />
           <p>No services are currently enabled</p>
         </div>

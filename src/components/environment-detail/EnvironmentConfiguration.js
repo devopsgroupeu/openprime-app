@@ -136,14 +136,11 @@ const EnvironmentConfiguration = ({ environment }) => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      success(
-        "Infrastructure repository generated and downloaded successfully",
-      );
+      success("Infrastructure repository generated and downloaded successfully");
     } catch (err) {
       console.error("Error generating infrastructure:", err);
       showError(
-        err.response?.data?.error ||
-          "Failed to generate infrastructure. Please try again.",
+        err.response?.data?.error || "Failed to generate infrastructure. Please try again.",
       );
     } finally {
       setIsGenerating(false);
@@ -157,16 +154,12 @@ const EnvironmentConfiguration = ({ environment }) => {
       {environment.terraform_backend?.enabled && (
         <div
           className={`p-6 rounded-xl border ${
-            isDark
-              ? "bg-gray-800/50 border-gray-700"
-              : "bg-white/70 border-gray-200"
+            isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
           }`}
         >
           <div className="flex items-center mb-4">
             <Database className="w-5 h-5 mr-2 text-teal-500" />
-            <h4
-              className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
-            >
+            <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
               Terraform Backend Configuration
             </h4>
           </div>
@@ -207,9 +200,7 @@ const EnvironmentConfiguration = ({ environment }) => {
                 >
                   Locking Mechanism
                 </p>
-                <p
-                  className={`text-sm ${isDark ? "text-gray-200" : "text-gray-800"}`}
-                >
+                <p className={`text-sm ${isDark ? "text-gray-200" : "text-gray-800"}`}>
                   {environment.terraform_backend.lockingMechanism === "s3"
                     ? "S3 Native Locking"
                     : "DynamoDB"}
@@ -241,16 +232,12 @@ const EnvironmentConfiguration = ({ environment }) => {
       {environment.git_repository?.enabled && (
         <div
           className={`p-6 rounded-xl border ${
-            isDark
-              ? "bg-gray-800/50 border-gray-700"
-              : "bg-white/70 border-gray-200"
+            isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
           }`}
         >
           <div className="flex items-center mb-4">
             <GitBranch className="w-5 h-5 mr-2 text-teal-500" />
-            <h4
-              className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
-            >
+            <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
               Git Repository Configuration
             </h4>
           </div>
@@ -262,9 +249,7 @@ const EnvironmentConfiguration = ({ environment }) => {
                 Repository URL
               </p>
               <div className="flex items-center space-x-2">
-                <p
-                  className={`text-sm font-mono ${isDark ? "text-gray-200" : "text-gray-800"}`}
-                >
+                <p className={`text-sm font-mono ${isDark ? "text-gray-200" : "text-gray-800"}`}>
                   {environment.git_repository.url}
                 </p>
                 {environment.git_repository.url.includes("github.com") && (
@@ -292,7 +277,7 @@ const EnvironmentConfiguration = ({ environment }) => {
                   isDark ? "bg-gray-900/50" : "bg-gray-100"
                 }`}
               >
-                <Key className="w-4 h-4 text-teal-500 flex-shrink-0" />
+                <Key className="w-4 h-4 text-teal-500 shrink-0" />
                 <p
                   className={`text-xs font-mono flex-1 ${
                     isDark ? "text-gray-400" : "text-gray-600"
@@ -314,11 +299,7 @@ const EnvironmentConfiguration = ({ environment }) => {
                     }`}
                     title={showSshKey ? "Hide key" : "Show key"}
                   >
-                    {showSshKey ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
+                    {showSshKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 )}
               </div>
@@ -327,9 +308,7 @@ const EnvironmentConfiguration = ({ environment }) => {
         </div>
       )}
       <div className="flex items-center justify-between">
-        <h3
-          className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
-        >
+        <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
           Environment Configuration
         </h3>
         <div className="flex items-center space-x-3">
@@ -406,24 +385,18 @@ const EnvironmentConfiguration = ({ environment }) => {
 
       <div
         className={`rounded-lg border ${
-          isDark
-            ? "bg-gray-900/50 border-gray-700"
-            : "bg-gray-50 border-gray-200"
+          isDark ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"
         }`}
       >
         <div
           className={`px-4 py-3 border-b text-sm font-medium flex items-center justify-between ${
-            isDark
-              ? "border-gray-700 text-gray-300"
-              : "border-gray-200 text-gray-700"
+            isDark ? "border-gray-700 text-gray-300" : "border-gray-200 text-gray-700"
           }`}
         >
           <span>
             {environment.name} - {format.toUpperCase()} Configuration
           </span>
-          <span className="text-xs opacity-75">
-            {content.split("\n").length} lines
-          </span>
+          <span className="text-xs opacity-75">{content.split("\n").length} lines</span>
         </div>
         <div className="relative">
           <pre
@@ -444,14 +417,13 @@ const EnvironmentConfiguration = ({ environment }) => {
         }`}
       >
         <div className="flex items-start space-x-3">
-          <FileText className="w-5 h-5 mt-0.5 flex-shrink-0" />
+          <FileText className="w-5 h-5 mt-0.5 shrink-0" />
           <div>
             <p className="font-medium mb-1">Configuration Export</p>
             <p className="text-sm opacity-90">
-              This configuration represents the complete state of your
-              environment including all services, settings, and metadata. You
-              can use this to backup, version control, or recreate this
-              environment.
+              This configuration represents the complete state of your environment including all
+              services, settings, and metadata. You can use this to backup, version control, or
+              recreate this environment.
             </p>
           </div>
         </div>

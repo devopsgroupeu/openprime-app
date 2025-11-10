@@ -2,14 +2,7 @@ import React from "react";
 import { X, AlertTriangle } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 
-const ConfirmDeleteModal = ({
-  environment,
-  onClose,
-  onConfirm,
-  isOpen,
-  title,
-  message,
-}) => {
+const ConfirmDeleteModal = ({ environment, onClose, onConfirm, isOpen, title, message }) => {
   const { isDark } = useTheme();
 
   return (
@@ -41,21 +34,16 @@ const ConfirmDeleteModal = ({
         </div>
 
         <div className="p-6">
-          <p
-            className={`mb-4 transition-colors ${
-              isDark ? "text-gray-300" : "text-gray-700"
-            }`}
-          >
-            {message ||
-              `Are you sure you want to delete the environment "${environment?.name}"?`}
+          <p className={`mb-4 transition-colors ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+            {message || `Are you sure you want to delete the environment "${environment?.name}"?`}
           </p>
           <p
             className={`mb-6 text-sm transition-colors ${
               isDark ? "text-gray-400" : "text-gray-600"
             }`}
           >
-            This action cannot be undone. All configuration for this environment
-            will be permanently removed.
+            This action cannot be undone. All configuration for this environment will be permanently
+            removed.
           </p>
 
           <div className="flex space-x-3">

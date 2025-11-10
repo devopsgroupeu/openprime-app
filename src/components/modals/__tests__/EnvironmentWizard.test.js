@@ -52,7 +52,10 @@ describe("EnvironmentWizard", () => {
         <EnvironmentWizard
           {...defaultProps}
           isEditMode={true}
-          newEnv={{ ...defaultProps.newEnv, name: "Test Environment" }}
+          newEnv={{
+            ...defaultProps.newEnv,
+            name: "Test Environment",
+          }}
         />
       </MockWrapper>,
     );
@@ -82,11 +85,7 @@ describe("EnvironmentWizard", () => {
 
     render(
       <MockWrapper>
-        <EnvironmentWizard
-          {...defaultProps}
-          newEnv={newEnv}
-          setNewEnv={mockSetNewEnv}
-        />
+        <EnvironmentWizard {...defaultProps} newEnv={newEnv} setNewEnv={mockSetNewEnv} />
       </MockWrapper>,
     );
 
@@ -125,11 +124,7 @@ describe("EnvironmentWizard", () => {
   it("shows update text in edit mode", () => {
     render(
       <MockWrapper>
-        <EnvironmentWizard
-          {...defaultProps}
-          isEditMode={true}
-          isLoading={true}
-        />
+        <EnvironmentWizard {...defaultProps} isEditMode={true} isLoading={true} />
       </MockWrapper>,
     );
 
@@ -137,9 +132,7 @@ describe("EnvironmentWizard", () => {
   });
 
   it("renders within error boundary and catches errors gracefully", () => {
-    const consoleSpy = jest
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
     // Force an error by passing invalid props
     const invalidProps = {
@@ -169,7 +162,9 @@ describe("EnvironmentWizard", () => {
     );
 
     const nameInput = screen.getByPlaceholderText(/production, staging/i);
-    fireEvent.change(nameInput, { target: { value: "My Test Environment" } });
+    fireEvent.change(nameInput, {
+      target: { value: "My Test Environment" },
+    });
 
     expect(mockSetNewEnv).toHaveBeenCalledWith(
       expect.objectContaining({

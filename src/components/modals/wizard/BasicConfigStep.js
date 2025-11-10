@@ -1,21 +1,9 @@
 // src/components/modals/wizard/BasicConfigStep.js
 import React, { useState, useEffect } from "react";
-import {
-  Cloud,
-  MapPin,
-  Type,
-  Key,
-  Database,
-  Loader,
-  CheckCircle,
-  GitBranch,
-} from "lucide-react";
+import { Cloud, MapPin, Type, Key, Database, Loader, CheckCircle, GitBranch } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useToast } from "../../../contexts/ToastContext";
-import {
-  PROVIDERS,
-  createEmptyEnvironment,
-} from "../../../config/environmentsConfig";
+import { PROVIDERS, createEmptyEnvironment } from "../../../config/environmentsConfig";
 import { getAllProviders } from "../../../config/providersConfig";
 import authService from "../../../services/authService";
 
@@ -37,9 +25,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
   const loadCredentials = async (provider) => {
     try {
       setLoadingCredentials(true);
-      const response = await authService.get(
-        `/cloud-credentials?provider=${provider}`,
-      );
+      const response = await authService.get(`/cloud-credentials?provider=${provider}`);
       setCredentials(response.credentials || []);
     } catch (error) {
       console.error("Failed to load credentials:", error);
@@ -86,16 +72,13 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
     setCreatingBackend(true);
 
     try {
-      const response = await authService.post(
-        "/environments/terraform-backend/create",
-        {
-          region: newEnv.region,
-          environmentName: newEnv.name,
-          lockingMechanism: newEnv.terraformBackend.lockingMechanism,
-          tableName: newEnv.terraformBackend.tableName,
-          cloudCredentialId: newEnv.cloudCredentialId,
-        },
-      );
+      const response = await authService.post("/environments/terraform-backend/create", {
+        region: newEnv.region,
+        environmentName: newEnv.name,
+        lockingMechanism: newEnv.terraformBackend.lockingMechanism,
+        tableName: newEnv.terraformBackend.tableName,
+        cloudCredentialId: newEnv.cloudCredentialId,
+      });
 
       if (response.success) {
         const bucketName = response.data?.bucketName;
@@ -121,8 +104,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
         toast.error(response.error || "Failed to create backend resources");
       }
     } catch (error) {
-      const errorMessage =
-        error.message || "Failed to create backend resources";
+      const errorMessage = error.message || "Failed to create backend resources";
       toast.error(errorMessage);
     } finally {
       setCreatingBackend(false);
@@ -143,9 +125,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
           <Cloud className="w-4 h-4 mr-2" />
           Basic Configuration
         </div>
-        <h3
-          className={`text-xl font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}
-        >
+        <h3 className={`text-xl font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
           Let's start with the basics
         </h3>
         <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
@@ -156,16 +136,12 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
       {/* Environment Name */}
       <div
         className={`p-6 rounded-xl border ${
-          isDark
-            ? "bg-gray-800/50 border-gray-700"
-            : "bg-white/70 border-gray-200"
+          isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
         }`}
       >
         <div className="flex items-center mb-4">
           <Type className="w-5 h-5 mr-2 text-teal-500" />
-          <label
-            className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}
-          >
+          <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
             Environment Name
           </label>
         </div>
@@ -183,15 +159,10 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
           onChange={(e) => setNewEnv({ ...newEnv, name: e.target.value })}
         />
         {getFieldError("name") ? (
-          <p className="text-red-500 text-xs mt-2">
-            {getFieldError("name").message}
-          </p>
+          <p className="text-red-500 text-xs mt-2">{getFieldError("name").message}</p>
         ) : (
-          <p
-            className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-          >
-            Choose a descriptive name that identifies the purpose of this
-            environment
+          <p className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+            Choose a descriptive name that identifies the purpose of this environment
           </p>
         )}
       </div>
@@ -199,16 +170,12 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
       {/* Cloud Provider */}
       <div
         className={`p-6 rounded-xl border ${
-          isDark
-            ? "bg-gray-800/50 border-gray-700"
-            : "bg-white/70 border-gray-200"
+          isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
         }`}
       >
         <div className="flex items-center mb-4">
           <Cloud className="w-5 h-5 mr-2 text-teal-500" />
-          <label
-            className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}
-          >
+          <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
             Cloud Provider
           </label>
         </div>
@@ -224,9 +191,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
               onClick={() => handleProviderChange(provider.value)}
               disabled={!provider.enabled}
               className={`p-4 rounded-lg border-2 transition-all ${
-                provider.enabled
-                  ? "hover:scale-105"
-                  : "cursor-not-allowed opacity-50"
+                provider.enabled ? "hover:scale-105" : "cursor-not-allowed opacity-50"
               } ${
                 newEnv.provider === provider.value
                   ? isDark
@@ -277,9 +242,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                         ? "Google Cloud Platform"
                         : "Self-managed"}
                   {!provider.enabled && (
-                    <span className="block text-xs mt-1 font-medium text-orange-500">
-                      Disabled
-                    </span>
+                    <span className="block text-xs mt-1 font-medium text-orange-500">Disabled</span>
                   )}
                 </div>
               </div>
@@ -292,16 +255,12 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
       {newEnv.provider && (
         <div
           className={`p-6 rounded-xl border ${
-            isDark
-              ? "bg-gray-800/50 border-gray-700"
-              : "bg-white/70 border-gray-200"
+            isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
           }`}
         >
           <div className="flex items-center mb-4">
             <Key className="w-5 h-5 mr-2 text-teal-500" />
-            <label
-              className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}
-            >
+            <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
               Cloud Credentials (Optional)
             </label>
           </div>
@@ -334,9 +293,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                   </option>
                 ))}
               </select>
-              <p
-                className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-              >
+              <p className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                 Select saved credentials to use for this environment
               </p>
             </div>
@@ -350,9 +307,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
             >
               <Key className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <p className="mb-2">No saved credentials found</p>
-              <p className="text-xs">
-                Add credentials in Settings to use them for deployments
-              </p>
+              <p className="text-xs">Add credentials in Settings to use them for deployments</p>
             </div>
           )}
         </div>
@@ -361,16 +316,12 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
       {/* Region Selection */}
       <div
         className={`p-6 rounded-xl border ${
-          isDark
-            ? "bg-gray-800/50 border-gray-700"
-            : "bg-white/70 border-gray-200"
+          isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
         }`}
       >
         <div className="flex items-center mb-4">
           <MapPin className="w-5 h-5 mr-2 text-teal-500" />
-          <label
-            className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}
-          >
+          <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
             Deployment Region
           </label>
         </div>
@@ -392,9 +343,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                 </option>
               ))}
             </select>
-            <p
-              className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-            >
+            <p className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
               Choose the region closest to your users for optimal performance
             </p>
           </div>
@@ -416,9 +365,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
       {newEnv.provider === "aws" && (
         <div
           className={`p-6 rounded-xl border ${
-            isDark
-              ? "bg-gray-800/50 border-gray-700"
-              : "bg-white/70 border-gray-200"
+            isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
           }`}
         >
           <div className="flex items-center justify-between mb-4">
@@ -442,8 +389,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                       ...newEnv.terraformBackend,
                       enabled: e.target.checked,
                       bucketName: newEnv.terraformBackend?.bucketName || "",
-                      lockingMechanism:
-                        newEnv.terraformBackend?.lockingMechanism || "s3",
+                      lockingMechanism: newEnv.terraformBackend?.lockingMechanism || "s3",
                       tableName: newEnv.terraformBackend?.tableName || "",
                     },
                   })
@@ -465,11 +411,9 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
             </label>
           </div>
 
-          <p
-            className={`text-xs mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-          >
-            Automatically create S3 bucket and optional DynamoDB table for
-            Terraform state management
+          <p className={`text-xs mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+            Automatically create S3 bucket and optional DynamoDB table for Terraform state
+            management
           </p>
 
           {newEnv.terraformBackend?.enabled && !newEnv.cloudCredentialId && (
@@ -483,13 +427,11 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
               <div className="flex items-center">
                 <Database className="w-4 h-4 mr-2" />
                 <span className="text-sm font-medium">
-                  AWS credentials are required to create Terraform backend
-                  resources
+                  AWS credentials are required to create Terraform backend resources
                 </span>
               </div>
               <p className="text-xs mt-1 ml-6">
-                Please select cloud credentials above before creating backend
-                resources
+                Please select cloud credentials above before creating backend resources
               </p>
             </div>
           )}
@@ -504,32 +446,23 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                 }`}
               >
                 <div className="flex items-start">
-                  <Database className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
+                  <Database className="w-4 h-4 mr-2 mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-sm font-medium">
-                      S3 Bucket Name (Auto-generated)
-                    </p>
+                    <p className="text-sm font-medium">S3 Bucket Name (Auto-generated)</p>
                     <p className="text-xs mt-1">
                       Format:{" "}
                       <code className="font-mono">
                         &lt;AWS_ACCOUNT_ID&gt;-terraform-&lt;environment-name&gt;
                       </code>
                     </p>
-                    {newEnv.name &&
-                      credentials.find(
-                        (c) => c.id === newEnv.cloudCredentialId,
-                      ) && (
-                        <p className="text-xs mt-1 font-mono">
-                          Preview:{" "}
-                          {
-                            credentials.find(
-                              (c) => c.id === newEnv.cloudCredentialId,
-                            )?.identifier
-                          }
-                          -terraform-
-                          {newEnv.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}
-                        </p>
-                      )}
+                    {newEnv.name && credentials.find((c) => c.id === newEnv.cloudCredentialId) && (
+                      <p className="text-xs mt-1 font-mono">
+                        Preview:{" "}
+                        {credentials.find((c) => c.id === newEnv.cloudCredentialId)?.identifier}
+                        -terraform-
+                        {newEnv.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -560,14 +493,10 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                     })
                   }
                 >
-                  <option value="s3">
-                    S3 Native Locking (Terraform 1.11+)
-                  </option>
+                  <option value="s3">S3 Native Locking (Terraform 1.11+)</option>
                   <option value="dynamodb">DynamoDB Locking</option>
                 </select>
-                <p
-                  className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                >
+                <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                   {newEnv.terraformBackend?.lockingMechanism === "s3"
                     ? "Uses S3 native locking (requires Terraform 1.11 or higher)"
                     : "Creates DynamoDB table for state locking (works with all Terraform versions)"}
@@ -603,9 +532,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                       })
                     }
                   />
-                  <p
-                    className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                  >
+                  <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     DynamoDB table for managing Terraform state locks
                   </p>
                 </div>
@@ -621,11 +548,9 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                   }`}
                 >
                   <div className="flex items-start">
-                    <CheckCircle className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="w-5 h-5 mr-2 mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm font-medium">
-                        Backend resources created successfully
-                      </p>
+                      <p className="text-sm font-medium">Backend resources created successfully</p>
                       {createdBucketName && (
                         <p className="text-xs mt-1 font-mono opacity-90">
                           S3 Bucket: {createdBucketName}
@@ -669,17 +594,13 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
       {/* Git Repository Configuration */}
       <div
         className={`p-6 rounded-xl border ${
-          isDark
-            ? "bg-gray-800/50 border-gray-700"
-            : "bg-white/70 border-gray-200"
+          isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
         }`}
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
             <GitBranch className="w-5 h-5 mr-2 text-teal-500" />
-            <label
-              className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}
-            >
+            <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
               Git Repository (Optional)
             </label>
           </div>
@@ -716,11 +637,8 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
           </label>
         </div>
 
-        <p
-          className={`text-xs mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-        >
-          Configure Git repository for infrastructure code storage and version
-          control
+        <p className={`text-xs mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+          Configure Git repository for infrastructure code storage and version control
         </p>
 
         {newEnv.gitRepository?.enabled && (
@@ -752,9 +670,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                   })
                 }
               />
-              <p
-                className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-              >
+              <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                 SSH URL of the Git repository for infrastructure code
               </p>
             </div>
@@ -786,9 +702,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                   })
                 }
               />
-              <p
-                className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-              >
+              <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                 Private SSH key with read access to the repository
               </p>
             </div>
@@ -808,13 +722,8 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
           <div className="flex items-center">
             <div className="w-2 h-2 bg-emerald-500 rounded-full mr-3"></div>
             <span className="text-sm font-medium">
-              Ready to create "{newEnv.name}" on{" "}
-              {PROVIDERS[newEnv.provider]?.name} in{" "}
-              {
-                PROVIDERS[newEnv.provider]?.regions.find(
-                  (r) => r.value === newEnv.region,
-                )?.label
-              }
+              Ready to create "{newEnv.name}" on {PROVIDERS[newEnv.provider]?.name} in{" "}
+              {PROVIDERS[newEnv.provider]?.regions.find((r) => r.value === newEnv.region)?.label}
             </span>
           </div>
         </div>

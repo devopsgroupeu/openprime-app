@@ -2,13 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, Key, Eye, EyeOff } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 
-const CloudCredentialModal = ({
-  credential,
-  provider,
-  onClose,
-  onSave,
-  isOpen,
-}) => {
+const CloudCredentialModal = ({ credential, provider, onClose, onSave, isOpen }) => {
   const { isDark } = useTheme();
   const [formData, setFormData] = useState({
     name: "",
@@ -141,9 +135,7 @@ const CloudCredentialModal = ({
               } ${errors.name ? "border-red-500" : ""}`}
               placeholder="e.g., Production Account"
             />
-            {errors.name && (
-              <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-            )}
+            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
           </div>
 
           <div>
@@ -165,9 +157,7 @@ const CloudCredentialModal = ({
               } ${errors.identifier ? "border-red-500" : ""}`}
               placeholder="123456789012"
             />
-            {errors.identifier && (
-              <p className="text-red-500 text-sm mt-1">{errors.identifier}</p>
-            )}
+            {errors.identifier && <p className="text-red-500 text-sm mt-1">{errors.identifier}</p>}
           </div>
 
           <div>
@@ -187,13 +177,9 @@ const CloudCredentialModal = ({
                   ? "bg-gray-700 border-gray-600 text-white"
                   : "bg-white border-gray-300 text-gray-900"
               } ${errors.accessKey ? "border-red-500" : ""}`}
-              placeholder={
-                credential ? "••••••••••••••••" : "AKIAIOSFODNN7EXAMPLE"
-              }
+              placeholder={credential ? "••••••••••••••••" : "AKIAIOSFODNN7EXAMPLE"}
             />
-            {errors.accessKey && (
-              <p className="text-red-500 text-sm mt-1">{errors.accessKey}</p>
-            )}
+            {errors.accessKey && <p className="text-red-500 text-sm mt-1">{errors.accessKey}</p>}
           </div>
 
           <div>
@@ -215,30 +201,20 @@ const CloudCredentialModal = ({
                     : "bg-white border-gray-300 text-gray-900"
                 } ${errors.secretKey ? "border-red-500" : ""}`}
                 placeholder={
-                  credential
-                    ? "••••••••••••••••"
-                    : "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+                  credential ? "••••••••••••••••" : "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
                 }
               />
               <button
                 type="button"
                 onClick={() => setShowSecretKey(!showSecretKey)}
                 className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${
-                  isDark
-                    ? "text-gray-400 hover:text-gray-300"
-                    : "text-gray-500 hover:text-gray-700"
+                  isDark ? "text-gray-400 hover:text-gray-300" : "text-gray-500 hover:text-gray-700"
                 }`}
               >
-                {showSecretKey ? (
-                  <EyeOff className="w-5 h-5" />
-                ) : (
-                  <Eye className="w-5 h-5" />
-                )}
+                {showSecretKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
-            {errors.secretKey && (
-              <p className="text-red-500 text-sm mt-1">{errors.secretKey}</p>
-            )}
+            {errors.secretKey && <p className="text-red-500 text-sm mt-1">{errors.secretKey}</p>}
           </div>
 
           <div className="flex items-center">
@@ -273,7 +249,7 @@ const CloudCredentialModal = ({
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg font-medium hover:from-teal-700 hover:to-cyan-700 transition-colors"
+              className="flex-1 px-4 py-2 bg-linear-to-r from-teal-600 to-cyan-600 text-white rounded-lg font-medium hover:from-teal-700 hover:to-cyan-700 transition-colors"
             >
               {credential ? "Update" : "Add"}
             </button>

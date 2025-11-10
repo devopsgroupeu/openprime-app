@@ -1,19 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import {
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  Settings,
-  Package,
-  Cloud,
-} from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Check, Settings, Package, Cloud } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useToast } from "../../../contexts/ToastContext";
-import {
-  validateEnvironmentConfig,
-  getValidationSummary,
-} from "../../../utils/configValidator";
+import { validateEnvironmentConfig, getValidationSummary } from "../../../utils/configValidator";
 import BasicConfigStep from "./BasicConfigStep";
 import ServicesConfigStep from "./ServicesConfigStep";
 import HelmChartsStep from "./HelmChartsStep";
@@ -96,9 +85,7 @@ const WizardContainer = ({
 
       switch (currentStep) {
         case 1: // Basic Configuration
-          return Boolean(
-            newEnv.name?.trim() && newEnv.provider && newEnv.region,
-          );
+          return Boolean(newEnv.name?.trim() && newEnv.provider && newEnv.region);
 
         case 2: // Services Configuration
           // Allow progression even without services for now
@@ -254,27 +241,17 @@ const WizardContainer = ({
             }`}
           >
             <div>
-              <h2
-                className={`text-2xl font-bold ${
-                  isDark ? "text-white" : "text-gray-900"
-                }`}
-              >
+              <h2 className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                 {isEditMode ? "Edit Environment" : "Create New Environment"}
               </h2>
-              <p
-                className={`text-sm mt-1 ${
-                  isDark ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
+              <p className={`text-sm mt-1 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                 {steps.find((s) => s.number === currentStep)?.description || ""}
               </p>
             </div>
             <button
               onClick={onClose}
               className={`p-2 rounded-lg transition-colors ${
-                isDark
-                  ? "hover:bg-gray-700 text-gray-400"
-                  : "hover:bg-gray-100 text-gray-500"
+                isDark ? "hover:bg-gray-700 text-gray-400" : "hover:bg-gray-100 text-gray-500"
               }`}
             >
               <X className="w-5 h-5" />
@@ -285,9 +262,7 @@ const WizardContainer = ({
           <div className="flex-1 overflow-y-auto">
             <div className="p-6">
               {/* Progress Steps - Compact and consistent */}
-              <div
-                className={`mb-4 ${isDark ? "bg-gray-800/30" : "bg-gray-50/50"} rounded-lg p-4`}
-              >
+              <div className={`mb-4 ${isDark ? "bg-gray-800/30" : "bg-gray-50/50"} rounded-lg p-4`}>
                 <div className="flex items-center justify-center">
                   <div className="flex items-start space-x-3">
                     {steps.slice(0, totalSteps).map((step, index) => {
@@ -300,9 +275,7 @@ const WizardContainer = ({
                           {/* Step Circle and Content */}
                           <div className="flex flex-col items-center">
                             <button
-                              onClick={() =>
-                                isClickable && handleStepChange(step.number)
-                              }
+                              onClick={() => isClickable && handleStepChange(step.number)}
                               disabled={!isClickable}
                               className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
                                 isClickable
@@ -310,9 +283,9 @@ const WizardContainer = ({
                                   : "cursor-not-allowed"
                               } ${
                                 isActive
-                                  ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg ring-4 ring-teal-500/30"
+                                  ? "bg-linear-to-r from-teal-500 to-cyan-500 text-white shadow-lg ring-4 ring-teal-500/30"
                                   : isCompleted
-                                    ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md"
+                                    ? "bg-linear-to-r from-green-500 to-emerald-500 text-white shadow-md"
                                     : isDark
                                       ? "bg-gray-700 text-gray-400 hover:bg-gray-600"
                                       : "bg-gray-200 text-gray-600 hover:bg-gray-300"
@@ -324,7 +297,7 @@ const WizardContainer = ({
                                 <step.icon className="w-5 h-5" />
                               )}
                             </button>
-                            <div className="mt-2 text-center min-h-[2.5rem] flex flex-col justify-start">
+                            <div className="mt-2 text-center min-h-10 flex flex-col justify-start">
                               <p
                                 className={`text-xs font-medium leading-tight ${
                                   isActive
@@ -356,11 +329,9 @@ const WizardContainer = ({
                               <div
                                 className={`h-0.5 w-12 transition-colors duration-300 ${
                                   isCompleted &&
-                                  (completedSteps.has(
-                                    steps[index + 1].number,
-                                  ) ||
+                                  (completedSteps.has(steps[index + 1].number) ||
                                     steps[index + 1].number === currentStep)
-                                    ? "bg-gradient-to-r from-emerald-400 to-teal-400"
+                                    ? "bg-linear-to-r from-emerald-400 to-teal-400"
                                     : isActive || step.number < currentStep
                                       ? isDark
                                         ? "bg-teal-600"
@@ -386,10 +357,8 @@ const WizardContainer = ({
 
           {/* Footer Navigation */}
           <div
-            className={`flex-shrink-0 flex items-center justify-between p-6 border-t ${
-              isDark
-                ? "border-gray-700 bg-gray-800/50"
-                : "border-gray-200 bg-gray-50/50"
+            className={`shrink-0 flex items-center justify-between p-6 border-t ${
+              isDark ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50/50"
             }`}
           >
             {/* Previous Button */}
@@ -412,23 +381,17 @@ const WizardContainer = ({
 
             {/* Step Indicator and Progress */}
             <div className="flex items-center space-x-4">
-              <div
-                className={`text-sm font-medium ${
-                  isDark ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
+              <div className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                 Step {currentStep} of {totalSteps}
               </div>
 
               {/* Progress bar */}
-              <div
-                className={`w-32 h-2 rounded-full ${
-                  isDark ? "bg-gray-700" : "bg-gray-200"
-                }`}
-              >
+              <div className={`w-32 h-2 rounded-full ${isDark ? "bg-gray-700" : "bg-gray-200"}`}>
                 <div
-                  className="h-2 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full transition-all duration-300"
-                  style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+                  className="h-2 bg-linear-to-r from-teal-500 to-cyan-500 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${(currentStep / totalSteps) * 100}%`,
+                  }}
                 />
               </div>
             </div>
@@ -443,7 +406,7 @@ const WizardContainer = ({
                     ? isDark
                       ? "bg-gray-700 text-gray-500 cursor-not-allowed"
                       : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700 shadow-lg hover:shadow-xl"
+                    : "bg-linear-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700 shadow-lg hover:shadow-xl"
                 }`}
               >
                 {isLoading ? (
@@ -470,7 +433,7 @@ const WizardContainer = ({
                     ? isDark
                       ? "bg-gray-700 text-gray-500 cursor-not-allowed"
                       : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700 shadow-lg hover:shadow-xl"
+                    : "bg-linear-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700 shadow-lg hover:shadow-xl"
                 }`}
               >
                 {isLoading ? (
@@ -478,9 +441,7 @@ const WizardContainer = ({
                 ) : (
                   <>
                     <Check className="w-4 h-4" />
-                    <span>
-                      {isEditMode ? "Save Changes" : "Create Environment"}
-                    </span>
+                    <span>{isEditMode ? "Save Changes" : "Create Environment"}</span>
                   </>
                 )}
               </button>
@@ -496,14 +457,8 @@ const WizardContainer = ({
                 }`}
               >
                 <LoadingSpinner />
-                <p
-                  className={`mt-4 text-center ${
-                    isDark ? "text-gray-300" : "text-gray-600"
-                  }`}
-                >
-                  {isEditMode
-                    ? "Updating environment..."
-                    : "Creating environment..."}
+                <p className={`mt-4 text-center ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                  {isEditMode ? "Updating environment..." : "Creating environment..."}
                 </p>
               </div>
             </div>
@@ -517,7 +472,11 @@ const WizardContainer = ({
         <AIChatModal
           isOpen={aiChatModal.isOpen}
           onClose={() =>
-            setAiChatModal({ isOpen: false, service: null, serviceTitle: null })
+            setAiChatModal({
+              isOpen: false,
+              service: null,
+              serviceTitle: null,
+            })
           }
           service={aiChatModal.service}
           serviceTitle={aiChatModal.serviceTitle}
@@ -527,9 +486,11 @@ const WizardContainer = ({
           setMessages={(update) =>
             setAiChatMessages((prev) => {
               const current = prev[aiChatModal.service] || [];
-              const newMessages =
-                typeof update === "function" ? update(current) : update;
-              return { ...prev, [aiChatModal.service]: newMessages };
+              const newMessages = typeof update === "function" ? update(current) : update;
+              return {
+                ...prev,
+                [aiChatModal.service]: newMessages,
+              };
             })
           }
         />

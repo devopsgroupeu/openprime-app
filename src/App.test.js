@@ -28,9 +28,7 @@ test("renders OpenPrime application loading state", async () => {
   // Wait for authentication to complete
   await waitFor(
     () => {
-      expect(
-        screen.queryByText(/Initializing authentication/i),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText(/Initializing authentication/i)).not.toBeInTheDocument();
     },
     { timeout: 3000 },
   );

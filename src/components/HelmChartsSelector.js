@@ -4,12 +4,7 @@ import { ChevronDown, ChevronRight, Settings, Package } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { getHelmChartsByCategory } from "../config/helmChartsConfig";
 
-const HelmChartsSelector = ({
-  value = {},
-  onChange,
-  onEditHelmValues,
-  k8sServiceName,
-}) => {
+const HelmChartsSelector = ({ value = {}, onChange, onEditHelmValues, k8sServiceName }) => {
   const { isDark } = useTheme();
   const [expandedCategories, setExpandedCategories] = useState({});
 
@@ -32,34 +27,23 @@ const HelmChartsSelector = ({
   };
 
   // Get charts available for this k8s service, grouped by category
-  const chartsByCategory = k8sServiceName
-    ? getHelmChartsByCategory(k8sServiceName)
-    : {};
+  const chartsByCategory = k8sServiceName ? getHelmChartsByCategory(k8sServiceName) : {};
 
   return (
     <div className="space-y-4">
       <div
         className={`flex items-center justify-between p-3 rounded-lg border ${
-          isDark
-            ? "bg-gray-700/30 border-gray-600"
-            : "bg-gray-50 border-gray-200"
+          isDark ? "bg-gray-700/30 border-gray-600" : "bg-gray-50 border-gray-200"
         }`}
       >
         <div className="flex items-center">
           <Package className="w-5 h-5 mr-2 text-teal-500" />
-          <span
-            className={`font-semibold ${
-              isDark ? "text-white" : "text-gray-900"
-            }`}
-          >
+          <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
             Helm Charts Configuration
           </span>
         </div>
-        <div
-          className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}
-        >
-          {Object.values(value).filter((chart) => chart?.enabled).length}{" "}
-          selected
+        <div className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+          {Object.values(value).filter((chart) => chart?.enabled).length} selected
         </div>
       </div>
 
@@ -67,9 +51,7 @@ const HelmChartsSelector = ({
         <div
           key={category}
           className={`border rounded-lg ${
-            isDark
-              ? "border-gray-600 bg-gray-800/30"
-              : "border-gray-200 bg-white/50"
+            isDark ? "border-gray-600 bg-gray-800/30" : "border-gray-200 bg-white/50"
           }`}
         >
           <div
@@ -82,31 +64,22 @@ const HelmChartsSelector = ({
               ) : (
                 <ChevronRight className="w-4 h-4 mr-2 text-gray-400" />
               )}
-              <span
-                className={`font-medium ${
-                  isDark ? "text-white" : "text-gray-900"
-                }`}
-              >
+              <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                 {category}
               </span>
             </div>
             <span
               className={`text-sm px-2 py-1 rounded-full ${
-                isDark
-                  ? "bg-gray-700 text-gray-300"
-                  : "bg-gray-100 text-gray-600"
+                isDark ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"
               }`}
             >
-              {charts.filter((chart) => value[chart.key]?.enabled).length} /{" "}
-              {charts.length}
+              {charts.filter((chart) => value[chart.key]?.enabled).length} / {charts.length}
             </span>
           </div>
 
           {expandedCategories[category] && (
             <div
-              className={`border-t p-3 space-y-3 ${
-                isDark ? "border-gray-600" : "border-gray-200"
-              }`}
+              className={`border-t p-3 space-y-3 ${isDark ? "border-gray-600" : "border-gray-200"}`}
             >
               {charts.map((chart) => {
                 const chartConfig = value[chart.key] || {
@@ -117,9 +90,7 @@ const HelmChartsSelector = ({
                   <div
                     key={chart.key}
                     className={`flex items-center justify-between p-3 rounded-lg border ${
-                      isDark
-                        ? "border-gray-600 bg-gray-700/20"
-                        : "border-gray-200 bg-gray-50"
+                      isDark ? "border-gray-600 bg-gray-700/20" : "border-gray-200 bg-gray-50"
                     }`}
                   >
                     <div className="flex items-center space-x-3">
@@ -128,9 +99,7 @@ const HelmChartsSelector = ({
                           type="checkbox"
                           className="sr-only peer"
                           checked={chartConfig.enabled}
-                          onChange={(e) =>
-                            handleChartToggle(chart.key, e.target.checked)
-                          }
+                          onChange={(e) => handleChartToggle(chart.key, e.target.checked)}
                         />
                         <div
                           className={`w-11 h-6 rounded-full peer peer-checked:bg-teal-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
@@ -139,18 +108,10 @@ const HelmChartsSelector = ({
                         ></div>
                       </label>
                       <div>
-                        <div
-                          className={`font-medium ${
-                            isDark ? "text-white" : "text-gray-900"
-                          }`}
-                        >
+                        <div className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                           {chart.displayName}
                         </div>
-                        <div
-                          className={`text-sm ${
-                            isDark ? "text-gray-400" : "text-gray-600"
-                          }`}
-                        >
+                        <div className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                           {chart.description}
                         </div>
                       </div>

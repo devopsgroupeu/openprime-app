@@ -17,8 +17,7 @@ const ServicesConfigStep = ({
 
   const getEnabledServicesCount = () => {
     if (!newEnv.services) return 0;
-    return Object.values(newEnv.services).filter((service) => service?.enabled)
-      .length;
+    return Object.values(newEnv.services).filter((service) => service?.enabled).length;
   };
 
   const getProviderDisplayName = () => {
@@ -39,11 +38,7 @@ const ServicesConfigStep = ({
           <Settings className="w-4 h-4 mr-2" />
           Services Configuration
         </div>
-        <h3
-          className={`text-xl font-semibold mb-2 ${
-            isDark ? "text-white" : "text-gray-900"
-          }`}
-        >
+        <h3 className={`text-xl font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
           Configure {getProviderDisplayName()} Services
         </h3>
         <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
@@ -54,31 +49,17 @@ const ServicesConfigStep = ({
       {/* Environment Summary */}
       <div
         className={`p-4 rounded-lg border ${
-          isDark
-            ? "bg-gray-800/50 border-gray-700"
-            : "bg-gray-50 border-gray-200"
+          isDark ? "bg-gray-800/50 border-gray-700" : "bg-gray-50 border-gray-200"
         }`}
       >
         <div className="flex items-center justify-between">
           <div>
-            <span
-              className={`text-sm font-medium ${
-                isDark ? "text-gray-300" : "text-gray-700"
-              }`}
-            >
+            <span className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
               Environment: {newEnv.name}
             </span>
-            <span
-              className={`ml-4 text-sm ${
-                isDark ? "text-gray-400" : "text-gray-600"
-              }`}
-            >
+            <span className={`ml-4 text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
               {getProviderDisplayName()} •{" "}
-              {
-                PROVIDERS[newEnv.provider]?.regions.find(
-                  (r) => r.value === newEnv.region,
-                )?.label
-              }
+              {PROVIDERS[newEnv.provider]?.regions.find((r) => r.value === newEnv.region)?.label}
             </span>
           </div>
           <div
@@ -106,21 +87,15 @@ const ServicesConfigStep = ({
         }`}
       >
         <div className="flex items-start">
-          <Info className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
+          <Info className="w-5 h-5 mr-3 mt-0.5 shrink-0" />
           <div className="text-sm">
             <p className="font-medium mb-1">Service Configuration Tips:</p>
             <ul className="list-disc list-inside space-y-1 text-xs opacity-80">
-              <li>
-                Start with essential services like VPC and compute resources
-              </li>
-              <li>
-                Enable additional services based on your application
-                requirements
-              </li>
+              <li>Start with essential services like VPC and compute resources</li>
+              <li>Enable additional services based on your application requirements</li>
               <li>You can always modify these configurations later</li>
               <li>
-                Services with dependencies will show relevant warnings if
-                prerequisites are missing
+                Services with dependencies will show relevant warnings if prerequisites are missing
               </li>
             </ul>
           </div>
@@ -131,9 +106,7 @@ const ServicesConfigStep = ({
       {getEnabledServicesCount() === 0 && (
         <div
           className={`p-4 rounded-lg border ${
-            isDark
-              ? "bg-yellow-500/10 border-yellow-500/30"
-              : "bg-yellow-50 border-yellow-200"
+            isDark ? "bg-yellow-500/10 border-yellow-500/30" : "bg-yellow-50 border-yellow-200"
           }`}
         >
           <div className="text-center">
@@ -153,8 +126,14 @@ const ServicesConfigStep = ({
                         ...newEnv,
                         services: {
                           ...newEnv.services,
-                          vpc: { ...newEnv.services.vpc, enabled: true },
-                          eks: { ...newEnv.services.eks, enabled: true },
+                          vpc: {
+                            ...newEnv.services.vpc,
+                            enabled: true,
+                          },
+                          eks: {
+                            ...newEnv.services.eks,
+                            enabled: true,
+                          },
                         },
                       });
                     }}
@@ -172,9 +151,18 @@ const ServicesConfigStep = ({
                         ...newEnv,
                         services: {
                           ...newEnv.services,
-                          vpc: { ...newEnv.services.vpc, enabled: true },
-                          rds: { ...newEnv.services.rds, enabled: true },
-                          s3: { ...newEnv.services.s3, enabled: true },
+                          vpc: {
+                            ...newEnv.services.vpc,
+                            enabled: true,
+                          },
+                          rds: {
+                            ...newEnv.services.rds,
+                            enabled: true,
+                          },
+                          s3: {
+                            ...newEnv.services.s3,
+                            enabled: true,
+                          },
                         },
                       });
                     }}
@@ -195,8 +183,14 @@ const ServicesConfigStep = ({
                       ...newEnv,
                       services: {
                         ...newEnv.services,
-                        vnet: { ...newEnv.services.vnet, enabled: true },
-                        aks: { ...newEnv.services.aks, enabled: true },
+                        vnet: {
+                          ...newEnv.services.vnet,
+                          enabled: true,
+                        },
+                        aks: {
+                          ...newEnv.services.aks,
+                          enabled: true,
+                        },
                       },
                     });
                   }}
@@ -216,7 +210,10 @@ const ServicesConfigStep = ({
                       ...newEnv,
                       services: {
                         ...newEnv.services,
-                        gke: { ...newEnv.services.gke, enabled: true },
+                        gke: {
+                          ...newEnv.services.gke,
+                          enabled: true,
+                        },
                       },
                     });
                   }}
@@ -237,11 +234,7 @@ const ServicesConfigStep = ({
       {/* Services Grid */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <label
-            className={`text-sm font-medium ${
-              isDark ? "text-gray-300" : "text-gray-700"
-            }`}
-          >
+          <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
             Available {getProviderDisplayName()} Services
           </label>
           {getEnabledServicesCount() > 0 && (
@@ -257,7 +250,10 @@ const ServicesConfigStep = ({
                     };
                   }
                 });
-                setNewEnv({ ...newEnv, services: updatedServices });
+                setNewEnv({
+                  ...newEnv,
+                  services: updatedServices,
+                });
               }}
               className={`text-xs px-3 py-1 rounded-lg transition-colors ${
                 isDark
@@ -295,8 +291,7 @@ const ServicesConfigStep = ({
           <div className="flex items-center">
             <div className="w-2 h-2 bg-teal-500 rounded-full mr-3"></div>
             <span className="text-sm font-medium">
-              Kubernetes service detected! Next step will allow you to configure
-              Helm charts.
+              Kubernetes service detected! Next step will allow you to configure Helm charts.
             </span>
           </div>
         </div>
