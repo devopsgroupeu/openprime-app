@@ -78,6 +78,32 @@ export default defineConfig([
     },
   },
 
+  // E2E test files - Playwright Core with custom runner
+  {
+    files: ["e2e/**/*.js"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        describe: "readonly",
+        test: "readonly",
+        expect: "readonly",
+      },
+      ecmaVersion: "latest",
+      sourceType: "module",
+    },
+    rules: {
+      // Allow unused catch variables
+      "no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: ".*",
+        },
+      ],
+    },
+  },
+
   // Node.js config files (CommonJS)
   {
     files: ["*.config.js"],

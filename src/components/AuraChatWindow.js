@@ -242,7 +242,7 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
                 <div
                   className={`px-3 py-2 rounded-lg ${
                     msg.type === "user"
-                      ? "bg-linear-to-r from-teal-500 to-cyan-500 text-white"
+                      ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white"
                       : isDark
                         ? "bg-gray-800 text-white border border-gray-700"
                         : "bg-white text-gray-900 border border-gray-200"
@@ -327,7 +327,7 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
             disabled={!inputMessage.trim() || isTyping}
             className={`px-3 py-2 rounded-lg transition-all ${
               inputMessage.trim() && !isTyping
-                ? "bg-linear-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white shadow-md hover:shadow-lg"
+                ? "bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white shadow-md hover:shadow-lg"
                 : isDark
                   ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"

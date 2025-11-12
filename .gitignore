@@ -8,6 +8,9 @@
 # testing
 /coverage
 
+# E2E test downloads
+/e2e/downloads
+
 # production
 /build
 

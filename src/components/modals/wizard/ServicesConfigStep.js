@@ -122,10 +122,10 @@ const ServicesConfigStep = ({
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 areAllServicesEnabled()
                   ? isDark
-                    ? "bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30"
+                    ? "bg-red-500/30 text-red-200 hover:bg-red-500/40 border border-red-400/50"
                     : "bg-red-100 text-red-700 hover:bg-red-200 border border-red-300"
                   : isDark
-                    ? "bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 border border-teal-500/30"
+                    ? "bg-teal-500/30 text-teal-200 hover:bg-teal-500/40 border border-teal-400/50"
                     : "bg-teal-100 text-teal-700 hover:bg-teal-200 border border-teal-300"
               }`}
               data-testid="toggle-all-services"

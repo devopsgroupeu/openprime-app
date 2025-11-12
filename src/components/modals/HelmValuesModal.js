@@ -38,7 +38,7 @@ const HelmValuesModal = ({ chartName, values, onChange, onClose, onSave }) => {
           </button>
           <button
             onClick={onSave}
-            className="px-6 py-2 bg-linear-to-r from-teal-600 to-cyan-600 text-white rounded-lg hover:from-teal-700 hover:to-cyan-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="px-6 py-2 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg hover:from-teal-700 hover:to-cyan-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
             aria-label={`Save ${chartName} configuration`}
           >
             Save Values

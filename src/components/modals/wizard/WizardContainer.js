@@ -283,9 +283,9 @@ const WizardContainer = ({
                                   : "cursor-not-allowed"
                               } ${
                                 isActive
-                                  ? "bg-linear-to-r from-teal-500 to-cyan-500 text-white shadow-lg ring-4 ring-teal-500/30"
+                                  ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg ring-4 ring-teal-500/30"
                                   : isCompleted
-                                    ? "bg-linear-to-r from-green-500 to-emerald-500 text-white shadow-md"
+                                    ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md"
                                     : isDark
                                       ? "bg-gray-700 text-gray-400 hover:bg-gray-600"
                                       : "bg-gray-200 text-gray-600 hover:bg-gray-300"
@@ -331,7 +331,7 @@ const WizardContainer = ({
                                   isCompleted &&
                                   (completedSteps.has(steps[index + 1].number) ||
                                     steps[index + 1].number === currentStep)
-                                    ? "bg-linear-to-r from-emerald-400 to-teal-400"
+                                    ? "bg-gradient-to-r from-emerald-400 to-teal-400"
                                     : isActive || step.number < currentStep
                                       ? isDark
                                         ? "bg-teal-600"
@@ -388,7 +388,7 @@ const WizardContainer = ({
               {/* Progress bar */}
               <div className={`w-32 h-2 rounded-full ${isDark ? "bg-gray-700" : "bg-gray-200"}`}>
                 <div
-                  className="h-2 bg-linear-to-r from-teal-500 to-cyan-500 rounded-full transition-all duration-300"
+                  className="h-2 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full transition-all duration-300"
                   style={{
                     width: `${(currentStep / totalSteps) * 100}%`,
                   }}
@@ -406,7 +406,7 @@ const WizardContainer = ({
                     ? isDark
                       ? "bg-gray-700 text-gray-500 cursor-not-allowed"
                       : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-linear-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700 shadow-lg hover:shadow-xl"
+                    : "bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700 shadow-lg hover:shadow-xl"
                 }`}
               >
                 {isLoading ? (
@@ -433,7 +433,7 @@ const WizardContainer = ({
                     ? isDark
                       ? "bg-gray-700 text-gray-500 cursor-not-allowed"
                       : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-linear-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700 shadow-lg hover:shadow-xl"
+                    : "bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700 shadow-lg hover:shadow-xl"
                 }`}
               >
                 {isLoading ? (

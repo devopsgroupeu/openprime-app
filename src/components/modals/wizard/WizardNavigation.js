@@ -98,9 +98,9 @@ const WizardNavigation = ({
                           : "cursor-not-allowed"
                       } ${
                         status === "current"
-                          ? "bg-linear-to-r from-teal-500 to-cyan-500 text-white shadow-lg ring-4 ring-teal-500/30"
+                          ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg ring-4 ring-teal-500/30"
                           : status === "completed"
-                            ? "bg-linear-to-r from-green-500 to-emerald-500 text-white shadow-md"
+                            ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md"
                             : isDark
                               ? "bg-gray-700 text-gray-400 hover:bg-gray-600"
                               : "bg-gray-200 text-gray-600 hover:bg-gray-300"
@@ -140,7 +140,7 @@ const WizardNavigation = ({
                     <div
                       className={`flex-1 h-1 mx-6 rounded-full ${
                         step.number < currentStep || completedSteps.has(step.number + 1)
-                          ? "bg-linear-to-r from-teal-500 to-cyan-500"
+                          ? "bg-gradient-to-r from-teal-500 to-cyan-500"
                           : isDark
                             ? "bg-gray-700"
                             : "bg-gray-200"
