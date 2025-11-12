@@ -36,13 +36,6 @@ jobs:
       - name: Build application
         run: npm run build
 
-      - name: Upload coverage
-        uses: codecov/codecov-action@v5
-        with:
-          files: ./coverage/lcov.info
-          flags: unittests
-          fail_ci_if_error: false
-
   validate-pr-title:
     name: Validate PR Title
     runs-on: ubuntu-latest
@@ -50,7 +43,7 @@ jobs:
 
     steps:
       - name: Validate PR title
-        uses: amannn/action-semantic-pull-request@v5
+        uses: amannn/action-semantic-pull-request@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
