@@ -11,11 +11,7 @@
 
 describe("Environment Deployment Workflow", () => {
   // Generate random environment name
-  const generateEnvName = () => {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 8);
-    return `test-${random}-${timestamp}`;
-  };
+  const generateEnvName = () => `test-${Math.random().toString(36).substring(2, 6)}`;
 
   test("should complete full deployment workflow with all services", async (ctx) => {
     const envName = generateEnvName();
