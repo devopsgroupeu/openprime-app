@@ -1,9 +1,10 @@
 // src/components/modals/wizard/ServicesConfigStep.js
 import React from "react";
-import { Settings, Info } from "lucide-react";
+import { Settings, Info, ToggleLeft, ToggleRight } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { PROVIDERS } from "../../../config/environmentsConfig";
 import DynamicServicesGrid from "../../DynamicServicesGrid";
+import { createDefaultServiceConfig } from "../../../config/servicesConfig";
 
 const ServicesConfigStep = ({
   newEnv,
@@ -18,6 +19,46 @@ const ServicesConfigStep = ({
   const getEnabledServicesCount = () => {
     if (!newEnv.services) return 0;
     return Object.values(newEnv.services).filter((service) => service?.enabled).length;
+  };
+
+  const getTotalServicesCount = () => {
+    if (!newEnv.services) return 0;
+    return Object.keys(newEnv.services).length;
+  };
+
+  const areAllServicesEnabled = () => {
+    if (!newEnv.services) return false;
+    const services = Object.values(newEnv.services);
+    return services.length > 0 && services.every((service) => service?.enabled);
+  };
+
+  const handleToggleAllServices = () => {
+    if (!newEnv.services) return;
+
+    const allEnabled = areAllServicesEnabled();
+    const updatedServices = {};
+
+    Object.keys(newEnv.services).forEach((serviceName) => {
+      const currentService = newEnv.services[serviceName];
+      if (!allEnabled) {
+        // Enable all services with default config
+        updatedServices[serviceName] = {
+          ...createDefaultServiceConfig(serviceName),
+          enabled: true,
+        };
+      } else {
+        // Disable all services
+        updatedServices[serviceName] = {
+          ...currentService,
+          enabled: false,
+        };
+      }
+    });
+
+    setNewEnv({
+      ...newEnv,
+      services: updatedServices,
+    });
   };
 
   const getProviderDisplayName = () => {
@@ -62,18 +103,45 @@ const ServicesConfigStep = ({
               {PROVIDERS[newEnv.provider]?.regions.find((r) => r.value === newEnv.region)?.label}
             </span>
           </div>
-          <div
-            className={`text-sm px-3 py-1 rounded-full ${
-              getEnabledServicesCount() > 0
-                ? isDark
-                  ? "bg-teal-500/20 text-teal-300"
-                  : "bg-teal-100 text-teal-700"
-                : isDark
-                  ? "bg-gray-700 text-gray-400"
-                  : "bg-gray-200 text-gray-600"
-            }`}
-          >
-            {getEnabledServicesCount()} services selected
+          <div className="flex items-center gap-4">
+            <div
+              className={`text-sm px-3 py-1 rounded-full ${
+                getEnabledServicesCount() > 0
+                  ? isDark
+                    ? "bg-teal-500/20 text-teal-300"
+                    : "bg-teal-100 text-teal-700"
+                  : isDark
+                    ? "bg-gray-700 text-gray-400"
+                    : "bg-gray-200 text-gray-600"
+              }`}
+            >
+              {getEnabledServicesCount()} / {getTotalServicesCount()} services
+            </div>
+            <button
+              onClick={handleToggleAllServices}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                areAllServicesEnabled()
+                  ? isDark
+                    ? "bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30"
+                    : "bg-red-100 text-red-700 hover:bg-red-200 border border-red-300"
+                  : isDark
+                    ? "bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 border border-teal-500/30"
+                    : "bg-teal-100 text-teal-700 hover:bg-teal-200 border border-teal-300"
+              }`}
+              data-testid="toggle-all-services"
+            >
+              {areAllServicesEnabled() ? (
+                <>
+                  <ToggleRight className="w-4 h-4" />
+                  Disable All
+                </>
+              ) : (
+                <>
+                  <ToggleLeft className="w-4 h-4" />
+                  Enable All
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
