@@ -1,43 +1,43 @@
 // src/config/environmentsConfig.js
-import { PROVIDERS_CONFIG, getProviderConfig, getProviderServices } from './providersConfig';
-import { createDefaultServiceConfig } from './servicesConfig';
+import { PROVIDERS_CONFIG, getProviderConfig, getProviderServices } from "./providersConfig";
+import { createDefaultServiceConfig } from "./servicesConfig";
 
 export const initialEnvironments = [
   {
     id: 1,
-    name: 'Production',
-    provider: 'aws',
-    status: 'running',
-    region: 'us-east-1',
+    name: "Production",
+    provider: "aws",
+    status: "running",
+    region: "us-east-1",
     services: {
       vpc: {
         enabled: true,
-        cidr: '10.0.0.0/16',
+        cidr: "10.0.0.0/16",
         azCount: 3,
         publicSubnets: 3,
         privateSubnets: 3,
-        natGateway: 'one-per-az',
+        natGateway: "one-per-az",
         enableVpnGateway: true,
         enableFlowLogs: true,
         enableDnsHostnames: true,
-        enableDnsSupport: true
+        enableDnsSupport: true,
       },
       eks: {
         enabled: true,
-        version: '1.28',
+        version: "1.28",
         nodeGroups: 2,
         minNodes: 2,
         maxNodes: 10,
-        instanceTypes: ['t3.medium', 't3.large'],
+        instanceTypes: ["t3.medium", "t3.large"],
         diskSize: 100,
         enableAutoScaling: true,
         enableClusterAutoscaler: true,
         enableMetricsServer: true,
         addons: {
-          vpcCni: { enabled: true, version: 'latest' },
-          coreDns: { enabled: true, version: 'latest' },
-          kubeProxy: { enabled: true, version: 'latest' },
-          ebsCsiDriver: { enabled: true, version: 'latest' }
+          vpcCni: { enabled: true, version: "latest" },
+          coreDns: { enabled: true, version: "latest" },
+          kubeProxy: { enabled: true, version: "latest" },
+          ebsCsiDriver: { enabled: true, version: "latest" },
         },
         helmCharts: {
           prometheus: { enabled: true, customValues: false },
@@ -49,14 +49,14 @@ export const initialEnvironments = [
           externalDns: { enabled: true, customValues: false },
           nginx: { enabled: true, customValues: false },
           istio: { enabled: false, customValues: false },
-          fluxcd: { enabled: false, customValues: false }
-        }
+          fluxcd: { enabled: false, customValues: false },
+        },
       },
       rds: {
         enabled: true,
-        engine: 'postgres',
-        version: '15.4',
-        instanceClass: 'db.t3.medium',
+        engine: "postgres",
+        version: "15.4",
+        instanceClass: "db.t3.medium",
         allocatedStorage: 100,
         maxAllocatedStorage: 1000,
         multiAz: true,
@@ -64,115 +64,127 @@ export const initialEnvironments = [
         encrypted: true,
         deletionProtection: true,
         performanceInsights: true,
-        enhancedMonitoring: true
+        enhancedMonitoring: true,
       },
       opensearch: {
         enabled: true,
-        version: '2.11',
-        instanceType: 't3.medium.search',
+        version: "2.11",
+        instanceType: "t3.medium.search",
         instanceCount: 3,
         dedicatedMasterEnabled: true,
-        dedicatedMasterType: 't3.medium.search',
+        dedicatedMasterType: "t3.medium.search",
         dedicatedMasterCount: 3,
         ebsVolumeSize: 100,
-        ebsVolumeType: 'gp3',
+        ebsVolumeType: "gp3",
         encrypted: true,
         nodeToNodeEncryption: true,
         fineGrainedAccessControl: true,
-        cognitoEnabled: false
+        cognitoEnabled: false,
       },
       ecr: {
         enabled: true,
         repositories: [
-          { name: 'frontend', scanOnPush: true, mutability: 'MUTABLE' },
-          { name: 'backend', scanOnPush: true, mutability: 'MUTABLE' },
-          { name: 'worker', scanOnPush: true, mutability: 'IMMUTABLE' }
+          {
+            name: "frontend",
+            scanOnPush: true,
+            mutability: "MUTABLE",
+          },
+          {
+            name: "backend",
+            scanOnPush: true,
+            mutability: "MUTABLE",
+          },
+          {
+            name: "worker",
+            scanOnPush: true,
+            mutability: "IMMUTABLE",
+          },
         ],
         lifecyclePolicy: true,
         crossRegionReplication: false,
-        imageTagMutability: 'MUTABLE'
+        imageTagMutability: "MUTABLE",
       },
       s3: {
         enabled: true,
         buckets: [
           {
-            name: 'app-assets',
+            name: "app-assets",
             versioning: true,
-            encryption: 'AES256',
+            encryption: "AES256",
             publicAccess: false,
             lifecycleRules: true,
             cors: true,
-            replication: false
+            replication: false,
           },
           {
-            name: 'backups',
+            name: "backups",
             versioning: true,
-            encryption: 'KMS',
+            encryption: "KMS",
             publicAccess: false,
             lifecycleRules: true,
             cors: false,
-            replication: true
-          }
-        ]
+            replication: true,
+          },
+        ],
       },
       lambda: {
         enabled: false,
         functions: [],
-        defaultRuntime: 'nodejs18.x',
+        defaultRuntime: "nodejs18.x",
         defaultMemory: 256,
-        defaultTimeout: 30
+        defaultTimeout: 30,
       },
       elasticache: {
         enabled: false,
-        engine: 'redis',
-        version: '7.0',
-        nodeType: 'cache.t3.micro',
+        engine: "redis",
+        version: "7.0",
+        nodeType: "cache.t3.micro",
         numCacheNodes: 1,
         automaticFailover: false,
-        multiAz: false
+        multiAz: false,
       },
       sqs: {
         enabled: false,
         queues: [],
         defaultVisibilityTimeout: 30,
-        defaultMessageRetention: 345600
+        defaultMessageRetention: 345600,
       },
       sns: {
         enabled: false,
         topics: [],
-        defaultKmsKeyId: null
-      }
-    }
+        defaultKmsKeyId: null,
+      },
+    },
   },
   {
     id: 2,
-    name: 'Development',
-    provider: 'onpremise',
-    status: 'running',
-    location: 'Datacenter EU-1',
+    name: "Development",
+    provider: "onpremise",
+    status: "running",
+    location: "Datacenter EU-1",
     services: {
-      kubernetes: { enabled: true, version: '1.28' },
+      kubernetes: { enabled: true, version: "1.28" },
       monitoring: { enabled: true },
-      logging: { enabled: true }
-    }
-  }
+      logging: { enabled: true },
+    },
+  },
 ];
 
 // Re-export providers from the new configuration
 export const PROVIDERS = PROVIDERS_CONFIG;
 
-export const createEmptyEnvironment = (providerType = 'aws') => ({
-  name: '',
+export const createEmptyEnvironment = (providerType = "aws") => ({
+  name: "",
   provider: providerType,
   region: getProviderConfig(providerType).defaultRegion,
-  services: createEmptyServices(providerType)
+  services: createEmptyServices(providerType),
 });
 
 const createEmptyServices = (providerType) => {
   const providerServices = getProviderServices(providerType);
   const services = {};
 
-  providerServices.forEach(serviceName => {
+  providerServices.forEach((serviceName) => {
     services[serviceName] = createDefaultServiceConfig(serviceName);
   });
 
@@ -472,5 +484,5 @@ enableWafv2: true
 
 defaultTags:
   Environment: Production
-  ManagedBy: OpenPrime`
+  ManagedBy: OpenPrime`,
 };

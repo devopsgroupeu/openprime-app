@@ -1,11 +1,11 @@
 // src/components/Navigation.js
-import React, { useState, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Sun, Moon, User, LogOut, Settings } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext';
-import { useAuth } from '../contexts/AuthContext';
-import openPrimeLogoBlack from '../assets/openprime-logo-color-black.svg';
-import openPrimeLogoWhite from '../assets/openprime-logo-color-white.svg';
+import React, { useState, useRef, useEffect } from "react";
+import { Link, useLocation } from "react-router";
+import { Sun, Moon, User, LogOut, Settings } from "lucide-react";
+import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
+import openPrimeLogoBlack from "../assets/openprime-logo-color-black.svg";
+import openPrimeLogoWhite from "../assets/openprime-logo-color-white.svg";
 
 const Navigation = () => {
   const { isDark, toggleTheme } = useTheme();
@@ -21,9 +21,9 @@ const Navigation = () => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
   return (
@@ -46,11 +46,11 @@ const Navigation = () => {
             <Link
               to="/environments"
               className={`font-medium font-poppins transition-colors duration-200 ${
-                location.pathname.startsWith('/environments')
-                  ? 'text-primary'
-                  : 'text-secondary hover:text-primary'
+                location.pathname.startsWith("/environments")
+                  ? "text-primary"
+                  : "text-secondary hover:text-primary"
               }`}
-              aria-current={location.pathname.startsWith('/environments') ? 'page' : undefined}
+              aria-current={location.pathname.startsWith("/environments") ? "page" : undefined}
               role="menuitem"
             >
               Environments
@@ -58,11 +58,11 @@ const Navigation = () => {
             <Link
               to="/settings"
               className={`font-medium font-poppins transition-colors duration-200 ${
-                location.pathname === '/settings'
-                  ? 'text-primary'
-                  : 'text-secondary hover:text-primary'
+                location.pathname === "/settings"
+                  ? "text-primary"
+                  : "text-secondary hover:text-primary"
               }`}
-              aria-current={location.pathname === '/settings' ? 'page' : undefined}
+              aria-current={location.pathname === "/settings" ? "page" : undefined}
               role="menuitem"
             >
               Settings
@@ -71,12 +71,11 @@ const Navigation = () => {
           <button
             onClick={toggleTheme}
             className="p-2 rounded-lg transition-all duration-200 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-primary dark:hover:text-white shadow-sm hover:shadow-md"
-            aria-label={`Switch to ${isDark ? 'light' : 'dark'} theme`}
-            title={`Switch to ${isDark ? 'light' : 'dark'} theme`}
+            aria-label={`Switch to ${isDark ? "light" : "dark"} theme`}
+            title={`Switch to ${isDark ? "light" : "dark"} theme`}
           >
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
-
           <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -90,11 +89,11 @@ const Navigation = () => {
               <div className="absolute right-0 mt-2 w-48 rounded-md shadow-elevation-3 z-50 bg-surface border border-border backdrop-blur-md animate-scale-in">
                 <div className="py-1">
                   <div className="px-4 py-2 text-sm border-b border-border-subtle">
-                    <div className="font-medium font-poppins text-primary">{user?.fullName || user?.username}</div>
+                    <div className="font-medium font-poppins text-primary">
+                      {user?.fullName || user?.username}
+                    </div>
                     {user?.email && (
-                      <div className="text-xs font-poppins text-tertiary">
-                        {user.email}
-                      </div>
+                      <div className="text-xs font-poppins text-tertiary">{user.email}</div>
                     )}
                   </div>
                   <Link

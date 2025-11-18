@@ -1,6 +1,7 @@
 name: Build and Push Docker Image
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -61,7 +62,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=sha,prefix={{branch}}-
+            type=sha,format=short,prefix=${{ github.ref_name }}-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Set up Docker Buildx

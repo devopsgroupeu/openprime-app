@@ -16,12 +16,14 @@ mv: can't remove '/usr/share/nginx/html/env.js': Read-only file system
 ### 1. Updated Container Startup Script
 
 **Before (failing):**
+
 ```bash
 envsubst < /usr/share/nginx/html/env.js > /tmp/env.js
 mv /tmp/env.js /usr/share/nginx/html/env.js  # ← FAILS: read-only filesystem
 ```
 
 **After (working):**
+
 ```bash
 envsubst < /usr/share/nginx/html/env.js > /tmp/env.js
 cp /tmp/env.js /var/cache/nginx/env.js  # ← SUCCESS: writable volume
@@ -44,6 +46,7 @@ location = /env.js {
 ### 3. Leverage Existing Volume Mounts
 
 The Helm chart already provides writable volumes:
+
 - `/tmp` - emptyDir volume
 - `/var/cache/nginx` - emptyDir volume
 - `/var/run` - emptyDir volume
@@ -53,6 +56,7 @@ We use `/var/cache/nginx` since it's semantically appropriate for serving cached
 ## How It Works Now
 
 ### Container Startup Flow:
+
 ```mermaid
 graph LR
     A[Container Starts] --> B[Read Template env.js]
@@ -64,11 +68,13 @@ graph LR
 ```
 
 ### File Locations:
+
 1. **Template**: `/usr/share/nginx/html/env.js` (read-only, with `$REACT_APP_*` variables)
 2. **Processing**: `/tmp/env.js` (temporary, processed content)
 3. **Serving**: `/var/cache/nginx/env.js` (writable, final processed file)
 
 ### HTTP Request Flow:
+
 ```
 Browser Request: GET /env.js
 ↓
@@ -89,6 +95,7 @@ JavaScript: window._env_ = {API_URL: "http://api.prod.com/api", ...}
 ## Testing the Fix
 
 ### 1. Check Container Logs
+
 ```bash
 kubectl logs -n openprime deployment/openprime-app
 # Should show: 🔧 Injecting runtime environment variables...
@@ -96,18 +103,21 @@ kubectl logs -n openprime deployment/openprime-app
 ```
 
 ### 2. Verify File Processing
+
 ```bash
 kubectl exec -n openprime deployment/openprime-app -- cat /var/cache/nginx/env.js
 # Should show actual values, not template variables like $REACT_APP_API_URL
 ```
 
 ### 3. Test HTTP Endpoint
+
 ```bash
 kubectl exec -n openprime deployment/openprime-app -- wget -qO- http://localhost:8080/env.js
 # Should return processed JavaScript with actual environment values
 ```
 
 ### 4. Browser Console Verification
+
 ```javascript
 // Access the app and check browser console
 console.log(window._env_);
@@ -118,12 +128,14 @@ console.log(window._env_);
 ## Deployment Compatibility
 
 ### ✅ **Works With:**
+
 - Helm charts with `readOnlyRootFilesystem: true`
 - Kubernetes security policies
 - Container security scanning
 - Multi-environment deployments
 
 ### ✅ **Maintains:**
+
 - Runtime environment injection functionality
 - Container security hardening
 - Performance (nginx serves from memory-backed emptyDir)
@@ -132,16 +144,19 @@ console.log(window._env_);
 ## Alternative Approaches Considered
 
 ### ❌ **Disable Read-Only Filesystem**
+
 - Reduces security posture
 - Goes against best practices
 - Not acceptable for production
 
 ### ❌ **Init Container Approach**
+
 - More complex deployment
 - Requires shared volumes between containers
 - Unnecessary complexity for this use case
 
 ### ✅ **Writable Volume + Nginx Alias (Chosen)**
+
 - Maintains security hardening
 - Uses existing volume mounts
 - Simple and reliable

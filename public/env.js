@@ -14,10 +14,13 @@ window._env_ = {
   KEYCLOAK_CLIENT_ID: "$REACT_APP_KEYCLOAK_CLIENT_ID",
 
   // Backend API Configuration
-  API_URL: "$REACT_APP_API_URL"
+  API_URL: "$REACT_APP_API_URL",
 };
 
 // Development debugging - shows which variables are runtime vs build-time
-if (window.location.hostname === 'localhost') {
-  console.log('🐛 Runtime environment variables (unprocessed templates will show as $VAR_NAME):', window._env_);
+if (window.location.hostname === "localhost") {
+  console.log(
+    "🐛 Runtime environment variables (unprocessed templates will show as $VAR_NAME):",
+    window._env_,
+  );
 }

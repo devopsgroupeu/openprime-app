@@ -1,26 +1,26 @@
 // src/config/providersConfig.js
-import { SERVICES_CONFIG } from './servicesConfig';
+import { SERVICES_CONFIG } from "./servicesConfig";
 
 export const PROVIDERS_CONFIG = {
   aws: {
-    name: 'Amazon Web Services',
-    type: 'aws',
+    name: "Amazon Web Services",
+    type: "aws",
     enabled: true,
-    defaultRegion: 'us-east-1',
+    defaultRegion: "us-east-1",
     regions: [
-      { value: 'us-east-1', label: 'US East (N. Virginia)' },
-      { value: 'us-west-1', label: 'US West (N. California)' },
-      { value: 'us-west-2', label: 'US West (Oregon)' },
-      { value: 'eu-west-1', label: 'EU (Ireland)' },
-      { value: 'eu-west-2', label: 'EU (London)' },
-      { value: 'eu-central-1', label: 'EU (Frankfurt)' },
-      { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore)' },
-      { value: 'ap-southeast-2', label: 'Asia Pacific (Sydney)' },
-      { value: 'ap-northeast-1', label: 'Asia Pacific (Tokyo)' },
-      { value: 'ap-northeast-2', label: 'Asia Pacific (Seoul)' },
-      { value: 'ca-central-1', label: 'Canada (Central)' },
-      { value: 'sa-east-1', label: 'South America (São Paulo)' }
-    ]
+      { value: "us-east-1", label: "US East (N. Virginia)" },
+      { value: "us-west-1", label: "US West (N. California)" },
+      { value: "us-west-2", label: "US West (Oregon)" },
+      { value: "eu-west-1", label: "EU (Ireland)" },
+      { value: "eu-west-2", label: "EU (London)" },
+      { value: "eu-central-1", label: "EU (Frankfurt)" },
+      { value: "ap-southeast-1", label: "Asia Pacific (Singapore)" },
+      { value: "ap-southeast-2", label: "Asia Pacific (Sydney)" },
+      { value: "ap-northeast-1", label: "Asia Pacific (Tokyo)" },
+      { value: "ap-northeast-2", label: "Asia Pacific (Seoul)" },
+      { value: "ca-central-1", label: "Canada (Central)" },
+      { value: "sa-east-1", label: "South America (São Paulo)" },
+    ],
   },
   // azure: {
   //   name: 'Microsoft Azure',
@@ -71,17 +71,17 @@ export const PROVIDERS_CONFIG = {
   //   ]
   // },
   onpremise: {
-    name: 'On-Premise',
-    type: 'onpremise',
+    name: "On-Premise",
+    type: "onpremise",
     enabled: true,
-    defaultRegion: 'datacenter-1',
+    defaultRegion: "datacenter-1",
     regions: [
-      { value: 'datacenter-1', label: 'Datacenter 1' },
-      { value: 'datacenter-2', label: 'Datacenter 2' },
-      { value: 'edge-location-1', label: 'Edge Location 1' },
-      { value: 'edge-location-2', label: 'Edge Location 2' }
-    ]
-  }
+      { value: "datacenter-1", label: "Datacenter 1" },
+      { value: "datacenter-2", label: "Datacenter 2" },
+      { value: "edge-location-1", label: "Edge Location 1" },
+      { value: "edge-location-2", label: "Edge Location 2" },
+    ],
+  },
 };
 
 export const getProviderConfig = (providerType) => {
@@ -89,10 +89,10 @@ export const getProviderConfig = (providerType) => {
 };
 
 export const getAllProviders = () => {
-  return Object.keys(PROVIDERS_CONFIG).map(key => ({
+  return Object.keys(PROVIDERS_CONFIG).map((key) => ({
     value: key,
     label: PROVIDERS_CONFIG[key].name,
-    ...PROVIDERS_CONFIG[key]
+    ...PROVIDERS_CONFIG[key],
   }));
 };
 
@@ -103,7 +103,7 @@ export const getProviderRegions = (providerType) => {
 
 export const getProviderServices = (providerType) => {
   // Dynamically filter services based on the provider field in servicesConfig
-  return Object.keys(SERVICES_CONFIG).filter(serviceKey => {
+  return Object.keys(SERVICES_CONFIG).filter((serviceKey) => {
     const service = SERVICES_CONFIG[serviceKey];
     return service.provider === providerType;
   });
