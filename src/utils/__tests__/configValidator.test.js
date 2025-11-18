@@ -144,7 +144,7 @@ describe("configValidator", () => {
       const natError = errors.find((e) => e.field === "natGateway");
       expect(natError).toBeDefined();
       expect(natError.message).toContain(
-        "must be one of: NO_NAT, SINGLE, ONE_PER_SUBNET, ONE_PER_AZ",
+        "must be one of: NO_NAT, SINGLE, ONE_PER_AZ, ONE_PER_SUBNET",
       );
     });
 
