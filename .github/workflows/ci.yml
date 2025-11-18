@@ -40,7 +40,8 @@ jobs:
     name: Validate PR Title
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-
+    permissions:
+      pull-requests: read
     steps:
       - name: Validate PR title
         uses: amannn/action-semantic-pull-request@v6
