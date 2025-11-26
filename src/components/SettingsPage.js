@@ -3,12 +3,14 @@ import React, { useState, useEffect } from "react";
 import { Cloud, GitBranch, Shield, Terminal, User, Save, Plus, Edit2, Trash2 } from "lucide-react";
 import Navigation from "./Navigation";
 import { useTheme } from "../contexts/ThemeContext";
+import { useToast } from "../contexts/ToastContext";
 import authService from "../services/authService";
 import CloudCredentialModal from "./modals/CloudCredentialModal";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
 
 const SettingsPage = () => {
   const { isDark } = useTheme();
+  const toast = useToast();
   const [userPreferences, setUserPreferences] = useState({
     theme: "light",
     notifications: true,
@@ -119,9 +121,13 @@ const SettingsPage = () => {
       await authService.delete(`/cloud-credentials/${credentialToDelete.id}`);
       await loadCloudCredentials();
       setShowDeleteModal(false);
+      toast.success("Credential deleted successfully");
       setCredentialToDelete(null);
     } catch (error) {
       console.error("Failed to delete credential:", error);
+      const errorMessage =
+        error.response?.data?.error || error.message || "Failed to delete credential";
+      toast.error(errorMessage, { title: "Delete Error" });
     }
   };
 
@@ -129,14 +135,20 @@ const SettingsPage = () => {
     try {
       if (selectedCredential) {
         await authService.put(`/cloud-credentials/${selectedCredential.id}`, credentialData);
+        toast.success("Credential updated successfully");
       } else {
         await authService.post("/cloud-credentials", credentialData);
+        toast.success("Credential created successfully");
       }
       await loadCloudCredentials();
       setShowCredentialModal(false);
       setSelectedCredential(null);
     } catch (error) {
       console.error("Failed to save credential:", error);
+      // Extract error message from response
+      const errorMessage =
+        error.response?.data?.error || error.message || "Failed to save credential";
+      toast.error(errorMessage, { title: "Credential Error", duration: 7000 });
     }
   };
   if (loading) {
