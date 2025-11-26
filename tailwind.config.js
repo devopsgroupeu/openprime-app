@@ -90,6 +90,14 @@ module.exports = {
           "100%": { transform: "scale(1)", opacity: "1" },
         },
       },
+      // Z-index scale extension for layered UI components
+      // 50: modals, dropdowns (Tailwind default)
+      // 60: floating UI (chat button/window)
+      // 70: toast notifications (always on top)
+      zIndex: {
+        60: "60",
+        70: "70",
+      },
     },
   },
   plugins: [
