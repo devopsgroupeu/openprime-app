@@ -1,6 +1,16 @@
 // src/components/modals/wizard/BasicConfigStep.js
 import React, { useState, useEffect } from "react";
-import { Cloud, MapPin, Type, Key, Database, Loader, CheckCircle, GitBranch } from "lucide-react";
+import {
+  Cloud,
+  MapPin,
+  Type,
+  Key,
+  Database,
+  Loader,
+  CheckCircle,
+  GitBranch,
+  Tag,
+} from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useToast } from "../../../contexts/ToastContext";
 import { PROVIDERS, createEmptyEnvironment } from "../../../config/environmentsConfig";
@@ -44,6 +54,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
     setNewEnv({
       ...emptyEnv,
       name: newEnv.name,
+      globalPrefix: newEnv.globalPrefix,
       cloudCredentialId: null,
     });
     setBackendCreated(false);
@@ -144,6 +155,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
           <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
             Environment Name
           </label>
+          <span className="ml-2 text-red-500 text-sm">*</span>
         </div>
         <input
           type="text"
@@ -154,15 +166,73 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                 ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
                 : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
           }`}
-          placeholder="e.g., Production, Staging, Development"
+          placeholder="e.g., production, staging, development"
           value={newEnv.name}
-          onChange={(e) => setNewEnv({ ...newEnv, name: e.target.value })}
+          onChange={(e) => {
+            const value = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "");
+            setNewEnv({ ...newEnv, name: value });
+          }}
         />
         {getFieldError("name") ? (
           <p className="text-red-500 text-xs mt-2">{getFieldError("name").message}</p>
         ) : (
           <p className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-            Choose a descriptive name that identifies the purpose of this environment
+            Lowercase alphanumeric name for this environment (e.g., production, staging)
+          </p>
+        )}
+      </div>
+
+      {/* Global Prefix */}
+      <div
+        className={`p-6 rounded-xl border ${
+          isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
+        }`}
+      >
+        <div className="flex items-center mb-4">
+          <Tag className="w-5 h-5 mr-2 text-teal-500" />
+          <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+            Global Prefix
+          </label>
+          <span className="ml-2 text-red-500 text-sm">*</span>
+        </div>
+        <input
+          type="text"
+          className={`w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 text-lg ${
+            getFieldError("globalPrefix")
+              ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+              : isDark
+                ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
+                : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
+          }`}
+          placeholder="e.g., myapp-, prod-, company-"
+          value={newEnv.globalPrefix || ""}
+          onChange={(e) => {
+            const newValue = e.target.value;
+            const currentValue = newEnv.globalPrefix || "";
+
+            // Detect if user is deleting (backspace)
+            if (newValue.length < currentValue.length) {
+              // Remove the dash first, then remove last char, then add dash back
+              const baseWithoutDash = currentValue.replace(/-$/, "");
+              const newBase = baseWithoutDash.slice(0, -1);
+              const finalValue = newBase ? `${newBase}-` : "";
+              setNewEnv({ ...newEnv, globalPrefix: finalValue });
+            } else {
+              // User is typing - sanitize and add dash
+              const baseValue = newValue
+                .replace(/-+$/, "")
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, "");
+              const finalValue = baseValue ? `${baseValue}-` : "";
+              setNewEnv({ ...newEnv, globalPrefix: finalValue });
+            }
+          }}
+        />
+        {getFieldError("globalPrefix") ? (
+          <p className="text-red-500 text-xs mt-2">{getFieldError("globalPrefix").message}</p>
+        ) : (
+          <p className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+            Prefix applied to all resource names (lowercase, alphanumeric, auto-appends dash)
           </p>
         )}
       </div>
@@ -689,7 +759,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                     ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
                     : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
                 }`}
-                placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;...&#10;-----END OPENSSH PRIVATE KEY-----"
+                placeholder="Paste your SSH private key here (PEM format)"
                 rows={8}
                 value={newEnv.gitRepository?.sshKey || ""}
                 onChange={(e) =>
@@ -711,7 +781,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
       </div>
 
       {/* Summary */}
-      {newEnv.name && newEnv.provider && newEnv.region && (
+      {newEnv.name && newEnv.globalPrefix && newEnv.provider && newEnv.region && (
         <div
           className={`p-4 rounded-lg border ${
             isDark
@@ -722,7 +792,8 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
           <div className="flex items-center">
             <div className="w-2 h-2 bg-emerald-500 rounded-full mr-3"></div>
             <span className="text-sm font-medium">
-              Ready to create "{newEnv.name}" on {PROVIDERS[newEnv.provider]?.name} in{" "}
+              Ready to create "{newEnv.name}" (prefix: {newEnv.globalPrefix}) on{" "}
+              {PROVIDERS[newEnv.provider]?.name} in{" "}
               {PROVIDERS[newEnv.provider]?.regions.find((r) => r.value === newEnv.region)?.label}
             </span>
           </div>

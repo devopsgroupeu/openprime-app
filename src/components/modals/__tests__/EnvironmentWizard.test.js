@@ -166,9 +166,10 @@ describe("EnvironmentWizard", () => {
       target: { value: "My Test Environment" },
     });
 
+    // Name is sanitized to lowercase alphanumeric only
     expect(mockSetNewEnv).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: "My Test Environment",
+        name: "mytestenvironment",
       }),
     );
   });

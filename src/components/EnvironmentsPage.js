@@ -34,12 +34,21 @@ const EnvironmentsPage = ({
       return;
     }
 
+    if (!newEnv.globalPrefix) {
+      error("Please enter a global prefix", {
+        title: "Validation Error",
+        duration: 5000,
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       // Send all services (enabled and disabled) to maintain complete configuration
       const environmentConfig = {
         name: newEnv.name,
+        globalPrefix: newEnv.globalPrefix,
         provider: newEnv.provider,
         region: newEnv.region,
         services: newEnv.services || {},

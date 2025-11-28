@@ -85,7 +85,9 @@ const WizardContainer = ({
 
       switch (currentStep) {
         case 1: // Basic Configuration
-          return Boolean(newEnv.name?.trim() && newEnv.provider && newEnv.region);
+          return Boolean(
+            newEnv.name?.trim() && newEnv.globalPrefix?.trim() && newEnv.provider && newEnv.region,
+          );
 
         case 2: // Services Configuration
           // Allow progression even without services for now
@@ -102,7 +104,9 @@ const WizardContainer = ({
       setValidationErrors([]);
       // Allow progression if validation fails
       return currentStep === 1
-        ? Boolean(newEnv.name?.trim() && newEnv.provider && newEnv.region)
+        ? Boolean(
+            newEnv.name?.trim() && newEnv.globalPrefix?.trim() && newEnv.provider && newEnv.region,
+          )
         : true;
     }
   }, [newEnv, currentStep]);
