@@ -86,38 +86,79 @@ const HelmChartsSelector = ({ value = {}, onChange, onEditHelmValues, k8sService
                   enabled: false,
                   customValues: false,
                 };
+                const isChartAvailable = chart.enabled !== false;
                 return (
                   <div
                     key={chart.key}
                     className={`flex items-center justify-between p-3 rounded-lg border ${
-                      isDark ? "border-gray-600 bg-gray-700/20" : "border-gray-200 bg-gray-50"
+                      isChartAvailable
+                        ? isDark
+                          ? "border-gray-600 bg-gray-700/20"
+                          : "border-gray-200 bg-gray-50"
+                        : isDark
+                          ? "border-gray-700 bg-gray-800/30 opacity-50"
+                          : "border-gray-200 bg-gray-100 opacity-50"
                     }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <label className="relative inline-flex items-center cursor-pointer">
+                      <label
+                        className={`relative inline-flex items-center ${isChartAvailable ? "cursor-pointer" : "cursor-not-allowed"}`}
+                      >
                         <input
                           type="checkbox"
                           className="sr-only peer"
                           checked={chartConfig.enabled}
+                          disabled={!isChartAvailable}
                           onChange={(e) => handleChartToggle(chart.key, e.target.checked)}
                         />
                         <div
                           className={`w-11 h-6 rounded-full peer peer-checked:bg-teal-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
-                            isDark ? "bg-gray-600" : "bg-gray-300"
+                            isChartAvailable
+                              ? isDark
+                                ? "bg-gray-600"
+                                : "bg-gray-300"
+                              : isDark
+                                ? "bg-gray-700"
+                                : "bg-gray-200"
                           }`}
                         ></div>
                       </label>
                       <div>
-                        <div className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <div
+                          className={`font-medium ${
+                            isChartAvailable
+                              ? isDark
+                                ? "text-white"
+                                : "text-gray-900"
+                              : isDark
+                                ? "text-gray-500"
+                                : "text-gray-400"
+                          }`}
+                        >
                           {chart.displayName}
+                          {!isChartAvailable && (
+                            <span className="ml-2 text-xs font-medium text-orange-500">
+                              Unavailable
+                            </span>
+                          )}
                         </div>
-                        <div className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                        <div
+                          className={`text-sm ${
+                            isChartAvailable
+                              ? isDark
+                                ? "text-gray-400"
+                                : "text-gray-600"
+                              : isDark
+                                ? "text-gray-600"
+                                : "text-gray-400"
+                          }`}
+                        >
                           {chart.description}
                         </div>
                       </div>
                     </div>
 
-                    {chartConfig.enabled && onEditHelmValues && (
+                    {chartConfig.enabled && onEditHelmValues && isChartAvailable && (
                       <button
                         onClick={() => onEditHelmValues(chart.key)}
                         className={`p-2 rounded-lg transition-colors ${

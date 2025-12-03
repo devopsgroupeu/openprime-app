@@ -1,6 +1,6 @@
 // src/components/modals/wizard/HelmChartsStep.js
 import React from "react";
-import { Package, Zap, Info } from "lucide-react";
+import { Package, Zap, Info, Construction } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import HelmChartsSelector from "../../HelmChartsSelector";
 
@@ -116,6 +116,27 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
             }`}
           >
             {getEnabledChartsCount()} charts selected
+          </div>
+        </div>
+      </div>
+
+      {/* Work in Progress Banner */}
+      <div
+        className={`p-4 rounded-lg border ${
+          isDark
+            ? "bg-orange-500/10 border-orange-500/30 text-orange-300"
+            : "bg-orange-50 border-orange-200 text-orange-700"
+        }`}
+      >
+        <div className="flex items-start">
+          <Construction className="w-5 h-5 mr-3 mt-0.5 shrink-0" />
+          <div className="text-sm">
+            <p className="font-medium mb-1">Feature In Development</p>
+            <p className="text-xs opacity-80">
+              Helm chart configurations are currently being implemented. Greyed out charts are not
+              yet available for selection. This feature will be fully functional in an upcoming
+              release.
+            </p>
           </div>
         </div>
       </div>
