@@ -157,7 +157,7 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
               <li>Charts are organized by category: Monitoring, Security, Networking, etc.</li>
               <li>Enable "Custom Values" to modify default chart configurations</li>
               <li>All charts are optional - you can add them later if needed</li>
-              <li>Popular combinations: Prometheus + Grafana for monitoring, ArgoCD for GitOps</li>
+              <li>Karpenter and ArgoCD are enabled automatically for all Kubernetes clusters</li>
             </ul>
           </div>
         </div>
@@ -208,10 +208,6 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
                   const currentCharts = newEnv.services[k8sService.name]?.helmCharts || {};
                   handleHelmChartsChange({
                     ...currentCharts,
-                    argocd: {
-                      enabled: true,
-                      customValues: false,
-                    },
                     certManager: {
                       enabled: true,
                       customValues: false,

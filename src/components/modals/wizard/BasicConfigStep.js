@@ -25,6 +25,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
   const [creatingBackend, setCreatingBackend] = useState(false);
   const [backendCreated, setBackendCreated] = useState(false);
   const [createdBucketName, setCreatedBucketName] = useState(null);
+  const [useExistingBucket, setUseExistingBucket] = useState(false);
 
   useEffect(() => {
     if (newEnv.provider) {
@@ -59,6 +60,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
     });
     setBackendCreated(false);
     setCreatedBucketName(null);
+    setUseExistingBucket(false);
   };
 
   const handleCreateBackend = async () => {
@@ -508,34 +510,121 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
 
           {newEnv.terraformBackend?.enabled && (
             <div className="space-y-4 mt-4">
-              <div
-                className={`p-4 rounded-lg border ${
-                  isDark
-                    ? "bg-blue-500/10 border-blue-500/30 text-blue-300"
-                    : "bg-blue-50 border-blue-200 text-blue-700"
-                }`}
-              >
-                <div className="flex items-start">
-                  <Database className="w-4 h-4 mr-2 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium">S3 Bucket Name (Auto-generated)</p>
-                    <p className="text-xs mt-1">
-                      Format:{" "}
-                      <code className="font-mono">
-                        &lt;AWS_ACCOUNT_ID&gt;-terraform-&lt;environment-name&gt;
-                      </code>
-                    </p>
-                    {newEnv.name && credentials.find((c) => c.id === newEnv.cloudCredentialId) && (
-                      <p className="text-xs mt-1 font-mono">
-                        Preview:{" "}
-                        {credentials.find((c) => c.id === newEnv.cloudCredentialId)?.identifier}
-                        -terraform-
-                        {newEnv.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}
-                      </p>
-                    )}
-                  </div>
+              {/* Toggle between Create New vs Use Existing Bucket */}
+              <div>
+                <label
+                  className={`block text-sm font-medium mb-2 ${
+                    isDark ? "text-gray-300" : "text-gray-700"
+                  }`}
+                >
+                  S3 Bucket Configuration
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setUseExistingBucket(false)}
+                    disabled={backendCreated || creatingBackend}
+                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                      !useExistingBucket
+                        ? isDark
+                          ? "bg-teal-600 text-white"
+                          : "bg-teal-500 text-white"
+                        : isDark
+                          ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    } ${backendCreated || creatingBackend ? "opacity-60 cursor-not-allowed" : ""}`}
+                  >
+                    Create New Bucket
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUseExistingBucket(true)}
+                    disabled={backendCreated || creatingBackend}
+                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                      useExistingBucket
+                        ? isDark
+                          ? "bg-teal-600 text-white"
+                          : "bg-teal-500 text-white"
+                        : isDark
+                          ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    } ${backendCreated || creatingBackend ? "opacity-60 cursor-not-allowed" : ""}`}
+                  >
+                    Use Existing Bucket
+                  </button>
                 </div>
               </div>
+
+              {!useExistingBucket ? (
+                // Create New Bucket Section
+                <>
+                  <div
+                    className={`p-4 rounded-lg border ${
+                      isDark
+                        ? "bg-blue-500/10 border-blue-500/30 text-blue-300"
+                        : "bg-blue-50 border-blue-200 text-blue-700"
+                    }`}
+                  >
+                    <div className="flex items-start">
+                      <Database className="w-4 h-4 mr-2 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium">S3 Bucket Name (Auto-generated)</p>
+                        <p className="text-xs mt-1">
+                          Format:{" "}
+                          <code className="font-mono">
+                            &lt;AWS_ACCOUNT_ID&gt;-terraform-&lt;environment-name&gt;
+                          </code>
+                        </p>
+                        {newEnv.name &&
+                          credentials.find((c) => c.id === newEnv.cloudCredentialId) && (
+                            <p className="text-xs mt-1 font-mono">
+                              Preview:{" "}
+                              {
+                                credentials.find((c) => c.id === newEnv.cloudCredentialId)
+                                  ?.identifier
+                              }
+                              -terraform-
+                              {newEnv.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}
+                            </p>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                // Use Existing Bucket Section
+                <div>
+                  <label
+                    className={`block text-sm font-medium mb-2 ${
+                      isDark ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    S3 Bucket Name
+                  </label>
+                  <input
+                    type="text"
+                    className={`w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 ${
+                      isDark
+                        ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
+                        : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
+                    }`}
+                    placeholder="e.g., my-terraform-state-bucket"
+                    value={newEnv.terraformBackend?.bucketName || ""}
+                    onChange={(e) =>
+                      setNewEnv({
+                        ...newEnv,
+                        terraformBackend: {
+                          ...newEnv.terraformBackend,
+                          bucketName: e.target.value,
+                        },
+                      })
+                    }
+                  />
+                  <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                    Enter the name of an existing S3 bucket for Terraform state storage
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label
@@ -608,53 +697,59 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                 </div>
               )}
 
-              {/* Create Backend Button */}
-              {backendCreated ? (
-                <div
-                  className={`p-4 rounded-lg border ${
-                    isDark
-                      ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-300"
-                      : "bg-emerald-50 border-emerald-200 text-emerald-700"
-                  }`}
-                >
-                  <div className="flex items-start">
-                    <CheckCircle className="w-5 h-5 mr-2 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium">Backend resources created successfully</p>
-                      {createdBucketName && (
-                        <p className="text-xs mt-1 font-mono opacity-90">
-                          S3 Bucket: {createdBucketName}
-                        </p>
-                      )}
+              {/* Create Backend Button - Only show when creating new bucket */}
+              {!useExistingBucket && (
+                <>
+                  {backendCreated ? (
+                    <div
+                      className={`p-4 rounded-lg border ${
+                        isDark
+                          ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-300"
+                          : "bg-emerald-50 border-emerald-200 text-emerald-700"
+                      }`}
+                    >
+                      <div className="flex items-start">
+                        <CheckCircle className="w-5 h-5 mr-2 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">
+                            Backend resources created successfully
+                          </p>
+                          {createdBucketName && (
+                            <p className="text-xs mt-1 font-mono opacity-90">
+                              S3 Bucket: {createdBucketName}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={handleCreateBackend}
-                  disabled={!newEnv.cloudCredentialId || creatingBackend}
-                  className={`w-full py-3 rounded-lg font-medium transition-colors flex items-center justify-center ${
-                    !newEnv.cloudCredentialId || creatingBackend
-                      ? isDark
-                        ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : isDark
-                        ? "bg-teal-600 text-white hover:bg-teal-700"
-                        : "bg-teal-500 text-white hover:bg-teal-600"
-                  }`}
-                >
-                  {creatingBackend ? (
-                    <>
-                      <Loader className="w-5 h-5 mr-2 animate-spin" />
-                      Creating Backend Resources...
-                    </>
                   ) : (
-                    <>
-                      <Database className="w-5 h-5 mr-2" />
-                      Create Backend Resources
-                    </>
+                    <button
+                      onClick={handleCreateBackend}
+                      disabled={!newEnv.cloudCredentialId || creatingBackend}
+                      className={`w-full py-3 rounded-lg font-medium transition-colors flex items-center justify-center ${
+                        !newEnv.cloudCredentialId || creatingBackend
+                          ? isDark
+                            ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+                            : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                          : isDark
+                            ? "bg-teal-600 text-white hover:bg-teal-700"
+                            : "bg-teal-500 text-white hover:bg-teal-600"
+                      }`}
+                    >
+                      {creatingBackend ? (
+                        <>
+                          <Loader className="w-5 h-5 mr-2 animate-spin" />
+                          Creating Backend Resources...
+                        </>
+                      ) : (
+                        <>
+                          <Database className="w-5 h-5 mr-2" />
+                          Create Backend Resources
+                        </>
+                      )}
+                    </button>
                   )}
-                </button>
+                </>
               )}
             </div>
           )}

@@ -413,5 +413,91 @@ describe("Create Environment with All Helm Charts", () => {
         console.warn("⚠ Configuration tab not found");
       }
     });
+
+    await test.step("Download configuration", async () => {
+      // Wait for environment to be created and wizard to close
+      await ctx.page.waitForTimeout(3000);
+
+      // We should be back on the environments list page
+      // Look for the newly created environment card
+      const envCard = ctx.page.locator(`[data-testid="env-card-${envName}"]`);
+
+      // If not found by testid, try finding by text
+      if ((await envCard.count()) === 0) {
+        const envByName = ctx.page.getByText(envName, { exact: false });
+        if ((await envByName.count()) > 0) {
+          console.log(`✓ Found environment: ${envName}`);
+          // Click on the environment to open details
+          await envByName.first().click();
+        } else {
+          console.warn(`⚠ Environment ${envName} not found in list`);
+          // Try navigating directly by URL
+          await ctx.goto(`/environments/${envName}`);
+        }
+      } else {
+        console.log(`✓ Found environment card: ${envName}`);
+        await envCard.click();
+      }
+
+      // Wait for environment detail page to load
+      await ctx.page.waitForTimeout(2000);
+
+      // Click on Configuration tab
+      const configTab = ctx.page
+        .getByRole("button", { name: /configuration/i })
+        .or(ctx.page.getByText("Configuration", { exact: true }));
+
+      if ((await configTab.count()) > 0) {
+        await configTab.first().click();
+        await ctx.page.waitForTimeout(1000);
+        console.log("✓ Opened Configuration tab");
+
+        // Find and click the Download button (green button with Download icon)
+        const downloadButton = ctx.page.getByRole("button", { name: /download/i }).filter({
+          hasText: /download/i,
+        });
+
+        if ((await downloadButton.count()) > 0) {
+          // Set up download listener
+          const downloadPromise = ctx.page.waitForEvent("download", {
+            timeout: 5000,
+          });
+
+          await downloadButton.first().click();
+          console.log("✓ Download button clicked");
+
+          try {
+            const download = await downloadPromise;
+            const fileName = download.suggestedFilename();
+            console.log(`✓ Configuration downloaded: ${fileName}`);
+
+            // Save the downloaded file to e2e/downloads directory
+            const fs = require("fs");
+            const path = require("path");
+            const downloadsDir = path.join(__dirname, "downloads");
+
+            // Create downloads directory if it doesn't exist
+            if (!fs.existsSync(downloadsDir)) {
+              fs.mkdirSync(downloadsDir, { recursive: true });
+            }
+
+            const filePath = path.join(downloadsDir, fileName);
+            await download.saveAs(filePath);
+            console.log(`✓ File saved to: ${filePath}`);
+
+            // Verify filename format
+            if (fileName.includes(envName) || fileName.includes("config")) {
+              console.log("✓ Downloaded file has expected name format");
+            }
+          } catch (downloadError) {
+            console.warn("⚠ Download event not captured, but button was clicked");
+          }
+        } else {
+          console.warn("⚠ Download button not found on Configuration tab");
+        }
+      } else {
+        console.warn("⚠ Configuration tab not found");
+      }
+    });
   });
 });

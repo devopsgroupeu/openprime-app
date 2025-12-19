@@ -1,6 +1,7 @@
 // src/config/helmChartsConfig.js
 
 // enabled: controls whether chart is available for selection (false = greyed out in UI)
+// implicit: if true, chart is always enabled automatically and hidden from UI
 export const HELM_CHARTS_CONFIG = {
   prometheusStack: {
     name: "prometheusStack",
@@ -113,6 +114,7 @@ export const HELM_CHARTS_CONFIG = {
     description: "Node provisioning and lifecycle management for AWS",
     category: "Infrastructure",
     enabled: true,
+    implicit: true, // Always enabled for EKS, hidden from UI
     k8sServices: ["eks"], // AWS EKS specific
     defaultEnabled: true,
     defaultCustomValues: false,
@@ -142,6 +144,7 @@ export const HELM_CHARTS_CONFIG = {
     description: "GitOps continuous delivery tool",
     category: "CI/CD",
     enabled: false,
+    implicit: true, // Always enabled for all K8s services, hidden from UI
     k8sServices: ["eks", "aks", "gke", "kubernetes"],
     defaultEnabled: false,
     defaultCustomValues: false,
@@ -265,10 +268,12 @@ export const HELM_CHARTS_CONFIG = {
 };
 
 // Helper functions
-export const getHelmChartsForK8sService = (k8sServiceName) => {
+export const getHelmChartsForK8sService = (k8sServiceName, includeImplicit = false) => {
   return Object.keys(HELM_CHARTS_CONFIG).filter((chartKey) => {
     const chart = HELM_CHARTS_CONFIG[chartKey];
-    return chart.k8sServices.includes(k8sServiceName);
+    const isAvailableForService = chart.k8sServices.includes(k8sServiceName);
+    // Exclude implicit charts unless explicitly requested
+    return isAvailableForService && (includeImplicit || !chart.implicit);
   });
 };
 
@@ -304,4 +309,12 @@ export const getAllCategories = () => {
     categories.add(chart.category);
   });
   return Array.from(categories);
+};
+
+// Get implicit charts for a specific k8s service
+export const getImplicitChartsForK8sService = (k8sServiceName) => {
+  return Object.keys(HELM_CHARTS_CONFIG).filter((chartKey) => {
+    const chart = HELM_CHARTS_CONFIG[chartKey];
+    return chart.k8sServices.includes(k8sServiceName) && chart.implicit === true;
+  });
 };
