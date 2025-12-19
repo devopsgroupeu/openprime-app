@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.0 (2025-12-19)
+
+* feat: update helmChartsConfig, modify e2e tests, allow to specify existing S3 bucket ([c784984](https://github.com/devopsgroupeu/openprime-app/commit/c784984))
+
 ## 1.0.0 (2025-12-19)
 
 * feat: add cloud credentials UI and integration ([297230b](https://github.com/devopsgroupeu/openprime-app/commit/297230b))
