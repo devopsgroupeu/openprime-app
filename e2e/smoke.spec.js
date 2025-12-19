@@ -79,6 +79,13 @@ describe("Application Smoke Tests", () => {
     const nameInput = ctx.page.getByPlaceholder(/production|staging|development/i);
     await nameInput.fill("smoke-test-env");
 
+    // Fill in global prefix (required field)
+    const prefixInput = ctx.page.getByPlaceholder(/myapp-|prod-|company-/i);
+    if ((await prefixInput.count()) > 0) {
+      await prefixInput.fill("smoke-test");
+      await ctx.page.waitForTimeout(200); // Wait for auto-dash appending
+    }
+
     // Select provider (AWS should be selected by default, but click it anyway)
     const awsProvider = ctx.page
       .getByRole("button")
