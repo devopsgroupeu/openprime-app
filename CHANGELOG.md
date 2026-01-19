@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## <small>1.1.1 (2026-01-19)</small>
+
+* fix(ci): force fetch tags and release only from main ([9a3cbb9](https://github.com/devopsgroupeu/openprime-app/commit/9a3cbb9))
+* fix(release): configure semantic-release for main branch only ([99c515c](https://github.com/devopsgroupeu/openprime-app/commit/99c515c))
+* ci(helm): remove duplicate helm-release workflow ([87bc67e](https://github.com/devopsgroupeu/openprime-app/commit/87bc67e))
+
 ## 1.1.0 (2025-12-19)
 
 * feat: update helmChartsConfig, modify e2e tests, allow to specify existing S3 bucket ([c784984](https://github.com/devopsgroupeu/openprime-app/commit/c784984))
