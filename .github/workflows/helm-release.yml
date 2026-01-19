@@ -1,0 +1,66 @@
+name: Release Helm Chart
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'chart/**'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  CHART_PATH: chart
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install Helm
+      uses: azure/setup-helm@v4
+      with:
+        version: '3.14.0'
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Get Chart Info
+      id: chart
+      run: |
+        CHART_NAME=$(helm show chart ${{ env.CHART_PATH }} | grep '^name:' | cut -d' ' -f2)
+        CHART_VERSION=$(helm show chart ${{ env.CHART_PATH }} | grep '^version:' | cut -d' ' -f2)
+        echo "name=${CHART_NAME}" >> $GITHUB_OUTPUT
+        echo "version=${CHART_VERSION}" >> $GITHUB_OUTPUT
+
+    - name: Package Helm Chart
+      run: |
+        helm dependency update ${{ env.CHART_PATH }} || true
+        helm package ${{ env.CHART_PATH }} --destination .helm-releases
+
+    - name: Push Helm Chart to GHCR
+      run: |
+        helm push .helm-releases/${{ steps.chart.outputs.name }}-${{ steps.chart.outputs.version }}.tgz \
+          oci://${{ env.REGISTRY }}/${{ github.repository_owner }}
+
+    - name: Summary
+      run: |
+        echo "### Helm Chart Published 🎉" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Chart:** ${{ steps.chart.outputs.name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Version:** ${{ steps.chart.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Registry:** oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ steps.chart.outputs.name }}" >> $GITHUB_STEP_SUMMARY
