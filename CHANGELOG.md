@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## <small>1.1.2 (2026-01-19)</small>
+
+* fix(ci): use Chart.yaml version for push/workflow_dispatch events ([5534c0d](https://github.com/devopsgroupeu/openprime-app/commit/5534c0d))
+* ci(helm): add workflow_dispatch trigger for manual runs ([352f233](https://github.com/devopsgroupeu/openprime-app/commit/352f233))
+
 ## <small>1.1.1 (2026-01-19)</small>
 
 * fix(ci): force fetch tags and release only from main ([9a3cbb9](https://github.com/devopsgroupeu/openprime-app/commit/9a3cbb9))
