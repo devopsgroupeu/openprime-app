@@ -112,17 +112,15 @@ jobs:
 
       - name: Update Chart Version
         run: |
-          # Update chart version based on git tag or commit
+          # Update chart version based on event type
           if [[ "${{ github.event_name }}" == "release" ]]; then
             VERSION="${{ github.event.release.tag_name }}"
             VERSION=${VERSION#v} # Remove 'v' prefix if present
-          else
-            VERSION="0.2.0-${{ github.sha }}"
+            # Update Chart.yaml for releases
+            sed -i "s/^version:.*/version: ${VERSION}/" ${{ env.HELM_CHART_PATH }}/Chart.yaml
+            sed -i "s/^appVersion:.*/appVersion: \"${VERSION}\"/" ${{ env.HELM_CHART_PATH }}/Chart.yaml
           fi
-
-          # Update Chart.yaml
-          sed -i "s/^version:.*/version: ${VERSION}/" ${{ env.HELM_CHART_PATH }}/Chart.yaml
-          sed -i "s/^appVersion:.*/appVersion: \"${VERSION}\"/" ${{ env.HELM_CHART_PATH }}/Chart.yaml
+          # For push/workflow_dispatch, use version from Chart.yaml as-is
 
           # Update values.yaml to use the built image
           sed -i "s|repository:.*|repository: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}|" ${{ env.HELM_CHART_PATH }}/values.yaml
