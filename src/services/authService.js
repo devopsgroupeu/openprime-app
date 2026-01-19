@@ -1,5 +1,5 @@
-import keycloak from '../config/keycloak';
-import { getApiUrl } from '../utils/envValidator';
+import keycloak from "../config/keycloak";
+import { getApiUrl } from "../utils/envValidator";
 
 export class AuthService {
   constructor() {
@@ -9,8 +9,8 @@ export class AuthService {
   getAuthHeaders() {
     const token = keycloak.token;
     return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     };
   }
 
@@ -20,22 +20,31 @@ export class AuthService {
         ...options,
         headers: {
           ...this.getAuthHeaders(),
-          ...options.headers
-        }
+          ...options.headers,
+        },
       });
 
       if (response.status === 401) {
         keycloak.logout();
-        throw new Error('Session expired');
+        throw new Error("Session expired");
       }
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+          // If response body is not JSON, use default error message
+        }
+        const error = new Error(errorMessage);
+        error.status = response.status;
+        throw error;
       }
 
       return response;
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error("API request failed:", error);
       throw error;
     }
   }
@@ -45,39 +54,45 @@ export class AuthService {
     return response.json();
   }
 
-  async post(url, data) {
+  async post(url, data, options = {}) {
     const response = await this.makeAuthenticatedRequest(url, {
-      method: 'POST',
-      body: JSON.stringify(data)
+      method: "POST",
+      body: JSON.stringify(data),
+      ...options,
     });
+
+    if (options.responseType === "blob") {
+      return { data: await response.blob() };
+    }
+
     return response.json();
   }
 
   async put(url, data) {
     const response = await this.makeAuthenticatedRequest(url, {
-      method: 'PUT',
-      body: JSON.stringify(data)
+      method: "PUT",
+      body: JSON.stringify(data),
     });
     return response.json();
   }
 
   async delete(url) {
     const response = await this.makeAuthenticatedRequest(url, {
-      method: 'DELETE'
+      method: "DELETE",
     });
     return response.json();
   }
 
   async uploadFile(url, file) {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
     const response = await this.makeAuthenticatedRequest(url, {
-      method: 'POST',
+      method: "POST",
       body: formData,
       headers: {
-        'Authorization': `Bearer ${keycloak.token}`
-      }
+        Authorization: `Bearer ${keycloak.token}`,
+      },
     });
     return response.json();
   }

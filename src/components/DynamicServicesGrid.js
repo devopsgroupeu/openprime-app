@@ -1,7 +1,7 @@
 // src/components/DynamicServicesGrid.js
-import React from 'react';
-import { getProviderServices } from '../config/providersConfig';
-import DynamicServiceConfig from './DynamicServiceConfig';
+import React from "react";
+import { getProviderServices } from "../config/providersConfig";
+import DynamicServiceConfig from "./DynamicServiceConfig";
 
 const DynamicServicesGrid = ({
   newEnv,
@@ -9,7 +9,7 @@ const DynamicServicesGrid = ({
   expandedServices,
   setExpandedServices,
   onEditHelmValues,
-  onAskAI
+  onAskAI,
 }) => {
   const providerServices = getProviderServices(newEnv.provider);
 
@@ -18,21 +18,21 @@ const DynamicServicesGrid = ({
       ...newEnv,
       services: {
         ...newEnv.services,
-        [serviceName]: newServiceConfig
-      }
+        [serviceName]: newServiceConfig,
+      },
     });
   };
 
   const handleToggleExpanded = (serviceName) => {
     setExpandedServices({
       ...expandedServices,
-      [serviceName]: !expandedServices[serviceName]
+      [serviceName]: !expandedServices[serviceName],
     });
   };
 
   return (
     <div className="space-y-3">
-      {providerServices.map(serviceName => {
+      {providerServices.map((serviceName) => {
         const serviceConfig = newEnv.services[serviceName];
         if (!serviceConfig) return null;
 

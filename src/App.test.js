@@ -1,8 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import App from './App';
+import { render, screen, waitFor } from "@testing-library/react";
+import App from "./App";
 
 // Mock Keycloak
-jest.mock('keycloak-js', () => {
+jest.mock("keycloak-js", () => {
   return jest.fn(() => ({
     init: jest.fn(() => Promise.resolve(false)),
     authenticated: false,
@@ -19,14 +19,17 @@ jest.mock('keycloak-js', () => {
   }));
 });
 
-test('renders OpenPrime application loading state', async () => {
+test("renders OpenPrime application loading state", async () => {
   render(<App />);
 
   // Initially should show authentication loading state
   expect(screen.getByText(/Initializing authentication/i)).toBeInTheDocument();
 
   // Wait for authentication to complete
-  await waitFor(() => {
-    expect(screen.queryByText(/Initializing authentication/i)).not.toBeInTheDocument();
-  }, { timeout: 3000 });
+  await waitFor(
+    () => {
+      expect(screen.queryByText(/Initializing authentication/i)).not.toBeInTheDocument();
+    },
+    { timeout: 3000 },
+  );
 });
