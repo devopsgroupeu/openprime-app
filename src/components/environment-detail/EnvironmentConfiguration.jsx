@@ -21,6 +21,7 @@ const EnvironmentConfiguration = ({ environment }) => {
   const { success, error: showError } = useToast();
   const [format, setFormat] = useState("json");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isPushing, setIsPushing] = useState(false);
   const [showSshKey, setShowSshKey] = useState(false);
 
   const generateConfiguration = () => {
@@ -146,6 +147,26 @@ const EnvironmentConfiguration = ({ environment }) => {
       setIsGenerating(false);
     }
   };
+
+  const pushInfrastructure = async () => {
+    try {
+      setIsPushing(true);
+
+      const response = await authService.post(
+        `/environments/${environment.id}/push`,
+        {},
+        { timeout: 120000 },
+      );
+
+      success(response?.message || "Infrastructure pushed to Git successfully");
+    } catch (err) {
+      console.error("Error pushing to Git:", err);
+      showError(err.response?.data?.error || "Failed to push to Git. Please try again.");
+    } finally {
+      setIsPushing(false);
+    }
+  };
+
   const content = getFormattedContent();
 
   return (
@@ -379,6 +400,20 @@ const EnvironmentConfiguration = ({ environment }) => {
           >
             <Package className="w-4 h-4 inline mr-2" />
             {isGenerating ? "Generating..." : "Generate Repository"}
+          </button>
+          <button
+            onClick={pushInfrastructure}
+            disabled={isPushing}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              isPushing
+                ? "bg-gray-500 cursor-not-allowed text-white"
+                : isDark
+                  ? "bg-orange-600 hover:bg-orange-700 text-white"
+                  : "bg-orange-600 hover:bg-orange-700 text-white"
+            }`}
+          >
+            <GitBranch className="w-4 h-4 inline mr-2" />
+            {isPushing ? "Pushing..." : "Push to Git"}
           </button>
         </div>
       </div>
