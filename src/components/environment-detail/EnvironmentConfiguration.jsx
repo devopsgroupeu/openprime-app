@@ -161,7 +161,7 @@ const EnvironmentConfiguration = ({ environment }) => {
       success(response?.message || "Infrastructure pushed to Git successfully");
     } catch (err) {
       console.error("Error pushing to Git:", err);
-      showError(err.response?.data?.error || "Failed to push to Git. Please try again.");
+      showError(err.message || "Failed to push to Git. Please try again.");
     } finally {
       setIsPushing(false);
     }
