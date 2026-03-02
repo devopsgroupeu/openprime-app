@@ -1,5 +1,4 @@
-import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import EnvironmentWizard from "../EnvironmentWizard";
 import { ThemeProvider } from "../../../contexts/ThemeContext";
@@ -7,9 +6,11 @@ import { ToastProvider } from "../../../contexts/ToastContext";
 import { createEmptyEnvironment } from "../../../config/environmentsConfig";
 
 // Mock components that might not be available in test environment
-jest.mock("../AIChatModal", () => {
-  return function MockAIChatModal() {
-    return <div data-testid="ai-chat-modal" />;
+vi.mock("../AIChatModal", () => {
+  return {
+    default: function MockAIChatModal() {
+      return <div data-testid="ai-chat-modal" />;
+    },
   };
 });
 
@@ -22,18 +23,18 @@ const MockWrapper = ({ children }) => (
 describe("EnvironmentWizard", () => {
   const defaultProps = {
     newEnv: createEmptyEnvironment("aws"),
-    setNewEnv: jest.fn(),
+    setNewEnv: vi.fn(),
     expandedServices: {},
-    setExpandedServices: jest.fn(),
-    onClose: jest.fn(),
-    onCreate: jest.fn(),
-    onEditHelmValues: jest.fn(),
+    setExpandedServices: vi.fn(),
+    onClose: vi.fn(),
+    onCreate: vi.fn(),
+    onEditHelmValues: vi.fn(),
     isEditMode: false,
     isLoading: false,
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders successfully without crashing", () => {
@@ -75,7 +76,7 @@ describe("EnvironmentWizard", () => {
   });
 
   it("allows navigation to next step when current step is valid", async () => {
-    const mockSetNewEnv = jest.fn();
+    const mockSetNewEnv = vi.fn();
     const newEnv = {
       ...createEmptyEnvironment("aws"),
       name: "Test Environment",
@@ -95,7 +96,7 @@ describe("EnvironmentWizard", () => {
   });
 
   it("calls onClose when close button is clicked", () => {
-    const mockOnClose = jest.fn();
+    const mockOnClose = vi.fn();
 
     render(
       <MockWrapper>
@@ -132,7 +133,7 @@ describe("EnvironmentWizard", () => {
   });
 
   it("renders within error boundary and catches errors gracefully", () => {
-    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     // Force an error by passing invalid props
     const invalidProps = {
@@ -153,7 +154,7 @@ describe("EnvironmentWizard", () => {
   });
 
   it("handles environment name input correctly", () => {
-    const mockSetNewEnv = jest.fn();
+    const mockSetNewEnv = vi.fn();
 
     render(
       <MockWrapper>

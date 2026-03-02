@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
 
 permissions:
   contents: write
@@ -12,10 +15,17 @@ permissions:
   packages: write
 
 jobs:
+  test:
+    uses: ./.github/workflows/reusable-test.yml
+
   release:
     name: Semantic Release
+    needs: test
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
 
     steps:
       - name: Checkout
@@ -27,61 +37,78 @@ jobs:
         run: git fetch --tags --force
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: "24"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test -- --coverage --watchAll=false
-
-      - name: Build application
-        run: npm run build
-
       - name: Semantic Release
+        id: semantic
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+        run: |
+          npx semantic-release > semantic-release.log 2>&1
+          cat semantic-release.log
+          if grep -q "Published release" semantic-release.log; then
+            echo "new_release_published=true" >> $GITHUB_OUTPUT
+          else
+            echo "new_release_published=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Extract version
         id: version
-        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+  publish-docker:
+    needs: release
+    if: needs.release.outputs.new_release_published == 'true'
+    uses: ./.github/workflows/reusable-docker-publish.yml
+    with:
+      tags: |
+        type=semver,pattern={{version}},value=${{ needs.release.outputs.version }}
+        type=semver,pattern={{major}}.{{minor}},value=${{ needs.release.outputs.version }}
+        type=semver,pattern={{major}},value=${{ needs.release.outputs.version }}
+        type=raw,value=latest
+
+  publish-helm:
+    needs: [release, publish-docker]
+    if: needs.release.outputs.new_release_published == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: "v3.12.0"
 
       - name: Log in to Container Registry
-        if: steps.version.outputs.version != ''
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ghcr.io --username ${{ github.actor }} --password-stdin
 
-      - name: Extract metadata for Docker
-        if: steps.version.outputs.version != ''
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=semver,pattern={{version}},value=${{ steps.version.outputs.version }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }}
-            type=semver,pattern={{major}},value=${{ steps.version.outputs.version }}
-            type=ref,event=branch
-            type=raw,value=latest,enable={{is_default_branch}}
+      - name: Package and Push Helm Chart
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+          REGISTRY: ghcr.io
+          IMAGE_NAME: ${{ github.repository }}
+        run: |
+          # Update version in Chart.yaml
+          sed -i "s/^version:.*/version: ${VERSION}/" chart/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"${VERSION}\"/" chart/Chart.yaml
 
-      - name: Set up Docker Buildx
-        if: steps.version.outputs.version != ''
-        uses: docker/setup-buildx-action@v3
+          # Update values.yaml
+          sed -i "s|repository:.*|repository: ${REGISTRY}/${IMAGE_NAME}|" chart/values.yaml
+          sed -i "s/tag:.*/tag: \"${VERSION}\"/" chart/values.yaml
 
-      - name: Build and push Docker image
-        if: steps.version.outputs.version != ''
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
+          mkdir -p charts/
+          helm package ./chart --destination ./charts/
+          helm push ./charts/openprime-app-${VERSION}.tgz oci://${REGISTRY}/${{ github.repository_owner }}/helm

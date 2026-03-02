@@ -47,7 +47,15 @@ export const getEnvVar = (configKey) => {
   }
 
   // Build-time environment (development) - second priority
-  if (process.env[config.buildTimeKey]) {
+  if (
+    typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env[config.buildTimeKey]
+  ) {
+    return import.meta.env[config.buildTimeKey];
+  }
+
+  if (typeof process !== "undefined" && process.env && process.env[config.buildTimeKey]) {
     return process.env[config.buildTimeKey];
   }
 
@@ -107,7 +115,11 @@ export const validateEnvironmentVariables = () => {
   }
 
   // Log successful configuration in development
-  if (process.env.NODE_ENV === "development") {
+  const isDev =
+    (typeof import.meta !== "undefined" && import.meta.env?.DEV) ||
+    (typeof process !== "undefined" && process.env?.NODE_ENV === "development");
+
+  if (isDev) {
     console.log("✅ Environment configuration loaded successfully");
 
     if (runtimeVars.length > 0) {

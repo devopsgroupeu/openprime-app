@@ -58,13 +58,13 @@ export default defineConfig([
     },
   },
 
-  // Test files - add Jest globals
+  // Test files - add Vitest globals
   {
     files: ["**/*.test.{js,jsx}", "**/__tests__/**/*.{js,jsx}", "**/setupTests.js"],
     languageOptions: {
       globals: {
         ...globals.browser,
-        ...globals.jest,
+        vi: "readonly",
         describe: "readonly",
         it: "readonly",
         test: "readonly",
@@ -73,7 +73,6 @@ export default defineConfig([
         afterEach: "readonly",
         beforeAll: "readonly",
         afterAll: "readonly",
-        jest: "readonly",
       },
     },
   },

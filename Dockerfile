@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Copy source code
 COPY . .
@@ -25,7 +25,7 @@ RUN apk add --no-cache gettext
 # COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy built app from build stage
-COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html
 
 # Set permissions for existing nginx user
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
