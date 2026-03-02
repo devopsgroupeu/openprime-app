@@ -78,37 +78,7 @@ jobs:
   publish-helm:
     needs: [release, publish-docker]
     if: needs.release.outputs.new_release_published == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Helm
-        uses: azure/setup-helm@v4
-        with:
-          version: "v3.12.0"
-
-      - name: Log in to Container Registry
-        run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ghcr.io --username ${{ github.actor }} --password-stdin
-
-      - name: Package and Push Helm Chart
-        env:
-          VERSION: ${{ needs.release.outputs.version }}
-          REGISTRY: ghcr.io
-          IMAGE_NAME: ${{ github.repository }}
-        run: |
-          # Update version in Chart.yaml
-          sed -i "s/^version:.*/version: ${VERSION}/" chart/Chart.yaml
-          sed -i "s/^appVersion:.*/appVersion: \"${VERSION}\"/" chart/Chart.yaml
-
-          # Update values.yaml
-          sed -i "s|repository:.*|repository: ${REGISTRY}/${IMAGE_NAME}|" chart/values.yaml
-          sed -i "s/tag:.*/tag: \"${VERSION}\"/" chart/values.yaml
-
-          mkdir -p charts/
-          helm package ./chart --destination ./charts/
-          helm push ./charts/openprime-app-${VERSION}.tgz oci://${REGISTRY}/${{ github.repository_owner }}/helm
+    uses: ./.github/workflows/reusable-helm-publish.yml
+    with:
+      version: ${{ needs.release.outputs.version }}
+      package-name: openprime-app

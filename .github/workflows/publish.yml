@@ -1,0 +1,33 @@
+name: Publish (Dev)
+
+on:
+  push:
+    branches:
+      - dev
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    uses: ./.github/workflows/reusable-test.yml
+
+  publish-docker:
+    needs: test
+    uses: ./.github/workflows/reusable-docker-publish.yml
+    with:
+      tags: |
+        type=ref,event=branch
+        type=sha,prefix=dev-
+
+  publish-helm:
+    needs: [test, publish-docker]
+    uses: ./.github/workflows/reusable-helm-publish.yml
+    with:
+      image-tag: ${{ needs.publish-docker.outputs.image-version }}
+      package-name: openprime-app
