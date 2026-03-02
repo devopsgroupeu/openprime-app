@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import EnvironmentWizard from "../EnvironmentWizard";
 import { ThemeProvider } from "../../../contexts/ThemeContext";
@@ -37,39 +37,45 @@ describe("EnvironmentWizard", () => {
     vi.clearAllMocks();
   });
 
-  it("renders successfully without crashing", () => {
-    render(
-      <MockWrapper>
-        <EnvironmentWizard {...defaultProps} />
-      </MockWrapper>,
-    );
+  it("renders successfully without crashing", async () => {
+    await act(async () => {
+      render(
+        <MockWrapper>
+          <EnvironmentWizard {...defaultProps} />
+        </MockWrapper>,
+      );
+    });
 
     expect(screen.getByText("Create New Environment")).toBeInTheDocument();
   });
 
-  it("shows edit mode when isEditMode is true", () => {
-    render(
-      <MockWrapper>
-        <EnvironmentWizard
-          {...defaultProps}
-          isEditMode={true}
-          newEnv={{
-            ...defaultProps.newEnv,
-            name: "Test Environment",
-          }}
-        />
-      </MockWrapper>,
-    );
+  it("shows edit mode when isEditMode is true", async () => {
+    await act(async () => {
+      render(
+        <MockWrapper>
+          <EnvironmentWizard
+            {...defaultProps}
+            isEditMode={true}
+            newEnv={{
+              ...defaultProps.newEnv,
+              name: "Test Environment",
+            }}
+          />
+        </MockWrapper>,
+      );
+    });
 
     expect(screen.getByText("Edit Environment")).toBeInTheDocument();
   });
 
-  it("shows step indicator with correct steps", () => {
-    render(
-      <MockWrapper>
-        <EnvironmentWizard {...defaultProps} />
-      </MockWrapper>,
-    );
+  it("shows step indicator with correct steps", async () => {
+    await act(async () => {
+      render(
+        <MockWrapper>
+          <EnvironmentWizard {...defaultProps} />
+        </MockWrapper>,
+      );
+    });
 
     expect(screen.getAllByText("Basic Configuration")).toHaveLength(2); // Header and step indicator
     expect(screen.getByText("Services Configuration")).toBeInTheDocument();
@@ -84,25 +90,29 @@ describe("EnvironmentWizard", () => {
       region: "us-east-1",
     };
 
-    render(
-      <MockWrapper>
-        <EnvironmentWizard {...defaultProps} newEnv={newEnv} setNewEnv={mockSetNewEnv} />
-      </MockWrapper>,
-    );
+    await act(async () => {
+      render(
+        <MockWrapper>
+          <EnvironmentWizard {...defaultProps} newEnv={newEnv} setNewEnv={mockSetNewEnv} />
+        </MockWrapper>,
+      );
+    });
 
     const nextButton = screen.getByText("Continue");
     expect(nextButton).toBeInTheDocument();
     expect(nextButton).not.toBeDisabled();
   });
 
-  it("calls onClose when close button is clicked", () => {
+  it("calls onClose when close button is clicked", async () => {
     const mockOnClose = vi.fn();
 
-    render(
-      <MockWrapper>
-        <EnvironmentWizard {...defaultProps} onClose={mockOnClose} />
-      </MockWrapper>,
-    );
+    await act(async () => {
+      render(
+        <MockWrapper>
+          <EnvironmentWizard {...defaultProps} onClose={mockOnClose} />
+        </MockWrapper>,
+      );
+    });
 
     // Find the X button (close button) - it should be the first button
     const buttons = screen.getAllByRole("button");
@@ -112,27 +122,31 @@ describe("EnvironmentWizard", () => {
     expect(mockOnClose).toHaveBeenCalled();
   });
 
-  it("shows loading state when isLoading is true", () => {
-    render(
-      <MockWrapper>
-        <EnvironmentWizard {...defaultProps} isLoading={true} />
-      </MockWrapper>,
-    );
+  it("shows loading state when isLoading is true", async () => {
+    await act(async () => {
+      render(
+        <MockWrapper>
+          <EnvironmentWizard {...defaultProps} isLoading={true} />
+        </MockWrapper>,
+      );
+    });
 
     expect(screen.getByText("Creating environment...")).toBeInTheDocument();
   });
 
-  it("shows update text in edit mode", () => {
-    render(
-      <MockWrapper>
-        <EnvironmentWizard {...defaultProps} isEditMode={true} isLoading={true} />
-      </MockWrapper>,
-    );
+  it("shows update text in edit mode", async () => {
+    await act(async () => {
+      render(
+        <MockWrapper>
+          <EnvironmentWizard {...defaultProps} isEditMode={true} isLoading={true} />
+        </MockWrapper>,
+      );
+    });
 
     expect(screen.getByText("Updating environment...")).toBeInTheDocument();
   });
 
-  it("renders within error boundary and catches errors gracefully", () => {
+  it("renders within error boundary and catches errors gracefully", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     // Force an error by passing invalid props
@@ -141,11 +155,13 @@ describe("EnvironmentWizard", () => {
       newEnv: null, // This should trigger the null check in WizardContainer
     };
 
-    render(
-      <MockWrapper>
-        <EnvironmentWizard {...invalidProps} />
-      </MockWrapper>,
-    );
+    await act(async () => {
+      render(
+        <MockWrapper>
+          <EnvironmentWizard {...invalidProps} />
+        </MockWrapper>,
+      );
+    });
 
     // Should render error boundary when newEnv is null
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
@@ -153,14 +169,16 @@ describe("EnvironmentWizard", () => {
     consoleSpy.mockRestore();
   });
 
-  it("handles environment name input correctly", () => {
+  it("handles environment name input correctly", async () => {
     const mockSetNewEnv = vi.fn();
 
-    render(
-      <MockWrapper>
-        <EnvironmentWizard {...defaultProps} setNewEnv={mockSetNewEnv} />
-      </MockWrapper>,
-    );
+    await act(async () => {
+      render(
+        <MockWrapper>
+          <EnvironmentWizard {...defaultProps} setNewEnv={mockSetNewEnv} />
+        </MockWrapper>,
+      );
+    });
 
     const nameInput = screen.getByPlaceholderText(/production, staging/i);
     fireEvent.change(nameInput, {
