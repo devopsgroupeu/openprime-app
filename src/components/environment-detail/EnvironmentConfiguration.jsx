@@ -407,9 +407,7 @@ const EnvironmentConfiguration = ({ environment }) => {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               isPushing
                 ? "bg-gray-500 cursor-not-allowed text-white"
-                : isDark
-                  ? "bg-orange-600 hover:bg-orange-700 text-white"
-                  : "bg-orange-600 hover:bg-orange-700 text-white"
+                : "bg-orange-600 hover:bg-orange-700 text-white"
             }`}
           >
             <GitBranch className="w-4 h-4 inline mr-2" />
