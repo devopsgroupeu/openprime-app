@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.3.0...v1.4.0) (2026-03-03)
+
+### 🚀 Features
+
+* **tf_backend:** set s3 locking as default, modify UI ([ba30c6e](https://github.com/devopsgroupeu/openprime-app/commit/ba30c6efad4799992e8fb3db43b318b0ac587cca))
+
 ## [1.3.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.2.0...v1.3.0) (2026-03-03)
 
 ### 🚀 Features
