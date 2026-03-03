@@ -187,7 +187,7 @@ async function authenticateWithKeycloak(page) {
     console.log("  ✓ Authentication successful");
   } catch (error) {
     console.error("  ✗ Authentication failed:", error.message);
-    throw new Error(`Keycloak authentication failed: ${error.message}`);
+    throw new Error(`Keycloak authentication failed: ${error.message}`, { cause: error });
   }
 }
 

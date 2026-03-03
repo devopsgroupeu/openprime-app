@@ -5,36 +5,21 @@ on:
     branches:
       - main
       - dev
+  push:
+    branches:
+      - main
+      - dev
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  lint-and-test:
-    name: Lint & Test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Check formatting
-        run: npm run format:check
-
-      - name: Lint code
-        run: npm run lint
-
-      - name: Run tests
-        run: npm test -- --coverage --watchAll=false
-
-      - name: Build application
-        run: npm run build
+  test:
+    uses: ./.github/workflows/reusable-test.yml
 
   validate-pr-title:
     name: Validate PR Title

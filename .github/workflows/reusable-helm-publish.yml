@@ -1,0 +1,78 @@
+name: Reusable Helm Publish
+
+on:
+  workflow_call:
+    inputs:
+      chart-path:
+        required: false
+        type: string
+        default: "./chart"
+      version:
+        required: false
+        type: string
+        description: "The version of the Helm chart to publish"
+      image-tag:
+        required: false
+        type: string
+        description: "The tag of the Docker image to use in values.yaml"
+      registry:
+        required: false
+        type: string
+        default: "ghcr.io"
+      image-name:
+        required: false
+        type: string
+        default: ${{ github.repository }}
+      package-name:
+        required: true
+        type: string
+        description: "The name of the package (e.g., openprime-app)"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: "v3.12.0"
+
+      - name: Log in to Container Registry
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ${{ inputs.registry }} --username ${{ github.actor }} --password-stdin
+
+      - name: Update Chart Version
+        id: update
+        run: |
+          VERSION="${{ inputs.version }}"
+          if [ -z "$VERSION" ]; then
+            VERSION="0.0.0-${{ github.sha }}"
+          fi
+
+          IMAGE_TAG="${{ inputs.image-tag }}"
+          if [ -z "$IMAGE_TAG" ]; then
+            IMAGE_TAG="$VERSION"
+          fi
+
+          # Update Chart.yaml
+          sed -i "s/^version:.*/version: ${VERSION}/" ${{ inputs.chart-path }}/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: "${IMAGE_TAG}"/" ${{ inputs.chart-path }}/Chart.yaml
+
+          # Update values.yaml
+          sed -i "s|repository:.*|repository: ${{ inputs.registry }}/${{ inputs.image-name }}|" ${{ inputs.chart-path }}/values.yaml
+          sed -i "s/tag:.*/tag: "${IMAGE_TAG}"/" ${{ inputs.chart-path }}/values.yaml
+
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Package and Push Helm Chart
+        run: |
+          VERSION="${{ steps.update.outputs.version }}"
+          mkdir -p charts/
+          helm package ${{ inputs.chart-path }} --destination ./charts/
+          helm push ./charts/${{ inputs.package-name }}-${VERSION}.tgz oci://${{ inputs.registry }}/${{ github.repository_owner }}/helm
