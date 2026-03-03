@@ -15,12 +15,22 @@ export class AuthService {
   }
 
   async makeAuthenticatedRequest(url, options = {}) {
+    const controller = new AbortController();
+
+    const { timeout, ...fetchOptions } = options;
+    const timer = timeout
+      ? setTimeout(() => {
+          controller.abort(`timeout after ${timeout} ms`);
+        }, timeout)
+      : null;
+
     try {
       const response = await fetch(`${this.baseURL}${url}`, {
-        ...options,
+        ...fetchOptions,
+        signal: controller.signal,
         headers: {
           ...this.getAuthHeaders(),
-          ...options.headers,
+          ...fetchOptions.headers,
         },
       });
 
@@ -41,11 +51,12 @@ export class AuthService {
         error.status = response.status;
         throw error;
       }
-
       return response;
     } catch (error) {
       console.error("API request failed:", error);
       throw error;
+    } finally {
+      clearTimeout(timer);
     }
   }
 
