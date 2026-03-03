@@ -555,42 +555,38 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                 </div>
               </div>
 
+              {/* S3 Bucket Name Display/Input */}
               {!useExistingBucket ? (
                 // Create New Bucket Section
-                <>
-                  <div
-                    className={`p-4 rounded-lg border ${
-                      isDark
-                        ? "bg-blue-500/10 border-blue-500/30 text-blue-300"
-                        : "bg-blue-50 border-blue-200 text-blue-700"
-                    }`}
-                  >
-                    <div className="flex items-start">
-                      <Database className="w-4 h-4 mr-2 mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium">S3 Bucket Name (Auto-generated)</p>
-                        <p className="text-xs mt-1">
-                          Format:{" "}
-                          <code className="font-mono">
-                            &lt;AWS_ACCOUNT_ID&gt;-terraform-&lt;environment-name&gt;
-                          </code>
-                        </p>
-                        {newEnv.name &&
-                          credentials.find((c) => c.id === newEnv.cloudCredentialId) && (
-                            <p className="text-xs mt-1 font-mono">
-                              Preview:{" "}
-                              {
-                                credentials.find((c) => c.id === newEnv.cloudCredentialId)
-                                  ?.identifier
-                              }
-                              -terraform-
-                              {newEnv.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}
-                            </p>
-                          )}
-                      </div>
+                <div
+                  className={`p-4 rounded-lg border ${
+                    isDark
+                      ? "bg-blue-500/10 border-blue-500/30 text-blue-300"
+                      : "bg-blue-50 border-blue-200 text-blue-700"
+                  }`}
+                >
+                  <div className="flex items-start">
+                    <Database className="w-4 h-4 mr-2 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium">S3 Bucket Name (Auto-generated)</p>
+                      <p className="text-xs mt-1">
+                        Format:{" "}
+                        <code className="font-mono">
+                          &lt;AWS_ACCOUNT_ID&gt;-terraform-&lt;environment-name&gt;
+                        </code>
+                      </p>
+                      {newEnv.name &&
+                        credentials.find((c) => c.id === newEnv.cloudCredentialId) && (
+                          <p className="text-xs mt-1 font-mono">
+                            Preview:{" "}
+                            {credentials.find((c) => c.id === newEnv.cloudCredentialId)?.identifier}
+                            -terraform-
+                            {newEnv.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}
+                          </p>
+                        )}
                     </div>
                   </div>
-                </>
+                </div>
               ) : (
                 // Use Existing Bucket Section
                 <div>
@@ -626,76 +622,23 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                 </div>
               )}
 
-              <div>
-                <label
-                  className={`block text-sm font-medium mb-2 ${
-                    isDark ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
-                  State Locking Mechanism
-                </label>
-                <select
-                  className={`w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 ${
-                    isDark
-                      ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
-                      : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
-                  } ${backendCreated || creatingBackend ? "opacity-60 cursor-not-allowed" : ""}`}
-                  value={newEnv.terraformBackend?.lockingMechanism || "s3"}
-                  disabled={backendCreated || creatingBackend}
-                  onChange={(e) =>
-                    setNewEnv({
-                      ...newEnv,
-                      terraformBackend: {
-                        ...newEnv.terraformBackend,
-                        lockingMechanism: e.target.value,
-                      },
-                    })
-                  }
-                >
-                  <option value="s3">S3 Native Locking (Terraform 1.11+)</option>
-                  <option value="dynamodb">DynamoDB Locking</option>
-                </select>
-                <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                  {newEnv.terraformBackend?.lockingMechanism === "s3"
-                    ? "Uses S3 native locking (requires Terraform 1.11 or higher)"
-                    : "Creates DynamoDB table for state locking (works with all Terraform versions)"}
-                </p>
-              </div>
-
-              {newEnv.terraformBackend?.lockingMechanism === "dynamodb" && (
-                <div>
-                  <label
-                    className={`block text-sm font-medium mb-2 ${
-                      isDark ? "text-gray-300" : "text-gray-700"
-                    }`}
-                  >
-                    DynamoDB Table Name
-                  </label>
-                  <input
-                    type="text"
-                    className={`w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 ${
-                      isDark
-                        ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
-                        : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
-                    } ${backendCreated || creatingBackend ? "opacity-60 cursor-not-allowed" : ""}`}
-                    placeholder="e.g., terraform-state-lock"
-                    value={newEnv.terraformBackend?.tableName || ""}
-                    disabled={backendCreated || creatingBackend}
-                    onChange={(e) =>
-                      setNewEnv({
-                        ...newEnv,
-                        terraformBackend: {
-                          ...newEnv.terraformBackend,
-                          tableName: e.target.value,
-                        },
-                      })
-                    }
-                  />
-                  <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                    DynamoDB table for managing Terraform state locks
-                  </p>
+              <div
+                className={`p-4 rounded-lg border ${
+                  isDark
+                    ? "bg-blue-500/10 border-blue-500/30 text-blue-300"
+                    : "bg-blue-50 border-blue-200 text-blue-700"
+                }`}
+              >
+                <div className="flex items-start">
+                  <Database className="w-4 h-4 mr-2 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">State Locking</p>
+                    <p className="text-xs mt-1">
+                      Using S3 native locking (requires Terraform 1.11 or higher).
+                    </p>
+                  </div>
                 </div>
-              )}
+              </div>
 
               {/* Create Backend Button - Only show when creating new bucket */}
               {!useExistingBucket && (
