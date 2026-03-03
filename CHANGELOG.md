@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.2.0...v1.3.0) (2026-03-03)
+
+### 🚀 Features
+
+* **OPE-138:** git push functionality ([#13](https://github.com/devopsgroupeu/openprime-app/issues/13)) ([5001ff7](https://github.com/devopsgroupeu/openprime-app/commit/5001ff78535d8b5bb585963e1a5230daef3f7619))
+
 ## [1.2.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.1.2...v1.2.0) (2026-03-03)
 
 ### 🚀 Features
