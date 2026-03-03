@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.1.2...v1.2.0) (2026-03-03)
+
+### 🚀 Features
+
+* **cicd/npm:** upgrade npm packages, mirror cicd setup from openprime-app-backend, use vite instead of CRA ([#14](https://github.com/devopsgroupeu/openprime-app/issues/14)) ([56d1a8c](https://github.com/devopsgroupeu/openprime-app/commit/56d1a8cdd2fc6fdf47c46ff4e8f19ac8c8a072a5))
+
 ## <small>1.1.2 (2026-01-19)</small>
 
 * fix(ci): use Chart.yaml version for push/workflow_dispatch events ([5534c0d](https://github.com/devopsgroupeu/openprime-app/commit/5534c0d))
