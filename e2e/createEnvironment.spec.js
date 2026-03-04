@@ -3,10 +3,12 @@
  *
  * This test validates the complete workflow of creating an environment with:
  * 1. Basic configuration (environment name, prefix, provider, region)
- * 2. Terraform backend enabled with S3 bucket: 559050227177-viro-dev
- * 3. All AWS services enabled (15 services)
- * 4. VPC CIDR configured to 10.69.0.0/16
- * 5. All available Helm charts enabled (9 charts across all categories)
+ * 2. Git repository + branch configured → verified in generated ZIP (argocd repoURL / targetRevision)
+ * 3. Terraform backend enabled
+ * 4. All AWS services enabled (15 services)
+ * 5. VPC CIDR configured to 10.69.0.0/16
+ * 6. All available Helm charts enabled (9 charts across all categories)
+ * 7. Downloaded ZIP and JSON are cross-checked against what was set in the UI
  *
  * Test User Credentials:
  * - Username: testuser
@@ -22,6 +24,8 @@ describe("Create Environment with All Helm Charts", () => {
     const envPrefix = randomLetter + randomSuffix.substring(0, 1); // 2 chars, starts with letter
     const s3BucketName = "559050227177-viro-dev";
     const vpcCidr = "10.69.0.0/16";
+    const gitRepoUrl = "git@github.com:test-org/infra-repo.git";
+    const gitBranch = "production";
 
     console.log(`Creating environment: ${envName} with prefix: ${envPrefix}-`);
 
@@ -125,6 +129,29 @@ describe("Create Environment with All Helm Charts", () => {
       // The UI shows format: <AWS_ACCOUNT_ID>-terraform-<environment-name>
       // In a production implementation, this would need to be customizable
       console.log(`Note: S3 bucket will be auto-generated (target: ${s3BucketName})`);
+    });
+
+    // Step 4b: Enable Git Repository with URL and branch
+    await test.step("Configure Git repository", async () => {
+      const gitSection = ctx.page
+        .locator("text=Git Repository (Optional)")
+        .locator("..")
+        .locator("..");
+      const gitToggle = gitSection.locator('input[type="checkbox"]');
+
+      const isChecked = await gitToggle.isChecked().catch(() => false);
+      if (!isChecked) {
+        await gitToggle.check({ force: true });
+        await ctx.page.waitForTimeout(300);
+      }
+
+      const repoInput = ctx.page.getByPlaceholder(/git@github\.com/i);
+      await repoInput.fill(gitRepoUrl);
+      console.log(`✓ Git repository URL set: ${gitRepoUrl}`);
+
+      const branchInput = ctx.page.getByPlaceholder(/^main$/i);
+      await branchInput.fill(gitBranch);
+      console.log(`✓ Target branch set: ${gitBranch}`);
     });
 
     // Step 5: Continue to Services Configuration
@@ -327,176 +354,121 @@ describe("Create Environment with All Helm Charts", () => {
       console.log(`   - Helm Charts: 9 charts enabled`);
     });
 
-    // Step 12: Navigate to environment and download configuration
-    await test.step("Download configuration", async () => {
-      // Wait for environment to be created and wizard to close
+    // Step 12: Navigate to environment and download infrastructure ZIP + config JSON, then cross-check
+    await test.step("Download and verify infrastructure ZIP", async () => {
       await ctx.page.waitForTimeout(3000);
 
-      // We should be back on the environments list page
-      // Look for the newly created environment card
       const envCard = ctx.page.locator(`[data-testid="env-card-${envName}"]`);
-
-      // If not found by testid, try finding by text
       if ((await envCard.count()) === 0) {
         const envByName = ctx.page.getByText(envName, { exact: false });
         if ((await envByName.count()) > 0) {
-          console.log(`✓ Found environment: ${envName}`);
-          // Click on the environment to open details
           await envByName.first().click();
         } else {
-          console.warn(`⚠ Environment ${envName} not found in list`);
-          // Try navigating directly by URL
           await ctx.goto(`/environments/${envName}`);
         }
       } else {
-        console.log(`✓ Found environment card: ${envName}`);
         await envCard.click();
       }
-
-      // Wait for environment detail page to load
+      console.log(`✓ Found environment: ${envName}`);
       await ctx.page.waitForTimeout(2000);
 
-      // Click on Configuration tab
       const configTab = ctx.page
         .getByRole("button", { name: /configuration/i })
         .or(ctx.page.getByText("Configuration", { exact: true }));
+      await configTab.first().click();
+      await ctx.page.waitForTimeout(1000);
+      console.log("✓ Opened Configuration tab");
 
-      if ((await configTab.count()) > 0) {
-        await configTab.first().click();
-        await ctx.page.waitForTimeout(1000);
-        console.log("✓ Opened Configuration tab");
+      // Download the infrastructure ZIP (Generate button)
+      const generateButton = ctx.page.getByRole("button", { name: /generate/i });
+      if ((await generateButton.count()) > 0) {
+        const downloadPromise = ctx.page.waitForEvent("download", { timeout: 50000 });
+        await generateButton.first().click();
+        const download = await downloadPromise;
+        const fileName = download.suggestedFilename();
 
-        // Find and click the Download button (green button with Download icon)
-        const downloadButton = ctx.page.getByRole("button", { name: /generate/i }).filter({
-          hasText: /generate/i,
-        });
+        const fs = require("fs");
+        const path = require("path");
+        const AdmZip = require("adm-zip");
+        const downloadsDir = path.join(__dirname, "downloads");
+        fs.mkdirSync(downloadsDir, { recursive: true });
 
-        if ((await downloadButton.count()) > 0) {
-          // Set up download listener
-          const downloadPromise = ctx.page.waitForEvent("download", {
-            timeout: 50000,
-          });
+        const zipPath = path.join(downloadsDir, fileName);
+        await download.saveAs(zipPath);
+        console.log(`✓ Infrastructure ZIP downloaded: ${fileName}`);
 
-          await downloadButton.first().click();
-          console.log("✓ Download button clicked");
+        // Extract ZIP so the full generated tree is browsable
+        const zip = new AdmZip(zipPath);
+        const extractDir = path.join(downloadsDir, envName);
+        zip.extractAllTo(extractDir, true);
+        console.log(`✓ Extracted to: ${extractDir}`);
+        const argoEntry = zip.getEntries().find((e) => e.entryName.includes("applications.yaml"));
+        if (argoEntry) {
+          const argoContent = argoEntry.getData().toString("utf8");
 
-          try {
-            const download = await downloadPromise;
-            const fileName = download.suggestedFilename();
-            console.log(`✓ Configuration downloaded: ${fileName}`);
+          if (argoContent.includes(gitRepoUrl)) {
+            console.log(`✓ ZIP ArgoCD repoURL matches UI value: ${gitRepoUrl}`);
+          } else {
+            throw new Error(
+              `✗ ZIP ArgoCD repoURL mismatch — expected "${gitRepoUrl}" but not found in applications.yaml`,
+            );
+          }
 
-            // Save the downloaded file to e2e/downloads directory
-            const fs = require("fs");
-            const path = require("path");
-            const downloadsDir = path.join(__dirname, "downloads");
-
-            // Create downloads directory if it doesn't exist
-            if (!fs.existsSync(downloadsDir)) {
-              fs.mkdirSync(downloadsDir, { recursive: true });
-            }
-
-            const filePath = path.join(downloadsDir, fileName);
-            await download.saveAs(filePath);
-            console.log(`✓ File saved to: ${filePath}`);
-
-            // Verify filename format
-            if (fileName.includes(envName) || fileName.includes("config")) {
-              console.log("✓ Downloaded file has expected name format");
-            }
-          } catch (downloadError) {
-            console.warn("⚠ Download event not captured, but button was clicked");
+          if (argoContent.includes(gitBranch)) {
+            console.log(`✓ ZIP ArgoCD targetRevision matches UI value: ${gitBranch}`);
+          } else {
+            throw new Error(
+              `✗ ZIP ArgoCD targetRevision mismatch — expected "${gitBranch}" but not found in applications.yaml`,
+            );
           }
         } else {
-          console.warn("⚠ Download button not found on Configuration tab");
+          console.warn("⚠ applications.yaml not found in ZIP — skipping ArgoCD content check");
         }
       } else {
-        console.warn("⚠ Configuration tab not found");
+        console.warn("⚠ Generate button not found on Configuration tab");
       }
     });
 
-    await test.step("Download configuration", async () => {
-      // Wait for environment to be created and wizard to close
-      await ctx.page.waitForTimeout(3000);
+    await test.step("Download and verify config JSON", async () => {
+      await ctx.page.waitForTimeout(1000);
 
-      // We should be back on the environments list page
-      // Look for the newly created environment card
-      const envCard = ctx.page.locator(`[data-testid="env-card-${envName}"]`);
+      const downloadButton = ctx.page.getByRole("button", { name: /download/i }).filter({
+        hasText: /download/i,
+      });
 
-      // If not found by testid, try finding by text
-      if ((await envCard.count()) === 0) {
-        const envByName = ctx.page.getByText(envName, { exact: false });
-        if ((await envByName.count()) > 0) {
-          console.log(`✓ Found environment: ${envName}`);
-          // Click on the environment to open details
-          await envByName.first().click();
-        } else {
-          console.warn(`⚠ Environment ${envName} not found in list`);
-          // Try navigating directly by URL
-          await ctx.goto(`/environments/${envName}`);
-        }
-      } else {
-        console.log(`✓ Found environment card: ${envName}`);
-        await envCard.click();
-      }
+      if ((await downloadButton.count()) > 0) {
+        const downloadPromise = ctx.page.waitForEvent("download", { timeout: 10000 });
+        await downloadButton.first().click();
+        const download = await downloadPromise;
+        const fileName = download.suggestedFilename();
 
-      // Wait for environment detail page to load
-      await ctx.page.waitForTimeout(2000);
+        const fs = require("fs");
+        const path = require("path");
+        const downloadsDir = path.join(__dirname, "downloads");
+        const filePath = path.join(downloadsDir, fileName);
+        await download.saveAs(filePath);
+        console.log(`✓ Config JSON downloaded: ${fileName}`);
 
-      // Click on Configuration tab
-      const configTab = ctx.page
-        .getByRole("button", { name: /configuration/i })
-        .or(ctx.page.getByText("Configuration", { exact: true }));
+        // Cross-check: parse the JSON and verify key fields match what was set in the UI
+        const config = JSON.parse(fs.readFileSync(filePath, "utf8"));
 
-      if ((await configTab.count()) > 0) {
-        await configTab.first().click();
-        await ctx.page.waitForTimeout(1000);
-        console.log("✓ Opened Configuration tab");
+        const checks = [
+          [config.gitRepository?.url === gitRepoUrl, `gitRepository.url = ${gitRepoUrl}`],
+          [config.gitRepository?.branch === gitBranch, `gitRepository.branch = ${gitBranch}`],
+          [config.provider === "aws", `provider = aws`],
+          [config.region === "eu-west-1", `region = eu-west-1`],
+          [config.services?.vpc?.enabled === true, `services.vpc.enabled = true`],
+        ];
 
-        // Find and click the Download button (green button with Download icon)
-        const downloadButton = ctx.page.getByRole("button", { name: /download/i }).filter({
-          hasText: /download/i,
-        });
-
-        if ((await downloadButton.count()) > 0) {
-          // Set up download listener
-          const downloadPromise = ctx.page.waitForEvent("download", {
-            timeout: 5000,
-          });
-
-          await downloadButton.first().click();
-          console.log("✓ Download button clicked");
-
-          try {
-            const download = await downloadPromise;
-            const fileName = download.suggestedFilename();
-            console.log(`✓ Configuration downloaded: ${fileName}`);
-
-            // Save the downloaded file to e2e/downloads directory
-            const fs = require("fs");
-            const path = require("path");
-            const downloadsDir = path.join(__dirname, "downloads");
-
-            // Create downloads directory if it doesn't exist
-            if (!fs.existsSync(downloadsDir)) {
-              fs.mkdirSync(downloadsDir, { recursive: true });
-            }
-
-            const filePath = path.join(downloadsDir, fileName);
-            await download.saveAs(filePath);
-            console.log(`✓ File saved to: ${filePath}`);
-
-            // Verify filename format
-            if (fileName.includes(envName) || fileName.includes("config")) {
-              console.log("✓ Downloaded file has expected name format");
-            }
-          } catch (downloadError) {
-            console.warn("⚠ Download event not captured, but button was clicked");
+        for (const [passed, label] of checks) {
+          if (passed) {
+            console.log(`✓ JSON field verified: ${label}`);
+          } else {
+            throw new Error(`✗ JSON field mismatch: expected ${label}`);
           }
-        } else {
-          console.warn("⚠ Download button not found on Configuration tab");
         }
       } else {
-        console.warn("⚠ Configuration tab not found");
+        console.warn("⚠ Download button not found");
       }
     });
   });

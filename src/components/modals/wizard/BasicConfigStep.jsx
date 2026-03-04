@@ -10,6 +10,7 @@ import {
   CheckCircle,
   GitBranch,
   Tag,
+  AlertTriangle,
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useToast } from "../../../contexts/ToastContext";
@@ -724,6 +725,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                     ...newEnv.gitRepository,
                     enabled: e.target.checked,
                     url: newEnv.gitRepository?.url || "",
+                    branch: newEnv.gitRepository?.branch || "main",
                     sshKey: newEnv.gitRepository?.sshKey || "",
                   },
                 })
@@ -789,6 +791,38 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                   isDark ? "text-gray-300" : "text-gray-700"
                 }`}
               >
+                Target Branch / Revision
+              </label>
+              <input
+                type="text"
+                className={`w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 ${
+                  isDark
+                    ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
+                    : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
+                }`}
+                placeholder="main"
+                value={newEnv.gitRepository?.branch || ""}
+                onChange={(e) =>
+                  setNewEnv({
+                    ...newEnv,
+                    gitRepository: {
+                      ...newEnv.gitRepository,
+                      branch: e.target.value,
+                    },
+                  })
+                }
+              />
+              <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                Branch or Git revision ArgoCD will track (e.g. main, HEAD, v1.2.0)
+              </p>
+            </div>
+
+            <div>
+              <label
+                className={`block text-sm font-medium mb-2 ${
+                  isDark ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
                 SSH Private Key (Deploy Key)
               </label>
               <textarea
@@ -813,6 +847,47 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
               <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                 Private SSH key with read access to the repository
               </p>
+            </div>
+
+            {/* Deployment prerequisite callout */}
+            <div
+              className={`p-3 rounded-lg border ${
+                isDark ? "border-amber-500/40 bg-amber-500/10" : "border-amber-400/60 bg-amber-50"
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <AlertTriangle
+                  className={`w-4 h-4 mt-0.5 shrink-0 ${isDark ? "text-amber-400" : "text-amber-600"}`}
+                />
+                <div className="space-y-1.5 min-w-0">
+                  <p
+                    className={`text-xs font-semibold ${isDark ? "text-amber-400" : "text-amber-700"}`}
+                  >
+                    Deployment prerequisites
+                  </p>
+                  <p className={`text-xs ${isDark ? "text-amber-300" : "text-amber-700"}`}>
+                    Before running Terraform, store the SSH private key in AWS Secrets Manager:
+                  </p>
+                  <pre
+                    className={`text-xs p-2 rounded font-mono overflow-x-auto whitespace-pre-wrap break-all ${
+                      isDark ? "bg-black/40 text-amber-200" : "bg-amber-100 text-amber-900"
+                    }`}
+                  >
+                    {`aws secretsmanager create-secret \\
+  --name argocd/git-ssh-private-key \\
+  --secret-string file:///path/to/private-key`}
+                  </pre>
+                  <p className={`text-xs ${isDark ? "text-amber-300" : "text-amber-700"}`}>
+                    Also add the corresponding <strong>public key</strong> as a{" "}
+                    <strong>deploy key</strong> to your git repository (read access is sufficient).
+                  </p>
+                  <p className={`text-xs ${isDark ? "text-amber-300" : "text-amber-700"}`}>
+                    ArgoCD will authenticate to git using this key at runtime. It also uses{" "}
+                    <strong>Keycloak SSO</strong> for the ArgoCD UI — no separate ArgoCD admin
+                    password is needed.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}

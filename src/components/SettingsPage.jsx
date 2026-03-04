@@ -1,6 +1,6 @@
 // src/components/SettingsPage.js
 import { useState, useEffect } from "react";
-import { Cloud, GitBranch, Shield, Terminal, User, Save, Plus, Edit2, Trash2 } from "lucide-react";
+import { Cloud, Shield, Terminal, User, Save, Plus, Edit2, Trash2, GitBranch } from "lucide-react";
 import Navigation from "./Navigation";
 import { useTheme } from "../contexts/ThemeContext";
 import { useToast } from "../contexts/ToastContext";
@@ -23,6 +23,10 @@ const SettingsPage = () => {
     firstName: "",
     lastName: "",
     email: "",
+  });
+  const [gitIntegration, setGitIntegration] = useState({
+    platform: "github",
+    orgUrl: "",
   });
   const [cloudCredentials, setCloudCredentials] = useState([]);
   const [showCredentialModal, setShowCredentialModal] = useState(false);
@@ -51,6 +55,9 @@ const SettingsPage = () => {
       });
 
       setUserPreferences(preferencesResponse.preferences);
+      if (preferencesResponse.preferences?.gitIntegration) {
+        setGitIntegration(preferencesResponse.preferences.gitIntegration);
+      }
     } catch (error) {
       console.error("Failed to load user data:", error);
     } finally {
@@ -85,7 +92,7 @@ const SettingsPage = () => {
       setSaving(true);
       await Promise.all([
         authService.put("/users/me/profile", profile),
-        authService.put("/users/me/preferences", userPreferences),
+        authService.put("/users/me/preferences", { ...userPreferences, gitIntegration }),
       ]);
     } catch (error) {
       console.error("Failed to save settings:", error);
@@ -456,13 +463,17 @@ const SettingsPage = () => {
             }`}
           >
             <h2
-              className={`text-xl font-bold mb-4 flex items-center transition-colors ${
+              className={`text-xl font-bold mb-1 flex items-center transition-colors ${
                 isDark ? "text-white" : "text-primary"
               }`}
             >
               <GitBranch className="w-5 h-5 mr-2 text-primary" />
               Git Integration
             </h2>
+            <p className={`text-sm mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              Configure the organization or group where new infrastructure repositories will be
+              generated.
+            </p>
             <div className="space-y-4">
               <div>
                 <label
@@ -470,17 +481,22 @@ const SettingsPage = () => {
                     isDark ? "text-tertiary" : "text-secondary"
                   }`}
                 >
-                  Repository URL
+                  Platform
                 </label>
-                <input
-                  type="text"
+                <select
+                  value={gitIntegration.platform}
+                  onChange={(e) =>
+                    setGitIntegration((prev) => ({ ...prev, platform: e.target.value }))
+                  }
                   className={`w-full px-4 py-2 rounded-lg border transition-colors ${
                     isDark
                       ? "bg-gray-700 border-gray-600 text-white"
                       : "bg-white border-gray-300 text-primary"
                   }`}
-                  placeholder="https://github.com/your-org/infrastructure"
-                />
+                >
+                  <option value="github">GitHub</option>
+                  <option value="gitlab">GitLab</option>
+                </select>
               </div>
               <div>
                 <label
@@ -488,17 +504,30 @@ const SettingsPage = () => {
                     isDark ? "text-tertiary" : "text-secondary"
                   }`}
                 >
-                  Default Branch
+                  Organization / Group URL
                 </label>
                 <input
                   type="text"
+                  value={gitIntegration.orgUrl}
+                  onChange={(e) =>
+                    setGitIntegration((prev) => ({ ...prev, orgUrl: e.target.value }))
+                  }
                   className={`w-full px-4 py-2 rounded-lg border transition-colors ${
                     isDark
                       ? "bg-gray-700 border-gray-600 text-white"
                       : "bg-white border-gray-300 text-primary"
                   }`}
-                  defaultValue="main"
+                  placeholder={
+                    gitIntegration.platform === "github"
+                      ? "https://github.com/my-org"
+                      : "https://gitlab.com/my-group"
+                  }
                 />
+                <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                  New repositories will be created under this{" "}
+                  {gitIntegration.platform === "github" ? "organization" : "group"} when you click
+                  &quot;Generate Repository&quot; on an environment.
+                </p>
               </div>
             </div>
           </div>
@@ -514,7 +543,7 @@ const SettingsPage = () => {
               }`}
             >
               <Shield className="w-5 h-5 mr-2 text-primary" />
-              Security & Compliance
+              Security &amp; Compliance
             </h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
