@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.4.0...v1.5.0) (2026-03-04)
+
+### 🚀 Features
+
+* **git_integration:** enhance Git integration in settings and wizard steps, update tests ([832e3f7](https://github.com/devopsgroupeu/openprime-app/commit/832e3f79471ea567fd98eedc180eecaa87bc5bc4))
+
 ## [1.4.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.3.0...v1.4.0) (2026-03-03)
 
 ### 🚀 Features
