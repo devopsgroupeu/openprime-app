@@ -4,7 +4,6 @@ import {
   Cloud,
   Server,
   Settings,
-  Download,
   Network,
   Box,
   Database,
@@ -286,10 +285,6 @@ const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
           >
             <Settings className="w-4 h-4 mr-2" />
             Configure
-          </button>
-          <button className="flex-1 px-4 py-2 bg-blue-600/20 text-blue-400 rounded-lg hover:bg-blue-600/30 transition-all flex items-center justify-center">
-            <Download className="w-4 h-4 mr-2" />
-            Download IaC
           </button>
           <button
             onClick={() => setShowDeleteModal(true)}

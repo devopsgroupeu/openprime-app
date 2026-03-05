@@ -8,21 +8,26 @@ import {
   GitBranch,
   Database,
   Key,
+  KeyRound,
   ExternalLink,
   Eye,
   EyeOff,
+  X,
 } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useToast } from "../../contexts/ToastContext";
 import authService from "../../services/authService";
 
-const EnvironmentConfiguration = ({ environment }) => {
+const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
   const { isDark } = useTheme();
   const { success, error: showError } = useToast();
   const [format, setFormat] = useState("json");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPushing, setIsPushing] = useState(false);
   const [showSshKey, setShowSshKey] = useState(false);
+  const [showSshKeyEditor, setShowSshKeyEditor] = useState(false);
+  const [newSshKey, setNewSshKey] = useState("");
+  const [isSavingSshKey, setIsSavingSshKey] = useState(false);
 
   const generateConfiguration = () => {
     const config = {
@@ -164,6 +169,33 @@ const EnvironmentConfiguration = ({ environment }) => {
       showError(err.message || "Failed to push to Git. Please try again.");
     } finally {
       setIsPushing(false);
+    }
+  };
+
+  const handleRotateSshKey = async () => {
+    if (!newSshKey.trim()) {
+      showError("Please enter an SSH private key");
+      return;
+    }
+
+    try {
+      setIsSavingSshKey(true);
+      const updated = await authService.put(`/environments/${environment.id}`, {
+        ...environment,
+        gitRepository: {
+          ...environment.git_repository,
+          sshKey: newSshKey.trim(),
+        },
+      });
+      onEnvironmentUpdate?.(updated);
+      setShowSshKeyEditor(false);
+      setNewSshKey("");
+      success("SSH key updated successfully");
+    } catch (err) {
+      console.error("Failed to update SSH key:", err);
+      showError(err.message || "Failed to update SSH key");
+    } finally {
+      setIsSavingSshKey(false);
     }
   };
 
@@ -324,6 +356,17 @@ const EnvironmentConfiguration = ({ environment }) => {
                   </button>
                 )}
               </div>
+              <button
+                onClick={() => setShowSshKeyEditor(true)}
+                className={`mt-2 flex items-center space-x-2 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                  isDark
+                    ? "text-gray-400 hover:text-gray-200 hover:bg-gray-700/50"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                }`}
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>Rotate SSH Key</span>
+              </button>
             </div>
           </div>
         </div>
@@ -461,6 +504,89 @@ const EnvironmentConfiguration = ({ environment }) => {
           </div>
         </div>
       </div>
+
+      {showSshKeyEditor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => {
+              setShowSshKeyEditor(false);
+              setNewSshKey("");
+            }}
+          />
+          <div
+            className={`relative w-full max-w-lg mx-4 rounded-xl border shadow-2xl ${
+              isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+            }`}
+          >
+            <div
+              className={`flex items-center justify-between p-5 border-b ${
+                isDark ? "border-gray-700" : "border-gray-200"
+              }`}
+            >
+              <div className="flex items-center space-x-3">
+                <KeyRound className="w-5 h-5 text-teal-500" />
+                <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                  Rotate SSH Key
+                </h3>
+              </div>
+              <button
+                onClick={() => {
+                  setShowSshKeyEditor(false);
+                  setNewSshKey("");
+                }}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  isDark ? "hover:bg-gray-700 text-gray-400" : "hover:bg-gray-100 text-gray-500"
+                }`}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                Paste the new SSH private key for{" "}
+                <span className="font-mono font-medium">
+                  {environment.git_repository?.url
+                    ?.replace("git@github.com:", "")
+                    .replace("git@gitlab.com:", "")
+                    .replace(/\.git$/, "")}
+                </span>
+              </p>
+              <textarea
+                value={newSshKey}
+                onChange={(e) => setNewSshKey(e.target.value)}
+                rows={8}
+                placeholder="Paste your SSH private key here..."
+                className={`w-full px-4 py-3 rounded-lg border font-mono text-xs resize-none transition-colors ${
+                  isDark
+                    ? "bg-gray-900 border-gray-600 text-gray-200 placeholder-gray-600 focus:border-teal-500"
+                    : "bg-gray-50 border-gray-300 text-gray-800 placeholder-gray-400 focus:border-teal-500"
+                } focus:outline-none focus:ring-1 focus:ring-teal-500`}
+              />
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowSshKeyEditor(false);
+                    setNewSshKey("");
+                  }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRotateSshKey}
+                  disabled={isSavingSshKey || !newSshKey.trim()}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-teal-600 text-white hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSavingSshKey ? "Saving..." : "Update Key"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
