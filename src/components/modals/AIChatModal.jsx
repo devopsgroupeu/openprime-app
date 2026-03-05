@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { X, Send, MessageCircle, Bot, User, Check } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { getApiUrl } from "../../utils/envValidator";
+import keycloak from "../../config/keycloak";
 import { SERVICES_CONFIG, FIELD_TYPES } from "../../config/servicesConfig";
 
 /**
@@ -528,7 +529,10 @@ const AIChatModal = ({
 
       const response = await fetch(`${apiUrl}/ai/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${keycloak.token}`,
+        },
         body: JSON.stringify({
           messages: payloadMessages,
           topic: serviceTitle,
