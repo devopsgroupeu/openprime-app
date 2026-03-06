@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.5.0...v1.5.1) (2026-03-06)
+
+### 🐛 Bug Fixes
+
+* remove phantom features, add quick actions and SSH key rotation ([#15](https://github.com/devopsgroupeu/openprime-app/issues/15)) ([4d930aa](https://github.com/devopsgroupeu/openprime-app/commit/4d930aa96bcb2153335f7161d89cadc061bca9f0))
+
 ## [1.5.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.4.0...v1.5.0) (2026-03-04)
 
 ### 🚀 Features
