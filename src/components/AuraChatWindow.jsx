@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Sparkles, Minimize2 } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { getApiUrl } from "../utils/envValidator";
+import keycloak from "../config/keycloak";
 
 export const INITIAL_MESSAGES = [
   {
@@ -72,7 +73,10 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
       // POST request to AI chat endpoint
       const response = await fetch(`${apiUrl}/ai/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${keycloak.token}`,
+        },
         body: JSON.stringify({ messages: [...messages, userMessage] }),
       });
 

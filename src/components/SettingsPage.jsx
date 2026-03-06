@@ -1,6 +1,6 @@
 // src/components/SettingsPage.js
 import { useState, useEffect } from "react";
-import { Cloud, Shield, Terminal, User, Save, Plus, Edit2, Trash2, GitBranch } from "lucide-react";
+import { Cloud, User, Save, Plus, Edit2, Trash2, Settings } from "lucide-react";
 import Navigation from "./Navigation";
 import { useTheme } from "../contexts/ThemeContext";
 import { useToast } from "../contexts/ToastContext";
@@ -280,7 +280,7 @@ const SettingsPage = () => {
                 isDark ? "text-white" : "text-primary"
               }`}
             >
-              <Shield className="w-5 h-5 mr-2 text-primary" />
+              <Settings className="w-5 h-5 mr-2 text-primary" />
               Preferences
             </h2>
             <div className="space-y-4">
@@ -326,37 +326,6 @@ const SettingsPage = () => {
                   }`}
                   placeholder="us-east-1"
                 />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div
-                    className={`font-medium transition-colors ${
-                      isDark ? "text-white" : "text-primary"
-                    }`}
-                  >
-                    Email Notifications
-                  </div>
-                  <div
-                    className={`text-sm transition-colors ${
-                      isDark ? "text-gray-400" : "text-gray-600"
-                    }`}
-                  >
-                    Receive deployment notifications
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={userPreferences.notifications}
-                    onChange={(e) => handlePreferenceChange("notifications", e.target.checked)}
-                  />
-                  <div
-                    className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
-                      isDark ? "bg-gray-700" : "bg-gray-300"
-                    }`}
-                  ></div>
-                </label>
               </div>
             </div>
           </div>
@@ -454,173 +423,6 @@ const SettingsPage = () => {
                     </div>
                   ))
               )}
-            </div>
-          </div>
-
-          <div
-            className={`backdrop-blur-sm rounded-xl border p-6 transition-colors ${
-              isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
-            }`}
-          >
-            <h2
-              className={`text-xl font-bold mb-1 flex items-center transition-colors ${
-                isDark ? "text-white" : "text-primary"
-              }`}
-            >
-              <GitBranch className="w-5 h-5 mr-2 text-primary" />
-              Git Integration
-            </h2>
-            <p className={`text-sm mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-              Configure the organization or group where new infrastructure repositories will be
-              generated.
-            </p>
-            <div className="space-y-4">
-              <div>
-                <label
-                  className={`block text-sm font-medium mb-2 transition-colors ${
-                    isDark ? "text-tertiary" : "text-secondary"
-                  }`}
-                >
-                  Platform
-                </label>
-                <select
-                  value={gitIntegration.platform}
-                  onChange={(e) =>
-                    setGitIntegration((prev) => ({ ...prev, platform: e.target.value }))
-                  }
-                  className={`w-full px-4 py-2 rounded-lg border transition-colors ${
-                    isDark
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "bg-white border-gray-300 text-primary"
-                  }`}
-                >
-                  <option value="github">GitHub</option>
-                  <option value="gitlab">GitLab</option>
-                </select>
-              </div>
-              <div>
-                <label
-                  className={`block text-sm font-medium mb-2 transition-colors ${
-                    isDark ? "text-tertiary" : "text-secondary"
-                  }`}
-                >
-                  Organization / Group URL
-                </label>
-                <input
-                  type="text"
-                  value={gitIntegration.orgUrl}
-                  onChange={(e) =>
-                    setGitIntegration((prev) => ({ ...prev, orgUrl: e.target.value }))
-                  }
-                  className={`w-full px-4 py-2 rounded-lg border transition-colors ${
-                    isDark
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "bg-white border-gray-300 text-primary"
-                  }`}
-                  placeholder={
-                    gitIntegration.platform === "github"
-                      ? "https://github.com/my-org"
-                      : "https://gitlab.com/my-group"
-                  }
-                />
-                <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-                  New repositories will be created under this{" "}
-                  {gitIntegration.platform === "github" ? "organization" : "group"} when you click
-                  &quot;Generate Repository&quot; on an environment.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className={`backdrop-blur-sm rounded-xl border p-6 transition-colors ${
-              isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
-            }`}
-          >
-            <h2
-              className={`text-xl font-bold mb-4 flex items-center transition-colors ${
-                isDark ? "text-white" : "text-primary"
-              }`}
-            >
-              <Shield className="w-5 h-5 mr-2 text-primary" />
-              Security &amp; Compliance
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div
-                    className={`font-medium transition-colors ${
-                      isDark ? "text-white" : "text-primary"
-                    }`}
-                  >
-                    Enforce MFA
-                  </div>
-                  <div
-                    className={`text-sm transition-colors ${
-                      isDark ? "text-gray-400" : "text-gray-600"
-                    }`}
-                  >
-                    Require multi-factor authentication
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div
-                    className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
-                      isDark ? "bg-gray-700" : "bg-gray-300"
-                    }`}
-                  ></div>
-                </label>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div
-                    className={`font-medium transition-colors ${
-                      isDark ? "text-white" : "text-primary"
-                    }`}
-                  >
-                    Encryption at Rest
-                  </div>
-                  <div
-                    className={`text-sm transition-colors ${
-                      isDark ? "text-gray-400" : "text-gray-600"
-                    }`}
-                  >
-                    Encrypt all data stored
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div
-                    className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
-                      isDark ? "bg-gray-700" : "bg-gray-300"
-                    }`}
-                  ></div>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className={`backdrop-blur-sm rounded-xl border p-6 transition-colors ${
-              isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
-            }`}
-          >
-            <h2
-              className={`text-xl font-bold mb-4 flex items-center transition-colors ${
-                isDark ? "text-white" : "text-primary"
-              }`}
-            >
-              <Terminal className="w-5 h-5 mr-2 text-primary" />
-              CLI Configuration
-            </h2>
-            <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs">
-              <div className="text-gray-400"># Install OpenPrime CLI</div>
-              <div className="text-green-400">$ npm install -g openprime-cli</div>
-              <div className="text-gray-400 mt-2"># Configure credentials</div>
-              <div className="text-green-400">$ openprime configure</div>
-              <div className="text-gray-400 mt-2"># Deploy environment</div>
-              <div className="text-green-400">$ openprime deploy production</div>
             </div>
           </div>
         </div>

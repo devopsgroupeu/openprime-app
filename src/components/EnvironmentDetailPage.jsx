@@ -2,14 +2,13 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import {
   Activity,
-  TrendingUp,
   Settings,
-  Download,
-  Eye,
   BarChart3,
-  Shield,
   Database,
   Container,
+  Package,
+  GitBranch,
+  ExternalLink,
 } from "lucide-react";
 import Navigation from "./Navigation";
 import { useTheme } from "../contexts/ThemeContext";
@@ -41,6 +40,8 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
   const [activeTab, setActiveTab] = useState("overview");
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isPushing, setIsPushing] = useState(false);
 
   useEffect(() => {
     const fetchEnvironment = async () => {
@@ -165,6 +166,51 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
     setEditingHelmValues("");
   };
 
+  const generateInfrastructure = async () => {
+    try {
+      setIsGenerating(true);
+      const response = await authService.post(
+        `/environments/${environment.id}/generate`,
+        {},
+        { responseType: "blob", timeout: 120000 },
+      );
+
+      const blob = new Blob([response.data], { type: "application/zip" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${environment.name}-infrastructure.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      success("Infrastructure generated and downloaded successfully");
+    } catch (err) {
+      console.error("Error generating infrastructure:", err);
+      error(err.response?.data?.error || "Failed to generate infrastructure. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const pushInfrastructure = async () => {
+    try {
+      setIsPushing(true);
+      const response = await authService.post(
+        `/environments/${environment.id}/push`,
+        {},
+        { timeout: 120000 },
+      );
+      success(response?.message || "Infrastructure pushed to Git successfully");
+    } catch (err) {
+      console.error("Error pushing to Git:", err);
+      error(err.message || "Failed to push to Git. Please try again.");
+    } finally {
+      setIsPushing(false);
+    }
+  };
+
   const getResourceStats = () => {
     const services = environment.services || {};
     const enabledCount = Object.values(services).filter((s) => s?.enabled).length;
@@ -176,18 +222,7 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
     return { enabledCount, totalCount, helmCount };
   };
 
-  const getHealthScore = () => {
-    const { enabledCount } = getResourceStats();
-    if (enabledCount === 0) return 0;
-
-    const healthyServices = Object.values(environment.services || {})
-      .filter((s) => s?.enabled)
-      .filter(() => Math.random() > 0.1).length;
-
-    return Math.round((healthyServices / enabledCount) * 100);
-  };
-
-  const MetricCard = ({ icon: Icon, title, value, subtitle, trend, color = "teal" }) => (
+  const MetricCard = ({ icon: Icon, title, value, subtitle, color = "teal" }) => (
     <div
       className={`rounded-xl border backdrop-blur-sm transition-all duration-200 hover:scale-[1.02] ${
         isDark
@@ -200,16 +235,6 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
           <div className={`p-3 rounded-lg bg-${color}-500/10`}>
             <Icon className={`w-6 h-6 text-${color}-500`} />
           </div>
-          {trend && (
-            <div
-              className={`flex items-center space-x-1 text-sm ${
-                trend > 0 ? "text-green-500" : "text-red-500"
-              }`}
-            >
-              <TrendingUp className="w-4 h-4" />
-              <span>{Math.abs(trend)}%</span>
-            </div>
-          )}
         </div>
         <div>
           <h3 className={`text-2xl font-bold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
@@ -262,24 +287,15 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
   );
 
   const { enabledCount, totalCount, helmCount } = getResourceStats();
-  const healthScore = getHealthScore();
 
   const renderOverview = () => (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          icon={Activity}
-          title="Health Score"
-          value={`${healthScore}%`}
-          subtitle={`${enabledCount} services monitored`}
-          trend={Math.floor(Math.random() * 10) - 5}
-          color="green"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <MetricCard
           icon={Database}
           title="Active Services"
           value={`${enabledCount}/${totalCount}`}
-          subtitle="AWS services configured"
+          subtitle="Cloud services configured"
           color="blue"
         />
         <MetricCard
@@ -288,13 +304,6 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
           value={helmCount}
           subtitle="Kubernetes deployments"
           color="purple"
-        />
-        <MetricCard
-          icon={Shield}
-          title="Security Status"
-          value="Secure"
-          subtitle="IAM & policies active"
-          color="teal"
         />
       </div>
 
@@ -347,26 +356,104 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
                 <span>Configure Environment</span>
               </button>
               <button
+                onClick={generateInfrastructure}
+                disabled={isGenerating}
                 className={`w-full p-3 rounded-lg flex items-center space-x-3 transition-colors ${
-                  isDark
-                    ? "bg-blue-600/20 hover:bg-blue-600/30 text-blue-400"
-                    : "bg-blue-50 hover:bg-blue-100 text-blue-600"
+                  isGenerating
+                    ? "opacity-50 cursor-not-allowed"
+                    : isDark
+                      ? "bg-purple-600/20 hover:bg-purple-600/30 text-purple-400"
+                      : "bg-purple-50 hover:bg-purple-100 text-purple-600"
                 }`}
               >
-                <Eye className="w-4 h-4" />
-                <span>View Monitoring</span>
+                <Package className={`w-4 h-4 ${isGenerating ? "animate-spin" : ""}`} />
+                <span>{isGenerating ? "Generating..." : "Generate Infrastructure"}</span>
               </button>
               <button
+                onClick={pushInfrastructure}
+                disabled={isPushing || !environment.git_repository?.enabled}
                 className={`w-full p-3 rounded-lg flex items-center space-x-3 transition-colors ${
-                  isDark
-                    ? "bg-purple-600/20 hover:bg-purple-600/30 text-purple-400"
-                    : "bg-purple-50 hover:bg-purple-100 text-purple-600"
+                  isPushing || !environment.git_repository?.enabled
+                    ? "opacity-50 cursor-not-allowed"
+                    : isDark
+                      ? "bg-orange-600/20 hover:bg-orange-600/30 text-orange-400"
+                      : "bg-orange-50 hover:bg-orange-100 text-orange-600"
                 }`}
               >
-                <Download className="w-4 h-4" />
-                <span>Export Config</span>
+                <GitBranch className={`w-4 h-4 ${isPushing ? "animate-spin" : ""}`} />
+                <span>{isPushing ? "Pushing..." : "Push to Git"}</span>
               </button>
             </div>
+
+            {/* External Resources */}
+            {(environment.git_repository?.enabled || environment.terraform_backend?.enabled) && (
+              <div className="mt-6">
+                <h4
+                  className={`text-sm font-medium mb-3 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                >
+                  External Resources
+                </h4>
+                <div className="space-y-2">
+                  {environment.git_repository?.enabled && environment.git_repository?.url && (
+                    <a
+                      href={environment.git_repository.url
+                        .replace("git@github.com:", "https://github.com/")
+                        .replace("git@gitlab.com:", "https://gitlab.com/")
+                        .replace(/\.git$/, "")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`w-full p-3 rounded-lg flex items-center justify-between transition-colors ${
+                        isDark
+                          ? "bg-gray-700/30 hover:bg-gray-700/50 text-gray-300"
+                          : "bg-gray-100/50 hover:bg-gray-100 text-gray-700"
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <GitBranch className="w-4 h-4 shrink-0" />
+                        <div className="min-w-0">
+                          <span className="text-sm font-medium block">Git Repository</span>
+                          <span
+                            className={`text-xs truncate block ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                          >
+                            {environment.git_repository.url
+                              .replace("git@github.com:", "")
+                              .replace("git@gitlab.com:", "")
+                              .replace(/\.git$/, "")}
+                          </span>
+                        </div>
+                      </div>
+                      <ExternalLink className="w-3.5 h-3.5 shrink-0 opacity-50" />
+                    </a>
+                  )}
+                  {environment.terraform_backend?.enabled &&
+                    environment.terraform_backend?.bucketName && (
+                      <a
+                        href={`https://${environment.region}.console.aws.amazon.com/s3/buckets/${environment.terraform_backend.bucketName}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`w-full p-3 rounded-lg flex items-center justify-between transition-colors ${
+                          isDark
+                            ? "bg-gray-700/30 hover:bg-gray-700/50 text-gray-300"
+                            : "bg-gray-100/50 hover:bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3 min-w-0">
+                          <Database className="w-4 h-4 shrink-0" />
+                          <div className="min-w-0">
+                            <span className="text-sm font-medium block">S3 Backend</span>
+                            <span
+                              className={`text-xs truncate block ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                            >
+                              {environment.terraform_backend.bucketName}
+                            </span>
+                          </div>
+                        </div>
+                        <ExternalLink className="w-3.5 h-3.5 shrink-0 opacity-50" />
+                      </a>
+                    )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -426,7 +513,10 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
               }`}
             >
               <div className="p-6">
-                <EnvironmentConfiguration environment={environment} />
+                <EnvironmentConfiguration
+                  environment={environment}
+                  onEnvironmentUpdate={setEnvironment}
+                />
               </div>
             </div>
           )}
