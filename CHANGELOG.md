@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.2](https://github.com/devopsgroupeu/openprime-app/compare/v1.5.1...v1.5.2) (2026-03-06)
+
+### ♻️ Code Refactoring
+
+* **BasicConfigStep:** improve warning callout layout and styling ([c735096](https://github.com/devopsgroupeu/openprime-app/commit/c735096768be31133f3aeac1ac6ee9376f7578a0))
+
 ## [1.5.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.5.0...v1.5.1) (2026-03-06)
 
 ### 🐛 Bug Fixes
