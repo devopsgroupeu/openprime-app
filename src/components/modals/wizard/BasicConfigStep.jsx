@@ -862,9 +862,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
               <div className="flex items-start">
                 <AlertTriangle className="w-4 h-4 mr-2 mt-0.5 shrink-0" />
                 <div className="space-y-1.5 min-w-0">
-                  <p className="text-sm font-medium">
-                    Deployment prerequisites
-                  </p>
+                  <p className="text-sm font-medium">Deployment prerequisites</p>
                   <p className="text-sm">
                     <strong>ArgoCD</strong>
                   </p>
