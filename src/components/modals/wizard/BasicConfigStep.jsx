@@ -497,15 +497,17 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                   : "bg-orange-50 border-orange-200 text-orange-700"
               }`}
             >
-              <div className="flex items-center">
-                <Database className="w-4 h-4 mr-2" />
-                <span className="text-sm font-medium">
-                  AWS credentials are required to create Terraform backend resources
-                </span>
+              <div className="flex items-start">
+                <Database className="w-4 h-4 mr-2 mt-0.5" />
+                <div className="space-y-1.5 min-w-0">
+                  <p className="text-sm font-medium">
+                    AWS credentials are required to create Terraform backend resources
+                  </p>
+                  <p className="text-xs">
+                    Please select cloud credentials above before creating backend resources
+                  </p>
+                </div>
               </div>
-              <p className="text-xs mt-1 ml-6">
-                Please select cloud credentials above before creating backend resources
-              </p>
             </div>
           )}
 
@@ -851,21 +853,22 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
 
             {/* Deployment prerequisite callout */}
             <div
-              className={`p-3 rounded-lg border ${
-                isDark ? "border-amber-500/40 bg-amber-500/10" : "border-amber-400/60 bg-amber-50"
+              className={`p-4 rounded-lg border mb-4 ${
+                isDark
+                  ? "bg-orange-500/10 border-orange-500/30 text-orange-300"
+                  : "bg-orange-50 border-orange-200 text-orange-700"
               }`}
             >
-              <div className="flex items-start gap-2">
-                <AlertTriangle
-                  className={`w-4 h-4 mt-0.5 shrink-0 ${isDark ? "text-amber-400" : "text-amber-600"}`}
-                />
+              <div className="flex items-start">
+                <AlertTriangle className="w-4 h-4 mr-2 mt-0.5 shrink-0" />
                 <div className="space-y-1.5 min-w-0">
-                  <p
-                    className={`text-xs font-semibold ${isDark ? "text-amber-400" : "text-amber-700"}`}
-                  >
+                  <p className="text-sm font-medium">
                     Deployment prerequisites
                   </p>
-                  <p className={`text-xs ${isDark ? "text-amber-300" : "text-amber-700"}`}>
+                  <p className="text-sm">
+                    <strong>ArgoCD</strong>
+                  </p>
+                  <p className="text-xs">
                     Before running Terraform, store the SSH private key in AWS Secrets Manager:
                   </p>
                   <pre
@@ -877,14 +880,23 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
   --name argocd/git-ssh-private-key \\
   --secret-string file:///path/to/private-key`}
                   </pre>
-                  <p className={`text-xs ${isDark ? "text-amber-300" : "text-amber-700"}`}>
+                  <p className="text-xs">
                     Also add the corresponding <strong>public key</strong> as a{" "}
                     <strong>deploy key</strong> to your git repository (read access is sufficient).
                   </p>
-                  <p className={`text-xs ${isDark ? "text-amber-300" : "text-amber-700"}`}>
+                  <p className="text-xs">
                     ArgoCD will authenticate to git using this key at runtime. It also uses{" "}
                     <strong>Keycloak SSO</strong> for the ArgoCD UI — no separate ArgoCD admin
                     password is needed.
+                  </p>
+                  <p className="text-sm mt-6">
+                    <strong>CI/CD Cloud deployment</strong>
+                  </p>
+                  <p className="text-xs">
+                    To enable Git CI/CD deployments, add the required secrets to your repository:
+                  </p>
+                  <p className="text-xs">
+                    <strong>AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY</strong>
                   </p>
                 </div>
               </div>
