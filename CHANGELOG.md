@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.3](https://github.com/devopsgroupeu/openprime-app/compare/v1.5.2...v1.5.3) (2026-03-09)
+
+### ♻️ Code Refactoring
+
+* **BasicConfigStep:** update deployment prerequisites and CI/CD environment variable instructions ([a62e8a5](https://github.com/devopsgroupeu/openprime-app/commit/a62e8a50f503ceea7605aef5afb6894eca1a8772))
+
 ## [1.5.2](https://github.com/devopsgroupeu/openprime-app/compare/v1.5.1...v1.5.2) (2026-03-06)
 
 ### ♻️ Code Refactoring
