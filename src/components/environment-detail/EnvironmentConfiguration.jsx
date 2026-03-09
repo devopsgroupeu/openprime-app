@@ -31,13 +31,17 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
 
   const generateConfiguration = () => {
     const config = {
+      id: environment.id,
       name: environment.name,
+      globalPrefix: environment.global_prefix || environment.globalPrefix || "",
       provider: environment.provider,
       region: environment.region,
+      location: environment.location || environment.region,
       status: environment.status,
+      backend: environment.terraform_backend?.enabled || false,
       services: environment.services || {},
-      createdAt: environment.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: environment.createdAt || environment.created_at || new Date().toISOString(),
+      updatedAt: environment.updatedAt || environment.updated_at || new Date().toISOString(),
     };
 
     if (environment.cloudCredential) {
@@ -54,6 +58,16 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
 
     if (environment.git_repository) {
       config.gitRepository = environment.git_repository;
+      // Add argocd object for Injecto compatibility
+      config.argocd = {
+        git_repo_url: environment.git_repository.url || "",
+        targetRevision: environment.git_repository.branch || "HEAD",
+        git_target_revision: environment.git_repository.branch || "HEAD",
+      };
+    }
+
+    if (environment.helmCharts) {
+      config.helmCharts = environment.helmCharts;
     }
 
     return config;

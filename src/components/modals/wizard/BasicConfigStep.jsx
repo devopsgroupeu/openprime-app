@@ -895,7 +895,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                       <code
                         className={`px-1 py-0.5 rounded font-mono ${isDark ? "bg-black/30" : "bg-orange-100"}`}
                       >
-                        TF_VARS_git_repo_ssh_key
+                        TF_VAR_git_repo_ssh_key
                       </code>
                       <span className="block mt-1 opacity-80">
                         A private SSH key (Deployment Key) used by Terraform and ArgoCD to
