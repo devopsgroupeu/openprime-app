@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.6.0...v1.7.0) (2026-03-09)
+
+### 🚀 Features
+
+* **EnvironmentConfiguration:** enhance configuration generation with additional environment properties ([4b1c601](https://github.com/devopsgroupeu/openprime-app/commit/4b1c601473ca1e3c016419531cda0ba7beb32c56))
+
 ## [1.6.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.5.3...v1.6.0) (2026-03-09)
 
 ### 🚀 Features
