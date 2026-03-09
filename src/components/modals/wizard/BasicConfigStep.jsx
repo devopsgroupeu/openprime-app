@@ -863,38 +863,17 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                 <AlertTriangle className="w-4 h-4 mr-2 mt-0.5 shrink-0" />
                 <div className="space-y-1.5 min-w-0">
                   <p className="text-sm font-medium">Deployment prerequisites</p>
-                  <p className="text-sm">
-                    <strong>ArgoCD</strong>
-                  </p>
-                  <p className="text-xs">
-                    Before running Terraform, store the SSH private key in AWS Secrets Manager:
-                  </p>
-                  <pre
-                    className={`text-xs p-2 rounded font-mono overflow-x-auto whitespace-pre-wrap break-all ${
-                      isDark ? "bg-black/40 text-amber-200" : "bg-amber-100 text-amber-900"
-                    }`}
-                  >
-                    {`aws secretsmanager create-secret \\
-  --name argocd/git-ssh-private-key \\
-  --secret-string file:///path/to/private-key`}
-                  </pre>
-                  <p className="text-xs">
-                    Also add the corresponding <strong>public key</strong> as a{" "}
-                    <strong>deploy key</strong> to your git repository (read access is sufficient).
-                  </p>
-                  <p className="text-xs">
-                    ArgoCD will authenticate to git using this key at runtime. It also uses{" "}
-                    <strong>Keycloak SSO</strong> for the ArgoCD UI — no separate ArgoCD admin
-                    password is needed.
-                  </p>
                   <p className="text-sm mt-6">
                     <strong>CI/CD Cloud deployment</strong>
                   </p>
                   <p className="text-xs">
-                    To enable Git CI/CD deployments, add the required secrets to your repository:
+                    These environment variables are required to be existing in your repository, to
+                    be able to deploy the infrastructure using CI/CD:
                   </p>
                   <p className="text-xs">
-                    <strong>AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY</strong>
+                    <strong>
+                      AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, TF_VARS_git_repo_ssh_key
+                    </strong>
                   </p>
                 </div>
               </div>
