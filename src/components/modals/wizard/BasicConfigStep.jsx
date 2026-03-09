@@ -853,28 +853,68 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
 
             {/* Deployment prerequisite callout */}
             <div
-              className={`p-4 rounded-lg border mb-4 ${
+              className={`p-5 rounded-xl border mb-4 ${
                 isDark
                   ? "bg-orange-500/10 border-orange-500/30 text-orange-300"
                   : "bg-orange-50 border-orange-200 text-orange-700"
               }`}
             >
               <div className="flex items-start">
-                <AlertTriangle className="w-4 h-4 mr-2 mt-0.5 shrink-0" />
-                <div className="space-y-1.5 min-w-0">
-                  <p className="text-sm font-medium">Deployment prerequisites</p>
-                  <p className="text-sm mt-6">
-                    <strong>CI/CD Cloud deployment</strong>
+                <AlertTriangle className="w-5 h-5 mr-3 mt-0.5 shrink-0" />
+                <div className="space-y-3 min-w-0">
+                  <div>
+                    <p className="text-sm font-bold mb-0.5">Deployment Prerequisites</p>
+                  </div>
+
+                  <p className="text-xs leading-relaxed opacity-90">
+                    To enable automated infrastructure deployment via CI/CD, the following secrets
+                    must be configured within your repository&apos;s environment variables. These
+                    credentials allow the pipeline to authenticate with your cloud provider and
+                    securely access private Git resources.
                   </p>
-                  <p className="text-xs">
-                    These environment variables are required to be existing in your repository, to
-                    be able to deploy the infrastructure using CI/CD:
-                  </p>
-                  <p className="text-xs">
-                    <strong>
-                      AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, TF_VARS_git_repo_ssh_key
-                    </strong>
-                  </p>
+
+                  <ul className="text-[11px] space-y-2 list-none">
+                    <li className="leading-relaxed">
+                      <code
+                        className={`px-1 py-0.5 rounded font-mono ${isDark ? "bg-black/30" : "bg-orange-100"}`}
+                      >
+                        AWS_ACCESS_KEY_ID
+                      </code>{" "}
+                      &{" "}
+                      <code
+                        className={`px-1 py-0.5 rounded font-mono ${isDark ? "bg-black/30" : "bg-orange-100"}`}
+                      >
+                        AWS_SECRET_ACCESS_KEY
+                      </code>
+                      <span className="block mt-1 opacity-80">
+                        IAM credentials with the necessary permissions to provision and manage the
+                        resources.
+                      </span>
+                    </li>
+                    <li className="leading-relaxed">
+                      <code
+                        className={`px-1 py-0.5 rounded font-mono ${isDark ? "bg-black/30" : "bg-orange-100"}`}
+                      >
+                        TF_VARS_git_repo_ssh_key
+                      </code>
+                      <span className="block mt-1 opacity-80">
+                        A private SSH key (Deployment Key) used by Terraform and ArgoCD to
+                        authenticate against private repositories.
+                      </span>
+                    </li>
+                  </ul>
+
+                  <div
+                    className={`p-2 rounded text-[11px] border ${
+                      isDark ? "bg-black/20 border-orange-500/20" : "bg-white/50 border-orange-200"
+                    }`}
+                  >
+                    <span className="font-bold mr-1 uppercase text-[10px]">Security Note:</span>
+                    <span className="italic opacity-90">
+                      These variables must be stored as encrypted Secrets (e.g., GitHub Actions
+                      Secrets) and should never be logged or committed to source control.
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

@@ -305,7 +305,7 @@ aws:
   region: us-east-1
   zoneType: public
 domainFilters:
-  - example.com
+  - openprime.io
 policy: sync
 txtOwnerId: "external-dns"`,
 
