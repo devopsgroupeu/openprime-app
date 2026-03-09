@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.5.3...v1.6.0) (2026-03-09)
+
+### 🚀 Features
+
+* **ExternalDNS:** add configuration for External DNS management in Kubernetes ([a2c1964](https://github.com/devopsgroupeu/openprime-app/commit/a2c1964dbb31b2d191713889fb77b9dbd1feaba3))
+
 ## [1.5.3](https://github.com/devopsgroupeu/openprime-app/compare/v1.5.2...v1.5.3) (2026-03-09)
 
 ### ♻️ Code Refactoring
