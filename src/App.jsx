@@ -15,7 +15,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
   const [environments, setEnvironments] = useState([]);
-  const [environmentsLoading, setEnvironmentsLoading] = useState(true);
+  const [environmentsLoading, setEnvironmentsLoading] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
@@ -67,12 +67,36 @@ function AppContent() {
     }
   };
 
-  if (isLoading || environmentsLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-openprime-gradient flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-white text-lg font-poppins">Loading OpenPrime...</p>
+          <p className="text-white text-lg font-poppins">Initializing OpenPrime...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-openprime-gradient flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-white text-lg font-poppins">
+            Session expired. Redirecting to login...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (environmentsLoading) {
+    return (
+      <div className="min-h-screen bg-openprime-gradient flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-white text-lg font-poppins">Loading environments...</p>
         </div>
       </div>
     );

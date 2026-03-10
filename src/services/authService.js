@@ -35,7 +35,9 @@ export class AuthService {
       });
 
       if (response.status === 401) {
-        keycloak.logout();
+        keycloak.logout({
+          redirectUri: window.location.origin,
+        });
         throw new Error("Session expired");
       }
 

@@ -20,10 +20,39 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initKeycloak = async () => {
       try {
+        // Set up event handlers before init
+        keycloak.onTokenExpired = () => {
+          console.log("Token expired, attempting to update...");
+          keycloak
+            .updateToken(30)
+            .then((refreshed) => {
+              if (refreshed) {
+                console.log("Token refreshed successfully");
+              } else {
+                console.warn("Token not refreshed, user may need to log in again");
+              }
+            })
+            .catch(() => {
+              console.error("Failed to refresh token, logging out...");
+              logout();
+            });
+        };
+
+        keycloak.onAuthLogout = () => {
+          console.log("Keycloak auth logout triggered");
+          setIsAuthenticated(false);
+          setUser(null);
+        };
+
+        keycloak.onAuthError = (error) => {
+          console.error("Keycloak auth error:", error);
+        };
+
         const authenticated = await keycloak.init({
           onLoad: "login-required",
           checkLoginIframe: false,
           pkceMethod: "S256",
+          silentCheckSsoRedirectUri: window.location.origin + "/silent-check-sso.html",
         });
 
         if (authenticated) {
@@ -38,13 +67,9 @@ export const AuthProvider = ({ children }) => {
             roles: keycloak.tokenParsed?.realm_access?.roles || [],
           });
           setKeycloakInstance(keycloak);
-
-          keycloak.onTokenExpired = () => {
-            keycloak.updateToken(30).catch(() => {
-              console.log("Failed to refresh token, redirecting to login");
-              logout();
-            });
-          };
+        } else {
+          console.warn("User is not authenticated after init");
+          setIsAuthenticated(false);
         }
       } catch (error) {
         console.error("Keycloak initialization failed:", error);
@@ -54,6 +79,29 @@ export const AuthProvider = ({ children }) => {
     };
 
     initKeycloak();
+
+    // Add visibility change listener to refresh token when user returns to tab
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && keycloak.authenticated) {
+        keycloak
+          .updateToken(30)
+          .then((refreshed) => {
+            if (refreshed) {
+              console.log("Token refreshed on visibility change");
+            }
+          })
+          .catch(() => {
+            console.error("Failed to refresh token on visibility change, logging out...");
+            logout();
+          });
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   const login = () => {
@@ -61,7 +109,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    keycloak.logout();
+    keycloak.logout({
+      redirectUri: window.location.origin,
+    });
     setIsAuthenticated(false);
     setUser(null);
   };
