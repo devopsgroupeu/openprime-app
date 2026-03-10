@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.7.0...v1.8.0) (2026-03-10)
+
+### 🚀 Features
+
+* **Auth:** enhance authentication handling with token refresh and logout improvements ([101bda6](https://github.com/devopsgroupeu/openprime-app/commit/101bda6e2e1a09a68174508aa75e519c41b7080e))
+
 ## [1.7.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.6.0...v1.7.0) (2026-03-09)
 
 ### 🚀 Features
