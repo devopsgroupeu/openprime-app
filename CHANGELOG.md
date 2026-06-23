@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.8.0...v1.9.0) (2026-06-23)
+
+### 🚀 Features
+
+* **config:** add EKS Kubernetes 1.35 version option ([#16](https://github.com/devopsgroupeu/openprime-app/issues/16)) ([21b1f51](https://github.com/devopsgroupeu/openprime-app/commit/21b1f51ba8be51c50d450d8b4b37eef11c189402))
+
 ## [1.8.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.7.0...v1.8.0) (2026-03-10)
 
 ### 🚀 Features
