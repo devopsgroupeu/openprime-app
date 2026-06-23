@@ -220,6 +220,7 @@ export const SERVICES_CONFIG = {
           { value: "1.32", label: "1.32" },
           { value: "1.33", label: "1.33" },
           { value: "1.34", label: "1.34" },
+          { value: "1.35", label: "1.35" },
         ],
       },
       enableClusterCreatorAdminPermissions: {
