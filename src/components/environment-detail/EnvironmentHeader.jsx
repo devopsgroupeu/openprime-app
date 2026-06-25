@@ -31,11 +31,7 @@ const EnvironmentHeader = ({ environment, providerConfig, onEdit, onDelete }) =>
   };
 
   return (
-    <div
-      className={`backdrop-blur-md border-b transition-colors ${
-        isDark ? "bg-gray-900/95 border-gray-700" : "bg-white/95 border-gray-200"
-      }`}
-    >
+    <div className="border-b border-border">
       <div className="max-w-7xl mx-auto px-8 py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
