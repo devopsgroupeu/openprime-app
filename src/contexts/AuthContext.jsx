@@ -1,5 +1,17 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import keycloak from "../config/keycloak";
+import { isMockMode } from "../utils/mockMode";
+
+// Fake authenticated user for mock mode (no Keycloak).
+const MOCK_USER = {
+  id: "mock-user-1",
+  username: "mockuser",
+  email: "mock@openprime.dev",
+  firstName: "Mock",
+  lastName: "User",
+  fullName: "Mock User",
+  roles: ["user"],
+};
 
 const AuthContext = createContext();
 
@@ -18,6 +30,14 @@ export const AuthProvider = ({ children }) => {
   const [keycloakInstance, setKeycloakInstance] = useState(null);
 
   useEffect(() => {
+    // Mock mode: skip Keycloak entirely, start authenticated as a fake user.
+    if (isMockMode()) {
+      setIsAuthenticated(true);
+      setUser(MOCK_USER);
+      setIsLoading(false);
+      return;
+    }
+
     const initKeycloak = async () => {
       try {
         // Set up event handlers before init

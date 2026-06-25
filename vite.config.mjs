@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
-  envPrefix: "REACT_APP_",
+  envPrefix: ["REACT_APP_", "VITE_"],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -26,6 +26,8 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/setupTests.js"],
     css: true,
+    // Run tests in mock mode (MSW + mock auth, no real backend/Keycloak)
+    env: { VITE_MOCK: "true" },
     exclude: ["node_modules", "dist", ".git", ".cache", "e2e"],
   },
 });
