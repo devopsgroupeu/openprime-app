@@ -373,7 +373,7 @@ const SettingsPage = () => {
                       }`}
                     >
                       <div className="flex items-center flex-1">
-                        <Cloud className="w-6 h-6 text-orange-400 mr-3" />
+                        <Cloud className="w-6 h-6 text-teal-400 mr-3" />
                         <div>
                           <div
                             className={`font-semibold transition-colors ${

@@ -320,7 +320,7 @@ const WizardContainer = ({
                                 {step.title}
                               </p>
                               {isEditMode && step.number === 1 && (
-                                <div className="text-xs text-orange-500 mt-1 font-medium">
+                                <div className="text-xs text-amber-500 mt-1 font-medium">
                                   Read Only
                                 </div>
                               )}

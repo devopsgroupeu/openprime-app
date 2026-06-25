@@ -20,6 +20,7 @@
   --color-surface: #ffffff;
   --color-surface-elevated: #f8fafc;
   --color-surface-overlay: #ffffff;
+  --color-input-bg: #ffffff; /* form field background (matches Keycloak field) */
 
   /* Text Colors (WCAG AA on white) */
   --color-text-primary: #0f172a; /* slate-900 — 14.6:1 */
@@ -72,6 +73,7 @@
   --color-surface: #111827; /* cards */
   --color-surface-elevated: #1e293b; /* elevated surfaces */
   --color-surface-overlay: #0a0f1a; /* modals */
+  --color-input-bg: #0f172a; /* form field background (matches Keycloak field) */
 
   /* Text Colors (WCAG AA on navy) */
   --color-text-primary: #f8fafc; /* slate-50 — 17.7:1 */
@@ -145,4 +147,52 @@ body {
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+/* ---------- Form fields — consistent with the Keycloak login theme inputs ---------- */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+select,
+textarea {
+  background-color: var(--color-input-bg) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 0.5rem !important; /* ≈ Keycloak calc(--radius - 2px) */
+  color: var(--color-text-primary) !important;
+  font-size: 0.875rem !important;
+  padding: 0.5rem 0.75rem !important; /* 8px 12px — matches Keycloak field */
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease !important;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus,
+input[type="search"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+select:focus,
+textarea:focus {
+  outline: none !important;
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.12) !important; /* teal focus ring (Keycloak) */
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-tertiary) !important;
+  opacity: 0.7;
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
 }

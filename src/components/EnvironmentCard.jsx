@@ -46,16 +46,16 @@ const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
       secretsManager: <Lock className="w-3 h-3 mr-1 text-primary" />,
       iam: <Shield className="w-3 h-3 mr-1 text-primary" />,
       // Azure Services
-      vnet: <Network className="w-3 h-3 mr-1 text-blue-400" />,
-      aks: <Box className="w-3 h-3 mr-1 text-blue-400" />,
-      sqlDatabase: <Database className="w-3 h-3 mr-1 text-blue-400" />,
-      cosmosDb: <Database className="w-3 h-3 mr-1 text-blue-400" />,
-      containerRegistry: <Container className="w-3 h-3 mr-1 text-blue-400" />,
-      storageAccount: <Archive className="w-3 h-3 mr-1 text-blue-400" />,
-      functions: <FunctionSquare className="w-3 h-3 mr-1 text-blue-400" />,
-      redis: <HardDrive className="w-3 h-3 mr-1 text-blue-400" />,
-      serviceBus: <MessageSquare className="w-3 h-3 mr-1 text-blue-400" />,
-      keyVault: <Lock className="w-3 h-3 mr-1 text-blue-400" />,
+      vnet: <Network className="w-3 h-3 mr-1 text-teal-400" />,
+      aks: <Box className="w-3 h-3 mr-1 text-teal-400" />,
+      sqlDatabase: <Database className="w-3 h-3 mr-1 text-teal-400" />,
+      cosmosDb: <Database className="w-3 h-3 mr-1 text-teal-400" />,
+      containerRegistry: <Container className="w-3 h-3 mr-1 text-teal-400" />,
+      storageAccount: <Archive className="w-3 h-3 mr-1 text-teal-400" />,
+      functions: <FunctionSquare className="w-3 h-3 mr-1 text-teal-400" />,
+      redis: <HardDrive className="w-3 h-3 mr-1 text-teal-400" />,
+      serviceBus: <MessageSquare className="w-3 h-3 mr-1 text-teal-400" />,
+      keyVault: <Lock className="w-3 h-3 mr-1 text-teal-400" />,
     };
     return icons[service] || <Layers className="w-3 h-3 mr-1 text-primary" />;
   };
@@ -267,7 +267,7 @@ const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
                     ).map((repo, idx) => (
                       <span
                         key={idx}
-                        className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs"
+                        className="px-2 py-1 bg-teal-500/20 text-teal-400 rounded text-xs"
                       >
                         {repo.name}
                       </span>

@@ -51,6 +51,10 @@ module.exports = {
         sora: ["Geist", "sans-serif"],
         poppins: ["Geist", "sans-serif"],
       },
+      // Radius — align the dominant "lg" radius to site/Keycloak --radius (0.625rem)
+      borderRadius: {
+        lg: "0.625rem",
+      },
       // Add smooth scrolling utilities
       scrollBehavior: {
         smooth: "smooth",

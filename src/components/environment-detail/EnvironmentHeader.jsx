@@ -8,10 +8,10 @@ const EnvironmentHeader = ({ environment, providerConfig, onEdit, onDelete }) =>
 
   const getProviderIcon = (type) => {
     const iconColors = {
-      aws: "text-orange-400",
-      azure: "text-blue-400",
-      gcp: "text-green-400",
-      onpremise: "text-gray-400",
+      aws: "text-teal-400",
+      azure: "text-teal-400",
+      gcp: "text-teal-400",
+      onpremise: "text-slate-400",
     };
 
     const colorClass = iconColors[type] || "text-gray-400";

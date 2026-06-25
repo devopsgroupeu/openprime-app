@@ -68,7 +68,7 @@ const ConfigurationExport = ({ environment }) => {
     if (typeof value === "object" && value !== null && !Array.isArray(value)) {
       return (
         <div key={key}>
-          <div className={`${isDark ? "text-blue-300" : "text-blue-600"}`}>
+          <div className={`${isDark ? "text-teal-300" : "text-teal-600"}`}>
             {indent}&quot;{key}&quot;: {"{"}
           </div>
           {Object.entries(value).map(([subKey, subValue]) =>
@@ -86,7 +86,7 @@ const ConfigurationExport = ({ environment }) => {
     if (Array.isArray(value)) {
       return (
         <div key={key}>
-          <div className={`${isDark ? "text-blue-300" : "text-blue-600"}`}>
+          <div className={`${isDark ? "text-teal-300" : "text-teal-600"}`}>
             {indent}&quot;{key}&quot;: [
           </div>
           {value.map((item, index) => (
@@ -106,12 +106,12 @@ const ConfigurationExport = ({ environment }) => {
           ? "text-green-300"
           : "text-green-600"
         : isDark
-          ? "text-orange-300"
-          : "text-orange-600";
+          ? "text-amber-300"
+          : "text-amber-600";
 
     return (
       <div key={key}>
-        <span className={`${isDark ? "text-blue-300" : "text-blue-600"}`}>
+        <span className={`${isDark ? "text-teal-300" : "text-teal-600"}`}>
           {indent}&quot;{key}&quot;:
         </span>{" "}
         <span className={valueColor}>
@@ -166,8 +166,8 @@ const ConfigurationExport = ({ environment }) => {
             onClick={downloadConfiguration}
             className={`px-3 py-1 rounded text-sm transition-colors ${
               isDark
-                ? "bg-blue-700 hover:bg-blue-600 text-white"
-                : "bg-blue-600 hover:bg-blue-700 text-white"
+                ? "bg-teal-700 hover:bg-teal-600 text-white"
+                : "bg-teal-600 hover:bg-teal-700 text-white"
             }`}
           >
             <Download className="w-4 h-4 inline mr-1" />

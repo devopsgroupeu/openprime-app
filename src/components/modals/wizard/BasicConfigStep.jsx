@@ -315,7 +315,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                         ? "Google Cloud Platform"
                         : "Self-managed"}
                   {!provider.enabled && (
-                    <span className="block text-xs mt-1 font-medium text-orange-500">Disabled</span>
+                    <span className="block text-xs mt-1 font-medium text-amber-500">Disabled</span>
                   )}
                 </div>
               </div>
@@ -493,8 +493,8 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
             <div
               className={`p-4 rounded-lg border mb-4 ${
                 isDark
-                  ? "bg-orange-500/10 border-orange-500/30 text-orange-300"
-                  : "bg-orange-50 border-orange-200 text-orange-700"
+                  ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                  : "bg-amber-50 border-amber-200 text-amber-700"
               }`}
             >
               <div className="flex items-start">
@@ -564,8 +564,8 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                 <div
                   className={`p-4 rounded-lg border ${
                     isDark
-                      ? "bg-blue-500/10 border-blue-500/30 text-blue-300"
-                      : "bg-blue-50 border-blue-200 text-blue-700"
+                      ? "bg-teal-500/10 border-teal-500/30 text-teal-300"
+                      : "bg-teal-50 border-teal-200 text-teal-700"
                   }`}
                 >
                   <div className="flex items-start">
@@ -628,8 +628,8 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
               <div
                 className={`p-4 rounded-lg border ${
                   isDark
-                    ? "bg-blue-500/10 border-blue-500/30 text-blue-300"
-                    : "bg-blue-50 border-blue-200 text-blue-700"
+                    ? "bg-teal-500/10 border-teal-500/30 text-teal-300"
+                    : "bg-teal-50 border-teal-200 text-teal-700"
                 }`}
               >
                 <div className="flex items-start">
@@ -855,8 +855,8 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
             <div
               className={`p-5 rounded-xl border mb-4 ${
                 isDark
-                  ? "bg-orange-500/10 border-orange-500/30 text-orange-300"
-                  : "bg-orange-50 border-orange-200 text-orange-700"
+                  ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                  : "bg-amber-50 border-amber-200 text-amber-700"
               }`}
             >
               <div className="flex items-start">
@@ -876,13 +876,13 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                   <ul className="text-[11px] space-y-2 list-none">
                     <li className="leading-relaxed">
                       <code
-                        className={`px-1 py-0.5 rounded font-mono ${isDark ? "bg-black/30" : "bg-orange-100"}`}
+                        className={`px-1 py-0.5 rounded font-mono ${isDark ? "bg-black/30" : "bg-amber-100"}`}
                       >
                         AWS_ACCESS_KEY_ID
                       </code>{" "}
                       &{" "}
                       <code
-                        className={`px-1 py-0.5 rounded font-mono ${isDark ? "bg-black/30" : "bg-orange-100"}`}
+                        className={`px-1 py-0.5 rounded font-mono ${isDark ? "bg-black/30" : "bg-amber-100"}`}
                       >
                         AWS_SECRET_ACCESS_KEY
                       </code>
@@ -893,7 +893,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                     </li>
                     <li className="leading-relaxed">
                       <code
-                        className={`px-1 py-0.5 rounded font-mono ${isDark ? "bg-black/30" : "bg-orange-100"}`}
+                        className={`px-1 py-0.5 rounded font-mono ${isDark ? "bg-black/30" : "bg-amber-100"}`}
                       >
                         TF_VAR_git_repo_ssh_key
                       </code>
@@ -906,7 +906,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
 
                   <div
                     className={`p-2 rounded text-[11px] border ${
-                      isDark ? "bg-black/20 border-orange-500/20" : "bg-white/50 border-orange-200"
+                      isDark ? "bg-black/20 border-amber-500/20" : "bg-white/50 border-amber-200"
                     }`}
                   >
                     <span className="font-bold mr-1 uppercase text-[10px]">Security Note:</span>

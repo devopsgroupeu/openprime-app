@@ -70,7 +70,7 @@ const Navigation = () => {
           </div>
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg transition-all duration-200 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-primary dark:hover:text-white shadow-sm hover:shadow-md"
+            className="p-2 rounded-lg transition-all duration-200 bg-background-tertiary text-secondary hover:bg-surface-elevated hover:text-primary border border-border shadow-sm hover:shadow-md"
             aria-label={`Switch to ${isDark ? "light" : "dark"} theme`}
             title={`Switch to ${isDark ? "light" : "dark"} theme`}
           >
@@ -79,14 +79,14 @@ const Navigation = () => {
           <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              className="flex items-center space-x-2 p-2 rounded-lg transition-all duration-200 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 shadow-sm hover:shadow-md"
+              className="flex items-center space-x-2 p-2 rounded-lg transition-all duration-200 bg-background-tertiary text-primary hover:bg-surface-elevated border border-border shadow-sm hover:shadow-md"
             >
               <User className="w-5 h-5" />
               <span className="text-sm font-medium font-poppins">{user?.username}</span>
             </button>
 
             {isUserMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-elevation-3 z-50 bg-surface border border-border backdrop-blur-md animate-scale-in">
+              <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-elevation-3 z-50 bg-surface border border-border backdrop-blur-md animate-scale-in">
                 <div className="py-1">
                   <div className="px-4 py-2 text-sm border-b border-border-subtle">
                     <div className="font-medium font-poppins text-primary">

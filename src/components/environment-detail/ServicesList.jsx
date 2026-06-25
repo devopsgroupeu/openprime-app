@@ -262,9 +262,9 @@ const ServicesList = ({ environment }) => {
                       <span
                         className={`text-xs px-2 py-1 rounded ${
                           typeof value === "object"
-                            ? "bg-purple-500/10 text-purple-500"
+                            ? "bg-teal-500/10 text-teal-500"
                             : typeof value === "boolean"
-                              ? "bg-blue-500/10 text-blue-500"
+                              ? "bg-teal-500/10 text-teal-500"
                               : typeof value === "number"
                                 ? "bg-green-500/10 text-green-500"
                                 : "bg-gray-500/10 text-gray-500"

@@ -296,14 +296,14 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
           title="Active Services"
           value={`${enabledCount}/${totalCount}`}
           subtitle="Cloud services configured"
-          color="blue"
+          color="teal"
         />
         <MetricCard
           icon={Container}
           title="Helm Charts"
           value={helmCount}
           subtitle="Kubernetes deployments"
-          color="purple"
+          color="teal"
         />
       </div>
 
@@ -362,8 +362,8 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
                   isGenerating
                     ? "opacity-50 cursor-not-allowed"
                     : isDark
-                      ? "bg-purple-600/20 hover:bg-purple-600/30 text-purple-400"
-                      : "bg-purple-50 hover:bg-purple-100 text-purple-600"
+                      ? "bg-teal-600/20 hover:bg-teal-600/30 text-teal-400"
+                      : "bg-teal-50 hover:bg-teal-100 text-teal-600"
                 }`}
               >
                 <Package className={`w-4 h-4 ${isGenerating ? "animate-spin" : ""}`} />
@@ -376,8 +376,8 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
                   isPushing || !environment.git_repository?.enabled
                     ? "opacity-50 cursor-not-allowed"
                     : isDark
-                      ? "bg-orange-600/20 hover:bg-orange-600/30 text-orange-400"
-                      : "bg-orange-50 hover:bg-orange-100 text-orange-600"
+                      ? "bg-amber-600/20 hover:bg-amber-600/30 text-amber-400"
+                      : "bg-amber-50 hover:bg-amber-100 text-amber-600"
                 }`}
               >
                 <GitBranch className={`w-4 h-4 ${isPushing ? "animate-spin" : ""}`} />
