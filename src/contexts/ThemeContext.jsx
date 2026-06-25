@@ -12,9 +12,9 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
   const [isDark, setIsDark] = useState(() => {
-    // Force light theme as default for new design
+    // Dark-default to match openprime-site + Keycloak theme (toggle still available)
     const saved = localStorage.getItem("openprime-theme-v2");
-    return saved ? JSON.parse(saved) : false;
+    return saved ? JSON.parse(saved) : true;
   });
 
   useEffect(() => {

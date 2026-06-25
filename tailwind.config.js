@@ -43,22 +43,25 @@ module.exports = {
         danger: "var(--color-danger)",
         info: "var(--color-info)",
       },
-      // Typography from Design Manual
+      // Typography — consolidated to Geist (matches openprime-site + Keycloak theme).
+      // Legacy class names (font-sora/font-poppins) aliased to Geist so existing
+      // components need no changes.
       fontFamily: {
-        sora: ["Sora", "sans-serif"], // Primary headings
-        poppins: ["Poppins", "sans-serif"], // Body text
+        geist: ["Geist", "sans-serif"],
+        sora: ["Geist", "sans-serif"],
+        poppins: ["Geist", "sans-serif"],
       },
       // Add smooth scrolling utilities
       scrollBehavior: {
         smooth: "smooth",
         auto: "auto",
       },
-      // Enhanced gradients for modern UI - Based on OpenPrime Design Manual
+      // Teal gradients — matches openprime-site + Keycloak theme
       backgroundImage: {
-        "openprime-gradient": "linear-gradient(135deg, #04312C 0%, #00E081 100%)",
-        "openprime-teal-gradient": "linear-gradient(135deg, #35B0A0 0%, #37D8A9 100%)",
-        "openprime-primary-gradient": "linear-gradient(135deg, #04312C 0%, #35B0A0 100%)",
-        "openprime-accent-gradient": "linear-gradient(135deg, #00E081 0%, #60EFFF 100%)",
+        "openprime-gradient": "linear-gradient(135deg, #14b8a6 0%, #0d9488 50%, #0f766e 100%)",
+        "openprime-teal-gradient": "linear-gradient(135deg, #2dd4bf 0%, #0d9488 100%)",
+        "openprime-primary-gradient": "linear-gradient(135deg, #14b8a6 0%, #0f766e 100%)",
+        "openprime-accent-gradient": "linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)",
         "surface-gradient":
           "linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-elevated) 100%)",
       },

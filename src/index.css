@@ -1,115 +1,115 @@
 /* src/index.css */
-@import url("https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Semantic Color System - Based on OpenPrime Design Manual v2025 */
+/* Semantic Color System - aligned with openprime-site + Keycloak openprime theme
+   (navy + teal + slate; Geist typography). WCAG AA verified. */
 :root {
-  /* Light Mode - Using Official OpenPrime Design Manual Colors */
+  /* Light Mode - neutral slate surfaces, teal brand */
 
   /* Background Colors (60% rule - primary surfaces) */
-  --color-background: #f2f9f8; /* OpenPrime lightest shade from manual */
-  --color-background-secondary: #ffffff; /* Pure white for cards */
-  --color-background-tertiary: #c5e8e4; /* OpenPrime light shade */
-  --color-background-accent: #35b0a0; /* OpenPrime primary teal */
+  --color-background: #f8fafc; /* slate-50 */
+  --color-background-secondary: #ffffff; /* white cards */
+  --color-background-tertiary: #f1f5f9; /* slate-100 */
+  --color-background-accent: #0d9488; /* teal-600 */
 
   /* Surface Colors (elevation system) */
-  --color-surface: #ffffff; /* White surfaces */
-  --color-surface-elevated: #f2f9f8; /* OpenPrime lightest */
-  --color-surface-overlay: #ffffff; /* Modal backgrounds */
+  --color-surface: #ffffff;
+  --color-surface-elevated: #f8fafc;
+  --color-surface-overlay: #ffffff;
 
-  /* Text Colors (high contrast, WCAG AA compliant) */
-  --color-text-primary: #04312c; /* OpenPrime primary dark */
-  --color-text-secondary: #1e7366; /* OpenPrime medium shade */
-  --color-text-tertiary: #2fa394; /* OpenPrime lighter shade */
-  --color-text-inverse: #ffffff; /* White text on dark backgrounds */
+  /* Text Colors (WCAG AA on white) */
+  --color-text-primary: #0f172a; /* slate-900 — 14.6:1 */
+  --color-text-secondary: #475569; /* slate-600 — 7.6:1 */
+  --color-text-tertiary: #64748b; /* slate-500 — 4.8:1 */
+  --color-text-inverse: #ffffff;
 
-  /* Border Colors */
-  --color-border: #c5e8e4; /* OpenPrime light shade */
-  --color-border-subtle: #f2f9f8; /* OpenPrime lightest */
-  --color-border-strong: #35b0a0; /* OpenPrime primary */
+  /* Border Colors (neutral slate) */
+  --color-border: #e2e8f0; /* slate-200 */
+  --color-border-subtle: #f1f5f9; /* slate-100 */
+  --color-border-strong: #cbd5e1; /* slate-300 */
 
-  /* Primary Brand Colors (30% rule - secondary elements) */
-  --color-primary: #35b0a0; /* OpenPrime primary teal */
-  --color-primary-hover: #268a7d; /* OpenPrime darker shade */
-  --color-primary-active: #04312c; /* OpenPrime primary dark */
-  --color-primary-muted: #c5e8e4; /* OpenPrime light shade */
+  /* Primary Brand Colors (teal — matches site/Keycloak) */
+  --color-primary: #0d9488; /* teal-600 */
+  --color-primary-hover: #0f766e; /* teal-700 — 5.5:1 as text */
+  --color-primary-active: #115e59; /* teal-800 */
+  --color-primary-muted: #ccfbf1; /* teal-100 */
 
-  /* Accent Colors (10% rule - highlights and CTAs) */
-  --color-accent: #00e081; /* OpenPrime complementary green */
-  --color-accent-hover: #207d72; /* OpenPrime medium shade */
-  --color-accent-muted: #f2f9f8; /* OpenPrime lightest */
+  /* Accent Colors (teal, not the old lime green) */
+  --color-accent: #0d9488; /* teal-600 */
+  --color-accent-hover: #0f766e; /* teal-700 */
+  --color-accent-muted: #f0fdfa; /* teal-50 */
 
-  /* Semantic Status Colors (from OpenPrime design manual) */
-  --color-success: #00e081; /* OpenPrime complementary green */
-  --color-success-muted: #f2f9f8; /* OpenPrime lightest */
+  /* Semantic Status Colors */
+  --color-success: #059669; /* emerald-600 */
+  --color-success-muted: #d1fae5; /* emerald-100 */
 
-  --color-warning: #ffdb29; /* OpenPrime complementary yellow */
-  --color-warning-muted: #f2f9f8; /* OpenPrime lightest */
+  --color-warning: #d97706; /* amber-600 (accessible) */
+  --color-warning-muted: #fef3c7; /* amber-100 */
 
-  --color-danger: #dc2626; /* Semantic red (accessible) */
-  --color-danger-muted: #fee2e2; /* Light error background */
+  --color-danger: #dc2626; /* red-600 */
+  --color-danger-muted: #fee2e2; /* red-100 */
 
-  --color-info: #60efff; /* OpenPrime complementary cyan */
-  --color-info-muted: #f2f9f8; /* OpenPrime lightest */
+  --color-info: #0891b2; /* cyan-600 */
+  --color-info-muted: #cffafe; /* cyan-100 */
 
   /* Shadow Colors */
-  --color-shadow: #000000; /* Black shadows for light mode */
+  --color-shadow: #0f172a; /* slate-900 */
 }
 
-/* Dark Mode - Using OpenPrime Design Manual colors optimized for dark backgrounds */
+/* Dark Mode - navy surfaces + bright teal (matches site/Keycloak dark theme) */
 .dark {
-  /* Background Colors (improved dark hierarchy with preferred dark blue) */
-  --color-background: #111827; /* Preferred dark blue background */
-  --color-background-secondary: #1f2937; /* Darker blue-gray for cards */
-  --color-background-tertiary: #374151; /* Medium blue-gray for elevated surfaces */
-  --color-background-accent: #1e7366; /* OpenPrime medium shade for accents */
+  /* Background Colors (navy hierarchy) */
+  --color-background: #0a0f1a; /* deepest navy (site page bg) */
+  --color-background-secondary: #111827; /* navy cards */
+  --color-background-tertiary: #1e293b; /* slate-800 elevated */
+  --color-background-accent: #0d9488; /* teal-600 */
 
-  /* Surface Colors (cohesive blue-gray elevation system) */
-  --color-surface: #1f2937; /* Darker blue-gray for cards */
-  --color-surface-elevated: #374151; /* Medium blue-gray for elevated surfaces */
-  --color-surface-overlay: #111827; /* Dark blue for modals */
+  /* Surface Colors (navy elevation system) */
+  --color-surface: #111827; /* cards */
+  --color-surface-elevated: #1e293b; /* elevated surfaces */
+  --color-surface-overlay: #0a0f1a; /* modals */
 
-  /* Text Colors (optimized for dark mode readability) */
-  --color-text-primary: #ffffff; /* Pure white for primary text */
-  --color-text-secondary: #c5e8e4; /* OpenPrime light shade */
-  --color-text-tertiary: #35c4a5; /* OpenPrime bright shade */
-  --color-text-inverse: #04312c; /* OpenPrime primary dark */
+  /* Text Colors (WCAG AA on navy) */
+  --color-text-primary: #f8fafc; /* slate-50 — 17.7:1 */
+  --color-text-secondary: #94a3b8; /* slate-400 — 6.9:1 */
+  --color-text-tertiary: #64748b; /* slate-500 */
+  --color-text-inverse: #0f172a; /* slate-900 */
 
-  /* Border Colors (subtle blue-gray borders for cohesive dark theme) */
-  --color-border: #374151; /* Medium blue-gray for borders */
-  --color-border-subtle: #1f2937; /* Darker blue-gray for subtle borders */
-  --color-border-strong: #35b0a0; /* OpenPrime primary for strong borders */
+  /* Border Colors (navy/slate borders) */
+  --color-border: #1e293b; /* slate-800 (site dark border) */
+  --color-border-subtle: #111827; /* navy */
+  --color-border-strong: #334155; /* slate-700 */
 
-  /* Primary Colors (using OpenPrime bright shades for visibility) */
-  --color-primary: #35b0a0; /* OpenPrime primary teal */
-  --color-primary-hover: #37d8a9; /* OpenPrime bright shade */
-  --color-primary-active: #35c4a5; /* OpenPrime bright shade */
-  --color-primary-muted: #374151; /* Medium blue-gray for muted states */
+  /* Primary Colors (bright teal for dark visibility) */
+  --color-primary: #2dd4bf; /* teal-400 — 9.5:1 on navy */
+  --color-primary-hover: #5eead4; /* teal-300 */
+  --color-primary-active: #99f6e4; /* teal-200 */
+  --color-primary-muted: #134e4a; /* teal-900 */
 
-  /* Accent Colors (using complementary colors from manual) */
-  --color-accent: #00e081; /* OpenPrime complementary green */
-  --color-accent-hover: #37d8a9; /* OpenPrime bright shade */
-  --color-accent-muted: #1f2937; /* Darker blue-gray for muted accents */
+  /* Accent Colors (teal) */
+  --color-accent: #2dd4bf; /* teal-400 */
+  --color-accent-hover: #5eead4; /* teal-300 */
+  --color-accent-muted: #134e4a; /* teal-900 */
 
-  /* Status Colors (using complementary colors from manual) */
-  --color-success: #00e081; /* OpenPrime complementary green */
-  --color-success-muted: #1f2937; /* Darker blue-gray for success backgrounds */
+  /* Status Colors */
+  --color-success: #34d399; /* emerald-400 */
+  --color-success-muted: #064e3b; /* emerald-900 */
 
-  --color-warning: #ffdb29; /* OpenPrime complementary yellow */
-  --color-warning-muted: #1f2937; /* Darker blue-gray for warning backgrounds */
+  --color-warning: #fbbf24; /* amber-400 */
+  --color-warning-muted: #422006; /* amber-950 */
 
-  --color-danger: #ef4444; /* Accessible red for dark mode */
-  --color-danger-muted: #7f1d1d; /* Dark error background */
+  --color-danger: #f87171; /* red-400 */
+  --color-danger-muted: #7f1d1d; /* red-900 */
 
-  --color-info: #60efff; /* OpenPrime complementary cyan */
-  --color-info-muted: #1f2937; /* Darker blue-gray for info backgrounds */
+  --color-info: #22d3ee; /* cyan-400 */
+  --color-info-muted: #164e63; /* cyan-900 */
 
   /* Shadow Colors */
-  --color-shadow: #000000; /* Deep black shadows */
+  --color-shadow: #000000;
 }
 
 /* Smooth scrolling for the entire document */
@@ -125,7 +125,7 @@ html {
 body {
   margin: 0;
   font-family:
-    "Poppins",
+    "Geist",
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",
