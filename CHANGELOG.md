@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.9.2...v1.10.0) (2026-06-25)
+
+### 🚀 Features
+
+* **app:** add a mock-mode FE test harness to run and test without backend or Keycloak ([#20](https://github.com/devopsgroupeu/openprime-app/issues/20)) ([2eeebc5](https://github.com/devopsgroupeu/openprime-app/commit/2eeebc55463978fd83a39c8d7b220c37aad15400))
+
 ## [1.9.2](https://github.com/devopsgroupeu/openprime-app/compare/v1.9.1...v1.9.2) (2026-06-25)
 
 ### 📚 Documentation
