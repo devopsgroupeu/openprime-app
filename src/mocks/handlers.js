@@ -20,7 +20,10 @@ export const handlers = [
     return env ? HttpResponse.json(env) : new HttpResponse(null, { status: 404 });
   }),
   http.post("*/environments", async ({ request }) =>
-    HttpResponse.json({ id: "env-new", status: "pending", ...(await request.json()) }, { status: 201 }),
+    HttpResponse.json(
+      { id: "env-new", status: "pending", ...(await request.json()) },
+      { status: 201 },
+    ),
   ),
   http.put("*/environments/:id", async ({ request, params }) =>
     HttpResponse.json({ id: params.id, ...(await request.json()) }),
