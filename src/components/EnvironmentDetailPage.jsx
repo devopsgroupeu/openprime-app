@@ -374,7 +374,7 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
                 disabled={isPushing || !environment.git_repository?.enabled}
                 className={`w-full p-3 rounded-lg flex items-center space-x-3 transition-colors ${
                   isPushing || !environment.git_repository?.enabled
-                    ? "opacity-50 cursor-not-allowed"
+                    ? "opacity-50 cursor-not-allowed text-tertiary"
                     : isDark
                       ? "bg-amber-600/20 hover:bg-amber-600/30 text-amber-400"
                       : "bg-amber-50 hover:bg-amber-100 text-amber-600"
