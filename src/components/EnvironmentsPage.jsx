@@ -136,7 +136,7 @@ const EnvironmentsPage = ({
   };
 
   return (
-    <div className="min-h-screen transition-colors duration-200 bg-background">
+    <div className="min-h-screen transition-colors duration-200 bg-transparent">
       <Navigation />
       <div className="max-w-7xl mx-auto px-8 py-8">
         <div className="flex justify-between items-center mb-8">

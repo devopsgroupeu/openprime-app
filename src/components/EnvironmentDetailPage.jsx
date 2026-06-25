@@ -74,7 +74,7 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen transition-colors duration-200 bg-background text-primary">
+      <div className="min-h-screen transition-colors duration-200 bg-transparent text-primary">
         <Navigation />
         <div className="max-w-7xl mx-auto px-8 py-16 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
@@ -86,7 +86,7 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
 
   if (!environment) {
     return (
-      <div className="min-h-screen transition-colors duration-200 bg-background text-primary">
+      <div className="min-h-screen transition-colors duration-200 bg-transparent text-primary">
         <Navigation />
         <div className="max-w-7xl mx-auto px-8 py-16 text-center">
           <p>Environment not found</p>
@@ -461,7 +461,7 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
   );
 
   return (
-    <div className="min-h-screen transition-colors duration-200 bg-background">
+    <div className="min-h-screen transition-colors duration-200 bg-transparent">
       <Navigation />
       <EnvironmentHeader
         environment={environment}

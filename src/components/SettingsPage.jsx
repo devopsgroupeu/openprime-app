@@ -161,7 +161,7 @@ const SettingsPage = () => {
   if (loading) {
     return (
       <div
-        className={`min-h-screen transition-colors ${isDark ? "bg-background" : "bg-background"}`}
+        className={`min-h-screen transition-colors ${isDark ? "bg-transparent" : "bg-transparent"}`}
       >
         <Navigation />
         <div className="max-w-7xl mx-auto px-8 py-8">
@@ -179,7 +179,9 @@ const SettingsPage = () => {
   }
 
   return (
-    <div className={`min-h-screen transition-colors ${isDark ? "bg-background" : "bg-background"}`}>
+    <div
+      className={`min-h-screen transition-colors ${isDark ? "bg-transparent" : "bg-transparent"}`}
+    >
       <Navigation />
       <div className="max-w-7xl mx-auto px-8 py-8">
         <h1

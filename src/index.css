@@ -11,10 +11,14 @@
   /* Light Mode - neutral slate surfaces, teal brand */
 
   /* Background Colors (60% rule - primary surfaces) */
-  --color-background: #f8fafc; /* slate-50 */
+  --color-background: #f1f5f9; /* slate-100 — page bg (matches site) */
   --color-background-secondary: #ffffff; /* white cards */
-  --color-background-tertiary: #f1f5f9; /* slate-100 */
+  --color-background-tertiary: #f8fafc; /* slate-50 — elevated */
   --color-background-accent: #0d9488; /* teal-600 */
+  /* Subtle teal page glow (ported from site/Keycloak theme) */
+  --page-glow:
+    radial-gradient(ellipse 800px 600px at 18% 55%, rgba(13, 148, 136, 0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 520px 420px at 75% 18%, rgba(56, 189, 248, 0.045) 0%, transparent 70%);
 
   /* Surface Colors (elevation system) */
   --color-surface: #ffffff;
@@ -69,6 +73,10 @@
   --color-background-secondary: #111827; /* navy cards */
   --color-background-tertiary: #1e293b; /* slate-800 elevated */
   --color-background-accent: #0d9488; /* teal-600 */
+  /* Subtle teal page glow (ported from site/Keycloak theme) */
+  --page-glow:
+    radial-gradient(ellipse 800px 600px at 18% 55%, rgba(45, 212, 191, 0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 520px 420px at 75% 18%, rgba(56, 189, 248, 0.04) 0%, transparent 70%);
 
   /* Surface Colors (navy elevation system) */
   --color-surface: #111827; /* cards */
@@ -128,6 +136,8 @@ html {
 
 body {
   margin: 0;
+  background: var(--page-glow), var(--color-background);
+  background-attachment: fixed;
   font-family:
     "Geist",
     -apple-system,
