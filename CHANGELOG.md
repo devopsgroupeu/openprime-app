@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.9.0...v1.9.1) (2026-06-25)
+
+### 🐛 Bug Fixes
+
+* **wizard:** hide Lambda service (generated lambda.tf needs user-provided .zip packages) ([#17](https://github.com/devopsgroupeu/openprime-app/issues/17)) ([a3831d6](https://github.com/devopsgroupeu/openprime-app/commit/a3831d627c90e93977118aaf607ee0a9e6b0c358))
+
 ## [1.9.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.8.0...v1.9.0) (2026-06-23)
 
 ### 🚀 Features
