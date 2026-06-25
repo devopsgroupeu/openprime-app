@@ -3,16 +3,11 @@
   "version": "1.9.1",
   "private": true,
   "dependencies": {
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1",
     "keycloak-js": "^26.2.3",
     "lucide-react": "^0.575.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-router": "^7.13.1",
-    "web-vitals": "^5.1.0"
+    "react-router": "^7.13.1"
   },
   "scripts": {
     "start": "vite",
@@ -54,6 +49,9 @@
     "@semantic-release/github": "^12.0.6",
     "@semantic-release/npm": "^13.1.4",
     "@semantic-release/release-notes-generator": "^14.1.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^25.3.0",
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/coverage-v8": "^4.0.18",
