@@ -171,15 +171,15 @@ input[type="tel"],
 input[type="url"],
 select,
 textarea {
-  background-color: var(--color-input-bg) !important;
-  border: 1px solid var(--color-border) !important;
-  border-radius: 0.5rem !important; /* ≈ Keycloak calc(--radius - 2px) */
-  color: var(--color-text-primary) !important;
-  font-size: 0.875rem !important;
-  padding: 0.5rem 0.75rem !important; /* 8px 12px — matches Keycloak field */
+  background-color: var(--color-input-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem; /* ≈ Keycloak calc(--radius - 2px) */
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem; /* 8px 12px — matches Keycloak field */
   transition:
     border-color 0.15s ease,
-    box-shadow 0.15s ease !important;
+    box-shadow 0.15s ease;
 }
 
 input[type="text"]:focus,
@@ -191,30 +191,30 @@ input[type="tel"]:focus,
 input[type="url"]:focus,
 select:focus,
 textarea:focus {
-  outline: none !important;
-  border-color: var(--color-primary) !important;
-  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.12) !important; /* teal focus ring (Keycloak) */
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.12); /* teal focus ring (Keycloak) */
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: var(--color-text-tertiary) !important;
+  color: var(--color-text-tertiary);
   opacity: 0.7;
 }
 
 input:disabled,
 select:disabled,
 textarea:disabled {
-  opacity: 0.5 !important;
-  cursor: not-allowed !important;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ---------- Form labels — consistent with the Keycloak login theme ---------- */
 label {
-  font-size: 0.8125rem !important; /* 13px */
-  font-weight: 500 !important;
-  letter-spacing: -0.01em !important;
-  color: var(--color-label) !important;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--color-label);
 }
 
 /* ---------- Buttons matching the Keycloak login style ----------
@@ -225,85 +225,85 @@ label {
 .btn-op-primary,
 .btn-op-secondary,
 .btn-op-danger {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-height: 38px !important;
-  padding: 8px 16px !important;
-  font-size: 0.84375rem !important; /* 13.5px */
-  font-weight: 500 !important;
-  line-height: 1 !important;
-  letter-spacing: -0.01em !important;
-  border: none !important;
-  border-radius: 0.625rem !important;
-  cursor: pointer !important;
-  box-shadow: none !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px 16px;
+  font-size: 0.84375rem; /* 13.5px */
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  border: none;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  box-shadow: none;
   transition:
     background 0.15s ease,
     box-shadow 0.15s ease,
     transform 0.1s ease,
     border-color 0.15s ease,
-    color 0.15s ease !important;
+    color 0.15s ease;
 }
 
 /* Primary — teal gradient (white text, like the "Continue" button) */
 .btn-op-primary {
-  color: #ffffff !important;
-  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 50%, #0f766e 100%) !important;
+  color: #ffffff;
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 50%, #0f766e 100%);
 }
 .btn-op-primary:hover {
-  background: linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #115e59 100%) !important;
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #115e59 100%);
 }
 .btn-op-primary:active {
-  background: linear-gradient(135deg, #0f766e 0%, #115e59 50%, #134e4a 100%) !important;
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 50%, #134e4a 100%);
   transform: scale(0.98);
 }
 .btn-op-primary:focus-visible {
-  outline: none !important;
-  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25) !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25);
 }
 
 /* Secondary — subtle ghost with border (Previous / Back) */
 .btn-op-secondary {
-  color: var(--color-text-secondary) !important;
-  background: transparent !important;
-  border: 1px solid var(--color-border) !important;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 1px solid var(--color-border);
 }
 .btn-op-secondary:hover {
-  background: var(--color-surface-elevated) !important;
-  color: var(--color-text-primary) !important;
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
 }
 .btn-op-secondary:active {
   transform: scale(0.98);
 }
 .btn-op-secondary:focus-visible {
-  outline: none !important;
-  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25) !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25);
 }
 
 /* Danger — red gradient (white text, for Delete) */
 .btn-op-danger {
-  color: #ffffff !important;
-  background: linear-gradient(135deg, #f87171 0%, #ef4444 50%, #dc2626 100%) !important;
+  color: #ffffff;
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 50%, #dc2626 100%);
 }
 .btn-op-danger:hover {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%) !important;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
 }
 .btn-op-danger:active {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%) !important;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
   transform: scale(0.98);
 }
 .btn-op-danger:focus-visible {
-  outline: none !important;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3) !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
 }
 
 .btn-op-primary:disabled,
 .btn-op-secondary:disabled,
 .btn-op-danger:disabled {
-  opacity: 0.7 !important;
-  cursor: not-allowed !important;
-  transform: none !important;
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* ---------- Top-nav text links — muted, with animated teal underline ---------- */
