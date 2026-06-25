@@ -28,7 +28,7 @@ const Navigation = () => {
   }, []);
   return (
     <nav
-      className="relative z-10 px-8 py-6 backdrop-blur-md border-b transition-all duration-200 bg-surface/95 border-border shadow-elevation-1"
+      className="relative z-10 px-8 py-4 backdrop-blur-md border-b border-border bg-surface/80"
       role="navigation"
       aria-label="Main navigation"
     >
@@ -37,7 +37,7 @@ const Navigation = () => {
           <img
             src={isDark ? openPrimeLogoWhite : openPrimeLogoBlack}
             alt="OpenPrime"
-            className="h-10 p-2 w-auto transition-transform group-hover:scale-105"
+            className="h-9 w-auto transition-transform group-hover:scale-105"
             aria-hidden="true"
           />
         </Link>
@@ -70,7 +70,7 @@ const Navigation = () => {
           </div>
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg transition-all duration-200 bg-background-tertiary text-secondary hover:bg-surface-elevated hover:text-primary border border-border shadow-sm hover:shadow-md"
+            className="p-2.5 rounded-lg text-tertiary hover:text-primary hover:bg-surface-elevated transition-colors duration-200"
             aria-label={`Switch to ${isDark ? "light" : "dark"} theme`}
             title={`Switch to ${isDark ? "light" : "dark"} theme`}
           >
@@ -79,7 +79,7 @@ const Navigation = () => {
           <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              className="flex items-center space-x-2 p-2 rounded-lg transition-all duration-200 bg-background-tertiary text-primary hover:bg-surface-elevated border border-border shadow-sm hover:shadow-md"
+              className="flex items-center space-x-2 p-2 rounded-lg text-secondary hover:text-primary hover:bg-surface-elevated transition-colors duration-200"
             >
               <User className="w-5 h-5" />
               <span className="text-sm font-medium font-poppins">{user?.username}</span>
