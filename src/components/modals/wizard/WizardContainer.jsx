@@ -369,15 +369,7 @@ const WizardContainer = ({
             <button
               onClick={handlePrevious}
               disabled={currentStep === 1 || (isEditMode && currentStep === 2)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all font-medium ${
-                currentStep === 1 || (isEditMode && currentStep === 2)
-                  ? isDark
-                    ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : isDark
-                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
-              }`}
+              className="btn-op-secondary space-x-2"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Previous</span>
