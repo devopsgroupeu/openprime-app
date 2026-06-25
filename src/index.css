@@ -216,3 +216,47 @@ label {
   letter-spacing: -0.01em !important;
   color: var(--color-label) !important;
 }
+
+/* ---------- Primary CTA button — same style as the Keycloak login "Continue" ----------
+   Opt-in via the .btn-op-primary class (New Environment, + Add, Save All Settings, …). */
+.btn-op-primary {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 38px !important;
+  padding: 8px 16px !important;
+  font-size: 0.84375rem !important; /* 13.5px */
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.01em !important;
+  color: #042f2e !important; /* dark teal text */
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 50%, #0f766e 100%) !important;
+  border: none !important;
+  border-radius: 0.625rem !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease !important;
+}
+
+.btn-op-primary:hover {
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #115e59 100%) !important;
+}
+
+.btn-op-primary:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25) !important;
+}
+
+.btn-op-primary:active {
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 50%, #134e4a 100%) !important;
+  transform: scale(0.98);
+}
+
+.btn-op-primary:disabled {
+  opacity: 0.7 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}

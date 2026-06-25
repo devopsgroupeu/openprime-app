@@ -405,13 +405,7 @@ const WizardContainer = ({
               <button
                 onClick={handleNext}
                 disabled={!canGoNext || isLoading}
-                className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-all font-medium ${
-                  !canGoNext || isLoading
-                    ? isDark
-                      ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700 shadow-lg hover:shadow-xl"
-                }`}
+                className="btn-op-primary space-x-2 transition-all"
               >
                 {isLoading ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -432,13 +426,7 @@ const WizardContainer = ({
               <button
                 onClick={handleFinish}
                 disabled={!canGoNext || isLoading}
-                className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-all font-medium ${
-                  !canGoNext || isLoading
-                    ? isDark
-                      ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700 shadow-lg hover:shadow-xl"
-                }`}
+                className="btn-op-primary space-x-2 transition-all"
               >
                 {isLoading ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
