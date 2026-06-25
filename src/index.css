@@ -260,3 +260,40 @@ label {
   cursor: not-allowed !important;
   transform: none !important;
 }
+
+/* ---------- Top-nav text links — muted, with animated teal underline ---------- */
+.nav-link {
+  position: relative;
+  color: var(--color-text-tertiary); /* inactive: more muted */
+  transition: color 0.15s ease;
+}
+
+.nav-link:hover,
+.nav-link[aria-current="page"] {
+  color: var(--color-text-primary);
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-primary); /* teal */
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.2s ease;
+}
+
+.nav-link:hover::after,
+.nav-link[aria-current="page"]::after {
+  transform: scaleX(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-link::after {
+    transition: none;
+  }
+}

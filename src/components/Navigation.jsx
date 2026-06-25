@@ -46,11 +46,7 @@ const Navigation = () => {
             <div className="flex items-center gap-6" role="menubar">
               <Link
                 to="/environments"
-                className={`font-medium font-poppins transition-colors duration-200 ${
-                  location.pathname.startsWith("/environments")
-                    ? "text-primary"
-                    : "text-secondary hover:text-primary"
-                }`}
+                className="nav-link font-medium font-poppins"
                 aria-current={location.pathname.startsWith("/environments") ? "page" : undefined}
                 role="menuitem"
               >
@@ -58,11 +54,7 @@ const Navigation = () => {
               </Link>
               <Link
                 to="/settings"
-                className={`font-medium font-poppins transition-colors duration-200 ${
-                  location.pathname === "/settings"
-                    ? "text-primary"
-                    : "text-secondary hover:text-primary"
-                }`}
+                className="nav-link font-medium font-poppins"
                 aria-current={location.pathname === "/settings" ? "page" : undefined}
                 role="menuitem"
               >
