@@ -105,6 +105,8 @@ export const getProviderServices = (providerType) => {
   // Dynamically filter services based on the provider field in servicesConfig
   return Object.keys(SERVICES_CONFIG).filter((serviceKey) => {
     const service = SERVICES_CONFIG[serviceKey];
-    return service.provider === providerType;
+    // `available: false` hides a service from the wizard while keeping its
+    // config (e.g. for existing environments and future re-enabling).
+    return service.provider === providerType && service.available !== false;
   });
 };
