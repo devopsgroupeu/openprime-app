@@ -1370,6 +1370,10 @@ export const SERVICES_CONFIG = {
     provider: "aws",
     category: "Compute",
     icon: "⚡",
+    // Hidden from the wizard: generated lambda.tf requires user-provided
+    // deployment packages (lambda-packages/*.zip), so a plain apply fails.
+    // Re-enable once package upload/build is supported. (OpenPrime-151)
+    available: false,
     fields: {
       enabled: {
         type: FIELD_TYPES.TOGGLE,
