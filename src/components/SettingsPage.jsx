@@ -161,7 +161,7 @@ const SettingsPage = () => {
   if (loading) {
     return (
       <div
-        className={`min-h-screen transition-colors ${isDark ? "bg-background" : "bg-background"}`}
+        className={`min-h-screen transition-colors ${isDark ? "bg-transparent" : "bg-transparent"}`}
       >
         <Navigation />
         <div className="max-w-7xl mx-auto px-8 py-8">
@@ -179,7 +179,9 @@ const SettingsPage = () => {
   }
 
   return (
-    <div className={`min-h-screen transition-colors ${isDark ? "bg-background" : "bg-background"}`}>
+    <div
+      className={`min-h-screen transition-colors ${isDark ? "bg-transparent" : "bg-transparent"}`}
+    >
       <Navigation />
       <div className="max-w-7xl mx-auto px-8 py-8">
         <h1
@@ -345,7 +347,7 @@ const SettingsPage = () => {
               </h2>
               <button
                 onClick={() => handleAddCredential("aws")}
-                className="px-3 py-2 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg hover:from-teal-700 hover:to-cyan-700 transition-all flex items-center text-sm"
+                className="btn-op-primary transition-all"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add
@@ -373,7 +375,7 @@ const SettingsPage = () => {
                       }`}
                     >
                       <div className="flex items-center flex-1">
-                        <Cloud className="w-6 h-6 text-orange-400 mr-3" />
+                        <Cloud className="w-6 h-6 text-teal-400 mr-3" />
                         <div>
                           <div
                             className={`font-semibold transition-colors ${
@@ -431,7 +433,7 @@ const SettingsPage = () => {
           <button
             onClick={saveSettings}
             disabled={saving}
-            className="px-6 py-3 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg font-semibold hover:from-teal-700 hover:to-cyan-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            className="btn-op-primary transition-all"
           >
             {saving ? (
               <>

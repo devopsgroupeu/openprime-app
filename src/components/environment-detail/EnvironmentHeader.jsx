@@ -8,10 +8,10 @@ const EnvironmentHeader = ({ environment, providerConfig, onEdit, onDelete }) =>
 
   const getProviderIcon = (type) => {
     const iconColors = {
-      aws: "text-orange-400",
-      azure: "text-blue-400",
-      gcp: "text-green-400",
-      onpremise: "text-gray-400",
+      aws: "text-teal-400",
+      azure: "text-teal-400",
+      gcp: "text-teal-400",
+      onpremise: "text-slate-400",
     };
 
     const colorClass = iconColors[type] || "text-gray-400";
@@ -31,11 +31,7 @@ const EnvironmentHeader = ({ environment, providerConfig, onEdit, onDelete }) =>
   };
 
   return (
-    <div
-      className={`backdrop-blur-md border-b transition-colors ${
-        isDark ? "bg-gray-900/95 border-gray-700" : "bg-white/95 border-gray-200"
-      }`}
-    >
+    <div className="border-b border-border">
       <div className="max-w-7xl mx-auto px-8 py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -45,7 +41,7 @@ const EnvironmentHeader = ({ environment, providerConfig, onEdit, onDelete }) =>
                 isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"
               }`}
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5 text-secondary" />
             </button>
 
             <div className="flex items-center space-x-3">
@@ -86,26 +82,12 @@ const EnvironmentHeader = ({ environment, providerConfig, onEdit, onDelete }) =>
           </div>
 
           <div className="flex items-center space-x-2">
-            <button
-              onClick={() => onEdit(environment)}
-              className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
-                isDark
-                  ? "bg-teal-600 hover:bg-teal-700 text-white"
-                  : "bg-teal-600 hover:bg-teal-700 text-white"
-              }`}
-            >
+            <button onClick={() => onEdit(environment)} className="btn-op-primary space-x-2">
               <Edit2 className="w-4 h-4" />
               <span>Edit</span>
             </button>
 
-            <button
-              onClick={onDelete}
-              className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
-                isDark
-                  ? "bg-red-600 hover:bg-red-700 text-white"
-                  : "bg-red-600 hover:bg-red-700 text-white"
-              }`}
-            >
+            <button onClick={onDelete} className="btn-op-danger space-x-2">
               <Trash2 className="w-4 h-4" />
               <span>Delete</span>
             </button>

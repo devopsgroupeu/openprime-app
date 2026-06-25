@@ -74,7 +74,7 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen transition-colors duration-200 bg-background text-primary">
+      <div className="min-h-screen transition-colors duration-200 bg-transparent text-primary">
         <Navigation />
         <div className="max-w-7xl mx-auto px-8 py-16 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
@@ -86,7 +86,7 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
 
   if (!environment) {
     return (
-      <div className="min-h-screen transition-colors duration-200 bg-background text-primary">
+      <div className="min-h-screen transition-colors duration-200 bg-transparent text-primary">
         <Navigation />
         <div className="max-w-7xl mx-auto px-8 py-16 text-center">
           <p>Environment not found</p>
@@ -296,14 +296,14 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
           title="Active Services"
           value={`${enabledCount}/${totalCount}`}
           subtitle="Cloud services configured"
-          color="blue"
+          color="teal"
         />
         <MetricCard
           icon={Container}
           title="Helm Charts"
           value={helmCount}
           subtitle="Kubernetes deployments"
-          color="purple"
+          color="teal"
         />
       </div>
 
@@ -362,8 +362,8 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
                   isGenerating
                     ? "opacity-50 cursor-not-allowed"
                     : isDark
-                      ? "bg-purple-600/20 hover:bg-purple-600/30 text-purple-400"
-                      : "bg-purple-50 hover:bg-purple-100 text-purple-600"
+                      ? "bg-teal-600/20 hover:bg-teal-600/30 text-teal-400"
+                      : "bg-teal-50 hover:bg-teal-100 text-teal-600"
                 }`}
               >
                 <Package className={`w-4 h-4 ${isGenerating ? "animate-spin" : ""}`} />
@@ -374,10 +374,10 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
                 disabled={isPushing || !environment.git_repository?.enabled}
                 className={`w-full p-3 rounded-lg flex items-center space-x-3 transition-colors ${
                   isPushing || !environment.git_repository?.enabled
-                    ? "opacity-50 cursor-not-allowed"
+                    ? "opacity-50 cursor-not-allowed text-tertiary"
                     : isDark
-                      ? "bg-orange-600/20 hover:bg-orange-600/30 text-orange-400"
-                      : "bg-orange-50 hover:bg-orange-100 text-orange-600"
+                      ? "bg-amber-600/20 hover:bg-amber-600/30 text-amber-400"
+                      : "bg-amber-50 hover:bg-amber-100 text-amber-600"
                 }`}
               >
                 <GitBranch className={`w-4 h-4 ${isPushing ? "animate-spin" : ""}`} />
@@ -461,7 +461,7 @@ const EnvironmentDetailPage = ({ onEdit, onDelete }) => {
   );
 
   return (
-    <div className="min-h-screen transition-colors duration-200 bg-background">
+    <div className="min-h-screen transition-colors duration-200 bg-transparent">
       <Navigation />
       <EnvironmentHeader
         environment={environment}

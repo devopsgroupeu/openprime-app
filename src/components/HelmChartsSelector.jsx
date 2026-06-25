@@ -137,7 +137,7 @@ const HelmChartsSelector = ({ value = {}, onChange, onEditHelmValues, k8sService
                         >
                           {chart.displayName}
                           {!isChartAvailable && (
-                            <span className="ml-2 text-xs font-medium text-orange-500">
+                            <span className="ml-2 text-xs font-medium text-amber-500">
                               Unavailable
                             </span>
                           )}

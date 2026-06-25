@@ -149,8 +149,8 @@ const ServicesConfigStep = ({
       <div
         className={`p-4 rounded-lg border ${
           isDark
-            ? "bg-blue-500/10 border-blue-500/30 text-blue-300"
-            : "bg-blue-50 border-blue-200 text-blue-700"
+            ? "bg-teal-500/10 border-teal-500/30 text-teal-300"
+            : "bg-teal-50 border-teal-200 text-teal-700"
         }`}
       >
         <div className="flex items-start">
@@ -324,8 +324,8 @@ const ServicesConfigStep = ({
               }}
               className={`text-xs px-3 py-1 rounded-lg transition-colors ${
                 isDark
-                  ? "text-orange-400 hover:bg-orange-500/20"
-                  : "text-orange-600 hover:bg-orange-100"
+                  ? "text-amber-400 hover:bg-amber-500/20"
+                  : "text-amber-600 hover:bg-amber-100"
               }`}
             >
               Disable All

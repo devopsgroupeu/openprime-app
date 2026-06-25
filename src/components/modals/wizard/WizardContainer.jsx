@@ -320,7 +320,7 @@ const WizardContainer = ({
                                 {step.title}
                               </p>
                               {isEditMode && step.number === 1 && (
-                                <div className="text-xs text-orange-500 mt-1 font-medium">
+                                <div className="text-xs text-amber-500 mt-1 font-medium">
                                   Read Only
                                 </div>
                               )}
@@ -369,15 +369,7 @@ const WizardContainer = ({
             <button
               onClick={handlePrevious}
               disabled={currentStep === 1 || (isEditMode && currentStep === 2)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all font-medium ${
-                currentStep === 1 || (isEditMode && currentStep === 2)
-                  ? isDark
-                    ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : isDark
-                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
-              }`}
+              className="btn-op-secondary space-x-2"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Previous</span>
@@ -405,13 +397,7 @@ const WizardContainer = ({
               <button
                 onClick={handleNext}
                 disabled={!canGoNext || isLoading}
-                className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-all font-medium ${
-                  !canGoNext || isLoading
-                    ? isDark
-                      ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700 shadow-lg hover:shadow-xl"
-                }`}
+                className="btn-op-primary space-x-2 transition-all"
               >
                 {isLoading ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -432,13 +418,7 @@ const WizardContainer = ({
               <button
                 onClick={handleFinish}
                 disabled={!canGoNext || isLoading}
-                className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-all font-medium ${
-                  !canGoNext || isLoading
-                    ? isDark
-                      ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700 shadow-lg hover:shadow-xl"
-                }`}
+                className="btn-op-primary space-x-2 transition-all"
               >
                 {isLoading ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

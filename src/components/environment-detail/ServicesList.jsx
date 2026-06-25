@@ -73,22 +73,6 @@ const ServicesList = ({ environment }) => {
       });
   };
 
-  const getServiceTypeColor = (serviceName) => {
-    const colors = {
-      vpc: "blue",
-      eks: "purple",
-      rds: "green",
-      s3: "orange",
-      ecr: "indigo",
-      opensearch: "yellow",
-      lambda: "pink",
-      elasticache: "red",
-      secretsmanager: "gray",
-      iam: "teal",
-    };
-    return colors[serviceName] || "gray";
-  };
-
   const formatConfigValue = (value) => {
     if (typeof value === "boolean") return value.toString();
     if (typeof value === "number") return value.toString();
@@ -123,7 +107,6 @@ const ServicesList = ({ environment }) => {
     const serviceDefinition = getServiceConfig(serviceName);
     const IconComponent = getServiceIcon(serviceName);
     const isExpanded = expandedServices[serviceName];
-    const serviceColor = getServiceTypeColor(serviceName);
     const importantAttrs = getImportantAttributes(serviceConfig, serviceName);
 
     return (
@@ -138,10 +121,8 @@ const ServicesList = ({ environment }) => {
         <div className="p-6 pb-4">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center space-x-4">
-              <div
-                className={`p-3 rounded-lg bg-${serviceColor}-500/10 border border-${serviceColor}-500/20`}
-              >
-                <IconComponent className={`w-6 h-6 text-${serviceColor}-500`} />
+              <div className="p-3 rounded-lg bg-teal-500/10 border border-teal-500/20">
+                <IconComponent className="w-6 h-6 text-teal-500" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-1">
@@ -262,9 +243,9 @@ const ServicesList = ({ environment }) => {
                       <span
                         className={`text-xs px-2 py-1 rounded ${
                           typeof value === "object"
-                            ? "bg-purple-500/10 text-purple-500"
+                            ? "bg-teal-500/10 text-teal-500"
                             : typeof value === "boolean"
-                              ? "bg-blue-500/10 text-blue-500"
+                              ? "bg-teal-500/10 text-teal-500"
                               : typeof value === "number"
                                 ? "bg-green-500/10 text-green-500"
                                 : "bg-gray-500/10 text-gray-500"

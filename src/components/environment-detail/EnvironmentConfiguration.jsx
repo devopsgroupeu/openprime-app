@@ -426,8 +426,8 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
             onClick={copyToClipboard}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               isDark
-                ? "bg-blue-600 hover:bg-blue-700 text-white"
-                : "bg-blue-600 hover:bg-blue-700 text-white"
+                ? "bg-teal-600 hover:bg-teal-700 text-white"
+                : "bg-teal-600 hover:bg-teal-700 text-white"
             }`}
           >
             <Copy className="w-4 h-4 inline mr-2" />
@@ -451,8 +451,8 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
               isGenerating
                 ? "bg-gray-500 cursor-not-allowed text-white"
                 : isDark
-                  ? "bg-purple-600 hover:bg-purple-700 text-white"
-                  : "bg-purple-600 hover:bg-purple-700 text-white"
+                  ? "bg-teal-600 hover:bg-teal-700 text-white"
+                  : "bg-teal-600 hover:bg-teal-700 text-white"
             }`}
           >
             <Package className="w-4 h-4 inline mr-2" />
@@ -464,7 +464,7 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               isPushing
                 ? "bg-gray-500 cursor-not-allowed text-white"
-                : "bg-orange-600 hover:bg-orange-700 text-white"
+                : "bg-amber-600 hover:bg-amber-700 text-white"
             }`}
           >
             <GitBranch className="w-4 h-4 inline mr-2" />
@@ -502,8 +502,8 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
       <div
         className={`p-4 rounded-lg border-l-4 ${
           isDark
-            ? "bg-blue-900/20 border-blue-500/50 text-blue-300"
-            : "bg-blue-50 border-blue-500 text-blue-700"
+            ? "bg-teal-900/20 border-teal-500/50 text-teal-300"
+            : "bg-teal-50 border-teal-500 text-teal-700"
         }`}
       >
         <div className="flex items-start space-x-3">

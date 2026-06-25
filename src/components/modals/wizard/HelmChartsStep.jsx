@@ -143,8 +143,8 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
       <div
         className={`p-4 rounded-lg border ${
           isDark
-            ? "bg-blue-500/10 border-blue-500/30 text-blue-300"
-            : "bg-blue-50 border-blue-200 text-blue-700"
+            ? "bg-teal-500/10 border-teal-500/30 text-teal-300"
+            : "bg-teal-50 border-teal-200 text-teal-700"
         }`}
       >
         <div className="flex items-start">
@@ -214,8 +214,8 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
                 }}
                 className={`text-xs px-3 py-1 rounded-full transition-colors ${
                   isDark
-                    ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30"
-                    : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                    ? "bg-teal-500/20 text-teal-300 hover:bg-teal-500/30"
+                    : "bg-teal-100 text-teal-700 hover:bg-teal-200"
                 }`}
               >
                 GitOps Setup
@@ -241,8 +241,8 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
                 }}
                 className={`text-xs px-3 py-1 rounded-full transition-colors ${
                   isDark
-                    ? "bg-blue-500/20 text-blue-300 hover:bg-blue-500/30"
-                    : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                    ? "bg-teal-500/20 text-teal-300 hover:bg-teal-500/30"
+                    : "bg-teal-100 text-teal-700 hover:bg-teal-200"
                 }`}
               >
                 Ingress Stack
@@ -298,9 +298,7 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
               handleHelmChartsChange(clearedCharts);
             }}
             className={`text-sm px-4 py-2 rounded-lg transition-colors ${
-              isDark
-                ? "text-orange-400 hover:bg-orange-500/20"
-                : "text-orange-600 hover:bg-orange-100"
+              isDark ? "text-amber-400 hover:bg-amber-500/20" : "text-amber-600 hover:bg-amber-100"
             }`}
           >
             Clear All Charts
