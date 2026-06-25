@@ -21,6 +21,7 @@
   --color-surface-elevated: #f8fafc;
   --color-surface-overlay: #ffffff;
   --color-input-bg: #ffffff; /* form field background (matches Keycloak field) */
+  --color-label: #334155; /* form label text (matches Keycloak label) */
 
   /* Text Colors (WCAG AA on white) */
   --color-text-primary: #0f172a; /* slate-900 — 14.6:1 */
@@ -74,6 +75,7 @@
   --color-surface-elevated: #1e293b; /* elevated surfaces */
   --color-surface-overlay: #0a0f1a; /* modals */
   --color-input-bg: #0f172a; /* form field background (matches Keycloak field) */
+  --color-label: #e2e8f0; /* form label text (matches Keycloak label) */
 
   /* Text Colors (WCAG AA on navy) */
   --color-text-primary: #f8fafc; /* slate-50 — 17.7:1 */
@@ -195,4 +197,12 @@ select:disabled,
 textarea:disabled {
   opacity: 0.5 !important;
   cursor: not-allowed !important;
+}
+
+/* ---------- Form labels — consistent with the Keycloak login theme ---------- */
+label {
+  font-size: 0.8125rem !important; /* 13px */
+  font-weight: 500 !important;
+  letter-spacing: -0.01em !important;
+  color: var(--color-label) !important;
 }
