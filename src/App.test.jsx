@@ -1,17 +1,11 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import App from "./App";
 
-test("renders OpenPrime application loading state", async () => {
+// In mock mode (vitest runs with VITE_MOCK=true) the app auto-authenticates via
+// the mock AuthProvider and loads its data from MSW — no real Keycloak/backend.
+test("renders the authenticated app with mocked environments", async () => {
   render(<App />);
 
-  // Initially should show authentication loading state
-  expect(screen.getByText(/Initializing authentication/i)).toBeInTheDocument();
-
-  // Wait for authentication to complete
-  await waitFor(
-    () => {
-      expect(screen.queryByText(/Initializing authentication/i)).not.toBeInTheDocument();
-    },
-    { timeout: 3000 },
-  );
+  // The app reaches the authenticated state and renders the mocked environments.
+  expect(await screen.findByText(/demo-prod/i, {}, { timeout: 3000 })).toBeInTheDocument();
 });

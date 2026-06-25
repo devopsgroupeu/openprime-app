@@ -1,6 +1,18 @@
 // Runtime environment configuration for containerized deployments
 // Supports both build-time (development) and runtime (container) env injection
 
+import { isMockMode } from "./mockMode";
+
+// Safe defaults used in mock mode so the app runs without real env/Keycloak/backend.
+const MOCK_DEFAULTS = {
+  KEYCLOAK_URL: "http://mock-keycloak",
+  KEYCLOAK_REALM: "mock",
+  KEYCLOAK_CLIENT_ID: "mock-client",
+  // Empty base URL → requests are relative (/environments, /users/me), matched
+  // by the MSW `*/path` handlers regardless of origin.
+  API_URL: "",
+};
+
 const ENV_CONFIG = {
   // Keycloak Authentication
   KEYCLOAK_URL: {
@@ -35,6 +47,11 @@ export const getEnvVar = (configKey) => {
   const config = ENV_CONFIG[configKey];
   if (!config) {
     throw new Error(`Unknown environment config key: ${configKey}`);
+  }
+
+  // Mock mode: serve safe defaults (no real backend/Keycloak needed)
+  if (isMockMode() && MOCK_DEFAULTS[configKey]) {
+    return MOCK_DEFAULTS[configKey];
   }
 
   // Runtime injection (containers) - highest priority
