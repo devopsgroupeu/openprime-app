@@ -13,9 +13,16 @@ export class ConfigValidationError extends Error {
 export const validateField = (fieldConfig, value, fieldName) => {
   const errors = [];
 
-  if (fieldConfig.required && (value === null || value === undefined || value === "")) {
+  if (
+    fieldConfig.required &&
+    (value === null || value === undefined || value === "")
+  ) {
     errors.push(
-      new ConfigValidationError(`${fieldConfig.displayName} is required`, fieldName, value),
+      new ConfigValidationError(
+        `${fieldConfig.displayName} is required`,
+        fieldName,
+        value,
+      ),
     );
     return errors;
   }
@@ -67,7 +74,10 @@ export const validateField = (fieldConfig, value, fieldName) => {
           ),
         );
       } else {
-        if (fieldConfig.validation?.pattern && !fieldConfig.validation.pattern.test(value)) {
+        if (
+          fieldConfig.validation?.pattern &&
+          !fieldConfig.validation.pattern.test(value)
+        ) {
           errors.push(
             new ConfigValidationError(
               `${fieldConfig.displayName} format is invalid`,
@@ -186,29 +196,46 @@ export const validateServiceConfig = (serviceName, serviceConfig) => {
 
   if (!serviceDefinition) {
     errors.push(
-      new ConfigValidationError(`Unknown service: ${serviceName}`, "service", serviceName),
+      new ConfigValidationError(
+        `Unknown service: ${serviceName}`,
+        "service",
+        serviceName,
+      ),
     );
     return errors;
   }
 
   // Validate all fields
-  Object.entries(serviceDefinition.fields).forEach(([fieldName, fieldConfig]) => {
-    const value = serviceConfig[fieldName];
-    const fieldErrors = validateField(fieldConfig, value, fieldName);
-    errors.push(...fieldErrors);
-  });
+  Object.entries(serviceDefinition.fields).forEach(
+    ([fieldName, fieldConfig]) => {
+      const value = serviceConfig[fieldName];
+      const fieldErrors = validateField(fieldConfig, value, fieldName);
+      errors.push(...fieldErrors);
+    },
+  );
 
   // Custom validation rules for specific services
   if (serviceName === "vpc" && serviceConfig.enabled) {
     if (serviceConfig.publicSubnets + serviceConfig.privateSubnets === 0) {
-      errors.push(new ConfigValidationError("VPC must have at least one subnet", "subnets"));
+      errors.push(
+        new ConfigValidationError(
+          "VPC must have at least one subnet",
+          "subnets",
+        ),
+      );
     }
   }
 
   if (serviceName === "eks" && serviceConfig.enabled) {
-    if (serviceConfig.defaultNodeGroupMinSize > serviceConfig.defaultNodeGroupMaxSize) {
+    if (
+      serviceConfig.defaultNodeGroupMinSize >
+      serviceConfig.defaultNodeGroupMaxSize
+    ) {
       errors.push(
-        new ConfigValidationError("Min nodes cannot be greater than max nodes", "nodeCount"),
+        new ConfigValidationError(
+          "Min nodes cannot be greater than max nodes",
+          "nodeCount",
+        ),
       );
     }
   }
@@ -216,7 +243,10 @@ export const validateServiceConfig = (serviceName, serviceConfig) => {
   if (serviceName === "rds" && serviceConfig.enabled) {
     if (serviceConfig.multiAz && serviceConfig.instanceClass?.includes("t2.")) {
       errors.push(
-        new ConfigValidationError("Multi-AZ is not supported with t2 instance classes", "multiAz"),
+        new ConfigValidationError(
+          "Multi-AZ is not supported with t2 instance classes",
+          "multiAz",
+        ),
       );
     }
   }
@@ -229,11 +259,15 @@ export const validateEnvironmentConfig = (environment) => {
 
   // Validate basic environment properties
   if (!environment.name || environment.name.trim() === "") {
-    errors.push(new ConfigValidationError("Environment name is required", "name"));
+    errors.push(
+      new ConfigValidationError("Environment name is required", "name"),
+    );
   }
 
   if (!environment.provider) {
-    errors.push(new ConfigValidationError("Environment provider is required", "provider"));
+    errors.push(
+      new ConfigValidationError("Environment provider is required", "provider"),
+    );
   } else if (!PROVIDERS_CONFIG[environment.provider]) {
     errors.push(
       new ConfigValidationError(
@@ -245,9 +279,12 @@ export const validateEnvironmentConfig = (environment) => {
   }
 
   if (!environment.region) {
-    errors.push(new ConfigValidationError("Environment region is required", "region"));
+    errors.push(
+      new ConfigValidationError("Environment region is required", "region"),
+    );
   } else if (environment.provider && PROVIDERS_CONFIG[environment.provider]) {
-    const validRegions = PROVIDERS_CONFIG[environment.provider].regions?.map((r) => r.value) || [];
+    const validRegions =
+      PROVIDERS_CONFIG[environment.provider].regions?.map((r) => r.value) || [];
     if (validRegions.length > 0 && !validRegions.includes(environment.region)) {
       errors.push(
         new ConfigValidationError(
@@ -261,10 +298,12 @@ export const validateEnvironmentConfig = (environment) => {
 
   // Validate services
   if (environment.services) {
-    Object.entries(environment.services).forEach(([serviceName, serviceConfig]) => {
-      const serviceErrors = validateServiceConfig(serviceName, serviceConfig);
-      errors.push(...serviceErrors);
-    });
+    Object.entries(environment.services).forEach(
+      ([serviceName, serviceConfig]) => {
+        const serviceErrors = validateServiceConfig(serviceName, serviceConfig);
+        errors.push(...serviceErrors);
+      },
+    );
 
     // Cross-service validation
     const enabledServices = Object.keys(environment.services).filter(
@@ -273,12 +312,16 @@ export const validateEnvironmentConfig = (environment) => {
 
     // EKS requires VPC
     if (enabledServices.includes("eks") && !enabledServices.includes("vpc")) {
-      errors.push(new ConfigValidationError("EKS requires VPC to be enabled", "eks"));
+      errors.push(
+        new ConfigValidationError("EKS requires VPC to be enabled", "eks"),
+      );
     }
 
     // RDS requires VPC
     if (enabledServices.includes("rds") && !enabledServices.includes("vpc")) {
-      errors.push(new ConfigValidationError("RDS requires VPC to be enabled", "rds"));
+      errors.push(
+        new ConfigValidationError("RDS requires VPC to be enabled", "rds"),
+      );
     }
   }
 
@@ -298,11 +341,15 @@ export const getValidationSummary = (errors) => {
   }
 
   const criticalErrors = errors.filter(
-    (error) => error.field === "name" || error.field === "provider" || error.field === "region",
+    (error) =>
+      error.field === "name" ||
+      error.field === "provider" ||
+      error.field === "region",
   );
 
   const warnings = errors.filter(
-    (error) => error.message.includes("recommended") || error.message.includes("should"),
+    (error) =>
+      error.message.includes("recommended") || error.message.includes("should"),
   );
 
   return {
@@ -327,11 +374,18 @@ export const validateConfigStructure = () => {
     if (!serviceConfig.fields) {
       errors.push(`Service ${serviceName} missing fields definition`);
     } else {
-      Object.entries(serviceConfig.fields).forEach(([fieldName, fieldConfig]) => {
-        if (!fieldConfig.type || !Object.values(FIELD_TYPES).includes(fieldConfig.type)) {
-          errors.push(`Service ${serviceName}.${fieldName} has invalid field type`);
-        }
-      });
+      Object.entries(serviceConfig.fields).forEach(
+        ([fieldName, fieldConfig]) => {
+          if (
+            !fieldConfig.type ||
+            !Object.values(FIELD_TYPES).includes(fieldConfig.type)
+          ) {
+            errors.push(
+              `Service ${serviceName}.${fieldName} has invalid field type`,
+            );
+          }
+        },
+      );
     }
   });
 

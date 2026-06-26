@@ -6,7 +6,8 @@ export const HELM_CHARTS_CONFIG = {
   prometheusStack: {
     name: "prometheusStack",
     displayName: "Prometheus Stack",
-    description: "Complete monitoring solution with Prometheus, Grafana, and Alertmanager",
+    description:
+      "Complete monitoring solution with Prometheus, Grafana, and Alertmanager",
     category: "Monitoring",
     enabled: true,
     k8sServices: ["eks", "aks", "gke", "kubernetes"],
@@ -268,7 +269,10 @@ export const HELM_CHARTS_CONFIG = {
 };
 
 // Helper functions
-export const getHelmChartsForK8sService = (k8sServiceName, includeImplicit = false) => {
+export const getHelmChartsForK8sService = (
+  k8sServiceName,
+  includeImplicit = false,
+) => {
   return Object.keys(HELM_CHARTS_CONFIG).filter((chartKey) => {
     const chart = HELM_CHARTS_CONFIG[chartKey];
     const isAvailableForService = chart.k8sServices.includes(k8sServiceName);
@@ -315,6 +319,8 @@ export const getAllCategories = () => {
 export const getImplicitChartsForK8sService = (k8sServiceName) => {
   return Object.keys(HELM_CHARTS_CONFIG).filter((chartKey) => {
     const chart = HELM_CHARTS_CONFIG[chartKey];
-    return chart.k8sServices.includes(k8sServiceName) && chart.implicit === true;
+    return (
+      chart.k8sServices.includes(k8sServiceName) && chart.implicit === true
+    );
   });
 };

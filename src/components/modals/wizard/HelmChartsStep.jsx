@@ -1,11 +1,8 @@
 // src/components/modals/wizard/HelmChartsStep.js
 import { Package, Zap, Info, Sparkles } from "lucide-react";
-import { useTheme } from "../../../contexts/ThemeContext";
 import HelmChartsSelector from "../../HelmChartsSelector";
 
 const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
-  const { isDark } = useTheme();
-
   // Get the enabled Kubernetes service
   const getEnabledK8sService = () => {
     if (newEnv.services?.eks?.enabled)
@@ -54,13 +51,13 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
   if (!k8sService) {
     return (
       <div className="text-center py-12">
-        <Package className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-        <h3 className={`text-lg font-medium mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+        <Package className="w-16 h-16 mx-auto mb-4 text-tertiary" />
+        <h3 className="text-lg font-medium mb-2 text-primary">
           No Kubernetes Service Enabled
         </h3>
-        <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-          This step is only available when a Kubernetes service (EKS, AKS, GKE, or Kubernetes) is
-          enabled.
+        <p className="text-sm text-secondary">
+          This step is only available when a Kubernetes service (EKS, AKS, GKE,
+          or Kubernetes) is enabled.
         </p>
       </div>
     );
@@ -70,48 +67,34 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
-        <div
-          className={`inline-flex items-center px-4 py-2 rounded-full text-sm mb-4 ${
-            isDark
-              ? "bg-teal-500/20 text-teal-300 border border-teal-500/30"
-              : "bg-teal-500/10 text-teal-700 border border-teal-500/30"
-          }`}
-        >
+        <div className="inline-flex items-center px-4 py-2 rounded-full text-sm mb-4 bg-primary-muted text-primary border border-primary">
           <Package className="w-4 h-4 mr-2" />
           Helm Charts Configuration
         </div>
-        <h3 className={`text-xl font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+        <h3 className="text-xl font-bold mb-2 text-primary">
           Configure Kubernetes Applications
         </h3>
-        <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+        <p className="text-sm text-secondary">
           Select Helm charts to deploy on your {k8sService.displayName} cluster
         </p>
       </div>
 
       {/* K8s Service Summary */}
-      <div
-        className={`p-4 rounded-lg border ${
-          isDark ? "bg-gray-800/50 border-gray-700" : "bg-gray-50 border-gray-200"
-        }`}
-      >
+      <div className="p-4 rounded-lg border bg-surface border-border">
         <div className="flex items-center justify-between">
           <div>
-            <span className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+            <span className="text-sm font-medium text-secondary">
               Kubernetes Service: {k8sService.displayName}
             </span>
-            <span className={`ml-4 text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            <span className="ml-4 text-sm text-secondary">
               {k8sService.provider} • {newEnv.name}
             </span>
           </div>
           <div
             className={`text-sm px-3 py-1 rounded-full ${
               getEnabledChartsCount() > 0
-                ? isDark
-                  ? "bg-teal-500/20 text-teal-300"
-                  : "bg-teal-100 text-teal-700"
-                : isDark
-                  ? "bg-gray-700 text-gray-400"
-                  : "bg-gray-200 text-gray-600"
+                ? "bg-primary-muted text-primary"
+                : "bg-background-secondary text-tertiary"
             }`}
           >
             {getEnabledChartsCount()} charts selected
@@ -120,42 +103,42 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
       </div>
 
       {/* Preview Banner */}
-      <div
-        className={`p-4 rounded-lg border ${
-          isDark
-            ? "bg-teal-500/10 border-teal-500/30 text-teal-300"
-            : "bg-teal-50 border-teal-200 text-teal-700"
-        }`}
-      >
+      <div className="p-4 rounded-lg border bg-primary-muted border-primary text-primary">
         <div className="flex items-start">
-          <Sparkles className="w-5 h-5 mr-3 mt-0.5 shrink-0" />
+          <Sparkles className="w-5 h-5 mr-3 mt-0.5 shrink-0 text-accent" />
           <div className="text-sm">
             <p className="font-medium mb-1">Preview</p>
             <p className="text-xs opacity-80">
-              Helm chart configurations are currently in preview. Full functionality is actively
-              being developed and will be available in an upcoming release.
+              Helm chart configurations are currently in preview. Full
+              functionality is actively being developed and will be available in
+              an upcoming release.
             </p>
           </div>
         </div>
       </div>
 
       {/* Info Banner */}
-      <div
-        className={`p-4 rounded-lg border ${
-          isDark
-            ? "bg-teal-500/10 border-teal-500/30 text-teal-300"
-            : "bg-teal-50 border-teal-200 text-teal-700"
-        }`}
-      >
+      <div className="p-4 rounded-lg border bg-primary-muted border-primary text-primary">
         <div className="flex items-start">
           <Info className="w-5 h-5 mr-3 mt-0.5 shrink-0" />
           <div className="text-sm">
             <p className="font-medium mb-1">Helm Charts Information:</p>
             <ul className="list-disc list-inside space-y-1 text-xs opacity-80">
-              <li>Charts are organized by category: Monitoring, Security, Networking, etc.</li>
-              <li>Enable &quot;Custom Values&quot; to modify default chart configurations</li>
-              <li>All charts are optional - you can add them later if needed</li>
-              <li>Karpenter and ArgoCD are enabled automatically for all Kubernetes clusters</li>
+              <li>
+                Charts are organized by category: Monitoring, Security,
+                Networking, etc.
+              </li>
+              <li>
+                Enable &quot;Custom Values&quot; to modify default chart
+                configurations
+              </li>
+              <li>
+                All charts are optional - you can add them later if needed
+              </li>
+              <li>
+                Karpenter and ArgoCD are enabled automatically for all
+                Kubernetes clusters
+              </li>
             </ul>
           </div>
         </div>
@@ -163,24 +146,17 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
 
       {/* Quick Enable Suggestions */}
       {getEnabledChartsCount() === 0 && (
-        <div
-          className={`p-4 rounded-lg border ${
-            isDark ? "bg-yellow-500/10 border-yellow-500/30" : "bg-yellow-50 border-yellow-200"
-          }`}
-        >
+        <div className="p-4 rounded-lg border bg-warning-muted border-warning">
           <div className="text-center">
-            <Zap className="w-8 h-8 mx-auto mb-2 text-yellow-500" />
-            <h4
-              className={`text-sm font-medium mb-2 ${
-                isDark ? "text-yellow-300" : "text-yellow-700"
-              }`}
-            >
+            <Zap className="w-8 h-8 mx-auto mb-2 text-warning" />
+            <h4 className="section-label mb-2 text-warning">
               Quick Start Templates
             </h4>
             <div className="flex flex-wrap justify-center gap-2">
               <button
                 onClick={() => {
-                  const currentCharts = newEnv.services[k8sService.name]?.helmCharts || {};
+                  const currentCharts =
+                    newEnv.services[k8sService.name]?.helmCharts || {};
                   handleHelmChartsChange({
                     ...currentCharts,
                     prometheus: {
@@ -193,17 +169,14 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
                     },
                   });
                 }}
-                className={`text-xs px-3 py-1 rounded-full transition-colors ${
-                  isDark
-                    ? "bg-teal-500/20 text-teal-300 hover:bg-teal-500/30"
-                    : "bg-teal-100 text-teal-700 hover:bg-teal-200"
-                }`}
+                className="text-xs px-3 py-1 rounded-full transition-colors bg-primary-muted text-primary hover:bg-primary-muted"
               >
                 Monitoring Stack
               </button>
               <button
                 onClick={() => {
-                  const currentCharts = newEnv.services[k8sService.name]?.helmCharts || {};
+                  const currentCharts =
+                    newEnv.services[k8sService.name]?.helmCharts || {};
                   handleHelmChartsChange({
                     ...currentCharts,
                     certManager: {
@@ -212,17 +185,14 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
                     },
                   });
                 }}
-                className={`text-xs px-3 py-1 rounded-full transition-colors ${
-                  isDark
-                    ? "bg-teal-500/20 text-teal-300 hover:bg-teal-500/30"
-                    : "bg-teal-100 text-teal-700 hover:bg-teal-200"
-                }`}
+                className="text-xs px-3 py-1 rounded-full transition-colors bg-primary-muted text-primary hover:bg-primary-muted"
               >
                 GitOps Setup
               </button>
               <button
                 onClick={() => {
-                  const currentCharts = newEnv.services[k8sService.name]?.helmCharts || {};
+                  const currentCharts =
+                    newEnv.services[k8sService.name]?.helmCharts || {};
                   handleHelmChartsChange({
                     ...currentCharts,
                     nginx: {
@@ -239,11 +209,7 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
                     },
                   });
                 }}
-                className={`text-xs px-3 py-1 rounded-full transition-colors ${
-                  isDark
-                    ? "bg-teal-500/20 text-teal-300 hover:bg-teal-500/30"
-                    : "bg-teal-100 text-teal-700 hover:bg-teal-200"
-                }`}
+                className="text-xs px-3 py-1 rounded-full transition-colors bg-primary-muted text-primary hover:bg-primary-muted"
               >
                 Ingress Stack
               </button>
@@ -264,19 +230,13 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
 
       {/* Summary */}
       {getEnabledChartsCount() > 0 && (
-        <div
-          className={`p-4 rounded-lg border ${
-            isDark
-              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-              : "bg-emerald-50 border-emerald-200 text-emerald-700"
-          }`}
-        >
+        <div className="p-4 rounded-lg border bg-success-muted border-success text-success">
           <div className="flex items-center">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full mr-3"></div>
+            <div className="w-2 h-2 bg-success rounded-full mr-3"></div>
             <span className="text-sm font-medium">
               {getEnabledChartsCount()} Helm chart
-              {getEnabledChartsCount() !== 1 ? "s" : ""} will be deployed to your{" "}
-              {k8sService.displayName} cluster
+              {getEnabledChartsCount() !== 1 ? "s" : ""} will be deployed to
+              your {k8sService.displayName} cluster
             </span>
           </div>
         </div>
@@ -287,7 +247,8 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
         <div className="flex justify-center">
           <button
             onClick={() => {
-              const currentCharts = newEnv.services[k8sService.name]?.helmCharts || {};
+              const currentCharts =
+                newEnv.services[k8sService.name]?.helmCharts || {};
               const clearedCharts = {};
               Object.keys(currentCharts).forEach((key) => {
                 clearedCharts[key] = {
@@ -297,9 +258,7 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
               });
               handleHelmChartsChange(clearedCharts);
             }}
-            className={`text-sm px-4 py-2 rounded-lg transition-colors ${
-              isDark ? "text-amber-400 hover:bg-amber-500/20" : "text-amber-600 hover:bg-amber-100"
-            }`}
+            className="text-sm px-4 py-2 rounded-lg transition-colors text-warning hover:bg-warning-muted"
           >
             Clear All Charts
           </button>

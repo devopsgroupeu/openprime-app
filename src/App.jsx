@@ -1,9 +1,17 @@
 // src/App.js
 import { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router";
 import EnvironmentsPage from "./components/EnvironmentsPage";
 import EnvironmentDetailPage from "./components/EnvironmentDetailPage";
 import SettingsPage from "./components/SettingsPage";
+import WizardPage from "./components/WizardPage";
+import AppLayout from "./components/layout/AppLayout";
 import AuraChatButton from "./components/AuraChatButton";
 import ErrorBoundary from "./components/ErrorBoundary";
 import authService from "./services/authService";
@@ -11,6 +19,13 @@ import { useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./contexts/ToastContext";
 import { AuthProvider } from "./contexts/AuthContext";
+
+// The wizard has its own inline Aura assistant, so hide the floating one there.
+function FloatingAura() {
+  const { pathname } = useLocation();
+  const onWizard = /^\/environments\/(create|[^/]+\/edit)\/?$/.test(pathname);
+  return onWizard ? null : <AuraChatButton />;
+}
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -37,7 +52,10 @@ function AppContent() {
 
   const handleCreateEnvironment = async (newEnv) => {
     try {
-      const createdEnvironment = await authService.post("/environments", newEnv);
+      const createdEnvironment = await authService.post(
+        "/environments",
+        newEnv,
+      );
       setEnvironments([createdEnvironment, ...environments]);
       return createdEnvironment;
     } catch (error) {
@@ -58,8 +76,13 @@ function AppContent() {
 
   const handleUpdateEnvironment = async (updatedEnv) => {
     try {
-      const updated = await authService.put(`/environments/${updatedEnv.id}`, updatedEnv);
-      setEnvironments(environments.map((env) => (env.id === updated.id ? updated : env)));
+      const updated = await authService.put(
+        `/environments/${updatedEnv.id}`,
+        updatedEnv,
+      );
+      setEnvironments(
+        environments.map((env) => (env.id === updated.id ? updated : env)),
+      );
       return updated;
     } catch (error) {
       console.error("Failed to update environment:", error);
@@ -72,7 +95,9 @@ function AppContent() {
       <div className="min-h-screen bg-openprime-gradient flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-white text-lg font-poppins">Initializing OpenPrime...</p>
+          <p className="text-white text-lg font-poppins">
+            Initializing OpenPrime...
+          </p>
         </div>
       </div>
     );
@@ -96,7 +121,9 @@ function AppContent() {
       <div className="min-h-screen bg-openprime-gradient flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-white text-lg font-poppins">Loading environments...</p>
+          <p className="text-white text-lg font-poppins">
+            Loading environments...
+          </p>
         </div>
       </div>
     );
@@ -107,30 +134,43 @@ function AppContent() {
       <ToastProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/environments" replace />} />
+            <Route element={<AppLayout />}>
+              <Route
+                path="/"
+                element={<Navigate to="/environments" replace />}
+              />
+              <Route
+                path="/environments"
+                element={<EnvironmentsPage environments={environments} />}
+              />
+              <Route
+                path="/environments/:id"
+                element={
+                  <EnvironmentDetailPage onDelete={handleDeleteEnvironment} />
+                }
+              />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
             <Route
-              path="/environments"
+              path="/environments/create"
               element={
-                <EnvironmentsPage
-                  environments={environments}
+                <WizardPage
                   onCreateEnvironment={handleCreateEnvironment}
-                  onDeleteEnvironment={handleDeleteEnvironment}
                   onUpdateEnvironment={handleUpdateEnvironment}
                 />
               }
             />
             <Route
-              path="/environments/:id"
+              path="/environments/:id/edit"
               element={
-                <EnvironmentDetailPage
-                  onEdit={handleUpdateEnvironment}
-                  onDelete={handleDeleteEnvironment}
+                <WizardPage
+                  onCreateEnvironment={handleCreateEnvironment}
+                  onUpdateEnvironment={handleUpdateEnvironment}
                 />
               }
             />
-            <Route path="/settings" element={<SettingsPage />} />
           </Routes>
-          <AuraChatButton />
+          <FloatingAura />
         </BrowserRouter>
       </ToastProvider>
     </ThemeProvider>

@@ -1,11 +1,14 @@
 // src/components/DynamicFieldRenderer.js
 import React from "react";
 import { FIELD_TYPES } from "../config/servicesConfig";
-import { useTheme } from "../contexts/ThemeContext";
 
-const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disabled = false }) => {
-  const { isDark } = useTheme();
-
+const DynamicFieldRenderer = ({
+  fieldConfig,
+  value,
+  onChange,
+  fieldName,
+  disabled = false,
+}) => {
   // Initialize all hooks at the top level
   const [jsonText, setJsonText] = React.useState(
     typeof value === "object" && fieldConfig.type === FIELD_TYPES.OBJECT
@@ -18,7 +21,9 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
   React.useEffect(() => {
     // Update JSON text when value changes from outside
     if (fieldConfig.type === FIELD_TYPES.OBJECT) {
-      setJsonText(typeof value === "object" ? JSON.stringify(value, null, 2) : "");
+      setJsonText(
+        typeof value === "object" ? JSON.stringify(value, null, 2) : "",
+      );
     }
   }, [value, fieldConfig.type]);
 
@@ -26,13 +31,10 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
     onChange(fieldName, newValue);
   };
 
-  const baseInputClasses = `w-full px-4 py-2 rounded-lg border transition-colors ${
-    isDark
-      ? "bg-gray-700 border-gray-600 text-white focus:border-primary"
-      : "bg-white border-gray-300 text-primary focus:border-primary"
-  } focus:ring-2 focus:ring-primary/20 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`;
+  const baseInputClasses = `w-full px-4 py-2 rounded-lg border transition-colors bg-background-secondary border-border text-primary focus:border-primary focus:ring-2 focus:ring-primary/20 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`;
 
-  const labelClasses = "block text-sm font-medium mb-1 text-primary font-poppins";
+  const labelClasses =
+    "block text-sm font-medium mb-1 text-primary font-poppins";
 
   const descriptionClasses = "text-xs mt-1 text-tertiary font-poppins";
 
@@ -55,9 +57,7 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
               className="sr-only peer"
             />
             <div
-              className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
-                isDark ? "bg-gray-700" : "bg-gray-300"
-              } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all bg-background-secondary ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
             ></div>
           </label>
         </div>
@@ -105,7 +105,9 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
                   disabled={disabled}
                   className="mr-2 rounded"
                 />
-                <span className="text-primary font-poppins">{option.label}</span>
+                <span className="text-primary font-poppins">
+                  {option.label}
+                </span>
               </label>
             ))}
           </div>
@@ -158,7 +160,9 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
           <textarea
             value={Array.isArray(value) ? value.join("\n") : ""}
             onChange={(e) => {
-              const lines = e.target.value.split("\n").filter((line) => line.trim() !== "");
+              const lines = e.target.value
+                .split("\n")
+                .filter((line) => line.trim() !== "");
               handleChange(lines);
             }}
             disabled={disabled}
@@ -170,7 +174,7 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
             <p className={descriptionClasses}>{fieldConfig.description}</p>
           )}
           {Array.isArray(value) && value.length > 0 && (
-            <p className="text-xs mt-1 text-gray-500">
+            <p className="text-xs mt-1 text-tertiary">
               {value.length} item{value.length !== 1 ? "s" : ""}
             </p>
           )}
@@ -210,15 +214,17 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
             disabled={disabled}
             rows={6}
             placeholder='{"key": "value"}'
-            className={`${baseInputClasses} font-mono text-sm ${jsonError ? "border-red-500" : ""}`}
+            className={`${baseInputClasses} font-mono text-sm ${jsonError ? "border-danger" : ""}`}
           />
           {fieldConfig.description && (
             <p className={descriptionClasses}>{fieldConfig.description}</p>
           )}
           {jsonError ? (
-            <p className="text-xs mt-1 text-red-500">Invalid JSON: {jsonError}</p>
+            <p className="text-xs mt-1 text-danger">
+              Invalid JSON: {jsonError}
+            </p>
           ) : (
-            <p className="text-xs mt-1 text-gray-500">JSON format</p>
+            <p className="text-xs mt-1 text-tertiary">JSON format</p>
           )}
         </div>
       );
@@ -281,14 +287,14 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
             {listValue.map((item, index) => (
               <div
                 key={index}
-                className={`border rounded-lg transition-colors ${
-                  isDark ? "border-gray-600 bg-gray-750" : "border-gray-200 bg-gray-50"
-                }`}
+                className="border rounded-lg transition-colors border-border bg-background-secondary"
               >
                 {/* Item Header */}
                 <div
                   className="flex items-center justify-between p-3 cursor-pointer hover:bg-opacity-80"
-                  onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
+                  onClick={() =>
+                    setExpandedIndex(expandedIndex === index ? null : index)
+                  }
                   role="button"
                   tabIndex={0}
                   onKeyPress={(e) => {
@@ -298,7 +304,9 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
                   }}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{expandedIndex === index ? "▼" : "▶"}</span>
+                    <span className="text-lg">
+                      {expandedIndex === index ? "▼" : "▶"}
+                    </span>
                     <span className="font-medium text-primary">
                       {getItemDisplayName(item, index)}
                     </span>
@@ -310,11 +318,7 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
                       removeItem(index);
                     }}
                     disabled={disabled}
-                    className={`px-3 py-1 rounded text-sm transition-colors ${
-                      isDark
-                        ? "bg-red-600 hover:bg-red-700 text-white"
-                        : "bg-red-500 hover:bg-red-600 text-white"
-                    } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                    className={`btn-op-danger text-sm ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     Remove
                   </button>
@@ -322,19 +326,16 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
 
                 {/* Expanded Item Fields */}
                 {expandedIndex === index && (
-                  <div
-                    className="p-4 pt-2 border-t space-y-4"
-                    style={{
-                      borderColor: isDark ? "rgb(75, 85, 99)" : "rgb(229, 231, 235)",
-                    }}
-                  >
+                  <div className="p-4 pt-2 border-t border-border space-y-4">
                     {Object.entries(fieldConfig.itemSchema).map(
                       ([itemFieldName, itemFieldConfig]) => (
                         <DynamicFieldRenderer
                           key={itemFieldName}
                           fieldConfig={itemFieldConfig}
                           value={item[itemFieldName]}
-                          onChange={(_, newValue) => updateItem(index, itemFieldName, newValue)}
+                          onChange={(_, newValue) =>
+                            updateItem(index, itemFieldName, newValue)
+                          }
                           fieldName={itemFieldName}
                           disabled={disabled}
                         />
@@ -350,17 +351,13 @@ const DynamicFieldRenderer = ({ fieldConfig, value, onChange, fieldName, disable
               type="button"
               onClick={addItem}
               disabled={disabled}
-              className={`w-full px-4 py-3 rounded-lg border-2 border-dashed transition-colors font-medium ${
-                isDark
-                  ? "border-gray-600 hover:border-primary hover:bg-gray-750 text-gray-400 hover:text-primary"
-                  : "border-gray-300 hover:border-primary hover:bg-gray-50 text-gray-600 hover:text-primary"
-              } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`w-full px-4 py-3 rounded-lg border-2 border-dashed transition-colors font-medium border-border hover:border-primary hover:bg-primary-muted text-secondary hover:text-primary ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               + Add {fieldConfig.displayName?.replace(/s$/, "") || "Item"}
             </button>
 
             {listValue.length > 0 && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-tertiary">
                 {listValue.length} item{listValue.length === 1 ? "" : "s"}
               </p>
             )}

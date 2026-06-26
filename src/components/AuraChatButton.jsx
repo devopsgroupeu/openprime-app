@@ -1,11 +1,9 @@
 // src/components/AuraChatButton.js
 import { useState } from "react";
 import { MessageCircle, X, Sparkles } from "lucide-react";
-import { useTheme } from "../contexts/ThemeContext";
 import AuraChatWindow, { INITIAL_MESSAGES } from "./AuraChatWindow";
 
 const AuraChatButton = () => {
-  const { isDark } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [auraMessages, setAuraMessages] = useState(INITIAL_MESSAGES);
 
@@ -28,11 +26,7 @@ const AuraChatButton = () => {
       <div className="fixed bottom-6 right-6 z-60">
         <button
           onClick={toggleChat}
-          className={`aura-chat-button relative w-14 h-14 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 ${
-            isDark
-              ? "bg-openprime-teal-gradient hover:bg-openprime-gradient focus:ring-primary/50"
-              : "bg-openprime-teal-gradient hover:bg-openprime-gradient focus:ring-primary/50"
-          } ${isOpen ? "rotate-180" : ""}`}
+          className={`aura-chat-button relative w-14 h-14 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 bg-primary hover:bg-openprime-gradient focus:ring-primary/50 ${isOpen ? "rotate-180" : ""}`}
         >
           {/* Animated background glow */}
           <div className="absolute inset-0 rounded-full bg-primary opacity-20 animate-pulse"></div>
@@ -40,9 +34,9 @@ const AuraChatButton = () => {
           {/* Icon */}
           <div className="relative flex items-center justify-center w-full h-full">
             {isOpen ? (
-              <X className="w-6 h-6 text-white transition-transform duration-300" />
+              <X className="w-6 h-6 text-inverse transition-transform duration-300" />
             ) : (
-              <MessageCircle className="w-6 h-6 text-white transition-transform duration-300" />
+              <MessageCircle className="w-6 h-6 text-inverse transition-transform duration-300" />
             )}
           </div>
 
@@ -59,21 +53,15 @@ const AuraChatButton = () => {
 
         {/* Tooltip */}
         {!isOpen && (
-          <div
-            className={`absolute bottom-16 right-0 mb-2 px-3 py-2 rounded-lg shadow-lg transition-opacity duration-300 ${
-              isDark
-                ? "bg-surface text-white border border-strong"
-                : "bg-white text-primary border border-subtle"
-            }`}
-          >
-            <div className="text-sm font-medium font-poppins">Hi! I&apos;m Aura 🤖</div>
-            <div className="text-xs opacity-80 font-poppins">Your AI assistant</div>
+          <div className="absolute bottom-16 right-0 mb-2 px-3 py-2 rounded-lg shadow-lg transition-opacity duration-300 bg-surface text-primary border border-border">
+            <div className="text-sm font-medium font-poppins">
+              Hi! I&apos;m Aura 🤖
+            </div>
+            <div className="text-xs opacity-80 font-poppins">
+              Your AI assistant
+            </div>
             {/* Tooltip arrow */}
-            <div
-              className={`absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent ${
-                isDark ? "border-t-surface" : "border-t-white"
-              }`}
-            ></div>
+            <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-surface"></div>
           </div>
         )}
       </div>

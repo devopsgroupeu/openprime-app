@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { Download, Copy, Eye, EyeOff } from "lucide-react";
-import { useTheme } from "../../contexts/ThemeContext";
 import { useToast } from "../../contexts/ToastContext";
 
 const ConfigurationExport = ({ environment }) => {
-  const { isDark } = useTheme();
   const { success } = useToast();
   const [showSensitiveData, setShowSensitiveData] = useState(false);
 
@@ -20,11 +18,13 @@ const ConfigurationExport = ({ environment }) => {
     };
 
     // Add enabled services to configuration
-    Object.entries(environment.services || {}).forEach(([serviceName, serviceConfig]) => {
-      if (serviceConfig?.enabled) {
-        config.services[serviceName] = { ...serviceConfig };
-      }
-    });
+    Object.entries(environment.services || {}).forEach(
+      ([serviceName, serviceConfig]) => {
+        if (serviceConfig?.enabled) {
+          config.services[serviceName] = { ...serviceConfig };
+        }
+      },
+    );
 
     return config;
   };
@@ -68,13 +68,13 @@ const ConfigurationExport = ({ environment }) => {
     if (typeof value === "object" && value !== null && !Array.isArray(value)) {
       return (
         <div key={key}>
-          <div className={`${isDark ? "text-teal-300" : "text-teal-600"}`}>
+          <div className="text-primary">
             {indent}&quot;{key}&quot;: {"{"}
           </div>
           {Object.entries(value).map(([subKey, subValue]) =>
             renderConfigValue(subKey, subValue, level + 1),
           )}
-          <div className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>
+          <div className="text-secondary">
             {indent}
             {"}"}
             {level > 0 ? "," : ""}
@@ -86,38 +86,32 @@ const ConfigurationExport = ({ environment }) => {
     if (Array.isArray(value)) {
       return (
         <div key={key}>
-          <div className={`${isDark ? "text-teal-300" : "text-teal-600"}`}>
+          <div className="text-primary">
             {indent}&quot;{key}&quot;: [
           </div>
           {value.map((item, index) => (
-            <div key={index} className={`${isDark ? "text-green-300" : "text-green-600"}`}>
+            <div key={index} className="text-success">
               {indent} &quot;{item}&quot;{index < value.length - 1 ? "," : ""}
             </div>
           ))}
-          <div className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>{indent}],</div>
+          <div className="text-secondary">{indent}],</div>
         </div>
       );
     }
 
     const displayValue = maskSensitiveValue(key, value);
     const valueColor =
-      typeof value === "string"
-        ? isDark
-          ? "text-green-300"
-          : "text-green-600"
-        : isDark
-          ? "text-amber-300"
-          : "text-amber-600";
+      typeof value === "string" ? "text-success" : "text-warning";
 
     return (
       <div key={key}>
-        <span className={`${isDark ? "text-teal-300" : "text-teal-600"}`}>
+        <span className="text-primary">
           {indent}&quot;{key}&quot;:
         </span>{" "}
         <span className={valueColor}>
           {typeof value === "string" ? `"${displayValue}"` : displayValue}
         </span>
-        <span className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>,</span>
+        <span className="text-secondary">,</span>
       </div>
     );
   };
@@ -127,17 +121,13 @@ const ConfigurationExport = ({ environment }) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+        <h3 className="text-lg font-semibold text-primary">
           Configuration Export
         </h3>
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setShowSensitiveData(!showSensitiveData)}
-            className={`px-3 py-1 rounded text-sm transition-colors ${
-              isDark
-                ? "bg-gray-700 hover:bg-gray-600 text-gray-300"
-                : "bg-gray-200 hover:bg-gray-300 text-gray-700"
-            }`}
+            className="px-3 py-1 rounded text-sm transition-colors bg-background-secondary hover:bg-surface-elevated text-secondary"
           >
             {showSensitiveData ? (
               <>
@@ -153,22 +143,14 @@ const ConfigurationExport = ({ environment }) => {
           </button>
           <button
             onClick={copyToClipboard}
-            className={`px-3 py-1 rounded text-sm transition-colors ${
-              isDark
-                ? "bg-teal-700 hover:bg-teal-600 text-white"
-                : "bg-teal-600 hover:bg-teal-700 text-white"
-            }`}
+            className="px-3 py-1 rounded text-sm transition-colors bg-primary-muted hover:bg-primary-muted text-primary"
           >
             <Copy className="w-4 h-4 inline mr-1" />
             Copy
           </button>
           <button
             onClick={downloadConfiguration}
-            className={`px-3 py-1 rounded text-sm transition-colors ${
-              isDark
-                ? "bg-teal-700 hover:bg-teal-600 text-white"
-                : "bg-teal-600 hover:bg-teal-700 text-white"
-            }`}
+            className="px-3 py-1 rounded text-sm transition-colors bg-primary-muted hover:bg-primary-muted text-primary"
           >
             <Download className="w-4 h-4 inline mr-1" />
             Download
@@ -176,16 +158,12 @@ const ConfigurationExport = ({ environment }) => {
         </div>
       </div>
 
-      <div
-        className={`p-4 rounded-lg border font-mono text-sm overflow-auto max-h-96 ${
-          isDark
-            ? "bg-gray-900 border-gray-700 text-gray-300"
-            : "bg-gray-50 border-gray-200 text-gray-800"
-        }`}
-      >
-        <div className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>{"{"}</div>
-        {Object.entries(config).map(([key, value]) => renderConfigValue(key, value, 1))}
-        <div className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>{"}"}</div>
+      <div className="p-4 rounded-lg border font-mono text-sm overflow-auto max-h-96 bg-background border-border text-secondary">
+        <div className="text-secondary">{"{"}</div>
+        {Object.entries(config).map(([key, value]) =>
+          renderConfigValue(key, value, 1),
+        )}
+        <div className="text-secondary">{"}"}</div>
       </div>
     </div>
   );

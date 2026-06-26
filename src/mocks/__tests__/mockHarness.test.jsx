@@ -26,7 +26,9 @@ describe("FE mock harness", () => {
   it("auto-authenticates as the mock user (Keycloak bypassed)", async () => {
     function WhoAmI() {
       const { isAuthenticated, user } = useAuth();
-      return <div>{isAuthenticated ? `Hello ${user.username}` : "anonymous"}</div>;
+      return (
+        <div>{isAuthenticated ? `Hello ${user.username}` : "anonymous"}</div>
+      );
     }
 
     render(

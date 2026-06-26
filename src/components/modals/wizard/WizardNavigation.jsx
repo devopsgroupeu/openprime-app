@@ -1,5 +1,12 @@
-import { X, ChevronLeft, ChevronRight, Check, Settings, Package, Cloud } from "lucide-react";
-import { useTheme } from "../../../contexts/ThemeContext";
+import {
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  Settings,
+  Package,
+  Cloud,
+} from "lucide-react";
 
 const WizardNavigation = ({
   currentStep,
@@ -15,8 +22,6 @@ const WizardNavigation = ({
   isLoading,
   newEnv,
 }) => {
-  const { isDark } = useTheme();
-
   const steps = [
     {
       number: 1,
@@ -48,37 +53,27 @@ const WizardNavigation = ({
   return (
     <>
       {/* Header */}
-      <div
-        className={`flex items-center justify-between p-6 border-b ${
-          isDark ? "border-gray-700 bg-gray-800/30" : "border-gray-200 bg-gray-50/50"
-        }`}
-      >
+      <div className="flex items-center justify-between p-6 border-b border-border bg-surface">
         <div>
-          <h2 className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+          <h2 className="text-2xl font-bold text-primary">
             {isEditMode ? "Edit Environment" : "Create New Environment"}
           </h2>
-          <p className={`mt-1 text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-            {isEditMode ? `Editing "${newEnv.name}"` : "Configure your infrastructure environment"}
+          <p className="mt-1 text-sm text-secondary">
+            {isEditMode
+              ? `Editing "${newEnv.name}"`
+              : "Configure your infrastructure environment"}
           </p>
         </div>
         <button
           onClick={onClose}
-          className={`p-2 rounded-lg transition-colors ${
-            isDark
-              ? "hover:bg-gray-700 text-gray-400 hover:text-white"
-              : "hover:bg-gray-100 text-gray-500 hover:text-gray-700"
-          }`}
+          className="p-2 rounded-lg transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated"
         >
           <X className="w-6 h-6" />
         </button>
       </div>
 
       {/* Step Indicator */}
-      <div
-        className={`shrink-0 px-6 py-6 border-b ${
-          isDark ? "border-gray-700 bg-gray-800/20" : "border-gray-200 bg-gray-50/30"
-        }`}
-      >
+      <div className="shrink-0 px-6 py-6 border-b border-border bg-surface">
         <div className="flex items-center justify-center">
           <div className="flex items-center space-x-4">
             {steps.slice(0, totalSteps).map((step, index) => {
@@ -97,12 +92,10 @@ const WizardNavigation = ({
                           : "cursor-not-allowed"
                       } ${
                         status === "current"
-                          ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg ring-4 ring-teal-500/30"
+                          ? "bg-primary text-inverse shadow-lg ring-4 ring-primary-muted"
                           : status === "completed"
-                            ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md"
-                            : isDark
-                              ? "bg-gray-700 text-gray-400 hover:bg-gray-600"
-                              : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                            ? "bg-success text-inverse shadow-md"
+                            : "bg-background-secondary text-tertiary hover:bg-surface-elevated"
                       }`}
                     >
                       {status === "completed" ? (
@@ -115,21 +108,15 @@ const WizardNavigation = ({
                       <p
                         className={`text-sm font-medium ${
                           status === "current"
-                            ? isDark
-                              ? "text-teal-400"
-                              : "text-teal-600"
+                            ? "text-primary"
                             : status === "completed"
-                              ? isDark
-                                ? "text-green-400"
-                                : "text-green-600"
-                              : isDark
-                                ? "text-gray-400"
-                                : "text-gray-500"
+                              ? "text-success"
+                              : "text-tertiary"
                         }`}
                       >
                         {step.title}
                       </p>
-                      <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                      <p className="text-xs mt-1 text-tertiary">
                         {step.description}
                       </p>
                     </div>
@@ -138,11 +125,10 @@ const WizardNavigation = ({
                   {index < totalSteps - 1 && (
                     <div
                       className={`flex-1 h-1 mx-6 rounded-full ${
-                        step.number < currentStep || completedSteps.has(step.number + 1)
-                          ? "bg-gradient-to-r from-teal-500 to-cyan-500"
-                          : isDark
-                            ? "bg-gray-700"
-                            : "bg-gray-200"
+                        step.number < currentStep ||
+                        completedSteps.has(step.number + 1)
+                          ? "bg-primary"
+                          : "bg-background-secondary"
                       }`}
                     />
                   )}
@@ -154,27 +140,17 @@ const WizardNavigation = ({
       </div>
 
       {/* Footer Navigation */}
-      <div
-        className={`flex items-center justify-between p-6 border-t ${
-          isDark ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50/50"
-        }`}
-      >
+      <div className="flex items-center justify-between p-6 border-t border-border bg-surface">
         <button
           onClick={onPrevious}
           disabled={currentStep === 1 || (isEditMode && currentStep === 2)}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-            currentStep === 1 || (isEditMode && currentStep === 2)
-              ? "opacity-50 cursor-not-allowed"
-              : isDark
-                ? "bg-gray-700 hover:bg-gray-600 text-white"
-                : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300"
-          }`}
+          className="btn-op-secondary space-x-2"
         >
           <ChevronLeft className="w-4 h-4" />
           <span>Previous</span>
         </button>
 
-        <div className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+        <div className="text-sm text-tertiary">
           Step {currentStep} of {totalSteps}
         </div>
 
@@ -182,13 +158,7 @@ const WizardNavigation = ({
           <button
             onClick={onNext}
             disabled={!canGoNext || isLoading}
-            className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors ${
-              !canGoNext || isLoading ? "opacity-50 cursor-not-allowed" : ""
-            } ${
-              isDark
-                ? "bg-teal-600 hover:bg-teal-700 text-white"
-                : "bg-teal-600 hover:bg-teal-700 text-white"
-            }`}
+            className="btn-op-primary space-x-2"
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -201,20 +171,16 @@ const WizardNavigation = ({
           <button
             onClick={onFinish}
             disabled={!canGoNext || isLoading}
-            className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors ${
-              !canGoNext || isLoading ? "opacity-50 cursor-not-allowed" : ""
-            } ${
-              isDark
-                ? "bg-teal-600 hover:bg-teal-700 text-white"
-                : "bg-teal-600 hover:bg-teal-700 text-white"
-            }`}
+            className="btn-op-primary space-x-2"
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
                 <Check className="w-4 h-4" />
-                <span>{isEditMode ? "Save Changes" : "Create Environment"}</span>
+                <span>
+                  {isEditMode ? "Save Changes" : "Create Environment"}
+                </span>
               </>
             )}
           </button>

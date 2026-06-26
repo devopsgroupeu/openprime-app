@@ -1,7 +1,6 @@
 // src/components/AuraChatWindow.js
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Sparkles, Minimize2 } from "lucide-react";
-import { useTheme } from "../contexts/ThemeContext";
 import { getApiUrl } from "../utils/envValidator";
 import keycloak from "../config/keycloak";
 
@@ -23,7 +22,6 @@ export const INITIAL_MESSAGES = [
 ];
 
 const AuraChatWindow = ({ onClose, messages, setMessages }) => {
-  const { isDark } = useTheme();
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -154,16 +152,12 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
       <div className="fixed bottom-20 right-6 z-60">
         <div
           onClick={() => setIsMinimized(false)}
-          className={`cursor-pointer px-4 py-2 rounded-lg shadow-lg transition-all hover:scale-105 ${
-            isDark
-              ? "bg-gray-800 border border-gray-700 text-white"
-              : "bg-white border border-gray-200 text-gray-900"
-          }`}
+          className="cursor-pointer px-4 py-2 rounded-lg shadow-lg transition-all hover:scale-105 bg-surface border border-border text-primary"
         >
           <div className="flex items-center space-x-2">
-            <Bot className="w-4 h-4 text-primary" />
+            <Bot className="w-4 h-4 text-accent" />
             <span className="text-sm font-medium">Aura</span>
-            <Sparkles className="w-3 h-3 text-yellow-400" />
+            <Sparkles className="w-3 h-3 text-warning" />
           </div>
         </div>
       </div>
@@ -173,42 +167,32 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
   return (
     <div className="aura-chat-window fixed bottom-20 right-6 z-60 w-96 h-[500px] flex flex-col">
       {/* Chat Header */}
-      <div
-        className={`flex items-center justify-between p-4 rounded-t-lg border-b ${
-          isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-        } shadow-lg`}
-      >
+      <div className="flex items-center justify-between p-4 rounded-t-lg border-b bg-surface border-border shadow-lg">
         <div className="flex items-center space-x-3">
           <div className="relative">
-            <Bot className="w-8 h-8 text-primary" />
+            <Bot className="w-8 h-8 text-accent" />
             <div className="absolute -top-1 -right-1">
-              <Sparkles className="w-3 h-3 text-yellow-400 animate-pulse" />
+              <Sparkles className="w-3 h-3 text-warning animate-pulse" />
             </div>
           </div>
           <div>
-            <h3 className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>Aura AI</h3>
+            <h3 className="font-semibold text-primary">Aura AI</h3>
             <div className="flex items-center space-x-1">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                Online
-              </span>
+              <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
+              <span className="text-xs text-tertiary">Online</span>
             </div>
           </div>
         </div>
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setIsMinimized(true)}
-            className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
-              isDark ? "text-gray-400" : "text-gray-500"
-            }`}
+            className="p-1 rounded text-tertiary hover:text-primary hover:bg-surface-elevated transition-colors"
           >
             <Minimize2 className="w-4 h-4" />
           </button>
           <button
             onClick={onClose}
-            className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
-              isDark ? "text-gray-400" : "text-gray-500"
-            }`}
+            className="p-1 rounded text-tertiary hover:text-primary hover:bg-surface-elevated transition-colors"
           >
             ×
           </button>
@@ -216,50 +200,42 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
       </div>
 
       {/* Messages Area */}
-      <div
-        className={`flex-1 overflow-y-auto p-4 space-y-4 ${isDark ? "bg-gray-900" : "bg-gray-50"}`}
-      >
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-background-secondary">
         {messages.map((msg) => (
           <div
             key={msg.id}
             className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}
           >
-            <div className={`max-w-xs ${msg.type === "user" ? "order-2" : "order-1"}`}>
+            <div
+              className={`max-w-xs ${msg.type === "user" ? "order-2" : "order-1"}`}
+            >
               <div
                 className={`flex items-end space-x-2 ${msg.type === "user" ? "flex-row-reverse space-x-reverse" : ""}`}
               >
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center ${
                     msg.type === "user"
-                      ? "bg-teal-500"
-                      : isDark
-                        ? "bg-gray-700"
-                        : "bg-white border border-gray-200"
+                      ? "bg-primary"
+                      : "bg-surface border border-border"
                   }`}
                 >
                   {msg.type === "user" ? (
-                    <User className="w-3 h-3 text-white" />
+                    <User className="w-3 h-3 text-inverse" />
                   ) : (
-                    <Bot className="w-3 h-3 text-primary" />
+                    <Bot className="w-3 h-3 text-accent" />
                   )}
                 </div>
                 <div
                   className={`px-3 py-2 rounded-lg ${
                     msg.type === "user"
-                      ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white"
-                      : isDark
-                        ? "bg-gray-800 text-white border border-gray-700"
-                        : "bg-white text-gray-900 border border-gray-200"
+                      ? "bg-primary text-inverse"
+                      : "bg-surface text-primary border border-border"
                   }`}
                 >
                   <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
                   <p
                     className={`text-xs mt-1 ${
-                      msg.type === "user"
-                        ? "text-teal-100"
-                        : isDark
-                          ? "text-gray-400"
-                          : "text-gray-500"
+                      msg.type === "user" ? "text-inverse/80" : "text-tertiary"
                     }`}
                   >
                     {formatTime(msg.timestamp)}
@@ -274,26 +250,18 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
         {isTyping && (
           <div className="flex justify-start">
             <div className="flex items-end space-x-2">
-              <div
-                className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                  isDark ? "bg-gray-700" : "bg-white border border-gray-200"
-                }`}
-              >
-                <Bot className="w-3 h-3 text-primary" />
+              <div className="w-6 h-6 rounded-full flex items-center justify-center bg-surface border border-border">
+                <Bot className="w-3 h-3 text-accent" />
               </div>
-              <div
-                className={`px-3 py-2 rounded-lg ${
-                  isDark ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"
-                }`}
-              >
+              <div className="px-3 py-2 rounded-lg bg-surface border border-border">
                 <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-teal-500 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
                   <div
-                    className="w-2 h-2 bg-teal-500 rounded-full animate-bounce"
+                    className="w-2 h-2 bg-primary rounded-full animate-bounce"
                     style={{ animationDelay: "0.1s" }}
                   ></div>
                   <div
-                    className="w-2 h-2 bg-teal-500 rounded-full animate-bounce"
+                    className="w-2 h-2 bg-primary rounded-full animate-bounce"
                     style={{ animationDelay: "0.2s" }}
                   ></div>
                 </div>
@@ -306,11 +274,7 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
       </div>
 
       {/* Input Area */}
-      <div
-        className={`border-t p-4 ${
-          isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-        } rounded-b-lg shadow-lg`}
-      >
+      <div className="border-t p-4 bg-surface border-border rounded-b-lg shadow-lg">
         <div className="flex space-x-2">
           <textarea
             ref={inputRef}
@@ -319,11 +283,7 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
             onKeyDown={handleKeyDown}
             placeholder="Ask Aura anything about infrastructure..."
             rows={1}
-            className={`flex-1 px-3 py-2 border rounded-lg resize-none transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500/20 ${
-              isDark
-                ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-teal-500"
-                : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500 focus:border-teal-500"
-            }`}
+            className="flex-1 px-3 py-2 border rounded-lg resize-none transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 bg-background border-border text-primary placeholder-tertiary focus:border-primary"
             style={{ maxHeight: "80px" }}
           />
           <button
@@ -331,10 +291,8 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
             disabled={!inputMessage.trim() || isTyping}
             className={`px-3 py-2 rounded-lg transition-all ${
               inputMessage.trim() && !isTyping
-                ? "bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white shadow-md hover:shadow-lg"
-                : isDark
-                  ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                ? "bg-primary text-inverse shadow-md hover:shadow-lg"
+                : "bg-background-secondary text-tertiary cursor-not-allowed"
             }`}
           >
             <Send className="w-4 h-4" />

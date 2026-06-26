@@ -4,7 +4,6 @@ import {
   Copy,
   Code,
   FileText,
-  Package,
   GitBranch,
   Database,
   Key,
@@ -14,16 +13,122 @@ import {
   EyeOff,
   X,
 } from "lucide-react";
-import { useTheme } from "../../contexts/ThemeContext";
 import { useToast } from "../../contexts/ToastContext";
 import authService from "../../services/authService";
 
+// Lightweight, escaping-safe syntax highlighting.
+// Renders a config string as colored React nodes (no HTML injection, no deps).
+// Each line is split into safe spans via simple per-line regex; any line that
+// doesn't match cleanly falls back to a plain text-secondary span.
+
+// Tokenize a single JSON line into colored spans using a global regex.
+const highlightJsonLine = (line, lineKey) => {
+  // Capture, in order: object key ("..." before a colon), string value,
+  // boolean/null, number, structural punctuation. Everything else (whitespace)
+  // passes through untouched as the default span.
+  const tokenRegex =
+    /("(?:[^"\\]|\\.)*"\s*:)|("(?:[^"\\]|\\.)*")|(\btrue\b|\bfalse\b|\bnull\b)|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|([{}[\],:])/g;
+
+  const spans = [];
+  let lastIndex = 0;
+  let match;
+  let i = 0;
+
+  while ((match = tokenRegex.exec(line)) !== null) {
+    if (match.index > lastIndex) {
+      spans.push(
+        <span key={`${lineKey}-d${i++}`} className="text-secondary">
+          {line.slice(lastIndex, match.index)}
+        </span>,
+      );
+    }
+
+    const [, key, str, bool, num, punct] = match;
+    if (key !== undefined) {
+      spans.push(
+        <span key={`${lineKey}-t${i++}`} className="text-accent">
+          {key}
+        </span>,
+      );
+    } else if (str !== undefined) {
+      spans.push(
+        <span key={`${lineKey}-t${i++}`} className="text-success">
+          {str}
+        </span>,
+      );
+    } else if (bool !== undefined) {
+      spans.push(
+        <span key={`${lineKey}-t${i++}`} className="text-info">
+          {bool}
+        </span>,
+      );
+    } else if (num !== undefined) {
+      spans.push(
+        <span key={`${lineKey}-t${i++}`} className="text-warning">
+          {num}
+        </span>,
+      );
+    } else {
+      spans.push(
+        <span key={`${lineKey}-t${i++}`} className="text-tertiary">
+          {punct}
+        </span>,
+      );
+    }
+    lastIndex = tokenRegex.lastIndex;
+  }
+
+  if (lastIndex < line.length) {
+    spans.push(
+      <span key={`${lineKey}-d${i}`} className="text-secondary">
+        {line.slice(lastIndex)}
+      </span>,
+    );
+  }
+
+  return spans.length > 0 ? spans : line;
+};
+
+// Tokenize a single YAML line: full-line comments, key part, value part.
+const highlightYamlLine = (line) => {
+  // Full-line comment (allowing leading whitespace).
+  if (/^\s*#/.test(line)) {
+    return <span className="text-tertiary italic">{line}</span>;
+  }
+
+  // key: value  -> split on the first colon, preserving exact substrings.
+  const match = line.match(/^(\s*[^:\n]+:)(.*)$/);
+  if (match) {
+    const [, keyPart, valuePart] = match;
+    return (
+      <>
+        <span className="text-accent">{keyPart}</span>
+        <span className="text-secondary">{valuePart}</span>
+      </>
+    );
+  }
+
+  // No clean match (e.g. list items, blank lines) -> plain secondary.
+  return <span className="text-secondary">{line}</span>;
+};
+
+// Render a full config string as line-broken, colored React nodes.
+const highlightContent = (content, format) => {
+  const lines = content.split("\n");
+  return lines.map((line, index) => {
+    const lineKey = `line-${index}`;
+    const nodes =
+      format === "yaml"
+        ? highlightYamlLine(line)
+        : highlightJsonLine(line, lineKey);
+    // Render an empty line as a non-collapsing block so breaks are preserved.
+    return <div key={lineKey}>{line.length === 0 ? "​" : nodes}</div>;
+  });
+};
+
 const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
-  const { isDark } = useTheme();
   const { success, error: showError } = useToast();
   const [format, setFormat] = useState("json");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isPushing, setIsPushing] = useState(false);
   const [showSshKey, setShowSshKey] = useState(false);
   const [showSshKeyEditor, setShowSshKeyEditor] = useState(false);
   const [newSshKey, setNewSshKey] = useState("");
@@ -40,8 +145,14 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
       status: environment.status,
       backend: environment.terraform_backend?.enabled || false,
       services: environment.services || {},
-      createdAt: environment.createdAt || environment.created_at || new Date().toISOString(),
-      updatedAt: environment.updatedAt || environment.updated_at || new Date().toISOString(),
+      createdAt:
+        environment.createdAt ||
+        environment.created_at ||
+        new Date().toISOString(),
+      updatedAt:
+        environment.updatedAt ||
+        environment.updated_at ||
+        new Date().toISOString(),
     };
 
     if (environment.cloudCredential) {
@@ -133,59 +244,6 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
     });
   };
 
-  const generateInfrastructure = async () => {
-    try {
-      setIsGenerating(true);
-
-      const response = await authService.post(
-        `/environments/${environment.id}/generate`,
-        {},
-        {
-          responseType: "blob",
-          timeout: 120000,
-        },
-      );
-
-      const blob = new Blob([response.data], { type: "application/zip" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${environment.name}-infrastructure.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      success("Infrastructure repository generated and downloaded successfully");
-    } catch (err) {
-      console.error("Error generating infrastructure:", err);
-      showError(
-        err.response?.data?.error || "Failed to generate infrastructure. Please try again.",
-      );
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const pushInfrastructure = async () => {
-    try {
-      setIsPushing(true);
-
-      const response = await authService.post(
-        `/environments/${environment.id}/push`,
-        {},
-        { timeout: 120000 },
-      );
-
-      success(response?.message || "Infrastructure pushed to Git successfully");
-    } catch (err) {
-      console.error("Error pushing to Git:", err);
-      showError(err.message || "Failed to push to Git. Please try again.");
-    } finally {
-      setIsPushing(false);
-    }
-  };
-
   const handleRotateSshKey = async () => {
     if (!newSshKey.trim()) {
       showError("Please enter an SSH private key");
@@ -219,14 +277,10 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
     <div className="space-y-6">
       {/* Terraform Backend Configuration */}
       {environment.terraform_backend?.enabled && (
-        <div
-          className={`p-6 rounded-xl border ${
-            isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
-          }`}
-        >
+        <div className="p-6 rounded-2xl border bg-surface border-border">
           <div className="flex items-center mb-4">
-            <Database className="w-5 h-5 mr-2 text-teal-500" />
-            <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+            <Database className="w-5 h-5 mr-2 text-accent" />
+            <h4 className="text-base font-bold text-primary">
               Terraform Backend Configuration
             </h4>
           </div>
@@ -234,24 +288,16 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
             <div className="grid grid-cols-2 gap-4">
               {environment.terraform_backend.bucketName && (
                 <div>
-                  <p
-                    className={`text-xs font-medium mb-1 ${
-                      isDark ? "text-gray-400" : "text-gray-600"
-                    }`}
-                  >
-                    S3 Bucket
-                  </p>
+                  <p className="section-label mb-1">S3 Bucket</p>
                   <div className="flex items-center space-x-2">
-                    <p
-                      className={`text-sm font-mono ${isDark ? "text-gray-200" : "text-gray-800"}`}
-                    >
+                    <p className="text-sm font-mono text-primary">
                       {environment.terraform_backend.bucketName}
                     </p>
                     <a
                       href={`https://${environment.region}.console.aws.amazon.com/s3/buckets/${environment.terraform_backend.bucketName}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-teal-500 hover:text-teal-400"
+                      className="text-primary hover:text-primary"
                       title="Open in AWS Console"
                     >
                       <ExternalLink className="w-4 h-4" />
@@ -260,14 +306,8 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
                 </div>
               )}
               <div>
-                <p
-                  className={`text-xs font-medium mb-1 ${
-                    isDark ? "text-gray-400" : "text-gray-600"
-                  }`}
-                >
-                  Locking Mechanism
-                </p>
-                <p className={`text-sm ${isDark ? "text-gray-200" : "text-gray-800"}`}>
+                <p className="section-label mb-1">Locking Mechanism</p>
+                <p className="text-sm text-primary">
                   {environment.terraform_backend.lockingMechanism === "s3"
                     ? "S3 Native Locking"
                     : "DynamoDB"}
@@ -276,16 +316,8 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
               {environment.terraform_backend.lockingMechanism === "dynamodb" &&
                 environment.terraform_backend.tableName && (
                   <div>
-                    <p
-                      className={`text-xs font-medium mb-1 ${
-                        isDark ? "text-gray-400" : "text-gray-600"
-                      }`}
-                    >
-                      DynamoDB Table
-                    </p>
-                    <p
-                      className={`text-sm font-mono ${isDark ? "text-gray-200" : "text-gray-800"}`}
-                    >
+                    <p className="section-label mb-1">DynamoDB Table</p>
+                    <p className="text-sm font-mono text-primary">
                       {environment.terraform_backend.tableName}
                     </p>
                   </div>
@@ -297,26 +329,18 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
 
       {/* Git Repository Configuration */}
       {environment.git_repository?.enabled && (
-        <div
-          className={`p-6 rounded-xl border ${
-            isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
-          }`}
-        >
+        <div className="p-6 rounded-2xl border bg-surface border-border">
           <div className="flex items-center mb-4">
-            <GitBranch className="w-5 h-5 mr-2 text-teal-500" />
-            <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+            <GitBranch className="w-5 h-5 mr-2 text-accent" />
+            <h4 className="text-base font-bold text-primary">
               Git Repository Configuration
             </h4>
           </div>
           <div className="space-y-4">
             <div>
-              <p
-                className={`text-xs font-medium mb-1 ${isDark ? "text-gray-400" : "text-gray-600"}`}
-              >
-                Repository URL
-              </p>
+              <p className="section-label mb-1">Repository URL</p>
               <div className="flex items-center space-x-2">
-                <p className={`text-sm font-mono ${isDark ? "text-gray-200" : "text-gray-800"}`}>
+                <p className="text-sm font-mono text-primary">
                   {environment.git_repository.url}
                 </p>
                 {environment.git_repository.url.includes("github.com") && (
@@ -326,7 +350,7 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
                       .replace(".git", "")}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-teal-500 hover:text-teal-400"
+                    className="text-primary hover:text-primary"
                   >
                     <ExternalLink className="w-4 h-4" />
                   </a>
@@ -334,21 +358,13 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
               </div>
             </div>
             <div>
-              <p
-                className={`text-xs font-medium mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}
-              >
-                SSH Private Key
-              </p>
-              <div
-                className={`flex items-center space-x-2 p-3 rounded-lg ${
-                  isDark ? "bg-gray-900/50" : "bg-gray-100"
-                }`}
-              >
-                <Key className="w-4 h-4 text-teal-500 shrink-0" />
+              <p className="section-label mb-2">SSH Private Key</p>
+              <div className="flex items-center space-x-2 p-3 rounded-lg bg-background border border-border">
+                <Key className="w-4 h-4 text-primary shrink-0" />
                 <p
-                  className={`text-xs font-mono flex-1 ${
-                    isDark ? "text-gray-400" : "text-gray-600"
-                  } ${showSshKey ? "break-all" : ""}`}
+                  className={`text-xs font-mono flex-1 text-secondary ${
+                    showSshKey ? "break-all" : ""
+                  }`}
                 >
                   {environment.git_repository.sshKey
                     ? showSshKey
@@ -359,24 +375,20 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
                 {environment.git_repository.sshKey && (
                   <button
                     onClick={() => setShowSshKey(!showSshKey)}
-                    className={`p-1 rounded hover:bg-gray-700/50 transition-colors ${
-                      isDark
-                        ? "text-gray-400 hover:text-gray-200"
-                        : "text-gray-600 hover:text-gray-800"
-                    }`}
+                    className="p-1 rounded transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated"
                     title={showSshKey ? "Hide key" : "Show key"}
                   >
-                    {showSshKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showSshKey ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 )}
               </div>
               <button
                 onClick={() => setShowSshKeyEditor(true)}
-                className={`mt-2 flex items-center space-x-2 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
-                  isDark
-                    ? "text-gray-400 hover:text-gray-200 hover:bg-gray-700/50"
-                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                }`}
+                className="mt-2 flex items-center space-x-2 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated"
               >
                 <KeyRound className="w-3.5 h-3.5" />
                 <span>Rotate SSH Key</span>
@@ -386,7 +398,7 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
         </div>
       )}
       <div className="flex items-center justify-between">
-        <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+        <h3 className="text-lg font-bold text-primary">
           Environment Configuration
         </h3>
         <div className="flex items-center space-x-3">
@@ -395,12 +407,8 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
               onClick={() => setFormat("json")}
               className={`px-3 py-2 text-sm font-medium transition-colors ${
                 format === "json"
-                  ? isDark
-                    ? "bg-teal-600 text-white"
-                    : "bg-teal-600 text-white"
-                  : isDark
-                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "bg-primary-muted text-primary"
+                  : "bg-background-secondary text-secondary hover:bg-surface-elevated"
               }`}
             >
               <Code className="w-4 h-4 inline mr-1" />
@@ -410,110 +418,54 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
               onClick={() => setFormat("yaml")}
               className={`px-3 py-2 text-sm font-medium transition-colors ${
                 format === "yaml"
-                  ? isDark
-                    ? "bg-teal-600 text-white"
-                    : "bg-teal-600 text-white"
-                  : isDark
-                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "bg-primary-muted text-primary"
+                  : "bg-background-secondary text-secondary hover:bg-surface-elevated"
               }`}
             >
               <FileText className="w-4 h-4 inline mr-1" />
               YAML
             </button>
           </div>
-          <button
-            onClick={copyToClipboard}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              isDark
-                ? "bg-teal-600 hover:bg-teal-700 text-white"
-                : "bg-teal-600 hover:bg-teal-700 text-white"
-            }`}
-          >
+          <button onClick={copyToClipboard} className="btn-op-secondary">
             <Copy className="w-4 h-4 inline mr-2" />
             Copy
           </button>
-          <button
-            onClick={downloadConfiguration}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              isDark
-                ? "bg-green-600 hover:bg-green-700 text-white"
-                : "bg-green-600 hover:bg-green-700 text-white"
-            }`}
-          >
+          <button onClick={downloadConfiguration} className="btn-op-secondary">
             <Download className="w-4 h-4 inline mr-2" />
             Download
-          </button>
-          <button
-            onClick={generateInfrastructure}
-            disabled={isGenerating}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              isGenerating
-                ? "bg-gray-500 cursor-not-allowed text-white"
-                : isDark
-                  ? "bg-teal-600 hover:bg-teal-700 text-white"
-                  : "bg-teal-600 hover:bg-teal-700 text-white"
-            }`}
-          >
-            <Package className="w-4 h-4 inline mr-2" />
-            {isGenerating ? "Generating..." : "Generate Repository"}
-          </button>
-          <button
-            onClick={pushInfrastructure}
-            disabled={isPushing}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              isPushing
-                ? "bg-gray-500 cursor-not-allowed text-white"
-                : "bg-amber-600 hover:bg-amber-700 text-white"
-            }`}
-          >
-            <GitBranch className="w-4 h-4 inline mr-2" />
-            {isPushing ? "Pushing..." : "Push to Git"}
           </button>
         </div>
       </div>
 
-      <div
-        className={`rounded-lg border ${
-          isDark ? "bg-gray-900/50 border-gray-700" : "bg-gray-50 border-gray-200"
-        }`}
-      >
-        <div
-          className={`px-4 py-3 border-b text-sm font-medium flex items-center justify-between ${
-            isDark ? "border-gray-700 text-gray-300" : "border-gray-200 text-gray-700"
-          }`}
-        >
-          <span>
-            {environment.name} - {format.toUpperCase()} Configuration
+      <div className="rounded-2xl border border-border bg-surface-overlay overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-2 bg-surface-elevated border-b border-border">
+          <span className="h-2.5 w-2.5 rounded-full bg-danger/60" />
+          <span className="h-2.5 w-2.5 rounded-full bg-warning/60" />
+          <span className="h-2.5 w-2.5 rounded-full bg-success/60" />
+          <span className="ml-2 font-mono text-[10px] uppercase tracking-wide text-tertiary">
+            {environment.name}.{format === "yaml" ? "yaml" : "json"}
           </span>
-          <span className="text-xs opacity-75">{content.split("\n").length} lines</span>
+          <span className="ml-auto font-mono text-[10px] text-tertiary">
+            {content.split("\n").length} lines
+          </span>
         </div>
         <div className="relative">
-          <pre
-            className={`p-4 text-sm font-mono overflow-auto max-h-96 ${
-              isDark ? "text-gray-300" : "text-gray-800"
-            }`}
-          >
-            <code>{content}</code>
+          <pre className="p-4 text-sm font-mono overflow-auto max-h-96 text-secondary custom-scrollbar">
+            <code>{highlightContent(content, format)}</code>
           </pre>
         </div>
       </div>
 
-      <div
-        className={`p-4 rounded-lg border-l-4 ${
-          isDark
-            ? "bg-teal-900/20 border-teal-500/50 text-teal-300"
-            : "bg-teal-50 border-teal-500 text-teal-700"
-        }`}
-      >
+      <div className="p-4 rounded-lg border-l-4 bg-primary-muted border-primary text-primary">
         <div className="flex items-start space-x-3">
           <FileText className="w-5 h-5 mt-0.5 shrink-0" />
           <div>
             <p className="font-medium mb-1">Configuration Export</p>
             <p className="text-sm opacity-90">
-              This configuration represents the complete state of your environment including all
-              services, settings, and metadata. You can use this to backup, version control, or
-              recreate this environment.
+              This configuration represents the complete state of your
+              environment including all services, settings, and metadata. You
+              can use this to backup, version control, or recreate this
+              environment.
             </p>
           </div>
         </div>
@@ -528,19 +480,11 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
               setNewSshKey("");
             }}
           />
-          <div
-            className={`relative w-full max-w-lg mx-4 rounded-xl border shadow-2xl ${
-              isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-            }`}
-          >
-            <div
-              className={`flex items-center justify-between p-5 border-b ${
-                isDark ? "border-gray-700" : "border-gray-200"
-              }`}
-            >
+          <div className="relative w-full max-w-lg mx-4 rounded-2xl border shadow-2xl bg-surface border-border">
+            <div className="flex items-center justify-between p-5 border-b border-border">
               <div className="flex items-center space-x-3">
-                <KeyRound className="w-5 h-5 text-teal-500" />
-                <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                <KeyRound className="w-5 h-5 text-primary" />
+                <h3 className="text-lg font-bold text-primary">
                   Rotate SSH Key
                 </h3>
               </div>
@@ -549,15 +493,13 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
                   setShowSshKeyEditor(false);
                   setNewSshKey("");
                 }}
-                className={`p-1.5 rounded-lg transition-colors ${
-                  isDark ? "hover:bg-gray-700 text-gray-400" : "hover:bg-gray-100 text-gray-500"
-                }`}
+                className="p-1.5 rounded-lg transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-5 space-y-4">
-              <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+              <p className="text-sm text-secondary">
                 Paste the new SSH private key for{" "}
                 <span className="font-mono font-medium">
                   {environment.git_repository?.url
@@ -571,11 +513,7 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
                 onChange={(e) => setNewSshKey(e.target.value)}
                 rows={8}
                 placeholder="Paste your SSH private key here..."
-                className={`w-full px-4 py-3 rounded-lg border font-mono text-xs resize-none transition-colors ${
-                  isDark
-                    ? "bg-gray-900 border-gray-600 text-gray-200 placeholder-gray-600 focus:border-teal-500"
-                    : "bg-gray-50 border-gray-300 text-gray-800 placeholder-gray-400 focus:border-teal-500"
-                } focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                className="w-full px-4 py-3 rounded-lg border font-mono text-xs resize-none transition-colors bg-background border-border text-primary placeholder-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               <div className="flex justify-end space-x-3">
                 <button
@@ -583,16 +521,14 @@ const EnvironmentConfiguration = ({ environment, onEnvironmentUpdate }) => {
                     setShowSshKeyEditor(false);
                     setNewSshKey("");
                   }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                  className="btn-op-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleRotateSshKey}
                   disabled={isSavingSshKey || !newSshKey.trim()}
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-teal-600 text-white hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-op-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSavingSshKey ? "Saving..." : "Update Key"}
                 </button>

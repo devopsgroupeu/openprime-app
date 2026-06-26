@@ -56,7 +56,8 @@ export const SERVICES_CONFIG = {
         type: FIELD_TYPES.DROPDOWN,
         name: "azCount",
         displayName: "Availability Zones",
-        description: "Number of availability zones to use for high availability",
+        description:
+          "Number of availability zones to use for high availability",
         defaultValue: 2,
         options: [
           { value: 1, label: "1 AZ (Development only)" },
@@ -116,13 +117,20 @@ export const SERVICES_CONFIG = {
         type: FIELD_TYPES.DROPDOWN,
         name: "natGateway",
         displayName: "NAT Gateway Strategy",
-        description: "How to provision NAT gateways for private subnet internet access",
+        description:
+          "How to provision NAT gateways for private subnet internet access",
         defaultValue: "SINGLE",
         options: [
           { value: "NO_NAT", label: "None - No internet for private subnets" },
           { value: "SINGLE", label: "Single - Cost-effective (not HA)" },
-          { value: "ONE_PER_AZ", label: "One per AZ - High availability (recommended)" },
-          { value: "ONE_PER_SUBNET", label: "One per subnet - Maximum redundancy" },
+          {
+            value: "ONE_PER_AZ",
+            label: "One per AZ - High availability (recommended)",
+          },
+          {
+            value: "ONE_PER_SUBNET",
+            label: "One per subnet - Maximum redundancy",
+          },
         ],
         helpText: "Single NAT saves cost but creates a single point of failure",
         section: FIELD_SECTIONS.NETWORK,
@@ -170,7 +178,8 @@ export const SERVICES_CONFIG = {
         displayName: "VPC Flow Logs",
         description: "Enable flow logs for network traffic analysis",
         defaultValue: false,
-        helpText: "Useful for security and network troubleshooting (additional cost)",
+        helpText:
+          "Useful for security and network troubleshooting (additional cost)",
         section: FIELD_SECTIONS.MONITORING,
       },
       enableDnsHostnames: {
@@ -398,7 +407,10 @@ export const SERVICES_CONFIG = {
         description: "Choose your database engine",
         defaultValue: "postgres",
         options: [
-          { value: "postgres", label: "PostgreSQL - Open-source, feature-rich" },
+          {
+            value: "postgres",
+            label: "PostgreSQL - Open-source, feature-rich",
+          },
           { value: "mysql", label: "MySQL - Popular open-source" },
           { value: "mariadb", label: "MariaDB - MySQL fork" },
           { value: "oracle-ee", label: "Oracle Enterprise" },
@@ -444,7 +456,10 @@ export const SERVICES_CONFIG = {
           { value: "db.t3.small", label: "t3.small - 2 vCPU, 2GB" },
           { value: "db.t3.medium", label: "t3.medium - 2 vCPU, 4GB" },
           { value: "db.t3.large", label: "t3.large - 2 vCPU, 8GB" },
-          { value: "db.r5.large", label: "r5.large - 2 vCPU, 16GB (Memory-optimized)" },
+          {
+            value: "db.r5.large",
+            label: "r5.large - 2 vCPU, 16GB (Memory-optimized)",
+          },
           { value: "db.r5.xlarge", label: "r5.xlarge - 4 vCPU, 32GB" },
         ],
         helpText: "T3 for general use, R5 for memory-intensive workloads",
@@ -1204,7 +1219,8 @@ export const SERVICES_CONFIG = {
   ecr: {
     name: "ecr",
     displayName: "Elastic Container Registry (ECR)",
-    description: "Managed Docker container registry with vulnerability scanning",
+    description:
+      "Managed Docker container registry with vulnerability scanning",
     provider: "aws",
     category: "Storage",
     icon: "🐳",
@@ -1236,7 +1252,10 @@ export const SERVICES_CONFIG = {
         defaultValue: "private",
         options: [
           { value: "private", label: "Private - Requires authentication" },
-          { value: "public", label: "Public - Accessible without authentication" },
+          {
+            value: "public",
+            label: "Public - Accessible without authentication",
+          },
         ],
         section: FIELD_SECTIONS.CONFIGURATION,
         helpText: "Choose whether repositories should be private or public",
@@ -1249,10 +1268,14 @@ export const SERVICES_CONFIG = {
         defaultValue: "IMMUTABLE",
         options: [
           { value: "MUTABLE", label: "Mutable - Tags can be overwritten" },
-          { value: "IMMUTABLE", label: "Immutable - Tags cannot be overwritten" },
+          {
+            value: "IMMUTABLE",
+            label: "Immutable - Tags cannot be overwritten",
+          },
         ],
         section: FIELD_SECTIONS.CONFIGURATION,
-        helpText: "IMMUTABLE prevents accidental tag overwrites and improves security",
+        helpText:
+          "IMMUTABLE prevents accidental tag overwrites and improves security",
       },
       encryptionType: {
         type: FIELD_TYPES.DROPDOWN,
@@ -1262,10 +1285,14 @@ export const SERVICES_CONFIG = {
         defaultValue: "AES256",
         options: [
           { value: "AES256", label: "AES256 - AWS managed encryption" },
-          { value: "KMS", label: "KMS - Customer managed keys (additional cost)" },
+          {
+            value: "KMS",
+            label: "KMS - Customer managed keys (additional cost)",
+          },
         ],
         section: FIELD_SECTIONS.SECURITY,
-        helpText: "AES256 is free, KMS provides more control but incurs charges",
+        helpText:
+          "AES256 is free, KMS provides more control but incurs charges",
       },
       enableScanning: {
         type: FIELD_TYPES.TOGGLE,
@@ -1284,11 +1311,15 @@ export const SERVICES_CONFIG = {
         defaultValue: "BASIC",
         options: [
           { value: "BASIC", label: "Basic - Standard CVE scanning (free)" },
-          { value: "ENHANCED", label: "Enhanced - AWS Inspector integration (charged)" },
+          {
+            value: "ENHANCED",
+            label: "Enhanced - AWS Inspector integration (charged)",
+          },
         ],
         section: FIELD_SECTIONS.SECURITY,
         dependsOn: { field: "enableScanning", value: true },
-        helpText: "Enhanced scanning provides deeper OS and programming language package scanning",
+        helpText:
+          "Enhanced scanning provides deeper OS and programming language package scanning",
       },
       createLifecyclePolicy: {
         type: FIELD_TYPES.TOGGLE,
@@ -1297,7 +1328,8 @@ export const SERVICES_CONFIG = {
         description: "Automatically cleanup old images to save storage costs",
         defaultValue: true,
         section: FIELD_SECTIONS.LIFECYCLE,
-        helpText: "Lifecycle policies help manage storage costs by removing unused images",
+        helpText:
+          "Lifecycle policies help manage storage costs by removing unused images",
       },
       lifecyclePolicyMaxImages: {
         type: FIELD_TYPES.NUMBER,
@@ -1309,7 +1341,8 @@ export const SERVICES_CONFIG = {
         max: 1000,
         section: FIELD_SECTIONS.LIFECYCLE,
         dependsOn: { field: "createLifecyclePolicy", value: true },
-        helpText: "Older images beyond this count will be automatically deleted",
+        helpText:
+          "Older images beyond this count will be automatically deleted",
       },
       enableReplication: {
         type: FIELD_TYPES.TOGGLE,
@@ -1329,7 +1362,8 @@ export const SERVICES_CONFIG = {
         defaultValue: [],
         section: FIELD_SECTIONS.ADVANCED,
         dependsOn: { field: "enableReplication", value: true },
-        helpText: "Enter AWS region codes separated by commas (e.g., us-west-2, eu-central-1)",
+        helpText:
+          "Enter AWS region codes separated by commas (e.g., us-west-2, eu-central-1)",
       },
     },
   },
@@ -1357,7 +1391,8 @@ export const SERVICES_CONFIG = {
         description: "List of bucket names to create (one per line)",
         defaultValue: [],
         placeholder: "my-app-data\nmy-app-backups\nmy-app-logs",
-        helpText: "Names must be globally unique and DNS-compliant (lowercase, no spaces)",
+        helpText:
+          "Names must be globally unique and DNS-compliant (lowercase, no spaces)",
         section: FIELD_SECTIONS.BASIC,
       },
     },
@@ -1390,7 +1425,8 @@ export const SERVICES_CONFIG = {
         description: "List of Lambda function names to create (one per line)",
         defaultValue: [],
         placeholder: "api-handler\ndata-processor\nevent-handler",
-        helpText: "⚠️ Requires deployment packages in lambda-packages/{name}.zip directory",
+        helpText:
+          "⚠️ Requires deployment packages in lambda-packages/{name}.zip directory",
         section: FIELD_SECTIONS.BASIC,
       },
     },
@@ -1419,11 +1455,15 @@ export const SERVICES_CONFIG = {
         description: "Choose your caching engine",
         defaultValue: "valkey",
         options: [
-          { value: "valkey", label: "Valkey - Open-source Redis alternative (recommended)" },
+          {
+            value: "valkey",
+            label: "Valkey - Open-source Redis alternative (recommended)",
+          },
           { value: "redis", label: "Redis - In-memory data store" },
           { value: "memcached", label: "Memcached - Simple key-value cache" },
         ],
-        helpText: "Valkey is a Redis-compatible fork with no licensing concerns",
+        helpText:
+          "Valkey is a Redis-compatible fork with no licensing concerns",
         section: FIELD_SECTIONS.BASIC,
       },
       engineVersion: {
@@ -1443,14 +1483,29 @@ export const SERVICES_CONFIG = {
         description: "Instance type for cache nodes",
         defaultValue: "cache.t4g.small",
         options: [
-          { value: "cache.t4g.micro", label: "t4g.micro - 0.5GB (Graviton, cost-effective)" },
-          { value: "cache.t4g.small", label: "t4g.small - 1.37GB (Graviton, recommended)" },
-          { value: "cache.t4g.medium", label: "t4g.medium - 3.09GB (Graviton)" },
+          {
+            value: "cache.t4g.micro",
+            label: "t4g.micro - 0.5GB (Graviton, cost-effective)",
+          },
+          {
+            value: "cache.t4g.small",
+            label: "t4g.small - 1.37GB (Graviton, recommended)",
+          },
+          {
+            value: "cache.t4g.medium",
+            label: "t4g.medium - 3.09GB (Graviton)",
+          },
           { value: "cache.t3.micro", label: "t3.micro - 0.5GB (x86)" },
           { value: "cache.t3.small", label: "t3.small - 1.37GB (x86)" },
           { value: "cache.t3.medium", label: "t3.medium - 3.09GB (x86)" },
-          { value: "cache.r6g.large", label: "r6g.large - 13.07GB (Memory-optimized Graviton)" },
-          { value: "cache.r7g.large", label: "r7g.large - 13.07GB (Latest Graviton)" },
+          {
+            value: "cache.r6g.large",
+            label: "r6g.large - 13.07GB (Memory-optimized Graviton)",
+          },
+          {
+            value: "cache.r7g.large",
+            label: "r7g.large - 13.07GB (Latest Graviton)",
+          },
         ],
         helpText: "Graviton instances offer better price/performance",
         section: FIELD_SECTIONS.COMPUTE,
@@ -1609,10 +1664,16 @@ export const SERVICES_CONFIG = {
         description: "EC2 instance type for each broker",
         defaultValue: "kafka.t3.small",
         options: [
-          { value: "kafka.t3.small", label: "kafka.t3.small - 2 vCPU, 2GB (Dev/Test)" },
+          {
+            value: "kafka.t3.small",
+            label: "kafka.t3.small - 2 vCPU, 2GB (Dev/Test)",
+          },
           { value: "kafka.m5.large", label: "kafka.m5.large - 2 vCPU, 8GB" },
           { value: "kafka.m5.xlarge", label: "kafka.m5.xlarge - 4 vCPU, 16GB" },
-          { value: "kafka.m5.2xlarge", label: "kafka.m5.2xlarge - 8 vCPU, 32GB (Production)" },
+          {
+            value: "kafka.m5.2xlarge",
+            label: "kafka.m5.2xlarge - 8 vCPU, 32GB (Production)",
+          },
         ],
         helpText: "Choose based on throughput requirements",
         section: FIELD_SECTIONS.COMPUTE,
@@ -1664,7 +1725,8 @@ export const SERVICES_CONFIG = {
           { value: "REGIONAL", label: "Regional - ALB, API Gateway, AppSync" },
           { value: "CLOUDFRONT", label: "CloudFront - Global edge locations" },
         ],
-        helpText: "Use REGIONAL for regional resources, CLOUDFRONT for global CDN",
+        helpText:
+          "Use REGIONAL for regional resources, CLOUDFRONT for global CDN",
         section: FIELD_SECTIONS.BASIC,
       },
       cloudwatchMetricsEnabled: {
@@ -1931,7 +1993,10 @@ export const SERVICES_CONFIG = {
         description: "Edge location coverage (affects cost)",
         defaultValue: "PriceClass_100",
         options: [
-          { value: "PriceClass_100", label: "US, Canada, Europe (Lowest cost)" },
+          {
+            value: "PriceClass_100",
+            label: "US, Canada, Europe (Lowest cost)",
+          },
           { value: "PriceClass_200", label: "+ Asia, Middle East, Africa" },
           { value: "PriceClass_All", label: "All Edge Locations (Global)" },
         ],
@@ -2528,11 +2593,15 @@ export const getServiceConfig = (serviceName) => {
 };
 
 export const getServicesByProvider = (providerType) => {
-  return Object.values(SERVICES_CONFIG).filter((service) => service.provider === providerType);
+  return Object.values(SERVICES_CONFIG).filter(
+    (service) => service.provider === providerType,
+  );
 };
 
 export const getServicesByCategory = (category) => {
-  return Object.values(SERVICES_CONFIG).filter((service) => service.category === category);
+  return Object.values(SERVICES_CONFIG).filter(
+    (service) => service.category === category,
+  );
 };
 
 export const createDefaultServiceConfig = (serviceName) => {

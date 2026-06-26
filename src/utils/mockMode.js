@@ -2,7 +2,10 @@
 // without a real backend, DB, or Keycloak. Enabled via VITE_MOCK=true.
 export const isMockMode = () => {
   try {
-    if (typeof import.meta !== "undefined" && import.meta.env?.VITE_MOCK === "true") {
+    if (
+      typeof import.meta !== "undefined" &&
+      import.meta.env?.VITE_MOCK === "true"
+    ) {
       return true;
     }
   } catch {

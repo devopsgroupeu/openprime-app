@@ -9,12 +9,9 @@ import {
   CheckCircle,
   Package,
 } from "lucide-react";
-import { useTheme } from "../../contexts/ThemeContext";
 import { getServiceConfig } from "../../config/servicesConfig";
 
 const ServicesOverview = ({ environment }) => {
-  const { isDark } = useTheme();
-
   const getServiceIcon = (serviceName) => {
     const icons = {
       vpc: Network,
@@ -40,24 +37,22 @@ const ServicesOverview = ({ environment }) => {
     const IconComponent = getServiceIcon(serviceName);
 
     return (
-      <div
-        className={`p-4 rounded-lg border transition-colors ${
-          isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/80 border-gray-200"
-        }`}
-      >
+      <div className="p-4 rounded-lg border bg-surface border-border transition-colors">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <IconComponent className="w-5 h-5 text-teal-500" />
+            <div className="w-10 h-10 rounded-xl bg-primary-muted flex items-center justify-center">
+              <IconComponent className="w-5 h-5 text-accent" />
+            </div>
             <div>
-              <h4 className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+              <h4 className="font-medium text-primary">
                 {serviceDefinition?.displayName || serviceName}
               </h4>
-              <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+              <p className="text-sm text-secondary">
                 {serviceDefinition?.description || "Service configuration"}
               </p>
             </div>
           </div>
-          <CheckCircle className="w-4 h-4 text-green-400" />
+          <CheckCircle className="w-4 h-4 text-success" />
         </div>
       </div>
     );
@@ -76,7 +71,7 @@ const ServicesOverview = ({ environment }) => {
           ))}
         </div>
       ) : (
-        <div className={`text-center py-8 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+        <div className="text-center py-8 text-secondary">
           <Box className="w-12 h-12 mx-auto mb-3 opacity-50" />
           <p>No services are currently enabled</p>
         </div>

@@ -1,7 +1,6 @@
 // src/components/DynamicServiceConfig.js
 import { ChevronDown, ChevronRight, MessageCircle } from "lucide-react";
 import { getServiceConfig } from "../config/servicesConfig";
-import { useTheme } from "../contexts/ThemeContext";
 import DynamicFieldRenderer from "./DynamicFieldRenderer";
 
 const DynamicServiceConfig = ({
@@ -12,7 +11,6 @@ const DynamicServiceConfig = ({
   onToggleExpanded,
   onAskAI,
 }) => {
-  const { isDark } = useTheme();
   const serviceDefinition = getServiceConfig(serviceName);
 
   if (!serviceDefinition) {
@@ -33,8 +31,10 @@ const DynamicServiceConfig = ({
 
   return (
     <div
-      className={`border rounded-lg transition-colors ${
-        isDark ? "border-gray-600 bg-gray-800/50" : "border-gray-200 bg-white"
+      className={`rounded-lg transition-colors bg-surface ${
+        serviceConfig.enabled
+          ? "border-2 border-primary"
+          : "border border-border"
       }`}
     >
       <div
@@ -43,63 +43,37 @@ const DynamicServiceConfig = ({
       >
         <div className="flex items-center space-x-3">
           {expanded ? (
-            <ChevronDown className="w-5 h-5 text-gray-400" />
+            <ChevronDown className="w-5 h-5 text-tertiary" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-gray-400" />
+            <ChevronRight className="w-5 h-5 text-tertiary" />
           )}
+          <div className="w-10 h-10 rounded-xl bg-primary-muted flex items-center justify-center text-lg shrink-0">
+            {serviceDefinition.icon || "⚙️"}
+          </div>
           <div>
-            <h3 className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+            <h3 className="font-bold text-primary">
               {serviceDefinition.displayName}
             </h3>
-            <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            <p className="text-sm text-secondary">
               {serviceDefinition.description}
             </p>
-            <span
-              className={`inline-block px-2 py-1 text-xs rounded-full mt-1 ${
-                serviceDefinition.category === "Networking"
-                  ? isDark
-                    ? "bg-teal-900 text-teal-300"
-                    : "bg-teal-50 text-teal-700"
-                  : serviceDefinition.category === "Compute"
-                    ? isDark
-                      ? "bg-emerald-900 text-emerald-300"
-                      : "bg-emerald-50 text-emerald-700"
-                    : serviceDefinition.category === "Database"
-                      ? isDark
-                        ? "bg-teal-900 text-teal-300"
-                        : "bg-teal-50 text-teal-700"
-                      : serviceDefinition.category === "Storage"
-                        ? isDark
-                          ? "bg-amber-900 text-amber-300"
-                          : "bg-amber-50 text-amber-700"
-                        : serviceDefinition.category === "Observability"
-                          ? isDark
-                            ? "bg-yellow-900 text-yellow-300"
-                            : "bg-yellow-50 text-yellow-700"
-                          : serviceDefinition.category === "Integration"
-                            ? isDark
-                              ? "bg-teal-900 text-teal-300"
-                              : "bg-teal-50 text-teal-700"
-                            : serviceDefinition.category === "Security"
-                              ? isDark
-                                ? "bg-red-900 text-red-300"
-                                : "bg-red-50 text-red-700"
-                              : isDark
-                                ? "bg-gray-700 text-gray-300"
-                                : "bg-gray-50 text-gray-700"
-              }`}
-            >
+            <span className="mt-1 inline-block rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-tertiary">
               {serviceDefinition.category}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="flex items-center space-x-2"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Ask AI Button */}
           <button
             type="button"
-            onClick={() => onAskAI?.(serviceName, serviceDefinition.displayName)}
-            className="p-1.5 text-teal-400 hover:text-teal-300 transition-colors hover:bg-teal-500/10 rounded-md"
+            onClick={() =>
+              onAskAI?.(serviceName, serviceDefinition.displayName)
+            }
+            className="p-1.5 text-accent hover:bg-primary-muted transition-colors rounded-md"
             title="Ask AI about this service"
           >
             <MessageCircle className="w-4 h-4" />
@@ -110,21 +84,19 @@ const DynamicServiceConfig = ({
               <input
                 type="checkbox"
                 checked={serviceConfig.enabled}
-                onChange={() => handleFieldChange("enabled", !serviceConfig.enabled)}
+                onChange={() =>
+                  handleFieldChange("enabled", !serviceConfig.enabled)
+                }
                 className="sr-only peer"
               />
-              <div
-                className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
-                  isDark ? "bg-gray-700" : "bg-gray-300"
-                }`}
-              ></div>
+              <div className="w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all bg-background-secondary"></div>
             </label>
           )}
         </div>
       </div>
 
       {expanded && serviceConfig.enabled && (
-        <div className={`border-t p-4 space-y-4 ${isDark ? "border-gray-600" : "border-gray-200"}`}>
+        <div className="border-t p-4 space-y-4 border-border">
           {otherFields.map(([fieldName, fieldConfig]) => {
             return (
               <DynamicFieldRenderer

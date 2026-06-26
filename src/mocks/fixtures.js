@@ -8,7 +8,11 @@ export const currentUser = {
   lastName: "User",
   fullName: "Mock User",
   roles: ["user"],
-  preferences: { theme: "dark", defaultProvider: "aws", defaultRegion: "eu-west-1" },
+  preferences: {
+    theme: "dark",
+    defaultProvider: "aws",
+    defaultRegion: "eu-west-1",
+  },
 };
 
 export const environments = [
@@ -29,7 +33,10 @@ export const environments = [
       "ingress-nginx": { enabled: true },
     },
     terraform_backend: { enabled: true, bucket: "op-demo-tf-state" },
-    git_repository: { url: "git@github.com:example/demo-infra.git", branch: "main" },
+    git_repository: {
+      url: "git@github.com:example/demo-infra.git",
+      branch: "main",
+    },
     created_at: "2026-06-01T10:00:00Z",
     updated_at: "2026-06-20T12:00:00Z",
   },

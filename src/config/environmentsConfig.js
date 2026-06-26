@@ -1,5 +1,9 @@
 // src/config/environmentsConfig.js
-import { PROVIDERS_CONFIG, getProviderConfig, getProviderServices } from "./providersConfig";
+import {
+  PROVIDERS_CONFIG,
+  getProviderConfig,
+  getProviderServices,
+} from "./providersConfig";
 import { createDefaultServiceConfig } from "./servicesConfig";
 import { generateDefaultHelmChartsConfig } from "./helmChartsConfig";
 
@@ -23,7 +27,8 @@ const createEmptyServices = (providerType) => {
 
     // Initialize helmCharts for Kubernetes services
     if (["eks", "aks", "gke", "kubernetes"].includes(serviceName)) {
-      services[serviceName].helmCharts = generateDefaultHelmChartsConfig(serviceName);
+      services[serviceName].helmCharts =
+        generateDefaultHelmChartsConfig(serviceName);
     }
   });
 

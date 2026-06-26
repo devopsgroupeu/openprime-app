@@ -1,6 +1,5 @@
 // src/components/modals/wizard/ServicesConfigStep.js
 import { Settings, Info, ToggleLeft, ToggleRight } from "lucide-react";
-import { useTheme } from "../../../contexts/ThemeContext";
 import { PROVIDERS } from "../../../config/environmentsConfig";
 import DynamicServicesGrid from "../../DynamicServicesGrid";
 import { createDefaultServiceConfig } from "../../../config/servicesConfig";
@@ -13,11 +12,10 @@ const ServicesConfigStep = ({
   onEditHelmValues,
   onAskAI,
 }) => {
-  const { isDark } = useTheme();
-
   const getEnabledServicesCount = () => {
     if (!newEnv.services) return 0;
-    return Object.values(newEnv.services).filter((service) => service?.enabled).length;
+    return Object.values(newEnv.services).filter((service) => service?.enabled)
+      .length;
   };
 
   const getTotalServicesCount = () => {
@@ -68,64 +66,50 @@ const ServicesConfigStep = ({
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
-        <div
-          className={`inline-flex items-center px-4 py-2 rounded-full text-sm mb-4 ${
-            isDark
-              ? "bg-teal-500/20 text-teal-300 border border-teal-500/30"
-              : "bg-teal-500/10 text-teal-700 border border-teal-500/30"
-          }`}
-        >
+        <div className="inline-flex items-center px-4 py-2 rounded-full text-sm mb-4 bg-primary-muted text-primary border border-primary">
           <Settings className="w-4 h-4 mr-2" />
           Services Configuration
         </div>
-        <h3 className={`text-xl font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+        <h3 className="text-xl font-bold mb-2 text-primary">
           Configure {getProviderDisplayName()} Services
         </h3>
-        <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+        <p className="text-sm text-secondary">
           Select and configure the cloud services you need for your environment
         </p>
       </div>
 
       {/* Environment Summary */}
-      <div
-        className={`p-4 rounded-lg border ${
-          isDark ? "bg-gray-800/50 border-gray-700" : "bg-gray-50 border-gray-200"
-        }`}
-      >
+      <div className="p-4 rounded-lg border bg-surface border-border">
         <div className="flex items-center justify-between">
           <div>
-            <span className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+            <span className="text-sm font-medium text-secondary">
               Environment: {newEnv.name}
             </span>
-            <span className={`ml-4 text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            <span className="ml-4 text-sm text-secondary">
               {getProviderDisplayName()} •{" "}
-              {PROVIDERS[newEnv.provider]?.regions.find((r) => r.value === newEnv.region)?.label}
+              {
+                PROVIDERS[newEnv.provider]?.regions.find(
+                  (r) => r.value === newEnv.region,
+                )?.label
+              }
             </span>
           </div>
           <div className="flex items-center gap-4">
             <div
               className={`text-sm px-3 py-1 rounded-full ${
                 getEnabledServicesCount() > 0
-                  ? isDark
-                    ? "bg-teal-500/20 text-teal-300"
-                    : "bg-teal-100 text-teal-700"
-                  : isDark
-                    ? "bg-gray-700 text-gray-400"
-                    : "bg-gray-200 text-gray-600"
+                  ? "bg-primary-muted text-primary"
+                  : "bg-background-secondary text-tertiary"
               }`}
             >
               {getEnabledServicesCount()} / {getTotalServicesCount()} services
             </div>
             <button
               onClick={handleToggleAllServices}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
                 areAllServicesEnabled()
-                  ? isDark
-                    ? "bg-red-500/30 text-red-200 hover:bg-red-500/40 border border-red-400/50"
-                    : "bg-red-100 text-red-700 hover:bg-red-200 border border-red-300"
-                  : isDark
-                    ? "bg-teal-500/30 text-teal-200 hover:bg-teal-500/40 border border-teal-400/50"
-                    : "bg-teal-100 text-teal-700 hover:bg-teal-200 border border-teal-300"
+                  ? "bg-danger-muted text-danger hover:bg-danger-muted border-danger"
+                  : "bg-primary-muted text-primary hover:bg-primary-muted border-primary"
               }`}
               data-testid="toggle-all-services"
             >
@@ -146,23 +130,23 @@ const ServicesConfigStep = ({
       </div>
 
       {/* Info Banner */}
-      <div
-        className={`p-4 rounded-lg border ${
-          isDark
-            ? "bg-teal-500/10 border-teal-500/30 text-teal-300"
-            : "bg-teal-50 border-teal-200 text-teal-700"
-        }`}
-      >
+      <div className="p-4 rounded-lg border bg-primary-muted border-primary text-primary">
         <div className="flex items-start">
           <Info className="w-5 h-5 mr-3 mt-0.5 shrink-0" />
           <div className="text-sm">
             <p className="font-medium mb-1">Service Configuration Tips:</p>
             <ul className="list-disc list-inside space-y-1 text-xs opacity-80">
-              <li>Start with essential services like VPC and compute resources</li>
-              <li>Enable additional services based on your application requirements</li>
+              <li>
+                Start with essential services like VPC and compute resources
+              </li>
+              <li>
+                Enable additional services based on your application
+                requirements
+              </li>
               <li>You can always modify these configurations later</li>
               <li>
-                Services with dependencies will show relevant warnings if prerequisites are missing
+                Services with dependencies will show relevant warnings if
+                prerequisites are missing
               </li>
             </ul>
           </div>
@@ -171,17 +155,9 @@ const ServicesConfigStep = ({
 
       {/* Quick Enable Suggestions */}
       {getEnabledServicesCount() === 0 && (
-        <div
-          className={`p-4 rounded-lg border ${
-            isDark ? "bg-yellow-500/10 border-yellow-500/30" : "bg-yellow-50 border-yellow-200"
-          }`}
-        >
+        <div className="p-4 rounded-lg border bg-warning-muted border-warning">
           <div className="text-center">
-            <h4
-              className={`text-sm font-medium mb-2 ${
-                isDark ? "text-yellow-300" : "text-yellow-700"
-              }`}
-            >
+            <h4 className="section-label mb-2 text-warning">
               Need some suggestions?
             </h4>
             <div className="flex flex-wrap justify-center gap-2">
@@ -204,11 +180,7 @@ const ServicesConfigStep = ({
                         },
                       });
                     }}
-                    className={`text-xs px-3 py-1 rounded-full transition-colors ${
-                      isDark
-                        ? "bg-teal-500/20 text-teal-300 hover:bg-teal-500/30"
-                        : "bg-teal-100 text-teal-700 hover:bg-teal-200"
-                    }`}
+                    className="text-xs px-3 py-1 rounded-full transition-colors bg-primary-muted text-primary hover:bg-primary-muted"
                   >
                     Enable VPC + EKS
                   </button>
@@ -233,11 +205,7 @@ const ServicesConfigStep = ({
                         },
                       });
                     }}
-                    className={`text-xs px-3 py-1 rounded-full transition-colors ${
-                      isDark
-                        ? "bg-teal-500/20 text-teal-300 hover:bg-teal-500/30"
-                        : "bg-teal-100 text-teal-700 hover:bg-teal-200"
-                    }`}
+                    className="text-xs px-3 py-1 rounded-full transition-colors bg-primary-muted text-primary hover:bg-primary-muted"
                   >
                     Enable Basic Stack
                   </button>
@@ -261,11 +229,7 @@ const ServicesConfigStep = ({
                       },
                     });
                   }}
-                  className={`text-xs px-3 py-1 rounded-full transition-colors ${
-                    isDark
-                      ? "bg-teal-500/20 text-teal-300 hover:bg-teal-500/30"
-                      : "bg-teal-100 text-teal-700 hover:bg-teal-200"
-                  }`}
+                  className="text-xs px-3 py-1 rounded-full transition-colors bg-primary-muted text-primary hover:bg-primary-muted"
                 >
                   Enable VNet + AKS
                 </button>
@@ -284,11 +248,7 @@ const ServicesConfigStep = ({
                       },
                     });
                   }}
-                  className={`text-xs px-3 py-1 rounded-full transition-colors ${
-                    isDark
-                      ? "bg-teal-500/20 text-teal-300 hover:bg-teal-500/30"
-                      : "bg-teal-100 text-teal-700 hover:bg-teal-200"
-                  }`}
+                  className="text-xs px-3 py-1 rounded-full transition-colors bg-primary-muted text-primary hover:bg-primary-muted"
                 >
                   Enable GKE
                 </button>
@@ -301,7 +261,7 @@ const ServicesConfigStep = ({
       {/* Services Grid */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+          <label className="section-label">
             Available {getProviderDisplayName()} Services
           </label>
           {getEnabledServicesCount() > 0 && (
@@ -322,11 +282,7 @@ const ServicesConfigStep = ({
                   services: updatedServices,
                 });
               }}
-              className={`text-xs px-3 py-1 rounded-lg transition-colors ${
-                isDark
-                  ? "text-amber-400 hover:bg-amber-500/20"
-                  : "text-amber-600 hover:bg-amber-100"
-              }`}
+              className="text-xs px-3 py-1 rounded-lg transition-colors text-warning hover:bg-warning-muted"
             >
               Disable All
             </button>
@@ -348,17 +304,12 @@ const ServicesConfigStep = ({
         newEnv.services?.aks?.enabled ||
         newEnv.services?.gke?.enabled ||
         newEnv.services?.kubernetes?.enabled) && (
-        <div
-          className={`p-4 rounded-lg border ${
-            isDark
-              ? "bg-teal-500/10 border-teal-500/30 text-teal-300"
-              : "bg-teal-50 border-teal-200 text-teal-700"
-          }`}
-        >
+        <div className="p-4 rounded-lg border bg-primary-muted border-primary text-primary">
           <div className="flex items-center">
-            <div className="w-2 h-2 bg-teal-500 rounded-full mr-3"></div>
+            <div className="w-2 h-2 bg-primary rounded-full mr-3"></div>
             <span className="text-sm font-medium">
-              Kubernetes service detected! Next step will allow you to configure Helm charts.
+              Kubernetes service detected! Next step will allow you to configure
+              Helm charts.
             </span>
           </div>
         </div>

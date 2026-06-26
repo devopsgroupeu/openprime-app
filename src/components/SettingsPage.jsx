@@ -1,15 +1,12 @@
 // src/components/SettingsPage.js
 import { useState, useEffect } from "react";
 import { Cloud, User, Save, Plus, Edit2, Trash2, Settings } from "lucide-react";
-import Navigation from "./Navigation";
-import { useTheme } from "../contexts/ThemeContext";
 import { useToast } from "../contexts/ToastContext";
 import authService from "../services/authService";
 import CloudCredentialModal from "./modals/CloudCredentialModal";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
 
 const SettingsPage = () => {
-  const { isDark } = useTheme();
   const toast = useToast();
   const [userPreferences, setUserPreferences] = useState({
     theme: "light",
@@ -34,6 +31,7 @@ const SettingsPage = () => {
   const [selectedProvider, setSelectedProvider] = useState("aws");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [credentialToDelete, setCredentialToDelete] = useState(null);
+  const [activeTab, setActiveTab] = useState("account");
 
   useEffect(() => {
     loadUserData();
@@ -92,7 +90,10 @@ const SettingsPage = () => {
       setSaving(true);
       await Promise.all([
         authService.put("/users/me/profile", profile),
-        authService.put("/users/me/preferences", { ...userPreferences, gitIntegration }),
+        authService.put("/users/me/preferences", {
+          ...userPreferences,
+          gitIntegration,
+        }),
       ]);
     } catch (error) {
       console.error("Failed to save settings:", error);
@@ -109,7 +110,9 @@ const SettingsPage = () => {
 
   const handleEditCredential = async (credential) => {
     try {
-      const response = await authService.get(`/cloud-credentials/${credential.id}`);
+      const response = await authService.get(
+        `/cloud-credentials/${credential.id}`,
+      );
       setSelectedCredential(response.credential);
       setSelectedProvider(credential.provider);
       setShowCredentialModal(true);
@@ -133,7 +136,9 @@ const SettingsPage = () => {
     } catch (error) {
       console.error("Failed to delete credential:", error);
       const errorMessage =
-        error.response?.data?.error || error.message || "Failed to delete credential";
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to delete credential";
       toast.error(errorMessage, { title: "Delete Error" });
     }
   };
@@ -141,7 +146,10 @@ const SettingsPage = () => {
   const handleSaveCredential = async (credentialData) => {
     try {
       if (selectedCredential) {
-        await authService.put(`/cloud-credentials/${selectedCredential.id}`, credentialData);
+        await authService.put(
+          `/cloud-credentials/${selectedCredential.id}`,
+          credentialData,
+        );
         toast.success("Credential updated successfully");
       } else {
         await authService.post("/cloud-credentials", credentialData);
@@ -154,21 +162,20 @@ const SettingsPage = () => {
       console.error("Failed to save credential:", error);
       // Extract error message from response
       const errorMessage =
-        error.response?.data?.error || error.message || "Failed to save credential";
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to save credential";
       toast.error(errorMessage, { title: "Credential Error", duration: 7000 });
     }
   };
   if (loading) {
     return (
-      <div
-        className={`min-h-screen transition-colors ${isDark ? "bg-transparent" : "bg-transparent"}`}
-      >
-        <Navigation />
-        <div className="max-w-7xl mx-auto px-8 py-8">
+      <div className="transition-colors bg-transparent">
+        <div className="px-8 py-8">
           <div className="flex items-center justify-center min-h-[50vh]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className={`text-lg font-poppins ${isDark ? "text-white" : "text-primary"}`}>
+              <p className="text-lg font-poppins text-primary">
                 Loading settings...
               </p>
             </div>
@@ -178,275 +185,236 @@ const SettingsPage = () => {
     );
   }
 
-  return (
-    <div
-      className={`min-h-screen transition-colors ${isDark ? "bg-transparent" : "bg-transparent"}`}
+  const tabs = [
+    { id: "account", label: "Account", icon: User },
+    { id: "preferences", label: "Preferences", icon: Settings },
+    { id: "credentials", label: "Cloud Credentials", icon: Cloud },
+  ];
+
+  const saveButton = (
+    <button
+      onClick={saveSettings}
+      disabled={saving}
+      className="btn-op-primary transition-all"
     >
-      <Navigation />
-      <div className="max-w-7xl mx-auto px-8 py-8">
-        <h1
-          className={`text-3xl font-bold font-sora mb-8 transition-colors ${
-            isDark ? "text-white" : "text-primary"
-          }`}
-        >
-          Settings
-        </h1>
+      {saving ? (
+        <>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+          Saving...
+        </>
+      ) : (
+        <>
+          <Save className="w-4 h-4 mr-2" />
+          Save All Settings
+        </>
+      )}
+    </button>
+  );
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* User Profile Section */}
-          <div
-            className={`backdrop-blur-sm rounded-xl border p-6 transition-colors ${
-              isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
-            }`}
-          >
-            <h2
-              className={`text-xl font-bold font-sora mb-4 flex items-center transition-colors ${
-                isDark ? "text-white" : "text-primary"
-              }`}
-            >
-              <User className="w-5 h-5 mr-2 text-primary" />
-              User Profile
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label
-                  className={`block text-sm font-medium font-poppins mb-2 transition-colors ${
-                    isDark ? "text-tertiary" : "text-secondary"
-                  }`}
-                >
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  value={profile.firstName}
-                  onChange={(e) => handleProfileChange("firstName", e.target.value)}
-                  className={`w-full px-4 py-2 rounded-lg border transition-colors ${
-                    isDark
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "bg-white border-gray-300 text-primary"
-                  }`}
-                  placeholder="Enter your first name"
-                />
-              </div>
-              <div>
-                <label
-                  className={`block text-sm font-medium mb-2 transition-colors ${
-                    isDark ? "text-tertiary" : "text-secondary"
-                  }`}
-                >
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  value={profile.lastName}
-                  onChange={(e) => handleProfileChange("lastName", e.target.value)}
-                  className={`w-full px-4 py-2 rounded-lg border transition-colors ${
-                    isDark
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "bg-white border-gray-300 text-primary"
-                  }`}
-                  placeholder="Enter your last name"
-                />
-              </div>
-              <div>
-                <label
-                  className={`block text-sm font-medium mb-2 transition-colors ${
-                    isDark ? "text-tertiary" : "text-secondary"
-                  }`}
-                >
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={profile.email}
-                  onChange={(e) => handleProfileChange("email", e.target.value)}
-                  className={`w-full px-4 py-2 rounded-lg border transition-colors ${
-                    isDark
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "bg-white border-gray-300 text-primary"
-                  }`}
-                  placeholder="Enter your email"
-                />
-              </div>
-            </div>
-          </div>
+  return (
+    <div className="transition-colors bg-transparent">
+      <div className="px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-extrabold text-primary">Settings</h1>
+          <p className="text-secondary mt-1">
+            Manage your account and platform preferences.
+          </p>
+        </div>
 
-          {/* User Preferences Section */}
-          <div
-            className={`backdrop-blur-sm rounded-xl border p-6 transition-colors ${
-              isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
-            }`}
-          >
-            <h2
-              className={`text-xl font-bold mb-4 flex items-center transition-colors ${
-                isDark ? "text-white" : "text-primary"
-              }`}
-            >
-              <Settings className="w-5 h-5 mr-2 text-primary" />
-              Preferences
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label
-                  className={`block text-sm font-medium mb-2 transition-colors ${
-                    isDark ? "text-tertiary" : "text-secondary"
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Left tab nav */}
+          <nav className="md:w-56 shrink-0 flex md:flex-col gap-1">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium border-l-2 transition-colors ${
+                    isActive
+                      ? "border-primary bg-primary-muted text-primary"
+                      : "border-transparent text-secondary hover:text-primary hover:bg-surface-elevated"
                   }`}
                 >
-                  Default Cloud Provider
-                </label>
-                <select
-                  value={userPreferences.defaultProvider}
-                  onChange={(e) => handlePreferenceChange("defaultProvider", e.target.value)}
-                  className={`w-full px-4 py-2 rounded-lg border transition-colors ${
-                    isDark
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "bg-white border-gray-300 text-primary"
-                  }`}
-                >
-                  <option value="aws">AWS</option>
-                  <option value="azure">Azure</option>
-                  <option value="gcp">Google Cloud</option>
-                  <option value="on-premise">On-Premise</option>
-                </select>
-              </div>
-              <div>
-                <label
-                  className={`block text-sm font-medium mb-2 transition-colors ${
-                    isDark ? "text-tertiary" : "text-secondary"
-                  }`}
-                >
-                  Default Region
-                </label>
-                <input
-                  type="text"
-                  value={userPreferences.defaultRegion}
-                  onChange={(e) => handlePreferenceChange("defaultRegion", e.target.value)}
-                  className={`w-full px-4 py-2 rounded-lg border transition-colors ${
-                    isDark
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "bg-white border-gray-300 text-primary"
-                  }`}
-                  placeholder="us-east-1"
-                />
-              </div>
-            </div>
-          </div>
-          <div
-            className={`backdrop-blur-sm rounded-xl border p-6 transition-colors ${
-              isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
-            }`}
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h2
-                className={`text-xl font-bold flex items-center transition-colors ${
-                  isDark ? "text-white" : "text-primary"
-                }`}
-              >
-                <Cloud className="w-5 h-5 mr-2 text-primary" />
-                AWS Credentials
-              </h2>
-              <button
-                onClick={() => handleAddCredential("aws")}
-                className="btn-op-primary transition-all"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Add
-              </button>
-            </div>
-            <div className="space-y-3">
-              {cloudCredentials.filter((c) => c.provider === "aws").length === 0 ? (
-                <div
-                  className={`text-center py-8 transition-colors ${
-                    isDark ? "text-gray-400" : "text-gray-600"
-                  }`}
-                >
-                  <Cloud className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>No AWS credentials configured</p>
-                  <p className="text-sm mt-1">Add your first credential to get started</p>
+                  <Icon className="w-5 h-5" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Right content panel */}
+          <div className="flex-1 min-w-0">
+            <div className="rounded-2xl border border-border bg-surface p-6">
+              {activeTab === "account" && (
+                <div className="space-y-4">
+                  <p className="section-label">User Profile</p>
+                  <div>
+                    <label className="block text-sm font-medium font-poppins mb-2 transition-colors text-secondary">
+                      First Name
+                    </label>
+                    <input
+                      type="text"
+                      value={profile.firstName}
+                      onChange={(e) =>
+                        handleProfileChange("firstName", e.target.value)
+                      }
+                      className="w-full px-4 py-2 rounded-lg border transition-colors bg-background-secondary border-border text-primary"
+                      placeholder="Enter your first name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 transition-colors text-secondary">
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      value={profile.lastName}
+                      onChange={(e) =>
+                        handleProfileChange("lastName", e.target.value)
+                      }
+                      className="w-full px-4 py-2 rounded-lg border transition-colors bg-background-secondary border-border text-primary"
+                      placeholder="Enter your last name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 transition-colors text-secondary">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={profile.email}
+                      onChange={(e) =>
+                        handleProfileChange("email", e.target.value)
+                      }
+                      className="w-full px-4 py-2 rounded-lg border transition-colors bg-background-secondary border-border text-primary"
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                  <div className="pt-4 flex justify-end border-t border-border">
+                    {saveButton}
+                  </div>
                 </div>
-              ) : (
-                cloudCredentials
-                  .filter((c) => c.provider === "aws")
-                  .map((credential) => (
-                    <div
-                      key={credential.id}
-                      className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
-                        isDark ? "bg-gray-700/50" : "bg-gray-100"
-                      }`}
+              )}
+
+              {activeTab === "preferences" && (
+                <div className="space-y-4">
+                  <p className="section-label">Preferences</p>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 transition-colors text-secondary">
+                      Default Cloud Provider
+                    </label>
+                    <select
+                      value={userPreferences.defaultProvider}
+                      onChange={(e) =>
+                        handlePreferenceChange(
+                          "defaultProvider",
+                          e.target.value,
+                        )
+                      }
+                      className="w-full px-4 py-2 rounded-lg border transition-colors bg-background-secondary border-border text-primary"
                     >
-                      <div className="flex items-center flex-1">
-                        <Cloud className="w-6 h-6 text-teal-400 mr-3" />
-                        <div>
-                          <div
-                            className={`font-semibold transition-colors ${
-                              isDark ? "text-white" : "text-primary"
-                            }`}
-                          >
-                            {credential.name}
-                            {credential.isDefault && (
-                              <span className="ml-2 px-2 py-1 bg-primary/20 text-primary rounded text-xs">
-                                Default
-                              </span>
-                            )}
-                          </div>
-                          <div
-                            className={`text-sm transition-colors ${
-                              isDark ? "text-gray-400" : "text-gray-600"
-                            }`}
-                          >
-                            Account: {credential.identifier}
-                          </div>
-                        </div>
+                      <option value="aws">AWS</option>
+                      <option value="azure">Azure</option>
+                      <option value="gcp">Google Cloud</option>
+                      <option value="on-premise">On-Premise</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 transition-colors text-secondary">
+                      Default Region
+                    </label>
+                    <input
+                      type="text"
+                      value={userPreferences.defaultRegion}
+                      onChange={(e) =>
+                        handlePreferenceChange("defaultRegion", e.target.value)
+                      }
+                      className="w-full px-4 py-2 rounded-lg border transition-colors bg-background-secondary border-border text-primary"
+                      placeholder="us-east-1"
+                    />
+                  </div>
+                  <div className="pt-4 flex justify-end border-t border-border">
+                    {saveButton}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "credentials" && (
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <p className="section-label">AWS Credentials</p>
+                    <button
+                      onClick={() => handleAddCredential("aws")}
+                      className="btn-op-primary transition-all"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    {cloudCredentials.filter((c) => c.provider === "aws")
+                      .length === 0 ? (
+                      <div className="text-center py-8 transition-colors text-secondary">
+                        <Cloud className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                        <p>No AWS credentials configured</p>
+                        <p className="text-sm mt-1">
+                          Add your first credential to get started
+                        </p>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleEditCredential(credential)}
-                          className={`p-2 rounded-lg transition-colors ${
-                            isDark
-                              ? "hover:bg-gray-600 text-gray-400 hover:text-white"
-                              : "hover:bg-gray-200 text-gray-600 hover:text-gray-900"
-                          }`}
-                          title="Edit"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteCredential(credential)}
-                          className={`p-2 rounded-lg transition-colors ${
-                            isDark
-                              ? "hover:bg-red-900/20 text-gray-400 hover:text-red-400"
-                              : "hover:bg-red-100 text-gray-600 hover:text-red-600"
-                          }`}
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                    ) : (
+                      cloudCredentials
+                        .filter((c) => c.provider === "aws")
+                        .map((credential) => (
+                          <div
+                            key={credential.id}
+                            className="flex items-center justify-between p-4 rounded-lg transition-colors bg-background border border-border"
+                          >
+                            <div className="flex items-center flex-1 gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-primary-muted flex items-center justify-center shrink-0">
+                                <Cloud className="w-5 h-5 text-accent" />
+                              </div>
+                              <div>
+                                <div className="font-semibold transition-colors text-primary">
+                                  {credential.name}
+                                  {credential.isDefault && (
+                                    <span className="ml-2 px-2 py-1 bg-primary/20 text-primary rounded text-xs">
+                                      Default
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-sm transition-colors text-secondary">
+                                  Account: {credential.identifier}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => handleEditCredential(credential)}
+                                className="p-2 rounded-lg transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated"
+                                title="Edit"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleDeleteCredential(credential)
+                                }
+                                className="p-2 rounded-lg transition-colors text-tertiary hover:text-danger hover:bg-danger-muted"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           </div>
-        </div>
-
-        <div className="mt-8 flex justify-end">
-          <button
-            onClick={saveSettings}
-            disabled={saving}
-            className="btn-op-primary transition-all"
-          >
-            {saving ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Save All Settings
-              </>
-            )}
-          </button>
         </div>
       </div>
 

@@ -43,38 +43,56 @@ module.exports = {
         danger: "var(--color-danger)",
         info: "var(--color-info)",
       },
-      // Typography — consolidated to Geist (matches openprime-site + Keycloak theme).
-      // Legacy class names (font-sora/font-poppins) aliased to Geist so existing
-      // components need no changes.
+      // Typography — InfraFlow design language:
+      //   Cabinet Grotesk → headings/display, Satoshi → body, JetBrains Mono → code.
+      // Legacy aliases (font-sora/font-poppins/font-geist) re-pointed so existing
+      // components shift with zero edits: sora→display, poppins/geist→body.
       fontFamily: {
-        geist: ["Geist", "sans-serif"],
-        sora: ["Geist", "sans-serif"],
-        poppins: ["Geist", "sans-serif"],
+        cabinet: ['"Cabinet Grotesk"', "sans-serif"],
+        satoshi: ['"Satoshi"', "sans-serif"],
+        sora: ['"Cabinet Grotesk"', "sans-serif"],
+        geist: ['"Satoshi"', "sans-serif"],
+        poppins: ['"Satoshi"', "sans-serif"],
+        mono: [
+          '"JetBrains Mono"',
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "monospace",
+        ],
       },
-      // Radius — align the dominant "lg" radius to site/Keycloak --radius (0.625rem)
+      // Radius — InfraFlow uses generous radii; soften the dominant "lg" (128 uses).
       borderRadius: {
-        lg: "0.625rem",
+        lg: "0.75rem",
       },
       // Add smooth scrolling utilities
       scrollBehavior: {
         smooth: "smooth",
         auto: "auto",
       },
-      // Teal gradients — matches openprime-site + Keycloak theme
+      // Teal gradients — InfraFlow accent family (#00F5D4 bright teal).
       backgroundImage: {
-        "openprime-gradient": "linear-gradient(135deg, #14b8a6 0%, #0d9488 50%, #0f766e 100%)",
-        "openprime-teal-gradient": "linear-gradient(135deg, #2dd4bf 0%, #0d9488 100%)",
-        "openprime-primary-gradient": "linear-gradient(135deg, #14b8a6 0%, #0f766e 100%)",
-        "openprime-accent-gradient": "linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)",
+        "openprime-gradient":
+          "linear-gradient(135deg, #00F5D4 0%, #0d9488 50%, #0f766e 100%)",
+        "openprime-teal-gradient":
+          "linear-gradient(135deg, #00F5D4 0%, #0d9488 100%)",
+        "openprime-primary-gradient":
+          "linear-gradient(135deg, #00F5D4 0%, #0f766e 100%)",
+        "openprime-accent-gradient":
+          "linear-gradient(135deg, #5cf7e3 0%, #00F5D4 100%)",
         "surface-gradient":
           "linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-elevated) 100%)",
       },
       // Box shadows for elevation system
       boxShadow: {
-        "elevation-1": "0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24)",
-        "elevation-2": "0 3px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12)",
-        "elevation-3": "0 10px 20px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.10)",
-        "elevation-4": "0 15px 25px rgba(0, 0, 0, 0.15), 0 5px 10px rgba(0, 0, 0, 0.05)",
+        "elevation-1":
+          "0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24)",
+        "elevation-2":
+          "0 3px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12)",
+        "elevation-3":
+          "0 10px 20px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.10)",
+        "elevation-4":
+          "0 15px 25px rgba(0, 0, 0, 0.15), 0 5px 10px rgba(0, 0, 0, 0.05)",
         glass: "0 8px 32px rgba(0, 0, 0, 0.12)",
       },
       // Animation utilities
