@@ -4,7 +4,6 @@ import {
   Edit2,
   Trash2,
   MapPin,
-  Key,
   Package,
   GitBranch,
 } from "lucide-react";
@@ -23,16 +22,6 @@ const EnvironmentHeader = ({
 }) => {
   const navigate = useNavigate();
   const branded = isBrandedProvider(environment.provider);
-
-  const getStatusColor = (status) => {
-    const colors = {
-      running: "bg-success-muted text-success",
-      pending: "bg-warning-muted text-warning",
-      stopped: "text-tertiary bg-background",
-      error: "bg-danger-muted text-danger",
-    };
-    return colors[status] || colors["pending"];
-  };
 
   return (
     <div className="border-b border-border">
@@ -62,31 +51,6 @@ const EnvironmentHeader = ({
                 <span className="text-sm text-secondary">
                   {environment.region}
                 </span>
-              </div>
-              {environment.cloudCredential && (
-                <div className="flex items-center space-x-1">
-                  <Key className="w-4 h-4 text-tertiary" />
-                  <span className="text-sm text-secondary">
-                    {environment.cloudCredential.name} (
-                    {environment.cloudCredential.identifier})
-                  </span>
-                </div>
-              )}
-              <div
-                className={`status-badge ${getStatusColor(environment.status)}`}
-              >
-                {(environment.status === "running" ||
-                  environment.status === "pending") && (
-                  <span
-                    className={`status-dot animate-pulse ${
-                      environment.status === "running"
-                        ? "bg-success"
-                        : "bg-warning"
-                    }`}
-                  />
-                )}
-                {environment.status.charAt(0).toUpperCase() +
-                  environment.status.slice(1)}
               </div>
             </div>
           </div>

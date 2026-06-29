@@ -63,7 +63,10 @@ module.exports = {
       },
       // Radius — InfraFlow uses generous radii; soften the dominant "lg" (128 uses).
       borderRadius: {
-        lg: "0.75rem",
+        // One consistent radius (8px) for all blocks/buttons/fields — matches inputs.
+        lg: "0.5rem",
+        xl: "0.5rem",
+        "2xl": "0.5rem",
       },
       // Add smooth scrolling utilities
       scrollBehavior: {

@@ -12,33 +12,7 @@ const relTime = (iso) => {
   return `${d}d ago`;
 };
 
-const STATUS_STYLES = {
-  running: {
-    badge: "bg-success-muted text-success",
-    dot: "bg-success animate-pulse",
-  },
-  active: {
-    badge: "bg-success-muted text-success",
-    dot: "bg-success animate-pulse",
-  },
-  pending: {
-    badge: "bg-warning-muted text-warning",
-    dot: "bg-warning animate-pulse",
-  },
-  provisioning: {
-    badge: "bg-warning-muted text-warning",
-    dot: "bg-warning animate-pulse",
-  },
-};
-const STATUS_FALLBACK = {
-  badge: "bg-background text-tertiary",
-  dot: "bg-border-strong",
-};
-
 const EnvironmentCard = ({ environment, onClick, onEdit }) => {
-  const status = environment.status || "stopped";
-  const { badge, dot } = STATUS_STYLES[status] || STATUS_FALLBACK;
-  const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
   const branded = isBrandedProvider(environment.provider);
 
   const enabledCount = Object.values(environment.services || {}).filter(
@@ -54,43 +28,35 @@ const EnvironmentCard = ({ environment, onClick, onEdit }) => {
       className="group rounded-2xl border border-border bg-surface p-6 transition-all cursor-pointer hover:border-primary/40 hover:shadow-lg"
       onClick={() => onClick?.(environment)}
     >
-      <div className="flex justify-between items-start mb-6">
-        <div className="flex gap-3 items-center">
-          <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-              branded
-                ? "bg-background border border-border"
-                : "bg-primary-muted"
-            }`}
-          >
-            <ProviderIcon
-              provider={environment.provider}
-              className={`w-5 h-5 ${branded ? "text-[#FF9900]" : "text-accent"}`}
-            />
-          </div>
-          <div>
-            <h3 className="text-lg font-extrabold text-primary transition-colors group-hover:accent-teal">
-              {environment.name}
-            </h3>
-            {(environment.globalPrefix || environment.global_prefix) && (
-              <p className="text-xs font-mono text-tertiary">
-                {environment.globalPrefix || environment.global_prefix}
-              </p>
-            )}
-          </div>
+      <div className="flex items-center gap-3 mb-6">
+        <div
+          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+            branded ? "bg-background border border-border" : "bg-primary-muted"
+          }`}
+        >
+          <ProviderIcon
+            provider={environment.provider}
+            className={`w-5 h-5 ${branded ? "text-[#FF9900]" : "text-accent"}`}
+          />
         </div>
-        <span className={`status-badge ${badge}`}>
-          <span className={`status-dot ${dot}`} />
-          {statusLabel}
-        </span>
+        <div className="min-w-0">
+          <h3 className="text-lg font-extrabold text-primary transition-colors group-hover:accent-teal truncate">
+            {environment.name}
+          </h3>
+          {(environment.globalPrefix || environment.global_prefix) && (
+            <p className="text-xs font-mono text-tertiary">
+              {environment.globalPrefix || environment.global_prefix}
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="rounded-xl border border-border bg-background p-3">
+        <div className="rounded-xl border border-border bg-surface-elevated p-3">
           <p className="section-label mb-1">Services</p>
           <p className="text-xl font-bold text-primary">{enabledCount}</p>
         </div>
-        <div className="rounded-xl border border-border bg-background p-3">
+        <div className="rounded-xl border border-border bg-surface-elevated p-3">
           <p className="section-label mb-1">Region</p>
           <p className="text-sm font-bold text-primary">
             {environment.region || environment.location || "—"}

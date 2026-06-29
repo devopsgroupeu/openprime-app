@@ -159,14 +159,9 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
                     newEnv.services[k8sService.name]?.helmCharts || {};
                   handleHelmChartsChange({
                     ...currentCharts,
-                    prometheus: {
-                      enabled: true,
-                      customValues: false,
-                    },
-                    grafana: {
-                      enabled: true,
-                      customValues: false,
-                    },
+                    prometheusStack: { enabled: true, customValues: false },
+                    loki: { enabled: true, customValues: false },
+                    promtail: { enabled: true, customValues: false },
                   });
                 }}
                 className="text-xs px-3 py-1 rounded-full transition-colors bg-primary-muted text-primary hover:bg-primary-muted"
@@ -179,10 +174,7 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
                     newEnv.services[k8sService.name]?.helmCharts || {};
                   handleHelmChartsChange({
                     ...currentCharts,
-                    certManager: {
-                      enabled: true,
-                      customValues: false,
-                    },
+                    argocd: { enabled: true, customValues: false },
                   });
                 }}
                 className="text-xs px-3 py-1 rounded-full transition-colors bg-primary-muted text-primary hover:bg-primary-muted"
@@ -195,18 +187,9 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
                     newEnv.services[k8sService.name]?.helmCharts || {};
                   handleHelmChartsChange({
                     ...currentCharts,
-                    nginx: {
-                      enabled: true,
-                      customValues: false,
-                    },
-                    certManager: {
-                      enabled: true,
-                      customValues: false,
-                    },
-                    externalDns: {
-                      enabled: true,
-                      customValues: false,
-                    },
+                    ingressNginx: { enabled: true, customValues: false },
+                    certManager: { enabled: true, customValues: false },
+                    externalDns: { enabled: true, customValues: false },
                   });
                 }}
                 className="text-xs px-3 py-1 rounded-full transition-colors bg-primary-muted text-primary hover:bg-primary-muted"

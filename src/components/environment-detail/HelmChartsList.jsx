@@ -5,9 +5,6 @@ const HelmChartsList = ({ environment }) => {
   const enabledCharts = Object.entries(helmCharts).filter(
     ([_, config]) => config?.enabled,
   );
-  const disabledCharts = Object.entries(helmCharts).filter(
-    ([_, config]) => !config?.enabled,
-  );
 
   const getStatusIcon = (enabled) => {
     if (enabled) {
@@ -38,7 +35,7 @@ const HelmChartsList = ({ environment }) => {
             </div>
           </div>
           {chartConfig?.version ? (
-            <span className="shrink-0 rounded-md border border-border bg-background px-2.5 py-1 font-mono text-xs text-tertiary">
+            <span className="shrink-0 rounded-md border border-border bg-surface-elevated px-2.5 py-1 font-mono text-xs text-tertiary">
               v{chartConfig.version}
             </span>
           ) : (
@@ -72,24 +69,7 @@ const HelmChartsList = ({ environment }) => {
         </div>
       )}
 
-      {disabledCharts.length > 0 && (
-        <div>
-          <h3 className="text-2xl font-extrabold mb-4 text-secondary">
-            Available Charts ({disabledCharts.length})
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-            {disabledCharts.map(([chartName, chartConfig]) => (
-              <HelmChartItem
-                key={chartName}
-                chartName={chartName}
-                chartConfig={chartConfig}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {Object.keys(helmCharts).length === 0 && (
+      {enabledCharts.length === 0 && (
         <div className="text-center py-8 text-secondary">
           <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No Helm charts configured for this environment</p>

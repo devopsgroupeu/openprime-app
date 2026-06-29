@@ -91,6 +91,11 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const [valuesEditor, setValuesEditor] = useState(null);
   const [editingHelmValues, setEditingHelmValues] = useState("");
 
+  // Always land at the top when opening the wizard or switching steps.
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [currentStep]);
+
   // Load environment for edit mode; step 1 (basic config) is read-only when editing.
   useEffect(() => {
     if (!isEditMode) return;

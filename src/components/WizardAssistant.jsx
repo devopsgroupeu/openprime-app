@@ -20,10 +20,13 @@ const WizardAssistant = ({ context }) => {
   const [messages, setMessages] = useState(INTRO);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const endRef = useRef(null);
+  const listRef = useRef(null);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Scroll the message list itself, never the page (scrollIntoView would
+    // bubble up and jump the whole wizard down on mount / step change).
+    const el = listRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
   const send = async () => {
@@ -119,7 +122,10 @@ const WizardAssistant = ({ context }) => {
       </div>
 
       {/* Messages */}
-      <div className="custom-scrollbar flex-1 space-y-4 overflow-y-auto p-4">
+      <div
+        ref={listRef}
+        className="custom-scrollbar flex-1 space-y-4 overflow-y-auto p-4"
+      >
         {messages.map((m) => (
           <div
             key={m.id}
@@ -180,7 +186,6 @@ const WizardAssistant = ({ context }) => {
             </div>
           </div>
         )}
-        <div ref={endRef} />
       </div>
 
       {/* Input */}

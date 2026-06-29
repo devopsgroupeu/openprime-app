@@ -90,17 +90,24 @@ const ExternalResources = ({ environment, onEnvironmentUpdate }) => {
                   </p>
                 </div>
               </div>
-              {gitRepo.url && (
-                <a
-                  href={gitWebUrl(gitRepo.url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Open repository"
-                  className="p-2 -mr-1 rounded-lg shrink-0 text-tertiary transition-colors hover:text-primary hover:bg-surface-elevated"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              )}
+            </div>
+
+            <div className="border-t border-border pt-4">
+              <div className="flex items-baseline justify-between gap-4">
+                <span className="section-label">Repository</span>
+                {gitRepo.url && (
+                  <a
+                    href={gitWebUrl(gitRepo.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={gitRepo.url}
+                    className="flex min-w-0 items-center gap-1 text-xs font-mono text-secondary transition-colors hover:text-primary"
+                  >
+                    <span className="truncate">{gitRepo.url}</span>
+                    <ExternalLink className="w-3 h-3 shrink-0" />
+                  </a>
+                )}
+              </div>
             </div>
 
             <div className="border-t border-border pt-4">
@@ -114,7 +121,7 @@ const ExternalResources = ({ environment, onEnvironmentUpdate }) => {
                   Rotate
                 </button>
               </div>
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-background border border-border">
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-surface-elevated border border-border">
                 <Key className="w-4 h-4 text-tertiary shrink-0" />
                 <p
                   className={`text-xs font-mono flex-1 min-w-0 text-secondary ${
