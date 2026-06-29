@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.11.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.11.0...v1.11.1) (2026-06-29)
+
+### 🐛 Bug Fixes
+
+* **app:** release UI redesign polish + helm template & wizard-scroll fixes ([7086c66](https://github.com/devopsgroupeu/openprime-app/commit/7086c66b6161b585d4649651e5fa837618c90cd4)), closes [#24](https://github.com/devopsgroupeu/openprime-app/issues/24)
+* **app:** unregister stale MSW service worker when not in mock mode ([72c4eaa](https://github.com/devopsgroupeu/openprime-app/commit/72c4eaa367d8dadade42ee7cd9fda4180407b539)), closes [#24](https://github.com/devopsgroupeu/openprime-app/issues/24)
+
 ## [1.11.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.10.0...v1.11.0) (2026-06-29)
 
 ### 🚀 Features
