@@ -12,6 +12,15 @@ async function bootstrap() {
   if (isMockMode()) {
     const { worker } = await import("./mocks/browser");
     await worker.start({ onUnhandledRequest: "bypass" });
+  } else if ("serviceWorker" in navigator) {
+    // Defensively drop a stale MSW worker left over from a previous dev:mock
+    // session, so real mode is never silently intercepted by mock fixtures.
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(
+      regs
+        .filter((r) => r.active?.scriptURL.includes("mockServiceWorker"))
+        .map((r) => r.unregister()),
+    );
   }
 
   validateEnvironmentVariables();
