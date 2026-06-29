@@ -15,7 +15,10 @@ import ServicesList from "./environment-detail/ServicesList";
 import HelmChartsList from "./environment-detail/HelmChartsList";
 import ExternalResources from "./environment-detail/ExternalResources";
 import EnvironmentConfiguration from "./environment-detail/EnvironmentConfiguration";
-import { getProviderConfig } from "../config/providersConfig";
+import {
+  getProviderConfig,
+  getProviderRegions,
+} from "../config/providersConfig";
 
 // InfraFlow-style metric card: uppercase label, large value, optional progress bar.
 const MetricCard = ({ label, value, sub, progress }) => (
@@ -96,6 +99,13 @@ const EnvironmentDetailPage = ({ onDelete }) => {
   }
 
   const providerConfig = getProviderConfig(environment.provider);
+  // Region location for the metric card sub (e.g. "Ireland" from "EU (Ireland)").
+  const regionLabel = getProviderRegions(environment.provider)?.find(
+    (r) => r.value === environment.region,
+  )?.label;
+  const regionLocation = regionLabel
+    ? regionLabel.match(/\(([^)]+)\)/)?.[1] || regionLabel
+    : providerConfig?.name || environment.provider;
 
   const handleEdit = () => navigate(`/environments/${environment.id}/edit`);
   const handleDelete = () => setShowDeleteModal(true);
@@ -160,10 +170,7 @@ const EnvironmentDetailPage = ({ onDelete }) => {
   ).length;
 
   const gitRepo = environment.git_repository || environment.gitRepository;
-  const tfBackend =
-    environment.terraform_backend || environment.terraformBackend;
   const gitEnabled = gitRepo?.enabled;
-  const tfEnabled = tfBackend?.enabled;
   const prefix = environment.globalPrefix || environment.global_prefix;
 
   // Services expansion is owned here so the "Expand/Collapse all" toggle can
@@ -189,12 +196,6 @@ const EnvironmentDetailPage = ({ onDelete }) => {
       setExpandedServices(next);
     }
   };
-
-  const cleanGitUrl = (u) =>
-    (u || "")
-      .replace("git@github.com:", "")
-      .replace("git@gitlab.com:", "")
-      .replace(/\.git$/, "");
 
   return (
     <div className="transition-colors duration-200 bg-transparent">
@@ -231,7 +232,7 @@ const EnvironmentDetailPage = ({ onDelete }) => {
           <MetricCard
             label="Region"
             value={environment.region || "—"}
-            sub={providerConfig?.name || environment.provider}
+            sub={regionLocation}
           />
         </div>
 
@@ -310,23 +311,23 @@ const EnvironmentDetailPage = ({ onDelete }) => {
                   />
                   <ConfigRow label="Region" value={environment.region} />
                   <ConfigRow label="Global Prefix" value={prefix} mono />
-                  <ConfigRow
-                    label="Terraform Backend"
-                    value={
-                      tfEnabled
-                        ? tfBackend.lockingMechanism
-                          ? `S3 + ${tfBackend.lockingMechanism}`
-                          : "S3"
-                        : "Not configured"
-                    }
-                  />
-                  <ConfigRow
-                    label="Git Repository"
-                    value={
-                      gitEnabled ? cleanGitUrl(gitRepo.url) : "Not configured"
-                    }
-                    mono={gitEnabled}
-                  />
+                  <div className="flex items-start justify-between gap-4 py-2.5">
+                    <span className="section-label">Credentials</span>
+                    {environment.cloudCredential ? (
+                      <div className="min-w-0 text-right">
+                        <p className="text-sm font-medium text-primary truncate">
+                          {environment.cloudCredential.name}
+                        </p>
+                        <p className="text-xs font-mono text-tertiary truncate">
+                          Account {environment.cloudCredential.identifier}
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="text-sm font-medium text-primary text-right">
+                        Manual configuration
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </section>

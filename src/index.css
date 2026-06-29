@@ -75,10 +75,10 @@
 
 /* Dark Mode — OpenPrime brand: navy/slate surfaces + teal-400 (#2dd4bf) */
 .dark {
-  /* Background Colors (navy/slate elevation — stepped for clear separation) */
-  --color-background: #080c16; /* deepest navy page canvas */
-  --color-background-secondary: #161f37; /* navy panels (= surface) */
-  --color-background-tertiary: #212f4d; /* elevated */
+  /* Background Colors (navy/slate — matches openprime-site) */
+  --color-background: #0a0f1a; /* deep navy page canvas (site) */
+  --color-background-secondary: #111827; /* navy cards (site) */
+  --color-background-tertiary: #1e293b; /* slate-800 elevated (site) */
   --color-background-accent: #2dd4bf; /* teal-400 brand accent */
   /* Subtle teal glow from top-center */
   --page-glow: radial-gradient(
@@ -87,11 +87,11 @@
     transparent 70%
   );
 
-  /* Surface Colors (navy/slate elevation system) */
-  --color-surface: #161f37; /* navy cards/containers — lifted off the canvas */
-  --color-surface-elevated: #212f4d; /* elevated surfaces */
-  --color-surface-overlay: #080c16; /* modals */
-  --color-input-bg: #0d1426; /* form field bg — recessed below cards */
+  /* Surface Colors (navy/slate — matches openprime-site) */
+  --color-surface: #111827; /* navy cards/containers (site) */
+  --color-surface-elevated: #1e293b; /* slate-800 elevated (site) */
+  --color-surface-overlay: #0a0f1a; /* modals (site) */
+  --color-input-bg: #0f172a; /* slate-900 form field bg (site/Keycloak) */
   --color-label: #e5e5e5; /* form label text */
 
   /* Text Colors (WCAG AA on near-black) */
@@ -100,10 +100,10 @@
   --color-text-tertiary: #8b929e; /* lightened — clears AA 4.5:1 on navy surface */
   --color-text-inverse: #050505; /* on teal/white surfaces */
 
-  /* Border Colors (navy/slate — raised for visible card outlines) */
-  --color-border: #2c3b57; /* visible outline against cards + canvas */
-  --color-border-subtle: #1c2842;
-  --color-border-strong: #3c4c69;
+  /* Border Colors (navy/slate — matches openprime-site; strong = teal accent) */
+  --color-border: #1e293b; /* slate-800 (site) */
+  --color-border-subtle: #111827; /* navy (site) */
+  --color-border-strong: #2dd4bf; /* teal-400 — emphasis/hover border (site) */
 
   /* Primary Colors (OpenPrime brand teal — teal-400 for dark) */
   --color-primary: #2dd4bf; /* teal-400 — brand (matches site/Keycloak) */
@@ -189,10 +189,10 @@ select,
 textarea {
   background-color: var(--color-input-bg);
   border: 1px solid var(--color-border);
-  border-radius: 0.75rem; /* InfraFlow rounded-xl */
+  border-radius: 0.5rem; /* 8px — matches Keycloak login theme */
   color: var(--color-text-primary);
-  font-size: 0.875rem;
-  padding: 0.625rem 0.875rem; /* 10px 14px — InfraFlow field padding */
+  font-size: 0.84375rem; /* 13.5px — matches Keycloak login theme */
+  padding: 8px 12px; /* matches Keycloak login theme */
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -289,7 +289,7 @@ label {
   line-height: 1;
   letter-spacing: -0.01em;
   border: none;
-  border-radius: 0.75rem; /* InfraFlow rounded-xl (12px) */
+  border-radius: 0.5rem; /* 8px — consistent with inputs/blocks */
   cursor: pointer;
   box-shadow: none;
   transition:
@@ -300,31 +300,21 @@ label {
     color 0.15s ease;
 }
 
-/* Primary (light default) — brand teal fill, white text */
+/* Primary — teal gradient (matches openprime-site), white text, both themes */
 .btn-op-primary {
   color: #ffffff;
-  background: var(--color-primary);
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 50%, #0f766e 100%);
 }
 .btn-op-primary:hover {
-  background: var(--color-primary-hover);
   color: #ffffff;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4);
 }
 .btn-op-primary:active {
-  transform: scale(0.95);
+  transform: scale(0.98);
 }
 .btn-op-primary:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--color-ring);
-}
-
-/* Primary (dark) — white resting → brand teal on hover */
-.dark .btn-op-primary {
-  color: #0a0f1a;
-  background: #ffffff;
-}
-.dark .btn-op-primary:hover {
-  color: #0a0f1a;
-  background: var(--color-primary);
 }
 
 /* Secondary — subtle ghost with border (Previous / Back) */

@@ -23,6 +23,11 @@ export const environments = [
     provider: "aws",
     region: "eu-west-1",
     status: "running",
+    cloudCredential: {
+      name: "aws-sandbox",
+      identifier: "123456789012",
+      provider: "aws",
+    },
     services: {
       vpc: {
         enabled: true,
