@@ -8,7 +8,11 @@ export const currentUser = {
   lastName: "User",
   fullName: "Mock User",
   roles: ["user"],
-  preferences: { theme: "dark", defaultProvider: "aws", defaultRegion: "eu-west-1" },
+  preferences: {
+    theme: "dark",
+    defaultProvider: "aws",
+    defaultRegion: "eu-west-1",
+  },
 };
 
 export const environments = [
@@ -20,16 +24,63 @@ export const environments = [
     region: "eu-west-1",
     status: "running",
     services: {
-      vpc: { enabled: true },
-      eks: { enabled: true },
-      rds: { enabled: true },
+      vpc: {
+        enabled: true,
+        cidrBlock: "10.0.0.0/16",
+        region: "eu-west-1",
+        enableDnsSupport: true,
+        subnets: 3,
+        availabilityZones: ["eu-west-1a", "eu-west-1b", "eu-west-1c"],
+        natGateway: true,
+      },
+      eks: {
+        enabled: true,
+        version: "1.31",
+        nodeGroups: 2,
+        instanceType: "t3.large",
+        nodeGroupMinSize: 2,
+        nodeGroupMaxSize: 6,
+        endpointPublicAccess: true,
+        addons: ["vpc-cni", "coredns", "kube-proxy"],
+        helmCharts: {
+          "ingress-nginx": {
+            enabled: true,
+            version: "1.4.1",
+            namespace: "ingress-system",
+          },
+          "kube-prometheus-stack": {
+            enabled: true,
+            version: "2.4.5",
+            namespace: "monitoring",
+          },
+        },
+      },
+      rds: {
+        enabled: true,
+        engine: "postgres",
+        engineVersion: "16.3",
+        instanceType: "db.t3.medium",
+        allocatedStorage: 100,
+        port: 5432,
+        backupRetentionDays: 7,
+        multiAz: true,
+        encryption: true,
+      },
     },
-    helmCharts: {
-      "kube-prometheus-stack": { enabled: true },
-      "ingress-nginx": { enabled: true },
+    terraform_backend: {
+      enabled: true,
+      bucketName: "op-demo-tf-state",
+      region: "eu-west-1",
+      lockingMechanism: "DynamoDB",
+      tableName: "op-demo-tf-locks",
     },
-    terraform_backend: { enabled: true, bucket: "op-demo-tf-state" },
-    git_repository: { url: "git@github.com:example/demo-infra.git", branch: "main" },
+    git_repository: {
+      enabled: true,
+      url: "git@github.com:openprime/demo-infra.git",
+      branch: "main",
+      sshKey:
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEMOkeyForOpenPrimeDemoEnvironmentNotARealKey deploy@openprime",
+    },
     created_at: "2026-06-01T10:00:00Z",
     updated_at: "2026-06-20T12:00:00Z",
   },

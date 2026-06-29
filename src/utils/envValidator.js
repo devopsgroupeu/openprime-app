@@ -55,7 +55,11 @@ export const getEnvVar = (configKey) => {
   }
 
   // Runtime injection (containers) - highest priority
-  if (typeof window !== "undefined" && window._env_ && window._env_[config.runtimeKey]) {
+  if (
+    typeof window !== "undefined" &&
+    window._env_ &&
+    window._env_[config.runtimeKey]
+  ) {
     const value = window._env_[config.runtimeKey];
     if (value && value !== `$${config.buildTimeKey}`) {
       // Check it's not an unprocessed template
@@ -72,7 +76,11 @@ export const getEnvVar = (configKey) => {
     return import.meta.env[config.buildTimeKey];
   }
 
-  if (typeof process !== "undefined" && process.env && process.env[config.buildTimeKey]) {
+  if (
+    typeof process !== "undefined" &&
+    process.env &&
+    process.env[config.buildTimeKey]
+  ) {
     return process.env[config.buildTimeKey];
   }
 

@@ -1,9 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, Key, Eye, EyeOff } from "lucide-react";
-import { useTheme } from "../../contexts/ThemeContext";
 
-const CloudCredentialModal = ({ credential, provider, onClose, onSave, isOpen }) => {
-  const { isDark } = useTheme();
+const CloudCredentialModal = ({
+  credential,
+  provider,
+  onClose,
+  onSave,
+  isOpen,
+}) => {
   const [formData, setFormData] = useState({
     name: "",
     identifier: "",
@@ -13,6 +17,7 @@ const CloudCredentialModal = ({ credential, provider, onClose, onSave, isOpen })
   });
   const [showSecretKey, setShowSecretKey] = useState(false);
   const [errors, setErrors] = useState({});
+  const closeButtonRef = useRef(null);
 
   useEffect(() => {
     if (credential) {
@@ -33,6 +38,22 @@ const CloudCredentialModal = ({ credential, provider, onClose, onSave, isOpen })
       });
     }
   }, [credential]);
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  // Initial focus on the close button
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -90,26 +111,21 @@ const CloudCredentialModal = ({ credential, provider, onClose, onSave, isOpen })
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div
-        className={`w-full max-w-md mx-4 rounded-xl border shadow-xl transition-colors ${
-          isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-        }`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Cloud credential"
+        className="w-full max-w-md mx-4 rounded-2xl border border-border bg-surface shadow-xl transition-colors"
       >
-        <div className="flex justify-between items-center p-6 border-b border-gray-300 dark:border-gray-600">
-          <h2
-            className={`text-xl font-bold flex items-center transition-colors ${
-              isDark ? "text-white" : "text-gray-900"
-            }`}
-          >
-            <Key className="w-6 h-6 text-primary mr-2" />
+        <div className="flex justify-between items-center p-6 border-b border-border">
+          <h2 className="text-xl font-bold flex items-center text-primary transition-colors">
+            <Key className="w-6 h-6 text-accent mr-2" />
             {credential ? "Edit" : "Add"} AWS Credentials
           </h2>
           <button
+            ref={closeButtonRef}
             onClick={onClose}
-            className={`p-2 rounded-lg transition-colors ${
-              isDark
-                ? "hover:bg-gray-700 text-gray-400 hover:text-white"
-                : "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
-            }`}
+            aria-label="Close"
+            className="p-2 rounded-lg transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated"
           >
             <X className="w-5 h-5" />
           </button>
@@ -117,77 +133,63 @@ const CloudCredentialModal = ({ credential, provider, onClose, onSave, isOpen })
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label
-              className={`block text-sm font-medium mb-2 transition-colors ${
-                isDark ? "text-gray-300" : "text-gray-700"
-              }`}
-            >
+            <label className="block text-sm font-medium mb-2 text-secondary transition-colors">
               Name
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => handleChange("name", e.target.value)}
-              className={`w-full px-4 py-2 rounded-lg border transition-colors ${
-                isDark
-                  ? "bg-gray-700 border-gray-600 text-white"
-                  : "bg-white border-gray-300 text-gray-900"
-              } ${errors.name ? "border-red-500" : ""}`}
+              className={`w-full px-4 py-2 rounded-lg border bg-background border-border text-primary transition-colors ${
+                errors.name ? "border-danger" : ""
+              }`}
               placeholder="e.g., Production Account"
             />
-            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+            {errors.name && (
+              <p className="text-danger text-sm mt-1">{errors.name}</p>
+            )}
           </div>
 
           <div>
-            <label
-              className={`block text-sm font-medium mb-2 transition-colors ${
-                isDark ? "text-gray-300" : "text-gray-700"
-              }`}
-            >
+            <label className="block text-sm font-medium mb-2 text-secondary transition-colors">
               AWS Account ID
             </label>
             <input
               type="text"
               value={formData.identifier}
               onChange={(e) => handleChange("identifier", e.target.value)}
-              className={`w-full px-4 py-2 rounded-lg border transition-colors ${
-                isDark
-                  ? "bg-gray-700 border-gray-600 text-white"
-                  : "bg-white border-gray-300 text-gray-900"
-              } ${errors.identifier ? "border-red-500" : ""}`}
+              className={`w-full px-4 py-2 rounded-lg border bg-background border-border text-primary transition-colors ${
+                errors.identifier ? "border-danger" : ""
+              }`}
               placeholder="123456789012"
             />
-            {errors.identifier && <p className="text-red-500 text-sm mt-1">{errors.identifier}</p>}
+            {errors.identifier && (
+              <p className="text-danger text-sm mt-1">{errors.identifier}</p>
+            )}
           </div>
 
           <div>
-            <label
-              className={`block text-sm font-medium mb-2 transition-colors ${
-                isDark ? "text-gray-300" : "text-gray-700"
-              }`}
-            >
+            <label className="block text-sm font-medium mb-2 text-secondary transition-colors">
               Access Key
             </label>
             <input
               type="text"
               value={formData.accessKey}
               onChange={(e) => handleChange("accessKey", e.target.value)}
-              className={`w-full px-4 py-2 rounded-lg border transition-colors ${
-                isDark
-                  ? "bg-gray-700 border-gray-600 text-white"
-                  : "bg-white border-gray-300 text-gray-900"
-              } ${errors.accessKey ? "border-red-500" : ""}`}
-              placeholder={credential ? "••••••••••••••••" : "AKIAIOSFODNN7EXAMPLE"}
+              className={`w-full px-4 py-2 rounded-lg border bg-background border-border text-primary transition-colors ${
+                errors.accessKey ? "border-danger" : ""
+              }`}
+              placeholder={
+                credential ? "••••••••••••••••" : "AKIAIOSFODNN7EXAMPLE"
+              }
             />
-            {errors.accessKey && <p className="text-red-500 text-sm mt-1">{errors.accessKey}</p>}
+            {errors.accessKey && (
+              <p className="text-danger text-sm mt-1">{errors.accessKey}</p>
+            )}
           </div>
 
           <div>
-            <label
-              className={`block text-sm font-medium mb-2 transition-colors ${
-                isDark ? "text-gray-300" : "text-gray-700"
-              }`}
-            >
+            <label className="block text-sm font-medium mb-2 text-secondary transition-colors">
               Secret Key
             </label>
             <div className="relative">
@@ -195,26 +197,30 @@ const CloudCredentialModal = ({ credential, provider, onClose, onSave, isOpen })
                 type={showSecretKey ? "text" : "password"}
                 value={formData.secretKey}
                 onChange={(e) => handleChange("secretKey", e.target.value)}
-                className={`w-full px-4 py-2 rounded-lg border transition-colors ${
-                  isDark
-                    ? "bg-gray-700 border-gray-600 text-white"
-                    : "bg-white border-gray-300 text-gray-900"
-                } ${errors.secretKey ? "border-red-500" : ""}`}
+                className={`w-full px-4 py-2 rounded-lg border bg-background border-border text-primary transition-colors ${
+                  errors.secretKey ? "border-danger" : ""
+                }`}
                 placeholder={
-                  credential ? "••••••••••••••••" : "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+                  credential
+                    ? "••••••••••••••••"
+                    : "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
                 }
               />
               <button
                 type="button"
                 onClick={() => setShowSecretKey(!showSecretKey)}
-                className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${
-                  isDark ? "text-gray-400 hover:text-gray-300" : "text-gray-500 hover:text-gray-700"
-                }`}
+                className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors text-tertiary hover:text-primary"
               >
-                {showSecretKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showSecretKey ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
               </button>
             </div>
-            {errors.secretKey && <p className="text-red-500 text-sm mt-1">{errors.secretKey}</p>}
+            {errors.secretKey && (
+              <p className="text-danger text-sm mt-1">{errors.secretKey}</p>
+            )}
           </div>
 
           <div className="flex items-center">
@@ -227,9 +233,7 @@ const CloudCredentialModal = ({ credential, provider, onClose, onSave, isOpen })
             />
             <label
               htmlFor="isDefault"
-              className={`ml-2 text-sm transition-colors ${
-                isDark ? "text-gray-300" : "text-gray-700"
-              }`}
+              className="ml-2 text-sm text-secondary transition-colors"
             >
               Set as default credentials
             </label>
@@ -239,18 +243,11 @@ const CloudCredentialModal = ({ credential, provider, onClose, onSave, isOpen })
             <button
               type="button"
               onClick={onClose}
-              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-                isDark
-                  ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+              className="btn-op-secondary flex-1"
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg font-medium hover:from-teal-700 hover:to-cyan-700 transition-colors"
-            >
+            <button type="submit" className="btn-op-primary flex-1">
               {credential ? "Update" : "Add"}
             </button>
           </div>

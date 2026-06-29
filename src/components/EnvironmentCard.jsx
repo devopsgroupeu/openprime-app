@@ -1,308 +1,125 @@
-// src/components/EnvironmentCard.js
-import { useState } from "react";
-import {
-  Cloud,
-  Server,
-  Settings,
-  Network,
-  Box,
-  Database,
-  Package,
-  Edit2,
-  Search,
-  Container,
-  Layers,
-  Archive,
-  FunctionSquare,
-  Shield,
-  Bell,
-  Globe,
-  Lock,
-  HardDrive,
-  MessageSquare,
-  Trash2,
-} from "lucide-react";
-import { useTheme } from "../contexts/ThemeContext";
-import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
+// src/components/EnvironmentCard.jsx
+import { Clock, ArrowRight } from "lucide-react";
+import ProviderIcon, { isBrandedProvider } from "./icons/ProviderIcon";
 
-const EnvironmentCard = ({ environment, onEdit, onDelete, onClick }) => {
-  const { isDark } = useTheme();
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const getServiceIcon = (service) => {
-    const icons = {
-      // AWS Services
-      vpc: <Network className="w-3 h-3 mr-1 text-primary" />,
-      eks: <Box className="w-3 h-3 mr-1 text-primary" />,
-      rds: <Database className="w-3 h-3 mr-1 text-primary" />,
-      opensearch: <Search className="w-3 h-3 mr-1 text-primary" />,
-      ecr: <Container className="w-3 h-3 mr-1 text-primary" />,
-      s3: <Archive className="w-3 h-3 mr-1 text-primary" />,
-      lambda: <FunctionSquare className="w-3 h-3 mr-1 text-primary" />,
-      elasticache: <HardDrive className="w-3 h-3 mr-1 text-primary" />,
-      sqs: <MessageSquare className="w-3 h-3 mr-1 text-primary" />,
-      sns: <Bell className="w-3 h-3 mr-1 text-primary" />,
-      cloudfront: <Globe className="w-3 h-3 mr-1 text-primary" />,
-      route53: <Globe className="w-3 h-3 mr-1 text-primary" />,
-      secretsManager: <Lock className="w-3 h-3 mr-1 text-primary" />,
-      iam: <Shield className="w-3 h-3 mr-1 text-primary" />,
-      // Azure Services
-      vnet: <Network className="w-3 h-3 mr-1 text-teal-400" />,
-      aks: <Box className="w-3 h-3 mr-1 text-teal-400" />,
-      sqlDatabase: <Database className="w-3 h-3 mr-1 text-teal-400" />,
-      cosmosDb: <Database className="w-3 h-3 mr-1 text-teal-400" />,
-      containerRegistry: <Container className="w-3 h-3 mr-1 text-teal-400" />,
-      storageAccount: <Archive className="w-3 h-3 mr-1 text-teal-400" />,
-      functions: <FunctionSquare className="w-3 h-3 mr-1 text-teal-400" />,
-      redis: <HardDrive className="w-3 h-3 mr-1 text-teal-400" />,
-      serviceBus: <MessageSquare className="w-3 h-3 mr-1 text-teal-400" />,
-      keyVault: <Lock className="w-3 h-3 mr-1 text-teal-400" />,
-    };
-    return icons[service] || <Layers className="w-3 h-3 mr-1 text-primary" />;
-  };
+const relTime = (iso) => {
+  if (!iso) return "recently";
+  const diff = Date.now() - new Date(iso).getTime();
+  const h = Math.floor(diff / 3600000);
+  if (h < 1) return "just now";
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+};
 
-  const getServiceName = (service) => {
-    const names = {
-      // AWS Services
-      vpc: "VPC",
-      eks: "EKS",
-      rds: "RDS",
-      opensearch: "OpenSearch",
-      ecr: "ECR",
-      s3: "S3",
-      lambda: "Lambda",
-      elasticache: "ElastiCache",
-      sqs: "SQS",
-      sns: "SNS",
-      cloudfront: "CloudFront",
-      route53: "Route53",
-      secretsManager: "Secrets",
-      iam: "IAM",
-      // Azure Services
-      vnet: "VNet",
-      aks: "AKS",
-      sqlDatabase: "SQL Database",
-      cosmosDb: "Cosmos DB",
-      containerRegistry: "Container Registry",
-      storageAccount: "Storage Account",
-      functions: "Functions",
-      redis: "Redis Cache",
-      serviceBus: "Service Bus",
-      keyVault: "Key Vault",
-    };
-    return names[service] || service.toUpperCase();
-  };
+const STATUS_STYLES = {
+  running: {
+    badge: "bg-success-muted text-success",
+    dot: "bg-success animate-pulse",
+  },
+  active: {
+    badge: "bg-success-muted text-success",
+    dot: "bg-success animate-pulse",
+  },
+  pending: {
+    badge: "bg-warning-muted text-warning",
+    dot: "bg-warning animate-pulse",
+  },
+  provisioning: {
+    badge: "bg-warning-muted text-warning",
+    dot: "bg-warning animate-pulse",
+  },
+};
+const STATUS_FALLBACK = {
+  badge: "bg-background text-tertiary",
+  dot: "bg-border-strong",
+};
 
-  const enabledServices = environment.services
-    ? Object.entries(environment.services).filter(([_, config]) => config?.enabled)
-    : [];
+const EnvironmentCard = ({ environment, onClick, onEdit }) => {
+  const status = environment.status || "stopped";
+  const { badge, dot } = STATUS_STYLES[status] || STATUS_FALLBACK;
+  const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+  const branded = isBrandedProvider(environment.provider);
 
-  const handleDeleteConfirm = () => {
-    onDelete(environment.id);
-    setShowDeleteModal(false);
-  };
+  const enabledCount = Object.values(environment.services || {}).filter(
+    (s) => s?.enabled,
+  ).length;
+
+  const modified = relTime(
+    environment.updated_at || environment.updatedAt || environment.created_at,
+  );
 
   return (
-    <>
-      <div
-        className={`backdrop-blur-sm rounded-xl border p-6 transition-all cursor-pointer ${
-          isDark
-            ? "bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 hover:border-gray-600"
-            : "bg-white/70 border-gray-200 hover:bg-white/90 hover:border-gray-300"
-        } hover:shadow-lg hover:scale-[1.02]`}
-        onClick={() => onClick?.(environment)}
-      >
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h3
-              className={`text-xl font-bold mb-1 transition-colors ${
-                isDark ? "text-white" : "text-gray-900"
-              }`}
-            >
-              {environment.name}
-            </h3>
-            <div className="flex items-center space-x-4 text-sm">
-              <span
-                className={`flex items-center transition-colors ${
-                  isDark ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                {environment.provider === "aws" ? (
-                  <Cloud className="w-4 h-4 mr-1" />
-                ) : environment.provider === "azure" ? (
-                  <Cloud className="w-4 h-4 mr-1" />
-                ) : (
-                  <Server className="w-4 h-4 mr-1" />
-                )}
-                {environment.provider === "aws"
-                  ? "AWS Cloud"
-                  : environment.provider === "azure"
-                    ? "Azure Cloud"
-                    : "On-Premise"}
-              </span>
-              <span className={`transition-colors ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                {environment.provider === "aws" || environment.provider === "azure"
-                  ? environment.region
-                  : environment.location}
-              </span>
-            </div>
-          </div>
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-semibold ${
-              environment.status === "running"
-                ? "bg-green-500/20 text-green-400"
-                : "bg-yellow-500/20 text-yellow-400"
+    <div
+      className="group rounded-2xl border border-border bg-surface p-6 transition-all cursor-pointer hover:border-primary/40 hover:shadow-lg"
+      onClick={() => onClick?.(environment)}
+    >
+      <div className="flex justify-between items-start mb-6">
+        <div className="flex gap-3 items-center">
+          <div
+            className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+              branded
+                ? "bg-background border border-border"
+                : "bg-primary-muted"
             }`}
           >
-            {environment.status === "running" ? "Running" : "Pending"}
-          </span>
+            <ProviderIcon
+              provider={environment.provider}
+              className={`w-5 h-5 ${branded ? "text-[#FF9900]" : "text-accent"}`}
+            />
+          </div>
+          <div>
+            <h3 className="text-lg font-extrabold text-primary transition-colors group-hover:accent-teal">
+              {environment.name}
+            </h3>
+            {(environment.globalPrefix || environment.global_prefix) && (
+              <p className="text-xs font-mono text-tertiary">
+                {environment.globalPrefix || environment.global_prefix}
+              </p>
+            )}
+          </div>
         </div>
+        <span className={`status-badge ${badge}`}>
+          <span className={`status-dot ${dot}`} />
+          {statusLabel}
+        </span>
+      </div>
 
-        {(environment.provider === "aws" || environment.provider === "azure") &&
-          enabledServices.length > 0 && (
-            <div className="space-y-3 mb-4">
-              <div
-                className={`text-sm transition-colors ${
-                  isDark ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
-                <div className="font-semibold mb-2">
-                  {environment.provider === "azure" ? "Azure" : "AWS"} Services (
-                  {enabledServices.length}):
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {enabledServices.slice(0, 6).map(([service]) => (
-                    <div
-                      key={service}
-                      className={`flex items-center rounded px-2 py-1 transition-colors ${
-                        isDark ? "bg-gray-700/50" : "bg-gray-100"
-                      }`}
-                    >
-                      {getServiceIcon(service)}
-                      {getServiceName(service)}
-                    </div>
-                  ))}
-                  {enabledServices.length > 6 && (
-                    <div
-                      className={`flex items-center rounded px-2 py-1 transition-colors ${
-                        isDark ? "bg-gray-700/50 text-gray-400" : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      <span className="text-xs">+{enabledServices.length - 6} more</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {((environment.services.eks?.enabled && environment.services.eks.helmCharts) ||
-                (environment.services.aks?.enabled && environment.services.aks.helmCharts)) && (
-                <div
-                  className={`text-sm transition-colors ${
-                    isDark ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
-                  <div className="font-semibold mb-2">Helm Charts:</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(
-                      (environment.services.eks || environment.services.aks)?.helmCharts || {},
-                    )
-                      .filter(([_, config]) => config.enabled)
-                      .slice(0, 4)
-                      .map(([chart, config]) => (
-                        <div
-                          key={chart}
-                          className={`flex items-center justify-between rounded px-2 py-1 transition-colors ${
-                            isDark ? "bg-gray-700/50" : "bg-gray-100"
-                          }`}
-                        >
-                          <span className="flex items-center">
-                            <Package className="w-3 h-3 mr-1 text-green-400" />
-                            <span className="text-xs">{chart}</span>
-                          </span>
-                          {config.customValues && (
-                            <Edit2 className="w-3 h-3 text-yellow-400" title="Custom values" />
-                          )}
-                        </div>
-                      ))}
-                    {Object.entries(
-                      (environment.services.eks || environment.services.aks)?.helmCharts || {},
-                    ).filter(([_, config]) => config.enabled).length > 4 && (
-                      <div
-                        className={`flex items-center rounded px-2 py-1 transition-colors ${
-                          isDark ? "bg-gray-700/50 text-gray-400" : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        <span className="text-xs">
-                          +
-                          {Object.entries(
-                            (environment.services.eks || environment.services.aks)?.helmCharts ||
-                              {},
-                          ).filter(([_, config]) => config.enabled).length - 4}{" "}
-                          more
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {((environment.services.ecr?.enabled &&
-                environment.services.ecr.repositories?.length > 0) ||
-                (environment.services.containerRegistry?.enabled &&
-                  environment.services.containerRegistry.repositories?.length > 0)) && (
-                <div
-                  className={`text-sm transition-colors ${
-                    isDark ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
-                  <div className="font-semibold mb-2">
-                    {environment.provider === "azure"
-                      ? "Container Registry Repositories:"
-                      : "ECR Repositories:"}
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {(
-                      environment.services.ecr?.repositories ||
-                      environment.services.containerRegistry?.repositories ||
-                      []
-                    ).map((repo, idx) => (
-                      <span
-                        key={idx}
-                        className="px-2 py-1 bg-teal-500/20 text-teal-400 rounded text-xs"
-                      >
-                        {repo.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-        <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
-          <button
-            onClick={() => onEdit(environment)}
-            className="flex-1 px-4 py-2 bg-teal-600/20 text-teal-400 rounded-lg hover:bg-teal-600/30 transition-all flex items-center justify-center"
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            Configure
-          </button>
-          <button
-            onClick={() => setShowDeleteModal(true)}
-            className="px-4 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-all flex items-center justify-center"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="rounded-xl border border-border bg-background p-3">
+          <p className="section-label mb-1">Services</p>
+          <p className="text-xl font-bold text-primary">{enabledCount}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-background p-3">
+          <p className="section-label mb-1">Region</p>
+          <p className="text-sm font-bold text-primary">
+            {environment.region || environment.location || "—"}
+          </p>
         </div>
       </div>
 
-      {showDeleteModal && (
-        <ConfirmDeleteModal
-          environment={environment}
-          onClose={() => setShowDeleteModal(false)}
-          onConfirm={handleDeleteConfirm}
-        />
-      )}
-    </>
+      <div className="flex items-center justify-between pt-4 border-t border-border">
+        <div className="flex items-center gap-2 text-xs text-tertiary">
+          <Clock className="w-3.5 h-3.5" />
+          <span>Modified {modified}</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs font-bold text-secondary">
+          <span className="flex items-center gap-1 transition-colors group-hover:text-primary">
+            View <ArrowRight className="w-3.5 h-3.5" />
+          </span>
+          <span className="text-border-strong">·</span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit?.(environment);
+            }}
+            className="transition-colors hover:text-primary"
+          >
+            Edit
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 

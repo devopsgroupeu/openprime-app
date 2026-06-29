@@ -1,88 +1,124 @@
 import { useNavigate } from "react-router";
-import { ArrowLeft, Edit2, Trash2, Cloud, Server, MapPin, Key } from "lucide-react";
-import { useTheme } from "../../contexts/ThemeContext";
+import {
+  ArrowLeft,
+  Edit2,
+  Trash2,
+  MapPin,
+  Key,
+  Package,
+  GitBranch,
+} from "lucide-react";
+import ProviderIcon, { isBrandedProvider } from "../icons/ProviderIcon";
 
-const EnvironmentHeader = ({ environment, providerConfig, onEdit, onDelete }) => {
-  const { isDark } = useTheme();
+const EnvironmentHeader = ({
+  environment,
+  providerConfig,
+  onEdit,
+  onDelete,
+  onGenerate,
+  onPush,
+  isGenerating,
+  isPushing,
+  canPush,
+}) => {
   const navigate = useNavigate();
-
-  const getProviderIcon = (type) => {
-    const iconColors = {
-      aws: "text-teal-400",
-      azure: "text-teal-400",
-      gcp: "text-teal-400",
-      onpremise: "text-slate-400",
-    };
-
-    const colorClass = iconColors[type] || "text-gray-400";
-    const IconComponent = type === "onpremise" ? Server : Cloud;
-
-    return <IconComponent className={`w-6 h-6 ${colorClass}`} />;
-  };
+  const branded = isBrandedProvider(environment.provider);
 
   const getStatusColor = (status) => {
     const colors = {
-      running: "text-green-400 bg-green-400/10 border-green-400/20",
-      pending: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
-      stopped: "text-red-400 bg-red-400/10 border-red-400/20",
-      error: "text-red-400 bg-red-400/10 border-red-400/20",
+      running: "bg-success-muted text-success",
+      pending: "bg-warning-muted text-warning",
+      stopped: "text-tertiary bg-background",
+      error: "bg-danger-muted text-danger",
     };
     return colors[status] || colors["pending"];
   };
 
   return (
     <div className="border-b border-border">
-      <div className="max-w-7xl mx-auto px-8 py-6">
+      <div className="px-8 py-6">
+        <button
+          onClick={() => navigate("/environments")}
+          className="flex items-center gap-1.5 mb-3 text-[10px] font-bold uppercase tracking-wider text-tertiary hover:text-primary transition-colors"
+        >
+          <ArrowLeft className="w-3 h-3" />
+          Back to Environments
+        </button>
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => navigate("/environments")}
-              className={`p-2 rounded-lg transition-colors ${
-                isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"
-              }`}
-            >
-              <ArrowLeft className="w-5 h-5 text-secondary" />
-            </button>
-
-            <div className="flex items-center space-x-3">
-              {getProviderIcon(environment.provider)}
-              <div>
-                <h1 className={`text-3xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
-                  {environment.name}
-                </h1>
-                <div className="flex items-center space-x-4 mt-1">
-                  <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                    {providerConfig?.name || environment.provider}
+          <div>
+            <h1 className="text-4xl font-extrabold text-primary">
+              {environment.name}
+            </h1>
+            <div className="flex items-center space-x-4 mt-1">
+              <span className="flex items-center gap-1.5 text-sm text-secondary">
+                <ProviderIcon
+                  provider={environment.provider}
+                  className={`w-4 h-4 ${branded ? "text-[#FF9900]" : "text-accent"}`}
+                />
+                {providerConfig?.name || environment.provider}
+              </span>
+              <div className="flex items-center space-x-1">
+                <MapPin className="w-4 h-4 text-tertiary" />
+                <span className="text-sm text-secondary">
+                  {environment.region}
+                </span>
+              </div>
+              {environment.cloudCredential && (
+                <div className="flex items-center space-x-1">
+                  <Key className="w-4 h-4 text-tertiary" />
+                  <span className="text-sm text-secondary">
+                    {environment.cloudCredential.name} (
+                    {environment.cloudCredential.identifier})
                   </span>
-                  <div className="flex items-center space-x-1">
-                    <MapPin className="w-4 h-4 text-gray-400" />
-                    <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                      {environment.region}
-                    </span>
-                  </div>
-                  {environment.cloudCredential && (
-                    <div className="flex items-center space-x-1">
-                      <Key className="w-4 h-4 text-gray-400" />
-                      <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                        {environment.cloudCredential.name} ({environment.cloudCredential.identifier}
-                        )
-                      </span>
-                    </div>
-                  )}
-                  <div
-                    className={`px-2 py-1 rounded-full border text-xs font-medium ${getStatusColor(
-                      environment.status,
-                    )}`}
-                  >
-                    {environment.status.charAt(0).toUpperCase() + environment.status.slice(1)}
-                  </div>
                 </div>
+              )}
+              <div
+                className={`status-badge ${getStatusColor(environment.status)}`}
+              >
+                {(environment.status === "running" ||
+                  environment.status === "pending") && (
+                  <span
+                    className={`status-dot animate-pulse ${
+                      environment.status === "running"
+                        ? "bg-success"
+                        : "bg-warning"
+                    }`}
+                  />
+                )}
+                {environment.status.charAt(0).toUpperCase() +
+                  environment.status.slice(1)}
               </div>
             </div>
           </div>
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            <button
+              onClick={onGenerate}
+              disabled={isGenerating}
+              className="btn-op-secondary space-x-2"
+            >
+              <Package
+                className={`w-4 h-4 ${isGenerating ? "animate-spin" : ""}`}
+              />
+              <span>
+                {isGenerating ? "Generating..." : "Generate Repository"}
+              </span>
+            </button>
 
-          <div className="flex items-center space-x-2">
-            <button onClick={() => onEdit(environment)} className="btn-op-primary space-x-2">
+            <button
+              onClick={onPush}
+              disabled={isPushing || !canPush}
+              className="btn-op-secondary space-x-2"
+            >
+              <GitBranch
+                className={`w-4 h-4 ${isPushing ? "animate-spin" : ""}`}
+              />
+              <span>{isPushing ? "Pushing..." : "Push to Git"}</span>
+            </button>
+
+            <button
+              onClick={() => onEdit(environment)}
+              className="btn-op-primary space-x-2"
+            >
               <Edit2 className="w-4 h-4" />
               <span>Edit</span>
             </button>

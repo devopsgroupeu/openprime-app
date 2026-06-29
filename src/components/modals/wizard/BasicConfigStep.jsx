@@ -12,14 +12,16 @@ import {
   Tag,
   AlertTriangle,
 } from "lucide-react";
-import { useTheme } from "../../../contexts/ThemeContext";
+import ProviderIcon from "../../icons/ProviderIcon";
 import { useToast } from "../../../contexts/ToastContext";
-import { PROVIDERS, createEmptyEnvironment } from "../../../config/environmentsConfig";
+import {
+  PROVIDERS,
+  createEmptyEnvironment,
+} from "../../../config/environmentsConfig";
 import { getAllProviders } from "../../../config/providersConfig";
 import authService from "../../../services/authService";
 
 const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
-  const { isDark } = useTheme();
   const toast = useToast();
   const [credentials, setCredentials] = useState([]);
   const [loadingCredentials, setLoadingCredentials] = useState(false);
@@ -37,7 +39,9 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
   const loadCredentials = async (provider) => {
     try {
       setLoadingCredentials(true);
-      const response = await authService.get(`/cloud-credentials?provider=${provider}`);
+      const response = await authService.get(
+        `/cloud-credentials?provider=${provider}`,
+      );
       setCredentials(response.credentials || []);
     } catch (error) {
       console.error("Failed to load credentials:", error);
@@ -86,13 +90,16 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
     setCreatingBackend(true);
 
     try {
-      const response = await authService.post("/environments/terraform-backend/create", {
-        region: newEnv.region,
-        environmentName: newEnv.name,
-        lockingMechanism: newEnv.terraformBackend.lockingMechanism,
-        tableName: newEnv.terraformBackend.tableName,
-        cloudCredentialId: newEnv.cloudCredentialId,
-      });
+      const response = await authService.post(
+        "/environments/terraform-backend/create",
+        {
+          region: newEnv.region,
+          environmentName: newEnv.name,
+          lockingMechanism: newEnv.terraformBackend.lockingMechanism,
+          tableName: newEnv.terraformBackend.tableName,
+          cloudCredentialId: newEnv.cloudCredentialId,
+        },
+      );
 
       if (response.success) {
         const bucketName = response.data?.bucketName;
@@ -118,7 +125,8 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
         toast.error(response.error || "Failed to create backend resources");
       }
     } catch (error) {
-      const errorMessage = error.message || "Failed to create backend resources";
+      const errorMessage =
+        error.message || "Failed to create backend resources";
       toast.error(errorMessage);
     } finally {
       setCreatingBackend(false);
@@ -126,86 +134,55 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="text-center">
-        <div
-          className={`inline-flex items-center px-4 py-2 rounded-full text-sm mb-4 ${
-            isDark
-              ? "bg-teal-500/20 text-teal-300 border border-teal-500/30"
-              : "bg-teal-500/10 text-teal-700 border border-teal-500/30"
-          }`}
-        >
-          <Cloud className="w-4 h-4 mr-2" />
-          Basic Configuration
-        </div>
-        <h3 className={`text-xl font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
-          Let&apos;s start with the basics
-        </h3>
-        <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-          Choose your environment name, cloud provider, and deployment region
-        </p>
-      </div>
-
+    <div className="space-y-8">
       {/* Environment Name */}
-      <div
-        className={`p-6 rounded-xl border ${
-          isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
-        }`}
-      >
+      <div className="p-6 rounded-2xl border bg-surface border-border">
         <div className="flex items-center mb-4">
-          <Type className="w-5 h-5 mr-2 text-teal-500" />
-          <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+          <Type className="w-5 h-5 mr-2 text-accent" />
+          <label className="text-sm font-semibold text-label">
             Environment Name
           </label>
-          <span className="ml-2 text-red-500 text-sm">*</span>
+          <span className="ml-2 text-danger text-sm">*</span>
         </div>
         <input
           type="text"
-          className={`w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 text-lg ${
-            getFieldError("name")
-              ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
-              : isDark
-                ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
-                : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
+          className={`w-full px-4 py-3 text-lg transition-colors ${
+            getFieldError("name") ? "border-danger" : "border-border"
           }`}
           placeholder="e.g., production, staging, development"
           value={newEnv.name}
           onChange={(e) => {
-            const value = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "");
+            const value = e.target.value
+              .toLowerCase()
+              .replace(/[^a-z0-9]/g, "");
             setNewEnv({ ...newEnv, name: value });
           }}
         />
         {getFieldError("name") ? (
-          <p className="text-red-500 text-xs mt-2">{getFieldError("name").message}</p>
+          <p className="text-danger text-xs mt-2">
+            {getFieldError("name").message}
+          </p>
         ) : (
-          <p className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-            Lowercase alphanumeric name for this environment (e.g., production, staging)
+          <p className="text-xs mt-2 text-tertiary">
+            Lowercase alphanumeric name for this environment (e.g., production,
+            staging)
           </p>
         )}
       </div>
 
       {/* Global Prefix */}
-      <div
-        className={`p-6 rounded-xl border ${
-          isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
-        }`}
-      >
+      <div className="p-6 rounded-2xl border bg-surface border-border">
         <div className="flex items-center mb-4">
-          <Tag className="w-5 h-5 mr-2 text-teal-500" />
-          <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+          <Tag className="w-5 h-5 mr-2 text-accent" />
+          <label className="text-sm font-semibold text-label">
             Global Prefix
           </label>
-          <span className="ml-2 text-red-500 text-sm">*</span>
+          <span className="ml-2 text-danger text-sm">*</span>
         </div>
         <input
           type="text"
-          className={`w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 text-lg ${
-            getFieldError("globalPrefix")
-              ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
-              : isDark
-                ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
-                : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
+          className={`w-full px-4 py-3 text-lg transition-colors ${
+            getFieldError("globalPrefix") ? "border-danger" : "border-border"
           }`}
           placeholder="e.g., myapp-, prod-, company-"
           value={newEnv.globalPrefix || ""}
@@ -232,23 +209,22 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
           }}
         />
         {getFieldError("globalPrefix") ? (
-          <p className="text-red-500 text-xs mt-2">{getFieldError("globalPrefix").message}</p>
+          <p className="text-danger text-xs mt-2">
+            {getFieldError("globalPrefix").message}
+          </p>
         ) : (
-          <p className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-            Prefix applied to all resource names (lowercase, alphanumeric, auto-appends dash)
+          <p className="text-xs mt-2 text-tertiary">
+            Prefix applied to all resource names (lowercase, alphanumeric,
+            auto-appends dash)
           </p>
         )}
       </div>
 
       {/* Cloud Provider */}
-      <div
-        className={`p-6 rounded-xl border ${
-          isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
-        }`}
-      >
+      <div className="p-6 rounded-2xl border bg-surface border-border">
         <div className="flex items-center mb-4">
-          <Cloud className="w-5 h-5 mr-2 text-teal-500" />
-          <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+          <Cloud className="w-5 h-5 mr-2 text-accent" />
+          <label className="text-sm font-semibold text-label">
             Cloud Provider
           </label>
         </div>
@@ -263,62 +239,24 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
               key={provider.value}
               onClick={() => handleProviderChange(provider.value)}
               disabled={!provider.enabled}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                provider.enabled ? "hover:scale-105" : "cursor-not-allowed opacity-50"
-              } ${
+              className={`flex flex-col items-center justify-center gap-2.5 p-5 rounded-xl border-2 transition-all ${
                 newEnv.provider === provider.value
-                  ? isDark
-                    ? "border-teal-500 bg-teal-500/20 text-white"
-                    : "border-teal-500 bg-teal-50 text-teal-700"
+                  ? "border-primary text-accent"
                   : provider.enabled
-                    ? isDark
-                      ? "border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500"
-                      : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
-                    : isDark
-                      ? "border-gray-700 bg-gray-800/30 text-gray-500"
-                      : "border-gray-200 bg-gray-50 text-gray-400"
+                    ? "border-border text-secondary hover:border-primary/50 hover:text-primary"
+                    : "border-border text-tertiary cursor-not-allowed opacity-50"
               }`}
             >
-              <div className="text-center">
-                <div
-                  className={`w-8 h-8 mx-auto mb-2 rounded-full flex items-center justify-center ${
-                    newEnv.provider === provider.value
-                      ? "bg-teal-500 text-white"
-                      : provider.enabled
-                        ? isDark
-                          ? "bg-gray-600 text-gray-300"
-                          : "bg-gray-200 text-gray-600"
-                        : isDark
-                          ? "bg-gray-700 text-gray-500"
-                          : "bg-gray-100 text-gray-400"
-                  }`}
-                >
-                  <Cloud className="w-4 h-4" />
-                </div>
-                <div className="text-sm font-medium">{provider.name}</div>
-                <div
-                  className={`text-xs mt-1 ${
-                    provider.enabled
-                      ? isDark
-                        ? "text-gray-400"
-                        : "text-gray-500"
-                      : isDark
-                        ? "text-gray-500"
-                        : "text-gray-400"
-                  }`}
-                >
-                  {provider.value === "aws"
-                    ? "Amazon Web Services"
-                    : provider.value === "azure"
-                      ? "Microsoft Azure"
-                      : provider.value === "gcp"
-                        ? "Google Cloud Platform"
-                        : "Self-managed"}
-                  {!provider.enabled && (
-                    <span className="block text-xs mt-1 font-medium text-amber-500">Disabled</span>
-                  )}
-                </div>
-              </div>
+              <ProviderIcon
+                provider={provider.value}
+                className={`w-7 h-7 ${provider.value === "aws" ? "text-[#FF9900]" : ""}`}
+              />
+              <span className="text-sm font-bold">{provider.name}</span>
+              {!provider.enabled && (
+                <span className="text-[10px] font-bold uppercase tracking-wider text-warning">
+                  Disabled
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -326,30 +264,22 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
 
       {/* Cloud Credentials Selection */}
       {newEnv.provider && (
-        <div
-          className={`p-6 rounded-xl border ${
-            isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
-          }`}
-        >
+        <div className="p-6 rounded-2xl border bg-surface border-border">
           <div className="flex items-center mb-4">
-            <Key className="w-5 h-5 mr-2 text-teal-500" />
-            <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+            <Key className="w-5 h-5 mr-2 text-accent" />
+            <label className="text-sm font-semibold text-label">
               Cloud Credentials (Optional)
             </label>
           </div>
 
           {loadingCredentials ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : credentials.length > 0 ? (
             <div>
               <select
-                className={`w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 text-lg ${
-                  isDark
-                    ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
-                    : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
-                }`}
+                className="w-full px-4 py-3 text-lg transition-colors"
                 value={newEnv.cloudCredentialId || ""}
                 onChange={(e) =>
                   setNewEnv({
@@ -366,35 +296,27 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                   </option>
                 ))}
               </select>
-              <p className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              <p className="text-xs mt-2 text-tertiary">
                 Select saved credentials to use for this environment
               </p>
             </div>
           ) : (
-            <div
-              className={`p-4 rounded-lg border-2 border-dashed text-center ${
-                isDark
-                  ? "border-gray-600 bg-gray-700/30 text-gray-400"
-                  : "border-gray-300 bg-gray-50 text-gray-500"
-              }`}
-            >
+            <div className="p-4 rounded-lg border-2 border-dashed text-center border-border bg-background-secondary text-tertiary">
               <Key className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <p className="mb-2">No saved credentials found</p>
-              <p className="text-xs">Add credentials in Settings to use them for deployments</p>
+              <p className="text-xs">
+                Add credentials in Settings to use them for deployments
+              </p>
             </div>
           )}
         </div>
       )}
 
       {/* Region Selection */}
-      <div
-        className={`p-6 rounded-xl border ${
-          isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
-        }`}
-      >
+      <div className="p-6 rounded-2xl border bg-surface border-border">
         <div className="flex items-center mb-4">
-          <MapPin className="w-5 h-5 mr-2 text-teal-500" />
-          <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+          <MapPin className="w-5 h-5 mr-2 text-accent" />
+          <label className="text-sm font-semibold text-label">
             Deployment Region
           </label>
         </div>
@@ -402,11 +324,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
         {newEnv.provider && PROVIDERS[newEnv.provider] ? (
           <div>
             <select
-              className={`w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 text-lg ${
-                isDark
-                  ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
-                  : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
-              }`}
+              className="w-full px-4 py-3 text-lg transition-colors"
               value={newEnv.region}
               onChange={(e) => setNewEnv({ ...newEnv, region: e.target.value })}
             >
@@ -416,18 +334,12 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                 </option>
               ))}
             </select>
-            <p className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+            <p className="text-xs mt-2 text-tertiary">
               Choose the region closest to your users for optimal performance
             </p>
           </div>
         ) : (
-          <div
-            className={`p-4 rounded-lg border-2 border-dashed text-center ${
-              isDark
-                ? "border-gray-600 bg-gray-700/30 text-gray-400"
-                : "border-gray-300 bg-gray-50 text-gray-500"
-            }`}
-          >
+          <div className="p-4 rounded-lg border-2 border-dashed text-center border-border bg-background-secondary text-tertiary">
             <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p>Select a cloud provider first</p>
           </div>
@@ -436,17 +348,11 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
 
       {/* Terraform Backend Configuration */}
       {newEnv.provider === "aws" && (
-        <div
-          className={`p-6 rounded-xl border ${
-            isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
-          }`}
-        >
+        <div className="p-6 rounded-2xl border bg-surface border-border">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
-              <Database className="w-5 h-5 mr-2 text-teal-500" />
-              <label
-                className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}
-              >
+              <Database className="w-5 h-5 mr-2 text-accent" />
+              <label className="text-sm font-semibold text-label">
                 Terraform Backend (Optional)
               </label>
             </div>
@@ -462,21 +368,16 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                       ...newEnv.terraformBackend,
                       enabled: e.target.checked,
                       bucketName: newEnv.terraformBackend?.bucketName || "",
-                      lockingMechanism: newEnv.terraformBackend?.lockingMechanism || "s3",
+                      lockingMechanism:
+                        newEnv.terraformBackend?.lockingMechanism || "s3",
                       tableName: newEnv.terraformBackend?.tableName || "",
                     },
                   })
                 }
               />
-              <div
-                className={`w-11 h-6 rounded-full peer transition-colors ${
-                  isDark
-                    ? "bg-gray-600 peer-checked:bg-teal-500"
-                    : "bg-gray-300 peer-checked:bg-teal-500"
-                }`}
-              >
+              <div className="w-11 h-6 rounded-full peer transition-colors bg-border-strong peer-checked:bg-primary">
                 <div
-                  className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full transition-transform ${
+                  className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full shadow transition-transform ${
                     newEnv.terraformBackend?.enabled ? "translate-x-5" : ""
                   }`}
                 ></div>
@@ -484,27 +385,23 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
             </label>
           </div>
 
-          <p className={`text-xs mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-            Automatically create S3 bucket and optional DynamoDB table for Terraform state
-            management
+          <p className="text-xs mb-4 text-tertiary">
+            Automatically create S3 bucket and optional DynamoDB table for
+            Terraform state management
           </p>
 
           {newEnv.terraformBackend?.enabled && !newEnv.cloudCredentialId && (
-            <div
-              className={`p-4 rounded-lg border mb-4 ${
-                isDark
-                  ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
-                  : "bg-amber-50 border-amber-200 text-amber-700"
-              }`}
-            >
+            <div className="p-4 rounded-lg border mb-4 bg-warning-muted border-warning text-warning">
               <div className="flex items-start">
                 <Database className="w-4 h-4 mr-2 mt-0.5" />
                 <div className="space-y-1.5 min-w-0">
                   <p className="text-sm font-medium">
-                    AWS credentials are required to create Terraform backend resources
+                    AWS credentials are required to create Terraform backend
+                    resources
                   </p>
                   <p className="text-xs">
-                    Please select cloud credentials above before creating backend resources
+                    Please select cloud credentials above before creating
+                    backend resources
                   </p>
                 </div>
               </div>
@@ -515,11 +412,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
             <div className="space-y-4 mt-4">
               {/* Toggle between Create New vs Use Existing Bucket */}
               <div>
-                <label
-                  className={`block text-sm font-medium mb-2 ${
-                    isDark ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
+                <label className="text-sm font-semibold text-label block mb-2">
                   S3 Bucket Configuration
                 </label>
                 <div className="flex gap-2">
@@ -529,12 +422,8 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                     disabled={backendCreated || creatingBackend}
                     className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
                       !useExistingBucket
-                        ? isDark
-                          ? "bg-teal-600 text-white"
-                          : "bg-teal-500 text-white"
-                        : isDark
-                          ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        ? "bg-primary text-inverse"
+                        : "bg-background-secondary text-secondary hover:bg-surface-elevated"
                     } ${backendCreated || creatingBackend ? "opacity-60 cursor-not-allowed" : ""}`}
                   >
                     Create New Bucket
@@ -545,12 +434,8 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                     disabled={backendCreated || creatingBackend}
                     className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
                       useExistingBucket
-                        ? isDark
-                          ? "bg-teal-600 text-white"
-                          : "bg-teal-500 text-white"
-                        : isDark
-                          ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        ? "bg-primary text-inverse"
+                        : "bg-background-secondary text-secondary hover:bg-surface-elevated"
                     } ${backendCreated || creatingBackend ? "opacity-60 cursor-not-allowed" : ""}`}
                   >
                     Use Existing Bucket
@@ -561,17 +446,13 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
               {/* S3 Bucket Name Display/Input */}
               {!useExistingBucket ? (
                 // Create New Bucket Section
-                <div
-                  className={`p-4 rounded-lg border ${
-                    isDark
-                      ? "bg-teal-500/10 border-teal-500/30 text-teal-300"
-                      : "bg-teal-50 border-teal-200 text-teal-700"
-                  }`}
-                >
+                <div className="p-4 rounded-lg border bg-primary-muted border-primary text-primary">
                   <div className="flex items-start">
                     <Database className="w-4 h-4 mr-2 mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm font-medium">S3 Bucket Name (Auto-generated)</p>
+                      <p className="text-sm font-medium">
+                        S3 Bucket Name (Auto-generated)
+                      </p>
                       <p className="text-xs mt-1">
                         Format:{" "}
                         <code className="font-mono">
@@ -579,12 +460,20 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                         </code>
                       </p>
                       {newEnv.name &&
-                        credentials.find((c) => c.id === newEnv.cloudCredentialId) && (
+                        credentials.find(
+                          (c) => c.id === newEnv.cloudCredentialId,
+                        ) && (
                           <p className="text-xs mt-1 font-mono">
                             Preview:{" "}
-                            {credentials.find((c) => c.id === newEnv.cloudCredentialId)?.identifier}
+                            {
+                              credentials.find(
+                                (c) => c.id === newEnv.cloudCredentialId,
+                              )?.identifier
+                            }
                             -terraform-
-                            {newEnv.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}
+                            {newEnv.name
+                              .toLowerCase()
+                              .replace(/[^a-z0-9]/g, "-")}
                           </p>
                         )}
                     </div>
@@ -593,20 +482,12 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
               ) : (
                 // Use Existing Bucket Section
                 <div>
-                  <label
-                    className={`block text-sm font-medium mb-2 ${
-                      isDark ? "text-gray-300" : "text-gray-700"
-                    }`}
-                  >
+                  <label className="text-sm font-semibold text-label block mb-2">
                     S3 Bucket Name
                   </label>
                   <input
                     type="text"
-                    className={`w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 ${
-                      isDark
-                        ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
-                        : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
-                    }`}
+                    className="w-full px-4 py-2 transition-colors"
                     placeholder="e.g., my-terraform-state-bucket"
                     value={newEnv.terraformBackend?.bucketName || ""}
                     onChange={(e) =>
@@ -619,25 +500,21 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                       })
                     }
                   />
-                  <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                    Enter the name of an existing S3 bucket for Terraform state storage
+                  <p className="text-xs mt-1 text-tertiary">
+                    Enter the name of an existing S3 bucket for Terraform state
+                    storage
                   </p>
                 </div>
               )}
 
-              <div
-                className={`p-4 rounded-lg border ${
-                  isDark
-                    ? "bg-teal-500/10 border-teal-500/30 text-teal-300"
-                    : "bg-teal-50 border-teal-200 text-teal-700"
-                }`}
-              >
+              <div className="p-4 rounded-lg border bg-primary-muted border-primary text-primary">
                 <div className="flex items-start">
                   <Database className="w-4 h-4 mr-2 mt-0.5 shrink-0" />
                   <div>
                     <p className="text-sm font-medium">State Locking</p>
                     <p className="text-xs mt-1">
-                      Using S3 native locking (requires Terraform 1.11 or higher).
+                      Using S3 native locking (requires Terraform 1.11 or
+                      higher).
                     </p>
                   </div>
                 </div>
@@ -647,13 +524,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
               {!useExistingBucket && (
                 <>
                   {backendCreated ? (
-                    <div
-                      className={`p-4 rounded-lg border ${
-                        isDark
-                          ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-300"
-                          : "bg-emerald-50 border-emerald-200 text-emerald-700"
-                      }`}
-                    >
+                    <div className="p-4 rounded-lg border bg-success-muted border-success text-success">
                       <div className="flex items-start">
                         <CheckCircle className="w-5 h-5 mr-2 mt-0.5 shrink-0" />
                         <div>
@@ -672,15 +543,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                     <button
                       onClick={handleCreateBackend}
                       disabled={!newEnv.cloudCredentialId || creatingBackend}
-                      className={`w-full py-3 rounded-lg font-medium transition-colors flex items-center justify-center ${
-                        !newEnv.cloudCredentialId || creatingBackend
-                          ? isDark
-                            ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                            : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                          : isDark
-                            ? "bg-teal-600 text-white hover:bg-teal-700"
-                            : "bg-teal-500 text-white hover:bg-teal-600"
-                      }`}
+                      className="btn-op-primary w-full"
                     >
                       {creatingBackend ? (
                         <>
@@ -703,15 +566,11 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
       )}
 
       {/* Git Repository Configuration */}
-      <div
-        className={`p-6 rounded-xl border ${
-          isDark ? "bg-gray-800/50 border-gray-700" : "bg-white/70 border-gray-200"
-        }`}
-      >
+      <div className="p-6 rounded-2xl border bg-surface border-border">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
-            <GitBranch className="w-5 h-5 mr-2 text-teal-500" />
-            <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+            <GitBranch className="w-5 h-5 mr-2 text-accent" />
+            <label className="text-sm font-semibold text-label">
               Git Repository (Optional)
             </label>
           </div>
@@ -733,15 +592,9 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                 })
               }
             />
-            <div
-              className={`w-11 h-6 rounded-full peer transition-colors ${
-                isDark
-                  ? "bg-gray-600 peer-checked:bg-teal-500"
-                  : "bg-gray-300 peer-checked:bg-teal-500"
-              }`}
-            >
+            <div className="w-11 h-6 rounded-full peer transition-colors bg-border-strong peer-checked:bg-primary">
               <div
-                className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full transition-transform ${
+                className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full shadow transition-transform ${
                   newEnv.gitRepository?.enabled ? "translate-x-5" : ""
                 }`}
               ></div>
@@ -749,27 +602,20 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
           </label>
         </div>
 
-        <p className={`text-xs mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-          Configure Git repository for infrastructure code storage and version control
+        <p className="text-xs mb-4 text-tertiary">
+          Configure Git repository for infrastructure code storage and version
+          control
         </p>
 
         {newEnv.gitRepository?.enabled && (
           <div className="space-y-4 mt-4">
             <div>
-              <label
-                className={`block text-sm font-medium mb-2 ${
-                  isDark ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
+              <label className="text-sm font-semibold text-label block mb-2">
                 Repository URL
               </label>
               <input
                 type="text"
-                className={`w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 ${
-                  isDark
-                    ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
-                    : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
-                }`}
+                className="w-full px-4 py-2 transition-colors"
                 placeholder="git@github.com:organization/repository.git"
                 value={newEnv.gitRepository?.url || ""}
                 onChange={(e) =>
@@ -782,26 +628,18 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                   })
                 }
               />
-              <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              <p className="text-xs mt-1 text-tertiary">
                 SSH URL of the Git repository for infrastructure code
               </p>
             </div>
 
             <div>
-              <label
-                className={`block text-sm font-medium mb-2 ${
-                  isDark ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
+              <label className="text-sm font-semibold text-label block mb-2">
                 Target Branch / Revision
               </label>
               <input
                 type="text"
-                className={`w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 ${
-                  isDark
-                    ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
-                    : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
-                }`}
+                className="w-full px-4 py-2 transition-colors"
                 placeholder="main"
                 value={newEnv.gitRepository?.branch || ""}
                 onChange={(e) =>
@@ -814,25 +652,18 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                   })
                 }
               />
-              <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                Branch or Git revision ArgoCD will track (e.g. main, HEAD, v1.2.0)
+              <p className="text-xs mt-1 text-tertiary">
+                Branch or Git revision ArgoCD will track (e.g. main, HEAD,
+                v1.2.0)
               </p>
             </div>
 
             <div>
-              <label
-                className={`block text-sm font-medium mb-2 ${
-                  isDark ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
+              <label className="text-sm font-semibold text-label block mb-2">
                 SSH Private Key (Deploy Key)
               </label>
               <textarea
-                className={`w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 font-mono text-xs ${
-                  isDark
-                    ? "bg-gray-700 border-gray-600 text-white focus:border-teal-500 focus:ring-teal-500/20"
-                    : "bg-white border-gray-300 text-gray-900 focus:border-teal-500 focus:ring-teal-500/20"
-                }`}
+                className="w-full px-4 py-2 font-mono text-xs transition-colors"
                 placeholder="Paste your SSH private key here (PEM format)"
                 rows={8}
                 value={newEnv.gitRepository?.sshKey || ""}
@@ -846,73 +677,63 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                   })
                 }
               />
-              <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              <p className="text-xs mt-1 text-tertiary">
                 Private SSH key with read access to the repository
               </p>
             </div>
 
             {/* Deployment prerequisite callout */}
-            <div
-              className={`p-5 rounded-xl border mb-4 ${
-                isDark
-                  ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
-                  : "bg-amber-50 border-amber-200 text-amber-700"
-              }`}
-            >
+            <div className="p-5 rounded-xl border mb-4 bg-warning-muted border-warning text-warning">
               <div className="flex items-start">
                 <AlertTriangle className="w-5 h-5 mr-3 mt-0.5 shrink-0" />
                 <div className="space-y-3 min-w-0">
                   <div>
-                    <p className="text-sm font-bold mb-0.5">Deployment Prerequisites</p>
+                    <p className="text-sm font-bold mb-0.5">
+                      Deployment Prerequisites
+                    </p>
                   </div>
 
                   <p className="text-xs leading-relaxed opacity-90">
-                    To enable automated infrastructure deployment via CI/CD, the following secrets
-                    must be configured within your repository&apos;s environment variables. These
-                    credentials allow the pipeline to authenticate with your cloud provider and
-                    securely access private Git resources.
+                    To enable automated infrastructure deployment via CI/CD, the
+                    following secrets must be configured within your
+                    repository&apos;s environment variables. These credentials
+                    allow the pipeline to authenticate with your cloud provider
+                    and securely access private Git resources.
                   </p>
 
                   <ul className="text-[11px] space-y-2 list-none">
                     <li className="leading-relaxed">
-                      <code
-                        className={`px-1 py-0.5 rounded font-mono ${isDark ? "bg-black/30" : "bg-amber-100"}`}
-                      >
+                      <code className="px-1 py-0.5 rounded font-mono bg-background">
                         AWS_ACCESS_KEY_ID
                       </code>{" "}
                       &{" "}
-                      <code
-                        className={`px-1 py-0.5 rounded font-mono ${isDark ? "bg-black/30" : "bg-amber-100"}`}
-                      >
+                      <code className="px-1 py-0.5 rounded font-mono bg-background">
                         AWS_SECRET_ACCESS_KEY
                       </code>
                       <span className="block mt-1 opacity-80">
-                        IAM credentials with the necessary permissions to provision and manage the
-                        resources.
+                        IAM credentials with the necessary permissions to
+                        provision and manage the resources.
                       </span>
                     </li>
                     <li className="leading-relaxed">
-                      <code
-                        className={`px-1 py-0.5 rounded font-mono ${isDark ? "bg-black/30" : "bg-amber-100"}`}
-                      >
+                      <code className="px-1 py-0.5 rounded font-mono bg-background">
                         TF_VAR_git_repo_ssh_key
                       </code>
                       <span className="block mt-1 opacity-80">
-                        A private SSH key (Deployment Key) used by Terraform and ArgoCD to
-                        authenticate against private repositories.
+                        A private SSH key (Deployment Key) used by Terraform and
+                        ArgoCD to authenticate against private repositories.
                       </span>
                     </li>
                   </ul>
 
-                  <div
-                    className={`p-2 rounded text-[11px] border ${
-                      isDark ? "bg-black/20 border-amber-500/20" : "bg-white/50 border-amber-200"
-                    }`}
-                  >
-                    <span className="font-bold mr-1 uppercase text-[10px]">Security Note:</span>
+                  <div className="p-2 rounded text-[11px] border bg-background border-border">
+                    <span className="font-bold mr-1 uppercase text-[10px]">
+                      Security Note:
+                    </span>
                     <span className="italic opacity-90">
-                      These variables must be stored as encrypted Secrets (e.g., GitHub Actions
-                      Secrets) and should never be logged or committed to source control.
+                      These variables must be stored as encrypted Secrets (e.g.,
+                      GitHub Actions Secrets) and should never be logged or
+                      committed to source control.
                     </span>
                   </div>
                 </div>
@@ -923,24 +744,25 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
       </div>
 
       {/* Summary */}
-      {newEnv.name && newEnv.globalPrefix && newEnv.provider && newEnv.region && (
-        <div
-          className={`p-4 rounded-lg border ${
-            isDark
-              ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-300"
-              : "bg-emerald-50 border-emerald-200 text-emerald-700"
-          }`}
-        >
-          <div className="flex items-center">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full mr-3"></div>
-            <span className="text-sm font-medium">
-              Ready to create &quot;{newEnv.name}&quot; (prefix: {newEnv.globalPrefix}) on{" "}
-              {PROVIDERS[newEnv.provider]?.name} in{" "}
-              {PROVIDERS[newEnv.provider]?.regions.find((r) => r.value === newEnv.region)?.label}
-            </span>
+      {newEnv.name &&
+        newEnv.globalPrefix &&
+        newEnv.provider &&
+        newEnv.region && (
+          <div className="p-4 rounded-lg border bg-success-muted border-success text-success">
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-success rounded-full mr-3"></div>
+              <span className="text-sm font-medium">
+                Ready to create &quot;{newEnv.name}&quot; (prefix:{" "}
+                {newEnv.globalPrefix}) on {PROVIDERS[newEnv.provider]?.name} in{" "}
+                {
+                  PROVIDERS[newEnv.provider]?.regions.find(
+                    (r) => r.value === newEnv.region,
+                  )?.label
+                }
+              </span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 };

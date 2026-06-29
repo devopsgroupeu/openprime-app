@@ -7,5 +7,7 @@ test("renders the authenticated app with mocked environments", async () => {
   render(<App />);
 
   // The app reaches the authenticated state and renders the mocked environments.
-  expect(await screen.findByText(/demo-prod/i, {}, { timeout: 3000 })).toBeInTheDocument();
+  expect(
+    await screen.findByText(/demo-prod/i, {}, { timeout: 3000 }),
+  ).toBeInTheDocument();
 });

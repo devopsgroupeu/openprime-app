@@ -1,205 +1,69 @@
-// src/components/EnvironmentsPage.js
-import { useState } from "react";
+// src/components/EnvironmentsPage.jsx
 import { useNavigate } from "react-router";
-import { Plus } from "lucide-react";
-import Navigation from "./Navigation";
+import { Plus, Server } from "lucide-react";
 import EnvironmentCard from "./EnvironmentCard";
-import EnvironmentWizard from "./modals/EnvironmentWizard";
-import HelmValuesModal from "./modals/HelmValuesModal";
-import { createEmptyEnvironment } from "../config/environmentsConfig";
-import { useToast } from "../contexts/ToastContext";
 
-const EnvironmentsPage = ({
-  environments,
-  onCreateEnvironment,
-  onDeleteEnvironment,
-  onUpdateEnvironment,
-}) => {
-  const { success, error } = useToast();
+const EnvironmentsPage = ({ environments }) => {
   const navigate = useNavigate();
-  const [showNewEnvModal, setShowNewEnvModal] = useState(false);
-  const [showValuesEditor, setShowValuesEditor] = useState(null);
-  const [editingHelmValues, setEditingHelmValues] = useState("");
-  const [newEnv, setNewEnv] = useState(createEmptyEnvironment("aws"));
-  const [expandedServices, setExpandedServices] = useState({});
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleCreateEnvironment = async () => {
-    if (!newEnv.name) {
-      error("Please enter an environment name", {
-        title: "Validation Error",
-        duration: 5000,
-      });
-      return;
-    }
-
-    if (!newEnv.globalPrefix) {
-      error("Please enter a global prefix", {
-        title: "Validation Error",
-        duration: 5000,
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Send all services (enabled and disabled) to maintain complete configuration
-      const environmentConfig = {
-        name: newEnv.name,
-        globalPrefix: newEnv.globalPrefix,
-        provider: newEnv.provider,
-        region: newEnv.region,
-        services: newEnv.services || {},
-        terraformBackend: newEnv.terraformBackend || null,
-        gitRepository: newEnv.gitRepository || null,
-        cloudCredentialId: newEnv.cloudCredentialId || null,
-      };
-
-      // Call parent component to handle creation (App.js handles the API call)
-      try {
-        if (isEditMode) {
-          await onUpdateEnvironment(environmentConfig);
-        } else {
-          await onCreateEnvironment(environmentConfig);
-        }
-
-        success("Environment synced with backend successfully", {
-          title: "Backend Sync",
-          duration: 3000,
-        });
-      } catch (backendError) {
-        error(`Failed to sync with backend: ${backendError.message}`, {
-          title: "Backend Error",
-          duration: 7000,
-        });
-        return;
-      }
-
-      // Environment creation/update is handled in the backend success block above
-      success(`Environment "${newEnv.name}" ${isEditMode ? "updated" : "created"} successfully`, {
-        title: `Environment ${isEditMode ? "Updated" : "Created"}`,
-        duration: 4000,
-      });
-
-      // Reset form state
-      setShowNewEnvModal(false);
-      setNewEnv(createEmptyEnvironment("aws"));
-      setExpandedServices({});
-      setIsEditMode(false);
-    } catch (err) {
-      error(`Failed to ${isEditMode ? "update" : "create"} environment: ${err.message}`, {
-        title: "Error",
-        duration: 7000,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleEditEnvironment = (environment) => {
-    setNewEnv({ ...environment });
-    setIsEditMode(true);
-    setShowNewEnvModal(true);
-  };
-
-  const handleSaveHelmValues = () => {
-    const kubernetesService = newEnv.provider === "azure" ? "aks" : "eks";
-
-    // Ensure the kubernetes service exists
-    if (!newEnv.services || !newEnv.services[kubernetesService]) {
-      console.warn(`Kubernetes service ${kubernetesService} not found in environment services`);
-      setShowValuesEditor(null);
-      setEditingHelmValues("");
-      return;
-    }
-
-    setNewEnv({
-      ...newEnv,
-      services: {
-        ...newEnv.services,
-        [kubernetesService]: {
-          ...newEnv.services[kubernetesService],
-          helmCharts: {
-            ...newEnv.services[kubernetesService]?.helmCharts,
-            [showValuesEditor]: {
-              ...newEnv.services[kubernetesService]?.helmCharts?.[showValuesEditor],
-              customValues: true,
-            },
-          },
-        },
-      },
-    });
-    setShowValuesEditor(null);
-    setEditingHelmValues("");
-  };
+  const hasEnvironments = environments.length > 0;
 
   return (
-    <div className="min-h-screen transition-colors duration-200 bg-transparent">
-      <Navigation />
-      <div className="max-w-7xl mx-auto px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold font-sora transition-colors duration-200 text-primary">
-            Environments
-          </h1>
+    <div className="transition-colors duration-200 bg-transparent">
+      <div className="px-4 sm:px-8 py-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-8">
+          <div>
+            <h1 className="text-4xl font-extrabold text-primary">
+              Environments
+            </h1>
+            <p className="text-secondary mt-1">
+              Manage and deploy your cloud infrastructure environments.
+            </p>
+          </div>
           <button
-            onClick={() => {
-              setNewEnv(createEmptyEnvironment("aws"));
-              setIsEditMode(false);
-              setShowNewEnvModal(true);
-            }}
-            className="btn-op-primary font-poppins transition-all duration-200 animate-fade-in"
+            onClick={() => navigate("/environments/create")}
+            className="btn-op-primary animate-fade-in self-start sm:self-auto"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-4 h-4" />
             New Environment
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {environments.map((env) => (
-            <EnvironmentCard
-              key={env.id}
-              environment={env}
-              onEdit={handleEditEnvironment}
-              onDelete={onDeleteEnvironment}
-              onClick={(env) => navigate(`/environments/${env.id}`)}
-            />
-          ))}
-        </div>
+        {hasEnvironments ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {environments.map((env) => (
+              <EnvironmentCard
+                key={env.id}
+                environment={env}
+                onClick={(environment) =>
+                  navigate(`/environments/${environment.id}`)
+                }
+                onEdit={(environment) =>
+                  navigate(`/environments/${environment.id}/edit`)
+                }
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center text-center py-20">
+            <div className="w-16 h-16 rounded-2xl bg-primary-muted flex items-center justify-center">
+              <Server className="w-7 h-7 text-accent" />
+            </div>
+            <h3 className="text-lg font-extrabold text-primary mt-4">
+              No environments yet
+            </h3>
+            <p className="text-secondary mt-1">
+              Create your first environment to get started.
+            </p>
+            <button
+              onClick={() => navigate("/environments/create")}
+              className="btn-op-primary mt-6"
+            >
+              <Plus className="w-4 h-4" />
+              New Environment
+            </button>
+          </div>
+        )}
       </div>
-
-      {showNewEnvModal && (
-        <EnvironmentWizard
-          newEnv={newEnv}
-          setNewEnv={setNewEnv}
-          expandedServices={expandedServices}
-          setExpandedServices={setExpandedServices}
-          onClose={() => {
-            setShowNewEnvModal(false);
-            setExpandedServices({});
-            setIsEditMode(false);
-            setNewEnv(createEmptyEnvironment("aws")); // Reset to empty environment
-          }}
-          onCreate={handleCreateEnvironment}
-          isEditMode={isEditMode}
-          isLoading={isLoading}
-          onEditHelmValues={(chart, values) => {
-            setShowValuesEditor(chart);
-            setEditingHelmValues(values);
-          }}
-        />
-      )}
-
-      {showValuesEditor && (
-        <HelmValuesModal
-          chartName={showValuesEditor}
-          values={editingHelmValues}
-          onChange={setEditingHelmValues}
-          onClose={() => setShowValuesEditor(null)}
-          onSave={handleSaveHelmValues}
-        />
-      )}
     </div>
   );
 };

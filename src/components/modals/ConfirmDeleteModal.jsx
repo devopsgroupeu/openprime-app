@@ -1,65 +1,69 @@
+import { useEffect, useRef } from "react";
 import { X, AlertTriangle } from "lucide-react";
-import { useTheme } from "../../contexts/ThemeContext";
 
-const ConfirmDeleteModal = ({ environment, onClose, onConfirm, title, message }) => {
-  const { isDark } = useTheme();
+const ConfirmDeleteModal = ({
+  environment,
+  onClose,
+  onConfirm,
+  title,
+  message,
+}) => {
+  const closeButtonRef = useRef(null);
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  // Initial focus on the close button
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div
-        className={`w-full max-w-md mx-4 rounded-xl border shadow-xl transition-colors ${
-          isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-        }`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Confirm delete"
+        className="w-full max-w-md mx-4 rounded-2xl border border-border bg-surface shadow-xl transition-colors"
       >
-        <div className="flex justify-between items-center p-6 border-b border-gray-300 dark:border-gray-600">
-          <h2
-            className={`text-xl font-bold flex items-center transition-colors ${
-              isDark ? "text-white" : "text-gray-900"
-            }`}
-          >
-            <AlertTriangle className="w-6 h-6 text-red-500 mr-2" />
+        <div className="flex justify-between items-center p-6 border-b border-border">
+          <h2 className="text-xl font-bold flex items-center text-primary transition-colors">
+            <AlertTriangle className="w-6 h-6 text-danger mr-2" />
             {title || "Delete Environment"}
           </h2>
           <button
+            ref={closeButtonRef}
             onClick={onClose}
-            className={`p-2 rounded-lg transition-colors ${
-              isDark
-                ? "hover:bg-gray-700 text-gray-400 hover:text-white"
-                : "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
-            }`}
+            aria-label="Close"
+            className="p-2 rounded-lg transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-6">
-          <p className={`mb-4 transition-colors ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-            {message || `Are you sure you want to delete the environment "${environment?.name}"?`}
+          <p className="mb-4 text-secondary transition-colors">
+            {message ||
+              `Are you sure you want to delete the environment "${environment?.name}"?`}
           </p>
-          <p
-            className={`mb-6 text-sm transition-colors ${
-              isDark ? "text-gray-400" : "text-gray-600"
-            }`}
-          >
-            This action cannot be undone. All configuration for this environment will be permanently
-            removed.
+          <p className="mb-6 text-sm text-tertiary transition-colors">
+            This action cannot be undone. All configuration for this environment
+            will be permanently removed.
           </p>
 
           <div className="flex space-x-3">
-            <button
-              onClick={onClose}
-              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-                isDark
-                  ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
+            <button onClick={onClose} className="btn-op-secondary flex-1">
               Cancel
             </button>
-            <button
-              onClick={onConfirm}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
-            >
+            <button onClick={onConfirm} className="btn-op-danger flex-1">
               Delete
             </button>
           </div>

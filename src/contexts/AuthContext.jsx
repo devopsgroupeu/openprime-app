@@ -49,7 +49,9 @@ export const AuthProvider = ({ children }) => {
               if (refreshed) {
                 console.log("Token refreshed successfully");
               } else {
-                console.warn("Token not refreshed, user may need to log in again");
+                console.warn(
+                  "Token not refreshed, user may need to log in again",
+                );
               }
             })
             .catch(() => {
@@ -72,7 +74,8 @@ export const AuthProvider = ({ children }) => {
           onLoad: "login-required",
           checkLoginIframe: false,
           pkceMethod: "S256",
-          silentCheckSsoRedirectUri: window.location.origin + "/silent-check-sso.html",
+          silentCheckSsoRedirectUri:
+            window.location.origin + "/silent-check-sso.html",
         });
 
         if (authenticated) {
@@ -111,7 +114,9 @@ export const AuthProvider = ({ children }) => {
             }
           })
           .catch(() => {
-            console.error("Failed to refresh token on visibility change, logging out...");
+            console.error(
+              "Failed to refresh token on visibility change, logging out...",
+            );
             logout();
           });
       }

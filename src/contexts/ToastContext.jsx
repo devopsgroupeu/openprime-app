@@ -57,7 +57,9 @@ const ToastItem = ({ toast, onRemove }) => {
           <div className="shrink-0">{getIcon()}</div>
           <div className="ml-3 w-0 flex-1 pt-0.5">
             {toast.title && (
-              <p className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+              <p
+                className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+              >
                 {toast.title}
               </p>
             )}
@@ -73,7 +75,9 @@ const ToastItem = ({ toast, onRemove }) => {
             <button
               onClick={() => onRemove(toast.id)}
               className={`inline-flex rounded-md transition-colors ${
-                isDark ? "text-gray-400 hover:text-gray-200" : "text-gray-400 hover:text-gray-600"
+                isDark
+                  ? "text-gray-400 hover:text-gray-200"
+                  : "text-gray-400 hover:text-gray-600"
               }`}
               aria-label="Close notification"
             >
