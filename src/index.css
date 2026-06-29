@@ -8,9 +8,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Semantic Color System — InfraFlow design language.
-   Dark mode is the native target (near-black + bright teal #00F5D4); light mode is a
-   WCAG-tuned interpretation of the same teal family. Components consume CSS vars only. */
+/* Semantic Color System — OpenPrime brand (navy surfaces + brand teal).
+   Dark: navy/slate surfaces + teal-400 (#2dd4bf). Light: slate surfaces + teal-600 (#0d9488).
+   Components consume CSS vars only. */
 :root {
   /* Light Mode - neutral slate surfaces, teal brand */
 
@@ -19,10 +19,10 @@
   --color-background-secondary: #ffffff; /* white cards */
   --color-background-tertiary: #f8fafc; /* slate-50 — elevated */
   --color-background-accent: #0d9488; /* teal-600 */
-  /* InfraFlow signature: subtle teal glow from top-center */
+  /* Subtle teal glow from top-center */
   --page-glow: radial-gradient(
     ellipse 1000px 600px at 50% -5%,
-    rgba(0, 245, 212, 0.07) 0%,
+    rgba(13, 148, 136, 0.07) 0%,
     transparent 70%
   );
 
@@ -54,6 +54,7 @@
   --color-accent: #0d9488; /* teal-600 */
   --color-accent-hover: #0f766e; /* teal-700 */
   --color-accent-muted: #f0fdfa; /* teal-50 */
+  --color-ring: rgba(13, 148, 136, 0.25); /* teal-600 focus ring */
 
   /* Semantic Status Colors */
   --color-success: #059669; /* emerald-600 */
@@ -72,48 +73,49 @@
   --color-shadow: #0f172a; /* slate-900 */
 }
 
-/* Dark Mode — InfraFlow native target: near-black surfaces + bright teal #00F5D4 */
+/* Dark Mode — OpenPrime brand: navy/slate surfaces + teal-400 (#2dd4bf) */
 .dark {
-  /* Background Colors (near-black hierarchy) */
-  --color-background: #050505; /* page canvas (bg-dark) */
-  --color-background-secondary: #0d0d0d; /* panels (bg-panel) */
-  --color-background-tertiary: #141414; /* cards (bg-card) */
-  --color-background-accent: #00f5d4; /* teal accent */
-  /* InfraFlow signature: subtle teal glow from top-center */
+  /* Background Colors (navy/slate elevation — stepped for clear separation) */
+  --color-background: #080c16; /* deepest navy page canvas */
+  --color-background-secondary: #161f37; /* navy panels (= surface) */
+  --color-background-tertiary: #212f4d; /* elevated */
+  --color-background-accent: #2dd4bf; /* teal-400 brand accent */
+  /* Subtle teal glow from top-center */
   --page-glow: radial-gradient(
     ellipse 1100px 640px at 50% -5%,
-    rgba(0, 245, 212, 0.06) 0%,
+    rgba(45, 212, 191, 0.06) 0%,
     transparent 70%
   );
 
-  /* Surface Colors (near-black elevation system) */
-  --color-surface: #0d0d0d; /* cards/containers (bg-panel) */
-  --color-surface-elevated: #141414; /* elevated (bg-card) */
-  --color-surface-overlay: #0a0a0a; /* modals (bg-black) */
-  --color-input-bg: #0d0d0d; /* form field background */
+  /* Surface Colors (navy/slate elevation system) */
+  --color-surface: #161f37; /* navy cards/containers — lifted off the canvas */
+  --color-surface-elevated: #212f4d; /* elevated surfaces */
+  --color-surface-overlay: #080c16; /* modals */
+  --color-input-bg: #0d1426; /* form field bg — recessed below cards */
   --color-label: #e5e5e5; /* form label text */
 
   /* Text Colors (WCAG AA on near-black) */
   --color-text-primary: #ffffff; /* pure white */
-  --color-text-secondary: #9ca3af; /* gray-400 — 7.0:1 */
-  --color-text-tertiary: #6b7280; /* gray-500 — 4.8:1 */
+  --color-text-secondary: #a8afbb; /* lightened for readability on dark surfaces */
+  --color-text-tertiary: #8b929e; /* lightened — clears AA 4.5:1 on navy surface */
   --color-text-inverse: #050505; /* on teal/white surfaces */
 
-  /* Border Colors (charcoal) */
-  --color-border: #1a1a1a; /* border-gray */
-  --color-border-subtle: #141414;
-  --color-border-strong: #262626;
+  /* Border Colors (navy/slate — raised for visible card outlines) */
+  --color-border: #2c3b57; /* visible outline against cards + canvas */
+  --color-border-subtle: #1c2842;
+  --color-border-strong: #3c4c69;
 
-  /* Primary Colors (bright teal accent #00F5D4) */
-  --color-primary: #00f5d4; /* teal accent — ~13:1 on #050505 */
-  --color-primary-hover: #5cf7e3; /* lighter teal */
-  --color-primary-active: #00d9bd; /* deeper teal */
-  --color-primary-muted: rgba(0, 245, 212, 0.1); /* teal-accent/10 */
+  /* Primary Colors (OpenPrime brand teal — teal-400 for dark) */
+  --color-primary: #2dd4bf; /* teal-400 — brand (matches site/Keycloak) */
+  --color-primary-hover: #5eead4; /* teal-300 */
+  --color-primary-active: #99f6e4; /* teal-200 */
+  --color-primary-muted: rgba(45, 212, 191, 0.12); /* teal-400/12 */
 
   /* Accent Colors (teal) */
-  --color-accent: #00f5d4;
-  --color-accent-hover: #5cf7e3;
-  --color-accent-muted: rgba(0, 245, 212, 0.1);
+  --color-accent: #2dd4bf;
+  --color-accent-hover: #5eead4;
+  --color-accent-muted: rgba(45, 212, 191, 0.12);
+  --color-ring: rgba(45, 212, 191, 0.35); /* teal-400 focus ring */
 
   /* Status Colors (InfraFlow status palette) */
   --color-success: #10b981; /* emerald-500 */
@@ -207,7 +209,7 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(0, 245, 212, 0.18); /* InfraFlow teal focus ring */
+  box-shadow: 0 0 0 3px var(--color-ring); /* brand teal focus ring */
 }
 
 input::placeholder,
@@ -262,10 +264,10 @@ label {
   border-radius: 9999px;
 }
 
-/* ---------- InfraFlow teal progress bar (glow) ---------- */
+/* ---------- teal progress bar (glow) ---------- */
 .progress-glow {
   background: var(--color-primary);
-  box-shadow: 0 0 10px rgba(0, 245, 212, 0.5);
+  box-shadow: 0 0 10px rgba(45, 212, 191, 0.5);
 }
 
 /* ---------- Buttons — InfraFlow style ----------
@@ -280,14 +282,14 @@ label {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  min-height: 40px;
-  padding: 10px 22px;
+  min-height: 44px;
+  padding: 12px 24px;
   font-size: 0.84375rem; /* 13.5px */
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.01em;
   border: none;
-  border-radius: 9999px; /* InfraFlow pill */
+  border-radius: 0.75rem; /* InfraFlow rounded-xl (12px) */
   cursor: pointer;
   box-shadow: none;
   transition:
@@ -298,13 +300,13 @@ label {
     color 0.15s ease;
 }
 
-/* Primary (light default) — bright teal fill, near-black text */
+/* Primary (light default) — brand teal fill, white text */
 .btn-op-primary {
-  color: #050505;
-  background: #00f5d4;
+  color: #ffffff;
+  background: var(--color-primary);
 }
 .btn-op-primary:hover {
-  background: #0d9488;
+  background: var(--color-primary-hover);
   color: #ffffff;
 }
 .btn-op-primary:active {
@@ -312,17 +314,17 @@ label {
 }
 .btn-op-primary:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 245, 212, 0.3);
+  box-shadow: 0 0 0 3px var(--color-ring);
 }
 
-/* Primary (dark) — InfraFlow signature: white resting → teal on hover */
+/* Primary (dark) — white resting → brand teal on hover */
 .dark .btn-op-primary {
-  color: #050505;
+  color: #0a0f1a;
   background: #ffffff;
 }
 .dark .btn-op-primary:hover {
-  color: #050505;
-  background: #00f5d4;
+  color: #0a0f1a;
+  background: var(--color-primary);
 }
 
 /* Secondary — subtle ghost with border (Previous / Back) */
@@ -340,7 +342,7 @@ label {
 }
 .btn-op-secondary:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 245, 212, 0.3);
+  box-shadow: 0 0 0 3px var(--color-ring);
 }
 
 /* Danger — red gradient (white text, for Delete) */

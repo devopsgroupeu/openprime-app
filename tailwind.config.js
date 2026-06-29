@@ -70,16 +70,16 @@ module.exports = {
         smooth: "smooth",
         auto: "auto",
       },
-      // Teal gradients — InfraFlow accent family (#00F5D4 bright teal).
+      // Teal gradients — OpenPrime brand teal family (#2dd4bf teal-400).
       backgroundImage: {
         "openprime-gradient":
-          "linear-gradient(135deg, #00F5D4 0%, #0d9488 50%, #0f766e 100%)",
+          "linear-gradient(135deg, #2dd4bf 0%, #0d9488 50%, #0f766e 100%)",
         "openprime-teal-gradient":
-          "linear-gradient(135deg, #00F5D4 0%, #0d9488 100%)",
+          "linear-gradient(135deg, #2dd4bf 0%, #0d9488 100%)",
         "openprime-primary-gradient":
-          "linear-gradient(135deg, #00F5D4 0%, #0f766e 100%)",
+          "linear-gradient(135deg, #2dd4bf 0%, #0f766e 100%)",
         "openprime-accent-gradient":
-          "linear-gradient(135deg, #5cf7e3 0%, #00F5D4 100%)",
+          "linear-gradient(135deg, #5eead4 0%, #2dd4bf 100%)",
         "surface-gradient":
           "linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-elevated) 100%)",
       },

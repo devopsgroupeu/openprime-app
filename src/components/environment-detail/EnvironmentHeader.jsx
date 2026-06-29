@@ -1,4 +1,13 @@
-import { Edit2, Trash2, MapPin, Key, Package, GitBranch } from "lucide-react";
+import { useNavigate } from "react-router";
+import {
+  ArrowLeft,
+  Edit2,
+  Trash2,
+  MapPin,
+  Key,
+  Package,
+  GitBranch,
+} from "lucide-react";
 import ProviderIcon, { isBrandedProvider } from "../icons/ProviderIcon";
 
 const EnvironmentHeader = ({
@@ -12,6 +21,7 @@ const EnvironmentHeader = ({
   isPushing,
   canPush,
 }) => {
+  const navigate = useNavigate();
   const branded = isBrandedProvider(environment.provider);
 
   const getStatusColor = (status) => {
@@ -27,61 +37,56 @@ const EnvironmentHeader = ({
   return (
     <div className="border-b border-border">
       <div className="px-8 py-6">
+        <button
+          onClick={() => navigate("/environments")}
+          className="flex items-center gap-1.5 mb-3 text-[10px] font-bold uppercase tracking-wider text-tertiary hover:text-primary transition-colors"
+        >
+          <ArrowLeft className="w-3 h-3" />
+          Back to Environments
+        </button>
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                branded
-                  ? "bg-background border border-border"
-                  : "bg-primary-muted"
-              }`}
-            >
-              <ProviderIcon
-                provider={environment.provider}
-                className={`w-5 h-5 ${branded ? "text-[#FF9900]" : "text-accent"}`}
-              />
-            </div>
-            <div>
-              <h1 className="text-3xl font-extrabold text-primary">
-                {environment.name}
-              </h1>
-              <div className="flex items-center space-x-4 mt-1">
+          <div>
+            <h1 className="text-4xl font-extrabold text-primary">
+              {environment.name}
+            </h1>
+            <div className="flex items-center space-x-4 mt-1">
+              <span className="flex items-center gap-1.5 text-sm text-secondary">
+                <ProviderIcon
+                  provider={environment.provider}
+                  className={`w-4 h-4 ${branded ? "text-[#FF9900]" : "text-accent"}`}
+                />
+                {providerConfig?.name || environment.provider}
+              </span>
+              <div className="flex items-center space-x-1">
+                <MapPin className="w-4 h-4 text-tertiary" />
                 <span className="text-sm text-secondary">
-                  {providerConfig?.name || environment.provider}
+                  {environment.region}
                 </span>
+              </div>
+              {environment.cloudCredential && (
                 <div className="flex items-center space-x-1">
-                  <MapPin className="w-4 h-4 text-tertiary" />
+                  <Key className="w-4 h-4 text-tertiary" />
                   <span className="text-sm text-secondary">
-                    {environment.region}
+                    {environment.cloudCredential.name} (
+                    {environment.cloudCredential.identifier})
                   </span>
                 </div>
-                {environment.cloudCredential && (
-                  <div className="flex items-center space-x-1">
-                    <Key className="w-4 h-4 text-tertiary" />
-                    <span className="text-sm text-secondary">
-                      {environment.cloudCredential.name} (
-                      {environment.cloudCredential.identifier})
-                    </span>
-                  </div>
+              )}
+              <div
+                className={`status-badge ${getStatusColor(environment.status)}`}
+              >
+                {(environment.status === "running" ||
+                  environment.status === "pending") && (
+                  <span
+                    className={`status-dot animate-pulse ${
+                      environment.status === "running"
+                        ? "bg-success"
+                        : "bg-warning"
+                    }`}
+                  />
                 )}
-                <div
-                  className={`status-badge ${getStatusColor(
-                    environment.status,
-                  )}`}
-                >
-                  {(environment.status === "running" ||
-                    environment.status === "pending") && (
-                    <span
-                      className={`status-dot animate-pulse ${
-                        environment.status === "running"
-                          ? "bg-success"
-                          : "bg-warning"
-                      }`}
-                    />
-                  )}
-                  {environment.status.charAt(0).toUpperCase() +
-                    environment.status.slice(1)}
-                </div>
+                {environment.status.charAt(0).toUpperCase() +
+                  environment.status.slice(1)}
               </div>
             </div>
           </div>

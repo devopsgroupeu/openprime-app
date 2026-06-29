@@ -5,6 +5,7 @@ import { useToast } from "../contexts/ToastContext";
 import authService from "../services/authService";
 import CloudCredentialModal from "./modals/CloudCredentialModal";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
+import { getProviderRegions } from "../config/providersConfig";
 
 const SettingsPage = () => {
   const toast = useToast();
@@ -175,9 +176,7 @@ const SettingsPage = () => {
           <div className="flex items-center justify-center min-h-[50vh]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-lg font-poppins text-primary">
-                Loading settings...
-              </p>
+              <p className="text-lg text-primary">Loading settings...</p>
             </div>
           </div>
         </div>
@@ -195,7 +194,7 @@ const SettingsPage = () => {
     <button
       onClick={saveSettings}
       disabled={saving}
-      className="btn-op-primary transition-all"
+      className="btn-op-primary transition-all self-start sm:self-auto"
     >
       {saving ? (
         <>
@@ -205,7 +204,7 @@ const SettingsPage = () => {
       ) : (
         <>
           <Save className="w-4 h-4 mr-2" />
-          Save All Settings
+          Save Changes
         </>
       )}
     </button>
@@ -214,11 +213,14 @@ const SettingsPage = () => {
   return (
     <div className="transition-colors bg-transparent">
       <div className="px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-extrabold text-primary">Settings</h1>
-          <p className="text-secondary mt-1">
-            Manage your account and platform preferences.
-          </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-8">
+          <div>
+            <h1 className="text-4xl font-extrabold text-primary">Settings</h1>
+            <p className="text-secondary mt-1">
+              Manage your account and platform preferences.
+            </p>
+          </div>
+          {activeTab !== "credentials" && saveButton}
         </div>
 
         <div className="flex flex-col md:flex-row gap-8">
@@ -231,10 +233,10 @@ const SettingsPage = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium border-l-2 transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
                     isActive
-                      ? "border-primary bg-primary-muted text-primary"
-                      : "border-transparent text-secondary hover:text-primary hover:bg-surface-elevated"
+                      ? "bg-primary-muted text-primary"
+                      : "text-secondary hover:text-primary hover:bg-surface-elevated"
                   }`}
                 >
                   <Icon className="w-5 h-5" />
@@ -249,9 +251,8 @@ const SettingsPage = () => {
             <div className="rounded-2xl border border-border bg-surface p-6">
               {activeTab === "account" && (
                 <div className="space-y-4">
-                  <p className="section-label">User Profile</p>
                   <div>
-                    <label className="block text-sm font-medium font-poppins mb-2 transition-colors text-secondary">
+                    <label className="block text-sm font-semibold text-label mb-2">
                       First Name
                     </label>
                     <input
@@ -260,12 +261,12 @@ const SettingsPage = () => {
                       onChange={(e) =>
                         handleProfileChange("firstName", e.target.value)
                       }
-                      className="w-full px-4 py-2 rounded-lg border transition-colors bg-background-secondary border-border text-primary"
+                      className="w-full px-4 py-2.5 transition-colors"
                       placeholder="Enter your first name"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2 transition-colors text-secondary">
+                    <label className="block text-sm font-semibold text-label mb-2">
                       Last Name
                     </label>
                     <input
@@ -274,12 +275,12 @@ const SettingsPage = () => {
                       onChange={(e) =>
                         handleProfileChange("lastName", e.target.value)
                       }
-                      className="w-full px-4 py-2 rounded-lg border transition-colors bg-background-secondary border-border text-primary"
+                      className="w-full px-4 py-2.5 transition-colors"
                       placeholder="Enter your last name"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2 transition-colors text-secondary">
+                    <label className="block text-sm font-semibold text-label mb-2">
                       Email
                     </label>
                     <input
@@ -288,21 +289,17 @@ const SettingsPage = () => {
                       onChange={(e) =>
                         handleProfileChange("email", e.target.value)
                       }
-                      className="w-full px-4 py-2 rounded-lg border transition-colors bg-background-secondary border-border text-primary"
+                      className="w-full px-4 py-2.5 transition-colors"
                       placeholder="Enter your email"
                     />
-                  </div>
-                  <div className="pt-4 flex justify-end border-t border-border">
-                    {saveButton}
                   </div>
                 </div>
               )}
 
               {activeTab === "preferences" && (
                 <div className="space-y-4">
-                  <p className="section-label">Preferences</p>
                   <div>
-                    <label className="block text-sm font-medium mb-2 transition-colors text-secondary">
+                    <label className="block text-sm font-semibold text-label mb-2">
                       Default Cloud Provider
                     </label>
                     <select
@@ -313,7 +310,7 @@ const SettingsPage = () => {
                           e.target.value,
                         )
                       }
-                      className="w-full px-4 py-2 rounded-lg border transition-colors bg-background-secondary border-border text-primary"
+                      className="w-full px-4 py-2.5 transition-colors"
                     >
                       <option value="aws">AWS</option>
                       <option value="azure">Azure</option>
@@ -322,21 +319,24 @@ const SettingsPage = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2 transition-colors text-secondary">
+                    <label className="block text-sm font-semibold text-label mb-2">
                       Default Region
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={userPreferences.defaultRegion}
                       onChange={(e) =>
                         handlePreferenceChange("defaultRegion", e.target.value)
                       }
-                      className="w-full px-4 py-2 rounded-lg border transition-colors bg-background-secondary border-border text-primary"
-                      placeholder="us-east-1"
-                    />
-                  </div>
-                  <div className="pt-4 flex justify-end border-t border-border">
-                    {saveButton}
+                      className="w-full px-4 py-2.5 transition-colors"
+                    >
+                      {getProviderRegions(userPreferences.defaultProvider).map(
+                        (region) => (
+                          <option key={region.value} value={region.value}>
+                            {region.label}
+                          </option>
+                        ),
+                      )}
+                    </select>
                   </div>
                 </div>
               )}

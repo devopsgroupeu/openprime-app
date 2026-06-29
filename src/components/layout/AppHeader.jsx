@@ -15,7 +15,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import openPrimeLogoBlack from "../../assets/openprime-logo-color-black.svg";
 import openPrimeLogoWhite from "../../assets/openprime-logo-color-white.svg";
 
-const DOCS_URL = "https://openprime.io";
+const DOCS_URL = "https://docs.openprime.io";
 
 const AppHeader = ({ onMenuClick }) => {
   const { isDark, toggleTheme } = useTheme();
@@ -35,7 +35,7 @@ const AppHeader = ({ onMenuClick }) => {
 
   return (
     <header
-      className="sticky top-0 z-40 h-16 border-b border-border bg-surface/80 backdrop-blur-md"
+      className="sticky top-0 z-40 h-20 border-b border-border bg-surface/80 backdrop-blur-md"
       role="banner"
     >
       <div className="h-full px-6 flex items-center justify-between">

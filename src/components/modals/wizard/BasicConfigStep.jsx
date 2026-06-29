@@ -135,16 +135,6 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h3 className="text-xl font-bold mb-2 text-primary">
-          Let&apos;s start with the basics
-        </h3>
-        <p className="text-sm text-secondary">
-          Choose your environment name, cloud provider, and deployment region
-        </p>
-      </div>
-
       {/* Environment Name */}
       <div className="p-6 rounded-2xl border bg-surface border-border">
         <div className="flex items-center mb-4">
@@ -156,7 +146,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
         </div>
         <input
           type="text"
-          className={`w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 text-lg bg-background text-primary focus:border-primary focus:ring-primary-muted ${
+          className={`w-full px-4 py-3 text-lg transition-colors ${
             getFieldError("name") ? "border-danger" : "border-border"
           }`}
           placeholder="e.g., production, staging, development"
@@ -191,7 +181,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
         </div>
         <input
           type="text"
-          className={`w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 text-lg bg-background text-primary focus:border-primary focus:ring-primary-muted ${
+          className={`w-full px-4 py-3 text-lg transition-colors ${
             getFieldError("globalPrefix") ? "border-danger" : "border-border"
           }`}
           placeholder="e.g., myapp-, prod-, company-"
@@ -249,47 +239,24 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
               key={provider.value}
               onClick={() => handleProviderChange(provider.value)}
               disabled={!provider.enabled}
-              className={`group p-4 rounded-xl border-2 transition-all ${
-                provider.enabled ? "" : "cursor-not-allowed opacity-50"
-              } ${
+              className={`flex flex-col items-center justify-center gap-2.5 p-5 rounded-xl border-2 transition-all ${
                 newEnv.provider === provider.value
-                  ? "border-primary bg-primary-muted text-primary"
+                  ? "border-primary text-accent"
                   : provider.enabled
-                    ? "border-border bg-background text-secondary hover:border-primary/50"
-                    : "border-border bg-background-secondary text-tertiary"
+                    ? "border-border text-secondary hover:border-primary/50 hover:text-primary"
+                    : "border-border text-tertiary cursor-not-allowed opacity-50"
               }`}
             >
-              <div className="text-center">
-                <div
-                  className={`w-10 h-10 mx-auto mb-2 rounded-xl flex items-center justify-center transition-colors ${
-                    newEnv.provider === provider.value
-                      ? "bg-primary text-inverse"
-                      : provider.enabled
-                        ? "bg-background text-tertiary group-hover:bg-primary-muted group-hover:text-accent"
-                        : "bg-background-secondary text-tertiary"
-                  }`}
-                >
-                  <ProviderIcon
-                    provider={provider.value}
-                    className={`w-5 h-5 ${provider.value === "aws" ? "text-[#FF9900]" : ""}`}
-                  />
-                </div>
-                <div className="text-sm font-medium">{provider.name}</div>
-                <div className="text-xs mt-1 text-tertiary">
-                  {provider.value === "aws"
-                    ? "Amazon Web Services"
-                    : provider.value === "azure"
-                      ? "Microsoft Azure"
-                      : provider.value === "gcp"
-                        ? "Google Cloud Platform"
-                        : "Self-managed"}
-                  {!provider.enabled && (
-                    <span className="block text-xs mt-1 font-medium text-warning">
-                      Disabled
-                    </span>
-                  )}
-                </div>
-              </div>
+              <ProviderIcon
+                provider={provider.value}
+                className={`w-7 h-7 ${provider.value === "aws" ? "text-[#FF9900]" : ""}`}
+              />
+              <span className="text-sm font-bold">{provider.name}</span>
+              {!provider.enabled && (
+                <span className="text-[10px] font-bold uppercase tracking-wider text-warning">
+                  Disabled
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -312,7 +279,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
           ) : credentials.length > 0 ? (
             <div>
               <select
-                className="w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 text-lg bg-background border-border text-primary focus:border-primary focus:ring-primary-muted"
+                className="w-full px-4 py-3 text-lg transition-colors"
                 value={newEnv.cloudCredentialId || ""}
                 onChange={(e) =>
                   setNewEnv({
@@ -357,7 +324,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
         {newEnv.provider && PROVIDERS[newEnv.provider] ? (
           <div>
             <select
-              className="w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 text-lg bg-background border-border text-primary focus:border-primary focus:ring-primary-muted"
+              className="w-full px-4 py-3 text-lg transition-colors"
               value={newEnv.region}
               onChange={(e) => setNewEnv({ ...newEnv, region: e.target.value })}
             >
@@ -408,9 +375,9 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                   })
                 }
               />
-              <div className="w-11 h-6 rounded-full peer transition-colors bg-background-secondary peer-checked:bg-primary">
+              <div className="w-11 h-6 rounded-full peer transition-colors bg-border-strong peer-checked:bg-primary">
                 <div
-                  className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full transition-transform ${
+                  className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full shadow transition-transform ${
                     newEnv.terraformBackend?.enabled ? "translate-x-5" : ""
                   }`}
                 ></div>
@@ -520,7 +487,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                   </label>
                   <input
                     type="text"
-                    className="w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 bg-background border-border text-primary focus:border-primary focus:ring-primary-muted"
+                    className="w-full px-4 py-2 transition-colors"
                     placeholder="e.g., my-terraform-state-bucket"
                     value={newEnv.terraformBackend?.bucketName || ""}
                     onChange={(e) =>
@@ -625,9 +592,9 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                 })
               }
             />
-            <div className="w-11 h-6 rounded-full peer transition-colors bg-background-secondary peer-checked:bg-primary">
+            <div className="w-11 h-6 rounded-full peer transition-colors bg-border-strong peer-checked:bg-primary">
               <div
-                className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full transition-transform ${
+                className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full shadow transition-transform ${
                   newEnv.gitRepository?.enabled ? "translate-x-5" : ""
                 }`}
               ></div>
@@ -648,7 +615,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
               </label>
               <input
                 type="text"
-                className="w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 bg-background border-border text-primary focus:border-primary focus:ring-primary-muted"
+                className="w-full px-4 py-2 transition-colors"
                 placeholder="git@github.com:organization/repository.git"
                 value={newEnv.gitRepository?.url || ""}
                 onChange={(e) =>
@@ -672,7 +639,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
               </label>
               <input
                 type="text"
-                className="w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 bg-background border-border text-primary focus:border-primary focus:ring-primary-muted"
+                className="w-full px-4 py-2 transition-colors"
                 placeholder="main"
                 value={newEnv.gitRepository?.branch || ""}
                 onChange={(e) =>
@@ -696,7 +663,7 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
                 SSH Private Key (Deploy Key)
               </label>
               <textarea
-                className="w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 font-mono text-xs bg-background border-border text-primary focus:border-primary focus:ring-primary-muted"
+                className="w-full px-4 py-2 font-mono text-xs transition-colors"
                 placeholder="Paste your SSH private key here (PEM format)"
                 rows={8}
                 value={newEnv.gitRepository?.sshKey || ""}

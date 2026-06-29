@@ -36,7 +36,7 @@ const AppSidebar = ({ mobileOpen, onClose }) => (
   <>
     {/* Desktop — static rail */}
     <aside
-      className="hidden lg:flex flex-col w-64 shrink-0 border-r border-border bg-surface/40 sticky top-16 h-[calc(100vh-4rem)]"
+      className="hidden lg:flex flex-col w-64 shrink-0 border-r border-border bg-surface/40 sticky top-20 h-[calc(100vh-5rem)]"
       aria-label="Primary navigation"
     >
       <NavList />
@@ -53,7 +53,7 @@ const AppSidebar = ({ mobileOpen, onClose }) => (
           className="absolute left-0 top-0 h-full w-64 bg-surface border-r border-border shadow-elevation-4 animate-slide-up"
           aria-label="Primary navigation"
         >
-          <div className="flex items-center justify-between px-4 h-16 border-b border-border">
+          <div className="flex items-center justify-between px-4 h-20 border-b border-border">
             <span className="section-label">Menu</span>
             <button
               onClick={onClose}

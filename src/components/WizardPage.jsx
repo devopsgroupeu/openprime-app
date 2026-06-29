@@ -79,6 +79,8 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [validationErrors, setValidationErrors] = useState([]);
+  // Errors stay hidden until the user actually tries to advance a step.
+  const [showErrors, setShowErrors] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [aiChatModal, setAiChatModal] = useState({
     isOpen: false,
@@ -173,6 +175,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
 
   const handleStepChange = (stepNumber) => {
     if (stepNumber <= currentStep || completedSteps.has(stepNumber)) {
+      setShowErrors(false);
       setCurrentStep(stepNumber);
     }
   };
@@ -232,6 +235,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
 
   const handleNext = () => {
     if (!canGoNext) {
+      setShowErrors(true);
       if (validationErrors.length > 0) {
         error(`Validation Error: ${validationErrors[0].message}`, {
           title: "Configuration Invalid",
@@ -240,12 +244,14 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       }
       return;
     }
+    setShowErrors(false);
     setCompletedSteps((prev) => new Set([...prev, currentStep]));
     if (currentStep < totalSteps) setCurrentStep(currentStep + 1);
   };
 
   const handlePrevious = () => {
     if (currentStep > 1 && !(isEditMode && currentStep === 2)) {
+      setShowErrors(false);
       setCurrentStep(currentStep - 1);
     }
   };
@@ -292,9 +298,13 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
           <BasicConfigStep
             newEnv={newEnv}
             setNewEnv={setNewEnv}
-            validationErrors={validationErrors.filter((e) =>
-              ["name", "provider", "region"].includes(e.field),
-            )}
+            validationErrors={
+              showErrors
+                ? validationErrors.filter((e) =>
+                    ["name", "provider", "region"].includes(e.field),
+                  )
+                : []
+            }
           />
         );
       case "services":
@@ -305,9 +315,13 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
             expandedServices={expandedServices}
             setExpandedServices={setExpandedServices}
             onAskAI={handleAskAI}
-            validationErrors={validationErrors.filter(
-              (e) => !["name", "provider", "region"].includes(e.field),
-            )}
+            validationErrors={
+              showErrors
+                ? validationErrors.filter(
+                    (e) => !["name", "provider", "region"].includes(e.field),
+                  )
+                : []
+            }
           />
         );
       case "helm":
@@ -355,7 +369,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       <AppHeader />
       <div className="flex flex-1 min-h-0">
         {/* Wizard steps sidebar */}
-        <aside className="hidden lg:flex w-72 shrink-0 flex-col border-r border-border bg-surface/40 p-6 sticky top-16 h-[calc(100vh-4rem)]">
+        <aside className="hidden lg:flex w-72 shrink-0 flex-col border-r border-border bg-surface/40 p-6 sticky top-20 h-[calc(100vh-5rem)]">
           <p className="section-label mb-4">Provisioning Process</p>
           <nav className="space-y-2">
             {steps.map((step) => {
@@ -368,7 +382,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                   key={step.number}
                   onClick={() => isClickable && handleStepChange(step.number)}
                   disabled={!isClickable}
-                  className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors ${
+                  className={`flex w-full items-start gap-3 rounded-lg border-l-2 p-3 text-left transition-colors ${
                     isActive
                       ? "border-primary bg-primary-muted"
                       : "border-transparent hover:bg-surface-elevated"
@@ -391,7 +405,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                   </span>
                   <span className="min-w-0">
                     <span
-                      className={`block text-sm font-semibold ${isActive ? "text-primary" : "text-secondary"}`}
+                      className={`block text-sm font-semibold ${isActive ? "accent-teal" : "text-secondary"}`}
                     >
                       {step.title}
                     </span>
@@ -430,7 +444,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
             <div className="px-8 py-8">
               <div className="mb-6">
                 <div className="flex items-center justify-between gap-4">
-                  <h1 className="text-3xl font-extrabold text-primary">
+                  <h1 className="text-4xl font-extrabold text-primary">
                     {isEditMode ? "Edit Environment" : "Create New Environment"}
                   </h1>
                   {!isEditMode && savedAt && (
@@ -446,7 +460,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
             </div>
           </div>
 
-          <div className="shrink-0 flex items-center justify-between border-t border-border bg-surface px-8 py-4">
+          <div className="sticky bottom-0 z-20 shrink-0 flex items-center justify-between border-t border-border bg-surface px-8 py-4">
             <button
               onClick={() =>
                 currentStep === 1 ? navigate("/environments") : handlePrevious()
@@ -495,7 +509,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
         </main>
 
         {/* AI assistant */}
-        <aside className="hidden xl:block w-96 shrink-0 border-l border-border p-4 sticky top-16 h-[calc(100vh-4rem)]">
+        <aside className="hidden xl:block w-96 shrink-0 border-l border-border p-4 sticky top-20 h-[calc(100vh-5rem)]">
           <WizardAssistant
             context={{
               name: newEnv.name,

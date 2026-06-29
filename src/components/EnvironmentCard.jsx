@@ -35,7 +35,7 @@ const STATUS_FALLBACK = {
   dot: "bg-border-strong",
 };
 
-const EnvironmentCard = ({ environment, onClick }) => {
+const EnvironmentCard = ({ environment, onClick, onEdit }) => {
   const status = environment.status || "stopped";
   const { badge, dot } = STATUS_STYLES[status] || STATUS_FALLBACK;
   const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
@@ -68,9 +68,16 @@ const EnvironmentCard = ({ environment, onClick }) => {
               className={`w-5 h-5 ${branded ? "text-[#FF9900]" : "text-accent"}`}
             />
           </div>
-          <h3 className="text-lg font-extrabold text-primary transition-colors group-hover:accent-teal">
-            {environment.name}
-          </h3>
+          <div>
+            <h3 className="text-lg font-extrabold text-primary transition-colors group-hover:accent-teal">
+              {environment.name}
+            </h3>
+            {(environment.globalPrefix || environment.global_prefix) && (
+              <p className="text-xs font-mono text-tertiary">
+                {environment.globalPrefix || environment.global_prefix}
+              </p>
+            )}
+          </div>
         </div>
         <span className={`status-badge ${badge}`}>
           <span className={`status-dot ${dot}`} />
@@ -96,9 +103,21 @@ const EnvironmentCard = ({ environment, onClick }) => {
           <Clock className="w-3.5 h-3.5" />
           <span>Modified {modified}</span>
         </div>
-        <span className="flex items-center gap-1 text-xs font-bold text-secondary transition-colors group-hover:text-primary">
-          View <ArrowRight className="w-3.5 h-3.5" />
-        </span>
+        <div className="flex items-center gap-2 text-xs font-bold text-secondary">
+          <span className="flex items-center gap-1 transition-colors group-hover:text-primary">
+            View <ArrowRight className="w-3.5 h-3.5" />
+          </span>
+          <span className="text-border-strong">·</span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit?.(environment);
+            }}
+            className="transition-colors hover:text-primary"
+          >
+            Edit
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,43 +1,8 @@
-import { useState } from "react";
-import {
-  Database,
-  Network,
-  Container,
-  Archive,
-  Shield,
-  Box,
-  Lock,
-  Package,
-  ChevronDown,
-  ChevronRight,
-  Copy,
-  Info,
-} from "lucide-react";
-import { useTheme } from "../../contexts/ThemeContext";
-import { useToast } from "../../contexts/ToastContext";
+import { Box, ChevronDown, ChevronRight } from "lucide-react";
 import { getServiceConfig } from "../../config/servicesConfig";
+import { getServiceIcon } from "../../config/serviceIcons";
 
-const ServicesList = ({ environment }) => {
-  const { isDark } = useTheme();
-  const { success } = useToast();
-  const [expandedServices, setExpandedServices] = useState({});
-
-  const getServiceIcon = (serviceName) => {
-    const icons = {
-      vpc: Network,
-      eks: Container,
-      rds: Database,
-      s3: Archive,
-      ecr: Package,
-      opensearch: Database,
-      lambda: Box,
-      elasticache: Database,
-      secretsmanager: Lock,
-      iam: Shield,
-    };
-    return icons[serviceName] || Box;
-  };
-
+const ServicesList = ({ environment, expandedServices, onToggleService }) => {
   // const getServiceStatus = (serviceConfig) => {
   //   if (!serviceConfig?.enabled) return 'disabled';
   //   return 'enabled';
@@ -53,27 +18,6 @@ const ServicesList = ({ environment }) => {
   const enabledServices = Object.entries(environment.services || {})
     .filter(([_, config]) => config?.enabled)
     .sort(([a], [b]) => a.localeCompare(b));
-
-  const toggleServiceExpansion = (serviceName) => {
-    setExpandedServices((prev) => ({
-      ...prev,
-      [serviceName]: !prev[serviceName],
-    }));
-  };
-
-  const copyConfiguration = (config, serviceName) => {
-    const configText = JSON.stringify(config, null, 2);
-    navigator.clipboard
-      .writeText(configText)
-      .then(() => {
-        success(
-          `${serviceName.toUpperCase()} configuration copied to clipboard`,
-        );
-      })
-      .catch(() => {
-        success("Failed to copy configuration");
-      });
-  };
 
   const formatConfigValue = (value) => {
     if (typeof value === "boolean") return value.toString();
@@ -106,204 +50,138 @@ const ServicesList = ({ environment }) => {
       .slice(0, 4);
   };
 
+  const humanizeKey = (key) =>
+    key
+      .replace(/_/g, " ")
+      .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+
+  // Build a compact, human chip for the collapsed summary line.
+  const summaryChip = (key, value) => {
+    if (value === false || value === null || value === undefined) return null;
+    if (key.toLowerCase() === "version") return `v${value}`;
+    if (value === true) return humanizeKey(key).replace(/^Enable\s+/, "");
+    if (typeof value === "number") return `${value} ${humanizeKey(key)}`;
+    if (typeof value === "object") return null;
+    return String(value);
+  };
+
   const ServiceItem = ({ serviceName, serviceConfig }) => {
     const serviceDefinition = getServiceConfig(serviceName);
     const IconComponent = getServiceIcon(serviceName);
     const isExpanded = expandedServices[serviceName];
     const importantAttrs = getImportantAttributes(serviceConfig, serviceName);
+    const allAttrs = Object.entries(serviceConfig).filter(
+      ([key]) => key !== "enabled" && key !== "helmCharts",
+    );
+    const summary = importantAttrs
+      .map(([key, value]) => summaryChip(key, value))
+      .filter(Boolean)
+      .join(" · ");
 
     return (
-      <div className="rounded-2xl border bg-surface border-border transition-all duration-200 hover:shadow-lg">
-        {/* Header */}
-        <div className="p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 rounded-lg bg-primary-muted border border-primary">
-                <IconComponent className="w-6 h-6 text-accent" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-1">
-                  <h4 className="text-lg font-bold text-primary">
-                    {serviceDefinition?.displayName ||
-                      serviceName.toUpperCase()}
-                  </h4>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-success-muted text-success">
-                    <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                    Active
-                  </span>
-                </div>
-                <p className="text-sm text-secondary">
-                  {serviceDefinition?.description ||
-                    "AWS service configuration"}
-                </p>
-              </div>
+      <div className="rounded-2xl border bg-surface border-border p-5 transition-all duration-200 hover:shadow-lg">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-3 rounded-lg bg-primary-muted border border-primary shrink-0">
+              <IconComponent className="w-6 h-6 text-accent" />
             </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => copyConfiguration(serviceConfig, serviceName)}
-                className="p-2 rounded-lg transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated"
-                title="Copy configuration"
-              >
-                <Copy className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => toggleServiceExpansion(serviceName)}
-                className="p-2 rounded-lg transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated"
-              >
-                {isExpanded ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronRight className="w-4 h-4" />
-                )}
-              </button>
+            <div className="min-w-0">
+              <h4 className="text-lg font-bold text-primary truncate">
+                {serviceDefinition?.displayName || serviceName.toUpperCase()}
+              </h4>
+              <p className="text-xs text-tertiary truncate mt-0.5">
+                {summary ||
+                  serviceDefinition?.description ||
+                  "AWS service configuration"}
+              </p>
             </div>
           </div>
-
-          {/* Quick Overview - Important Attributes */}
-          {importantAttrs.length > 0 && (
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              {importantAttrs.map(([key, value]) => (
-                <div
-                  key={key}
-                  className="p-3 rounded-lg border bg-background border-border"
-                >
-                  <div className="section-label mb-1">
-                    {key
-                      .replace(/([A-Z])/g, " $1")
-                      .replace(/^./, (str) => str.toUpperCase())}
-                  </div>
-                  <div className="text-sm font-mono text-primary">
-                    {formatConfigValue(value).length > 30
-                      ? formatConfigValue(value).substring(0, 30) + "..."
-                      : formatConfigValue(value)}
-                  </div>
-                </div>
-              ))}
-            </div>
+          {allAttrs.length > 0 && (
+            <button
+              onClick={() => onToggleService(serviceName)}
+              aria-label={
+                isExpanded ? "Collapse configuration" : "Expand configuration"
+              }
+              className="p-2 -mr-1 rounded-lg shrink-0 transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated"
+            >
+              {isExpanded ? (
+                <ChevronDown className="w-4 h-4" />
+              ) : (
+                <ChevronRight className="w-4 h-4" />
+              )}
+            </button>
           )}
         </div>
 
-        {/* Expanded Configuration */}
-        {isExpanded && (
-          <div className="border-t px-6 pb-6 border-border">
-            <div className={`flex items-center justify-between mb-4 pt-4`}>
-              <h5 className="text-sm font-semibold flex items-center space-x-2 text-secondary">
-                <Info className="w-4 h-4" />
-                <span>Complete Configuration</span>
-              </h5>
-              <span className="text-xs text-tertiary">
-                {Object.keys(serviceConfig).length - 1} attributes
-              </span>
-            </div>
-
-            <div
-              className={`max-h-80 overflow-y-auto space-y-3 ${
-                isDark ? "scrollbar-dark" : "scrollbar-light"
-              }`}
-            >
-              {Object.entries(serviceConfig)
-                .filter(([key]) => key !== "enabled")
-                .map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="p-3 rounded-lg border bg-surface border-border"
+        {isExpanded && allAttrs.length > 0 && (
+          <dl className="mt-4 pt-4 border-t border-border space-y-2.5">
+            {allAttrs.map(([key, value]) => {
+              const formatted = formatConfigValue(value);
+              const stacked =
+                (typeof value === "object" && value !== null) ||
+                formatted.length > 28;
+              return (
+                <div
+                  key={key}
+                  className={
+                    stacked ? "" : "flex items-baseline justify-between gap-4"
+                  }
+                >
+                  <dt className="text-xs text-tertiary shrink-0">
+                    {humanizeKey(key)}
+                  </dt>
+                  <dd
+                    className={
+                      stacked
+                        ? "mt-1 text-xs font-mono text-primary whitespace-pre-wrap break-words"
+                        : "text-sm font-mono text-primary text-right truncate"
+                    }
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <span className="text-sm font-medium text-secondary">
-                        {key
-                          .replace(/([A-Z])/g, " $1")
-                          .replace(/^./, (str) => str.toUpperCase())}
-                      </span>
-                      <span
-                        className={`text-xs px-2 py-1 rounded ${
-                          typeof value === "object"
-                            ? "bg-primary-muted text-primary"
-                            : typeof value === "boolean"
-                              ? "bg-primary-muted text-primary"
-                              : typeof value === "number"
-                                ? "bg-success-muted text-success"
-                                : "bg-background text-tertiary"
-                        }`}
-                      >
-                        {typeof value === "object" ? "Object" : typeof value}
-                      </span>
-                    </div>
-                    <pre className="text-xs font-mono p-2 rounded border overflow-x-auto bg-background border-border text-secondary">
-                      {formatConfigValue(value)}
-                    </pre>
-                  </div>
-                ))}
-            </div>
-          </div>
+                    {formatted}
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
         )}
       </div>
     );
   };
 
+  // Split into two fixed columns in DOM order (round-robin) so expanding one
+  // card grows only its own column — no height-based reshuffling, no row gaps.
+  const serviceColumns = [[], []];
+  enabledServices.forEach((entry, i) => serviceColumns[i % 2].push(entry));
+
   return (
-    <>
-      <style jsx>{`
-        .scrollbar-light {
-          scrollbar-width: thin;
-          scrollbar-color: #d1d5db #f9fafb;
-        }
-        .scrollbar-light::-webkit-scrollbar {
-          width: 6px;
-        }
-        .scrollbar-light::-webkit-scrollbar-track {
-          background: #f9fafb;
-          border-radius: 3px;
-        }
-        .scrollbar-light::-webkit-scrollbar-thumb {
-          background: #d1d5db;
-          border-radius: 3px;
-        }
-        .scrollbar-light::-webkit-scrollbar-thumb:hover {
-          background: #9ca3af;
-        }
-        .scrollbar-dark {
-          scrollbar-width: thin;
-          scrollbar-color: #4b5563 #1f2937;
-        }
-        .scrollbar-dark::-webkit-scrollbar {
-          width: 6px;
-        }
-        .scrollbar-dark::-webkit-scrollbar-track {
-          background: #1f2937;
-          border-radius: 3px;
-        }
-        .scrollbar-dark::-webkit-scrollbar-thumb {
-          background: #4b5563;
-          border-radius: 3px;
-        }
-        .scrollbar-dark::-webkit-scrollbar-thumb:hover {
-          background: #6b7280;
-        }
-      `}</style>
-      <div className="space-y-6">
-        {enabledServices.length > 0 ? (
-          <div className="space-y-6">
-            {enabledServices.map(([serviceName, serviceConfig]) => (
-              <ServiceItem
-                key={serviceName}
-                serviceName={serviceName}
-                serviceConfig={serviceConfig}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 text-secondary">
-            <Box className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <h3 className="text-lg font-medium mb-2 text-secondary">
-              No Services Enabled
-            </h3>
-            <p className="text-sm">
-              Enable services to see their configuration details here.
-            </p>
-          </div>
-        )}
-      </div>
-    </>
+    <div className="space-y-6">
+      {enabledServices.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          {serviceColumns.map((column, columnIndex) => (
+            <div key={columnIndex} className="space-y-4">
+              {column.map(([serviceName, serviceConfig]) => (
+                <ServiceItem
+                  key={serviceName}
+                  serviceName={serviceName}
+                  serviceConfig={serviceConfig}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12 text-secondary">
+          <Box className="w-16 h-16 mx-auto mb-4 opacity-50" />
+          <h3 className="text-lg font-medium mb-2 text-secondary">
+            No Services Enabled
+          </h3>
+          <p className="text-sm">
+            Enable services to see their configuration details here.
+          </p>
+        </div>
+      )}
+    </div>
   );
 };
 

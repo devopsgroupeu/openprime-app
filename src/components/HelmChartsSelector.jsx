@@ -100,7 +100,7 @@ const HelmChartsSelector = ({
                             handleChartToggle(chart.key, e.target.checked)
                           }
                         />
-                        <div className="w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all bg-background-secondary"></div>
+                        <div className="w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow after:rounded-full after:h-5 after:w-5 after:transition-all bg-border-strong"></div>
                       </label>
                       <div>
                         <div

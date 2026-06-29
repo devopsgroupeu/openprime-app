@@ -18,24 +18,32 @@ const HelmChartsList = ({ environment }) => {
 
   const HelmChartItem = ({ chartName, chartConfig }) => {
     return (
-      <div className="p-4 rounded-lg border bg-surface border-border transition-colors">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-primary-muted flex items-center justify-center">
-              <Package className="w-5 h-5 text-accent" />
+      <div className="rounded-2xl border bg-surface border-border p-6 transition-all hover:shadow-lg">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center space-x-4 min-w-0">
+            <div className="p-3 rounded-lg bg-primary-muted border border-primary shrink-0">
+              <Package className="w-6 h-6 text-accent" />
             </div>
-            <div>
-              <h4 className="font-medium capitalize text-primary">
+            <div className="min-w-0">
+              <h4 className="text-lg font-bold text-primary truncate">
                 {chartName}
               </h4>
-              <p className="text-sm text-secondary">
-                {chartConfig?.customValues
-                  ? "Custom values configured"
-                  : "Default configuration"}
+              <p className="text-sm text-secondary truncate">
+                {chartConfig?.namespace
+                  ? `Namespace: ${chartConfig.namespace}`
+                  : chartConfig?.customValues
+                    ? "Custom values configured"
+                    : "Default configuration"}
               </p>
             </div>
           </div>
-          {getStatusIcon(chartConfig?.enabled)}
+          {chartConfig?.version ? (
+            <span className="shrink-0 rounded-md border border-border bg-background px-2.5 py-1 font-mono text-xs text-tertiary">
+              v{chartConfig.version}
+            </span>
+          ) : (
+            getStatusIcon(chartConfig?.enabled)
+          )}
         </div>
       </div>
     );
@@ -53,28 +61,23 @@ const HelmChartsList = ({ environment }) => {
   return (
     <div className="space-y-6">
       {enabledCharts.length > 0 && (
-        <div>
-          <h3 className="text-lg font-bold mb-4 text-primary">
-            Installed Charts ({enabledCharts.length})
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {enabledCharts.map(([chartName, chartConfig]) => (
-              <HelmChartItem
-                key={chartName}
-                chartName={chartName}
-                chartConfig={chartConfig}
-              />
-            ))}
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          {enabledCharts.map(([chartName, chartConfig]) => (
+            <HelmChartItem
+              key={chartName}
+              chartName={chartName}
+              chartConfig={chartConfig}
+            />
+          ))}
         </div>
       )}
 
       {disabledCharts.length > 0 && (
         <div>
-          <h3 className="text-lg font-bold mb-4 text-secondary">
+          <h3 className="text-2xl font-extrabold mb-4 text-secondary">
             Available Charts ({disabledCharts.length})
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
             {disabledCharts.map(([chartName, chartConfig]) => (
               <HelmChartItem
                 key={chartName}

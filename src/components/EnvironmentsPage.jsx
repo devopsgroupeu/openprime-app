@@ -12,7 +12,7 @@ const EnvironmentsPage = ({ environments }) => {
       <div className="px-4 sm:px-8 py-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-8">
           <div>
-            <h1 className="text-3xl font-extrabold text-primary">
+            <h1 className="text-4xl font-extrabold text-primary">
               Environments
             </h1>
             <p className="text-secondary mt-1">
@@ -36,6 +36,9 @@ const EnvironmentsPage = ({ environments }) => {
                 environment={env}
                 onClick={(environment) =>
                   navigate(`/environments/${environment.id}`)
+                }
+                onEdit={(environment) =>
+                  navigate(`/environments/${environment.id}/edit`)
                 }
               />
             ))}

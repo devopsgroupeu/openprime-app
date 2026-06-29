@@ -1,6 +1,7 @@
 // src/components/DynamicServiceConfig.js
 import { ChevronDown, ChevronRight, MessageCircle } from "lucide-react";
 import { getServiceConfig } from "../config/servicesConfig";
+import { getServiceIcon } from "../config/serviceIcons";
 import DynamicFieldRenderer from "./DynamicFieldRenderer";
 
 const DynamicServiceConfig = ({
@@ -12,6 +13,7 @@ const DynamicServiceConfig = ({
   onAskAI,
 }) => {
   const serviceDefinition = getServiceConfig(serviceName);
+  const ServiceIcon = getServiceIcon(serviceName);
 
   if (!serviceDefinition) {
     return null;
@@ -47,8 +49,8 @@ const DynamicServiceConfig = ({
           ) : (
             <ChevronRight className="w-5 h-5 text-tertiary" />
           )}
-          <div className="w-10 h-10 rounded-xl bg-primary-muted flex items-center justify-center text-lg shrink-0">
-            {serviceDefinition.icon || "⚙️"}
+          <div className="w-10 h-10 rounded-xl bg-primary-muted flex items-center justify-center shrink-0">
+            <ServiceIcon className="w-5 h-5 text-accent" />
           </div>
           <div>
             <h3 className="font-bold text-primary">
@@ -89,7 +91,7 @@ const DynamicServiceConfig = ({
                 }
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all bg-background-secondary"></div>
+              <div className="w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow after:rounded-full after:h-5 after:w-5 after:transition-all bg-border-strong"></div>
             </label>
           )}
         </div>
