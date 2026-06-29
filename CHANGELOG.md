@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.11.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.10.0...v1.11.0) (2026-06-29)
+
+### 🚀 Features
+
+* **app:** InfraFlow UI redesign (shell, page wizard, detail, cards, mobile nav) ([6fa7cbb](https://github.com/devopsgroupeu/openprime-app/commit/6fa7cbb2dbeccf8fc3a32201fe474aaea42832a3))
+
+### 🐛 Bug Fixes
+
+* **ci:** pin prettier printWidth to 80 (resolve editorconfig/CI formatting divergence) ([d665d32](https://github.com/devopsgroupeu/openprime-app/commit/d665d32f1bfa308795bbbbdb8cc0f0e96b9f7765))
+
 ## [1.10.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.9.2...v1.10.0) (2026-06-25)
 
 ### 🚀 Features
