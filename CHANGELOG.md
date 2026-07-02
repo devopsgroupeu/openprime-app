@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.11.1...v1.12.0) (2026-07-02)
+
+### 🚀 Features
+
+* harden credential modal + availability (PDB, graceful shutdown) ([#27](https://github.com/devopsgroupeu/openprime-app/issues/27)) ([c9129fc](https://github.com/devopsgroupeu/openprime-app/commit/c9129fc9b85ad0674af3844039c6a2d58330a594))
+
 ## [1.11.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.11.0...v1.11.1) (2026-06-29)
 
 ### 🐛 Bug Fixes
