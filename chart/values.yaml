@@ -4,6 +4,20 @@
 
 replicaCount: 2
 
+# Pod Disruption Budget - keeps at least one replica available during voluntary
+# disruptions (node drains, cluster upgrades). Safe because this service runs
+# >=2 replicas.
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Graceful shutdown - a preStop delay lets the load balancer deregister this
+# pod's endpoint before SIGTERM, avoiding 5xx during rollouts/scale-down.
+terminationGracePeriodSeconds: 45
+gracefulShutdown:
+  enabled: true
+  preStopSleepSeconds: 15
+
 image:
   repository: ghcr.io/devopsgroupeu/openprime-app
   pullPolicy: IfNotPresent

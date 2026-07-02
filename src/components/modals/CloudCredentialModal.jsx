@@ -90,11 +90,17 @@ const CloudCredentialModal = ({
       name: formData.name,
       identifier: formData.identifier,
       isDefault: formData.isDefault,
-      credentials: {
+    };
+
+    // Only send secrets when the user actually entered them. On edit, blank
+    // fields mean "keep the stored credentials" (secrets are never sent to the
+    // client), so we omit the credentials object entirely.
+    if (formData.accessKey || formData.secretKey) {
+      credentialData.credentials = {
         accessKey: formData.accessKey,
         secretKey: formData.secretKey,
-      },
-    };
+      };
+    }
 
     onSave(credentialData);
   };
