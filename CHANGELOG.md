@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.12.0...v1.12.1) (2026-07-03)
+
+### ♻️ Code Refactoring
+
+* split servicesConfig into per-provider service modules ([#28](https://github.com/devopsgroupeu/openprime-app/issues/28)) ([7501731](https://github.com/devopsgroupeu/openprime-app/commit/7501731175241088b2d2d987fc235c720631538b))
+
 ## [1.12.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.11.1...v1.12.0) (2026-07-02)
 
 ### 🚀 Features
