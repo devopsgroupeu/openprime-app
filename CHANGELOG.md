@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.4](https://github.com/devopsgroupeu/openprime-app/compare/v1.12.3...v1.12.4) (2026-07-04)
+
+### ♻️ Code Refactoring
+
+* split WizardPage into sidebar, footer, step-content, and step defs ([#31](https://github.com/devopsgroupeu/openprime-app/issues/31)) ([4881d91](https://github.com/devopsgroupeu/openprime-app/commit/4881d91c5c015d313fb59a8db109b58fd4fe167a))
+
 ## [1.12.3](https://github.com/devopsgroupeu/openprime-app/compare/v1.12.2...v1.12.3) (2026-07-04)
 
 ### ♻️ Code Refactoring
