@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.2](https://github.com/devopsgroupeu/openprime-app/compare/v1.12.1...v1.12.2) (2026-07-04)
+
+### ♻️ Code Refactoring
+
+* split BasicConfigStep wizard step into presentational sections ([#29](https://github.com/devopsgroupeu/openprime-app/issues/29)) ([a024384](https://github.com/devopsgroupeu/openprime-app/commit/a0243841d1aaace81d29f46ff52270329e2427d1))
+
 ## [1.12.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.12.0...v1.12.1) (2026-07-03)
 
 ### ♻️ Code Refactoring
