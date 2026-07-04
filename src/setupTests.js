@@ -12,6 +12,9 @@ import { TextEncoder, TextDecoder } from "node:util";
 globalThis.TextEncoder = TextEncoder;
 globalThis.TextDecoder = TextDecoder;
 
+// jsdom doesn't implement scrollIntoView (used by chat/list auto-scroll effects)
+Element.prototype.scrollIntoView = vi.fn();
+
 // Mock localStorage
 const localStorageMock = (function () {
   let store = {};
