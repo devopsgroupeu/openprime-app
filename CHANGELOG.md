@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.3](https://github.com/devopsgroupeu/openprime-app/compare/v1.12.2...v1.12.3) (2026-07-04)
+
+### ♻️ Code Refactoring
+
+* extract AIChatModal suggestion logic and message UI into modules ([#30](https://github.com/devopsgroupeu/openprime-app/issues/30)) ([54b0591](https://github.com/devopsgroupeu/openprime-app/commit/54b05919c52637b7321a34d5e2460bec9d7e8aff))
+
 ## [1.12.2](https://github.com/devopsgroupeu/openprime-app/compare/v1.12.1...v1.12.2) (2026-07-04)
 
 ### ♻️ Code Refactoring
