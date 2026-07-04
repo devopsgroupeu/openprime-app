@@ -3,24 +3,15 @@
 // WizardSidebar (steps + progress) | step form | live code-preview panel.
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  Settings,
-  Cloud,
-  Package,
-  ClipboardCheck,
-  CheckCircle,
-} from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import AppHeader from "./layout/AppHeader";
 import WizardAssistant from "./WizardAssistant";
-import BasicConfigStep from "./modals/wizard/BasicConfigStep";
-import ServicesConfigStep from "./modals/wizard/ServicesConfigStep";
-import HelmChartsStep from "./modals/wizard/HelmChartsStep";
-import WizardReviewStep from "./WizardReviewStep";
 import AIChatModal from "./modals/AIChatModal";
 import HelmValuesModal from "./modals/HelmValuesModal";
+import WizardStepSidebar from "./wizard-page/WizardStepSidebar";
+import WizardFooter from "./wizard-page/WizardFooter";
+import WizardStepContent from "./wizard-page/WizardStepContent";
+import { STEP_DEFS } from "./wizard-page/stepDefs";
 import { createEmptyEnvironment } from "../config/environmentsConfig";
 import {
   validateEnvironmentConfig,
@@ -30,33 +21,6 @@ import authService from "../services/authService";
 import { useToast } from "../contexts/ToastContext";
 
 const DRAFT_KEY = "op-wizard-draft";
-
-const STEP_DEFS = {
-  basic: {
-    id: "basic",
-    title: "Basic Configuration",
-    icon: Settings,
-    description: "Environment name and provider",
-  },
-  services: {
-    id: "services",
-    title: "Services Configuration",
-    icon: Cloud,
-    description: "Select and configure services",
-  },
-  helm: {
-    id: "helm",
-    title: "Helm Charts",
-    icon: Package,
-    description: "Configure Kubernetes applications",
-  },
-  review: {
-    id: "review",
-    title: "Review",
-    icon: ClipboardCheck,
-    description: "Review and create your environment",
-  },
-};
 
 const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const { id } = useParams();
@@ -296,65 +260,6 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     setEditingHelmValues("");
   };
 
-  const renderStepContent = () => {
-    switch (currentId) {
-      case "basic":
-        return (
-          <BasicConfigStep
-            newEnv={newEnv}
-            setNewEnv={setNewEnv}
-            validationErrors={
-              showErrors
-                ? validationErrors.filter((e) =>
-                    ["name", "provider", "region"].includes(e.field),
-                  )
-                : []
-            }
-          />
-        );
-      case "services":
-        return (
-          <ServicesConfigStep
-            newEnv={newEnv}
-            setNewEnv={setNewEnv}
-            expandedServices={expandedServices}
-            setExpandedServices={setExpandedServices}
-            onAskAI={handleAskAI}
-            validationErrors={
-              showErrors
-                ? validationErrors.filter(
-                    (e) => !["name", "provider", "region"].includes(e.field),
-                  )
-                : []
-            }
-          />
-        );
-      case "helm":
-        return (
-          <HelmChartsStep
-            newEnv={newEnv}
-            setNewEnv={setNewEnv}
-            onEditHelmValues={(chart, values) => {
-              setValuesEditor(chart);
-              setEditingHelmValues(values);
-            }}
-            onAskAI={handleAskAI}
-          />
-        );
-      case "review":
-        return (
-          <WizardReviewStep
-            newEnv={newEnv}
-            onEditStep={(stepId) =>
-              setCurrentStep(activeIds.indexOf(stepId) + 1)
-            }
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
   const progressPercent = Math.round((currentStep / totalSteps) * 100);
   const activeStep = steps[currentStep - 1];
 
@@ -374,74 +279,14 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       <AppHeader />
       <div className="flex flex-1 min-h-0">
         {/* Wizard steps sidebar */}
-        <aside className="hidden lg:flex w-72 shrink-0 flex-col border-r border-border bg-surface/40 p-6 sticky top-20 h-[calc(100vh-5rem)]">
-          <p className="section-label mb-4">Provisioning Process</p>
-          <nav className="space-y-2">
-            {steps.map((step) => {
-              const isActive = step.number === currentStep;
-              const isCompleted = completedSteps.has(step.number);
-              const isClickable = !isEditMode || step.number > 1;
-              const StepIcon = step.icon;
-              return (
-                <button
-                  key={step.number}
-                  onClick={() => isClickable && handleStepChange(step.number)}
-                  disabled={!isClickable}
-                  className={`flex w-full items-start gap-3 rounded-lg border-l-2 p-3 text-left transition-colors ${
-                    isActive
-                      ? "border-primary bg-primary-muted"
-                      : "border-transparent hover:bg-surface-elevated"
-                  } ${isClickable ? "cursor-pointer" : "cursor-not-allowed opacity-70"}`}
-                >
-                  <span
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                      isActive
-                        ? "bg-primary text-inverse"
-                        : isCompleted
-                          ? "bg-success text-inverse"
-                          : "bg-surface-elevated text-tertiary"
-                    }`}
-                  >
-                    {isCompleted ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <StepIcon className="h-4 w-4" />
-                    )}
-                  </span>
-                  <span className="min-w-0">
-                    <span
-                      className={`block text-sm font-semibold ${isActive ? "accent-teal" : "text-secondary"}`}
-                    >
-                      {step.title}
-                    </span>
-                    <span className="block text-xs text-tertiary">
-                      {step.description}
-                    </span>
-                    {isEditMode && step.number === 1 && (
-                      <span className="mt-1 block text-[10px] font-bold uppercase tracking-wider text-warning">
-                        Read only
-                      </span>
-                    )}
-                  </span>
-                </button>
-              );
-            })}
-          </nav>
-          <div className="mt-auto rounded-2xl border border-primary/10 bg-primary-muted p-4">
-            <div className="mb-2 flex items-end justify-between">
-              <span className="section-label">Overall Progress</span>
-              <span className="text-xs font-bold accent-teal">
-                {progressPercent}%
-              </span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
-              <div
-                className="progress-glow h-full rounded-full transition-all duration-300"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
-        </aside>
+        <WizardStepSidebar
+          steps={steps}
+          currentStep={currentStep}
+          completedSteps={completedSteps}
+          isEditMode={isEditMode}
+          progressPercent={progressPercent}
+          onStepChange={handleStepChange}
+        />
 
         {/* Center: form + sticky footer */}
         <main className="flex flex-1 min-w-0 flex-col">
@@ -461,56 +306,38 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                 </div>
                 <p className="mt-1 text-secondary">{activeStep?.description}</p>
               </div>
-              {renderStepContent()}
+              <WizardStepContent
+                currentId={currentId}
+                newEnv={newEnv}
+                setNewEnv={setNewEnv}
+                expandedServices={expandedServices}
+                setExpandedServices={setExpandedServices}
+                onAskAI={handleAskAI}
+                showErrors={showErrors}
+                validationErrors={validationErrors}
+                onEditHelmValues={(chart, values) => {
+                  setValuesEditor(chart);
+                  setEditingHelmValues(values);
+                }}
+                onEditStep={(stepId) =>
+                  setCurrentStep(activeIds.indexOf(stepId) + 1)
+                }
+              />
             </div>
           </div>
 
-          <div className="sticky bottom-0 z-20 shrink-0 flex items-center justify-between border-t border-border bg-surface px-8 py-4">
-            <button
-              onClick={() =>
-                currentStep === 1 ? navigate("/environments") : handlePrevious()
-              }
-              disabled={isEditMode && currentStep === 2}
-              className="btn-op-secondary"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span>{currentStep === 1 ? "Cancel" : "Previous"}</span>
-            </button>
-
-            <div className="hidden items-center gap-4 sm:flex">
-              <span className="section-label">
-                Step {currentStep} of {totalSteps}
-              </span>
-              <div className="h-1.5 w-32 overflow-hidden rounded-full bg-surface-elevated">
-                <div
-                  className="progress-glow h-full"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-            </div>
-
-            <button
-              onClick={currentStep < totalSteps ? handleNext : submit}
-              disabled={!canGoNext || isLoading}
-              className="btn-op-primary"
-            >
-              {isLoading ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              ) : currentStep < totalSteps ? (
-                <>
-                  <span>Continue</span>
-                  <ChevronRight className="h-4 w-4" />
-                </>
-              ) : (
-                <>
-                  <Check className="h-4 w-4" />
-                  <span>
-                    {isEditMode ? "Save Changes" : "Create Environment"}
-                  </span>
-                </>
-              )}
-            </button>
-          </div>
+          <WizardFooter
+            currentStep={currentStep}
+            totalSteps={totalSteps}
+            progressPercent={progressPercent}
+            isEditMode={isEditMode}
+            isLoading={isLoading}
+            canGoNext={canGoNext}
+            onCancel={() => navigate("/environments")}
+            onPrevious={handlePrevious}
+            onNext={handleNext}
+            onSubmit={submit}
+          />
         </main>
 
         {/* AI assistant */}
