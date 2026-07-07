@@ -38,27 +38,8 @@ RUN chown -R nginx:nginx /usr/share/nginx/html && \
 # Expose port 8080 for non-root
 EXPOSE 8080
 
-# Create nginx config for non-root port with env.js routing
-RUN echo "server { \
-    listen 8080; \
-    server_name localhost; \
-    location / { \
-        root /usr/share/nginx/html; \
-        index index.html index.htm; \
-        try_files \$uri \$uri/ /index.html; \
-    } \
-    # Serve processed env.js from writable cache directory \
-    location = /env.js { \
-        alias /var/cache/nginx/env.js; \
-        add_header Cache-Control 'no-cache, no-store, must-revalidate'; \
-        add_header Pragma 'no-cache'; \
-        add_header Expires '0'; \
-    } \
-    error_page 500 502 503 504 /50x.html; \
-    location = /50x.html { \
-        root /usr/share/nginx/html; \
-    } \
-}" > /etc/nginx/conf.d/default.conf
+# nginx config: non-root port 8080, SPA routing, env.js, and JSON access logs
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Create environment injection script for read-only filesystem
 RUN echo '#!/bin/sh' > /docker-entrypoint.d/10-inject-env.sh && \
