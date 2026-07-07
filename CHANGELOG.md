@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.12.4...v1.13.0) (2026-07-07)
+
+### 🚀 Features
+
+* **logging:** add JSON access logs to the frontend nginx container ([#32](https://github.com/devopsgroupeu/openprime-app/issues/32)) ([8c62b95](https://github.com/devopsgroupeu/openprime-app/commit/8c62b958f724277d16481cc3d5c11039ef7baaad))
+
 ## [1.12.4](https://github.com/devopsgroupeu/openprime-app/compare/v1.12.3...v1.12.4) (2026-07-04)
 
 ### ♻️ Code Refactoring
