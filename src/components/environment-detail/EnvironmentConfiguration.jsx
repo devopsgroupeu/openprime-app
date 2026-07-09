@@ -159,10 +159,6 @@ const EnvironmentConfiguration = ({ environment }) => {
       };
     }
 
-    if (environment.helmCharts) {
-      config.helmCharts = environment.helmCharts;
-    }
-
     return config;
   };
 
