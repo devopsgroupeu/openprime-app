@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.13.0...v1.13.1) (2026-07-09)
+
+### ♻️ Code Refactoring
+
+* **helm:** align chart catalog to infra-templates, disable defaults, drop dead code ([#33](https://github.com/devopsgroupeu/openprime-app/issues/33)) ([5197d7f](https://github.com/devopsgroupeu/openprime-app/commit/5197d7f614cb283873bf53286f02a82d4140ec45))
+
 ## [1.13.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.12.4...v1.13.0) (2026-07-07)
 
 ### 🚀 Features
