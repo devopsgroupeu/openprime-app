@@ -47,15 +47,25 @@ export const environments = [
         nodeGroupMaxSize: 6,
         endpointPublicAccess: true,
         addons: ["vpc-cni", "coredns", "kube-proxy"],
+        // Keys must match HELM_CHARTS_CONFIG / the templates' @section paths
+        // (camelCase). The stale kebab-case keys this fixture used to carry
+        // matched neither, so generation silently dropped them.
         helmCharts: {
-          "ingress-nginx": {
+          ingressNginx: {
             enabled: true,
             version: "1.4.1",
             namespace: "ingress-system",
           },
-          "kube-prometheus-stack": {
+          prometheusStack: {
             enabled: true,
             version: "2.4.5",
+            namespace: "monitoring",
+          },
+          // Removed from the catalog in app 1.13.1 — deploys nowhere. Kept here
+          // so the wizard's pruning of orphaned chart keys stays covered.
+          thanos: {
+            enabled: true,
+            version: "1.0.0",
             namespace: "monitoring",
           },
         },
