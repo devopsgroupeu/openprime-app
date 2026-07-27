@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.3](https://github.com/devopsgroupeu/openprime-app/compare/v1.13.2...v1.13.3) (2026-07-27)
+
+### 🐛 Bug Fixes
+
+* **nginx:** stop caching index.html so releases reach users immediately ([#35](https://github.com/devopsgroupeu/openprime-app/issues/35)) ([51056c8](https://github.com/devopsgroupeu/openprime-app/commit/51056c899f5e120a9fb263f8280145aefff24456))
+
 ## [1.13.2](https://github.com/devopsgroupeu/openprime-app/compare/v1.13.1...v1.13.2) (2026-07-27)
 
 ### 🐛 Bug Fixes
