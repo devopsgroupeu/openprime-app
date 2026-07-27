@@ -16,6 +16,7 @@ const WizardStepContent = ({
   validationErrors,
   onEditHelmValues,
   onEditStep,
+  isEditMode,
 }) => {
   switch (currentId) {
     case "basic":
@@ -23,6 +24,7 @@ const WizardStepContent = ({
         <BasicConfigStep
           newEnv={newEnv}
           setNewEnv={setNewEnv}
+          isEditMode={isEditMode}
           validationErrors={
             showErrors
               ? validationErrors.filter((e) =>
@@ -59,7 +61,13 @@ const WizardStepContent = ({
         />
       );
     case "review":
-      return <WizardReviewStep newEnv={newEnv} onEditStep={onEditStep} />;
+      return (
+        <WizardReviewStep
+          newEnv={newEnv}
+          onEditStep={onEditStep}
+          isEditMode={isEditMode}
+        />
+      );
     default:
       return null;
   }

@@ -39,7 +39,7 @@ const Card = ({ title, onEdit, children }) => (
 const asText = (v, key) =>
   v && typeof v === "object" ? v[key] || "configured" : v || null;
 
-const WizardReviewStep = ({ newEnv, onEditStep }) => {
+const WizardReviewStep = ({ newEnv, onEditStep, isEditMode }) => {
   const services = Object.entries(newEnv.services || {})
     .filter(([, c]) => c?.enabled)
     .map(([k]) => k);
@@ -59,7 +59,12 @@ const WizardReviewStep = ({ newEnv, onEditStep }) => {
         </p>
       </div>
 
-      <Card title="Basic configuration" onEdit={() => onEditStep?.("basic")}>
+      {/* No Edit affordance in edit mode: name and global prefix are immutable
+          once an environment exists (they name live Terraform resources). */}
+      <Card
+        title="Basic configuration"
+        onEdit={isEditMode ? undefined : () => onEditStep?.("basic")}
+      >
         <Row label="Name" value={newEnv.name} />
         <Row label="Global prefix" value={newEnv.globalPrefix} />
         <Row

@@ -18,6 +18,7 @@ import {
   getValidationSummary,
 } from "../utils/configValidator";
 import authService from "../services/authService";
+import { normalizeEnvironment } from "../utils/environmentShape";
 import { useToast } from "../contexts/ToastContext";
 
 const DRAFT_KEY = "op-wizard-draft";
@@ -68,7 +69,8 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       try {
         const env = await authService.get(`/environments/${id}`);
         if (!active) return;
-        setNewEnv(env);
+        // The API answers in snake_case; the wizard reads camelCase.
+        setNewEnv(normalizeEnvironment(env));
         setCurrentStep(2);
         setCompletedSteps(new Set([1]));
       } catch (err) {
@@ -319,9 +321,13 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                   setValuesEditor(chart);
                   setEditingHelmValues(values);
                 }}
-                onEditStep={(stepId) =>
-                  setCurrentStep(activeIds.indexOf(stepId) + 1)
-                }
+                isEditMode={isEditMode}
+                onEditStep={(stepId) => {
+                  // Step 1 stays unreachable in edit mode — the sidebar and the
+                  // Previous button already refuse it; this was the last way in.
+                  if (isEditMode && stepId === "basic") return;
+                  setCurrentStep(activeIds.indexOf(stepId) + 1);
+                }}
               />
             </div>
           </div>

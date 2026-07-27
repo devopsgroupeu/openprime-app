@@ -12,7 +12,15 @@ import authService from "../../../services/authService";
 import TerraformBackendSection from "./basic-config/TerraformBackendSection";
 import GitRepositorySection from "./basic-config/GitRepositorySection";
 
-const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
+// isEditMode locks Environment Name and Global Prefix: both are baked into every
+// generated Terraform resource name, so changing them on an existing environment
+// makes the next apply a full destroy/recreate.
+const BasicConfigStep = ({
+  newEnv,
+  setNewEnv,
+  validationErrors = [],
+  isEditMode = false,
+}) => {
   const toast = useToast();
   const [credentials, setCredentials] = useState([]);
   const [loadingCredentials, setLoadingCredentials] = useState(false);
@@ -142,6 +150,8 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
           }`}
           placeholder="e.g., production, staging, development"
           value={newEnv.name}
+          readOnly={isEditMode}
+          disabled={isEditMode}
           onChange={(e) => {
             const value = e.target.value
               .toLowerCase()
@@ -155,8 +165,9 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
           </p>
         ) : (
           <p className="text-xs mt-2 text-tertiary">
-            Lowercase alphanumeric name for this environment (e.g., production,
-            staging)
+            {isEditMode
+              ? "Fixed after creation — it names every generated Terraform resource."
+              : "Lowercase alphanumeric name for this environment (e.g., production, staging)"}
           </p>
         )}
       </div>
@@ -177,6 +188,8 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
           }`}
           placeholder="e.g., myapp-, prod-, company-"
           value={newEnv.globalPrefix || ""}
+          readOnly={isEditMode}
+          disabled={isEditMode}
           onChange={(e) => {
             const newValue = e.target.value;
             const currentValue = newEnv.globalPrefix || "";
@@ -205,8 +218,9 @@ const BasicConfigStep = ({ newEnv, setNewEnv, validationErrors = [] }) => {
           </p>
         ) : (
           <p className="text-xs mt-2 text-tertiary">
-            Prefix applied to all resource names (lowercase, alphanumeric,
-            auto-appends dash)
+            {isEditMode
+              ? "Fixed after creation — changing it would rename every Terraform resource."
+              : "Prefix applied to all resource names (lowercase, alphanumeric, auto-appends dash)"}
           </p>
         )}
       </div>
