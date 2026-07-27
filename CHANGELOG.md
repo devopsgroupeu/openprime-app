@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.2](https://github.com/devopsgroupeu/openprime-app/compare/v1.13.1...v1.13.2) (2026-07-27)
+
+### 🐛 Bug Fixes
+
+* **wizard:** normalize API shape and lock name/prefix in edit mode ([#34](https://github.com/devopsgroupeu/openprime-app/issues/34)) ([807de84](https://github.com/devopsgroupeu/openprime-app/commit/807de84290badc3f0b5860e3f1f18e5abe7a3f12))
+
 ## [1.13.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.13.0...v1.13.1) (2026-07-09)
 
 ### ♻️ Code Refactoring
