@@ -75,12 +75,8 @@ describe("SettingsPage", () => {
     await screen.findByText("Settings");
     fireEvent.click(screen.getByRole("button", { name: /Cloud Credentials/i }));
 
-    expect(
-      await screen.findByText("AWS Credentials"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Add/i }),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("AWS Credentials")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Add/i })).toBeInTheDocument();
     expect(screen.getByText("aws-sandbox")).toBeInTheDocument();
 
     // Save button hidden on credentials tab

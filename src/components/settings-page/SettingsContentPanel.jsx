@@ -90,18 +90,14 @@ const PreferencesTab = ({ userPreferences, onPreferenceChange }) => {
         <select
           id="settings-default-region"
           value={userPreferences.defaultRegion}
-          onChange={(e) =>
-            onPreferenceChange("defaultRegion", e.target.value)
-          }
+          onChange={(e) => onPreferenceChange("defaultRegion", e.target.value)}
           className="w-full px-4 py-2.5 transition-colors"
         >
-          {getProviderRegions(userPreferences.defaultProvider).map(
-            (region) => (
-              <option key={region.value} value={region.value}>
-                {region.label}
-              </option>
-            ),
-          )}
+          {getProviderRegions(userPreferences.defaultProvider).map((region) => (
+            <option key={region.value} value={region.value}>
+              {region.label}
+            </option>
+          ))}
         </select>
       </div>
     </div>
@@ -200,10 +196,7 @@ const SettingsContentPanel = ({
     <div className="flex-1 min-w-0">
       <div className="rounded-2xl border border-border bg-surface p-6">
         {activeTab === "account" && (
-          <AccountTab
-            profile={profile}
-            onProfileChange={onProfileChange}
-          />
+          <AccountTab profile={profile} onProfileChange={onProfileChange} />
         )}
         {activeTab === "preferences" && (
           <PreferencesTab
