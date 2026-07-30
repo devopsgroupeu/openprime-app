@@ -5,8 +5,10 @@ import { useToast } from "../contexts/ToastContext";
 import authService from "../services/authService";
 import CloudCredentialModal from "./modals/CloudCredentialModal";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
+import AccountTab from "./settings-page/AccountTab";
+import CloudCredentialsTab from "./settings-page/CloudCredentialsTab";
+import PreferencesTab from "./settings-page/PreferencesTab";
 import SettingsTabNav from "./settings-page/SettingsTabNav";
-import SettingsContentPanel from "./settings-page/SettingsContentPanel";
 
 const SettingsPage = () => {
   const toast = useToast();
@@ -230,17 +232,30 @@ const SettingsPage = () => {
             onTabChange={setActiveTab}
           />
 
-          <SettingsContentPanel
-            activeTab={activeTab}
-            profile={profile}
-            onProfileChange={handleProfileChange}
-            userPreferences={userPreferences}
-            onPreferenceChange={handlePreferenceChange}
-            cloudCredentials={cloudCredentials}
-            onAddCredential={handleAddCredential}
-            onEditCredential={handleEditCredential}
-            onDeleteCredential={handleDeleteCredential}
-          />
+          <div className="flex-1 min-w-0">
+            <div className="rounded-2xl border border-border bg-surface p-6">
+              {activeTab === "account" && (
+                <AccountTab
+                  profile={profile}
+                  onProfileChange={handleProfileChange}
+                />
+              )}
+              {activeTab === "preferences" && (
+                <PreferencesTab
+                  userPreferences={userPreferences}
+                  onPreferenceChange={handlePreferenceChange}
+                />
+              )}
+              {activeTab === "credentials" && (
+                <CloudCredentialsTab
+                  credentials={cloudCredentials}
+                  onAddCredential={handleAddCredential}
+                  onEditCredential={handleEditCredential}
+                  onDeleteCredential={handleDeleteCredential}
+                />
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

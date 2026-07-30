@@ -4,10 +4,6 @@ import { ToastProvider } from "../../contexts/ToastContext";
 import { AuthProvider } from "../../contexts/AuthContext";
 import SettingsPage from "../SettingsPage";
 
-// SettingsPage loads user data and credentials via MSW. Mock mode lets
-// AuthProvider auto-authenticate so the page can mount fully.
-process.env.VITE_MOCK = "true";
-
 function renderSettingsPage() {
   return render(
     <ThemeProvider>
