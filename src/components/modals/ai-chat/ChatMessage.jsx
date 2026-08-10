@@ -35,16 +35,7 @@ const ChatMessage = ({ message }) => {
         }`}
       >
         <div className="prose prose-sm max-w-none whitespace-pre-wrap">
-          {/* Render HTML content for welcome message, plain text for others */}
-          {message.isHtml ? (
-            <div
-              dangerouslySetInnerHTML={{
-                __html: message.content,
-              }}
-            />
-          ) : (
-            <MessageContent content={message.content} />
-          )}
+          <MessageContent content={message.content} />
         </div>
       </div>
 
