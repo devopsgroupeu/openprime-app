@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.14.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.13.6...v1.14.0) (2026-08-10)
+
+### 🚀 Features
+
+* **wizard:** auto-suggest global prefix from environment name ([80ee796](https://github.com/devopsgroupeu/openprime-app/commit/80ee796769baac18e9f52b5f3f65e9b3bfeb9241))
+
 ## [1.13.6](https://github.com/devopsgroupeu/openprime-app/compare/v1.13.5...v1.13.6) (2026-08-10)
 
 ### 📚 Documentation
