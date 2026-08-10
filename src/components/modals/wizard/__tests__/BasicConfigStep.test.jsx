@@ -79,4 +79,74 @@ describe("BasicConfigStep", () => {
     const summary = screen.getByText(/Ready to create/);
     expect(within(summary).getByText(/production/)).toBeInTheDocument();
   });
+
+  describe("Global Prefix auto-suggest", () => {
+    const blankEnv = { ...awsEnv, name: "", globalPrefix: "" };
+
+    it("suggests a dash-suffixed prefix as the name is typed", () => {
+      renderStep(blankEnv);
+      const nameInput = screen.getByPlaceholderText(
+        /e.g., production, staging, development/,
+      );
+      const prefixInput = screen.getByPlaceholderText(
+        /e.g., myapp-, prod-, company-/,
+      );
+
+      fireEvent.change(nameInput, { target: { value: "demo" } });
+
+      expect(nameInput).toHaveValue("demo");
+      expect(prefixInput).toHaveValue("demo-");
+    });
+
+    it("keeps the prefix in sync while the name keeps changing", () => {
+      renderStep(blankEnv);
+      const nameInput = screen.getByPlaceholderText(
+        /e.g., production, staging, development/,
+      );
+      const prefixInput = screen.getByPlaceholderText(
+        /e.g., myapp-, prod-, company-/,
+      );
+
+      fireEvent.change(nameInput, { target: { value: "demo" } });
+      fireEvent.change(nameInput, { target: { value: "demoapp" } });
+
+      expect(prefixInput).toHaveValue("demoapp-");
+    });
+
+    it("stops auto-syncing once the prefix has been edited by hand", () => {
+      renderStep(blankEnv);
+      const nameInput = screen.getByPlaceholderText(
+        /e.g., production, staging, development/,
+      );
+      const prefixInput = screen.getByPlaceholderText(
+        /e.g., myapp-, prod-, company-/,
+      );
+
+      fireEvent.change(nameInput, { target: { value: "demo" } });
+      expect(prefixInput).toHaveValue("demo-");
+
+      // Manual edit - user takes over the prefix.
+      fireEvent.change(prefixInput, { target: { value: "custom" } });
+      expect(prefixInput).toHaveValue("custom-");
+
+      // Further name changes must no longer touch the prefix.
+      fireEvent.change(nameInput, { target: { value: "demoapp" } });
+      expect(nameInput).toHaveValue("demoapp");
+      expect(prefixInput).toHaveValue("custom-");
+    });
+
+    it("does not overwrite an already-customized prefix loaded from a draft", () => {
+      renderStep({ ...awsEnv, name: "demo", globalPrefix: "custom-" });
+      const nameInput = screen.getByPlaceholderText(
+        /e.g., production, staging, development/,
+      );
+      const prefixInput = screen.getByPlaceholderText(
+        /e.g., myapp-, prod-, company-/,
+      );
+
+      fireEvent.change(nameInput, { target: { value: "demoapp" } });
+
+      expect(prefixInput).toHaveValue("custom-");
+    });
+  });
 });
