@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.5](https://github.com/devopsgroupeu/openprime-app/compare/v1.13.4...v1.13.5) (2026-08-10)
+
+### 🐛 Bug Fixes
+
+* gate on-premise provider behind roadmap label (OP-182) ([#38](https://github.com/devopsgroupeu/openprime-app/issues/38)) ([df5997f](https://github.com/devopsgroupeu/openprime-app/commit/df5997fa1809f2b2bcba0c84809fb5ee5d70118f))
+
 ## [1.13.4](https://github.com/devopsgroupeu/openprime-app/compare/v1.13.3...v1.13.4) (2026-08-10)
 
 ### 🐛 Bug Fixes
