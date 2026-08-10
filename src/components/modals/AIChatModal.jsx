@@ -42,8 +42,7 @@ const AIChatModal = ({
       const welcomeMessage = {
         id: Date.now(),
         type: "ai",
-        content: `Hi! I'm here to help you with <strong>${serviceTitle}</strong>. I can provide information about:\n\n• Configuration best practices\n• Common use cases and patterns\n• Security recommendations\n• Cost optimization tips\n• Integration with other services\n\nWhat would you like to know?`,
-        isHtml: true,
+        content: `Hi! I'm here to help you with ${serviceTitle}. I can provide information about:\n\n• Configuration best practices\n• Common use cases and patterns\n• Security recommendations\n• Cost optimization tips\n• Integration with other services\n\nWhat would you like to know?`,
       };
       setMessages([welcomeMessage]);
     }

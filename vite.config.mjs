@@ -19,7 +19,10 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
-    sourcemap: true,
+    // Public source maps hand the full unminified frontend to anyone who opens
+    // devtools. Nothing consumes them today - there is no error-reporting
+    // backend wired up - so they are pure disclosure. Revisit if one lands.
+    sourcemap: false,
   },
   test: {
     globals: true,
