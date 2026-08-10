@@ -1,5 +1,5 @@
 // src/components/modals/wizard/BasicConfigStep.js
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Cloud, MapPin, Type, Key, Tag } from "lucide-react";
 import ProviderIcon from "../../icons/ProviderIcon";
 import { useToast } from "../../../contexts/ToastContext";
@@ -11,6 +11,15 @@ import { getAllProviders } from "../../../config/providersConfig";
 import authService from "../../../services/authService";
 import TerraformBackendSection from "./basic-config/TerraformBackendSection";
 import GitRepositorySection from "./basic-config/GitRepositorySection";
+
+// Derives the suggested Global Prefix from Environment Name, e.g. "demo" ->
+// "demo-". Mirrors the sanitization already applied to the name field.
+const slugify = (value) =>
+  (value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+const derivePrefix = (name) => {
+  const slug = slugify(name);
+  return slug ? `${slug}-` : "";
+};
 
 // isEditMode locks Environment Name and Global Prefix: both are baked into every
 // generated Terraform resource name, so changing them on an existing environment
@@ -28,6 +37,12 @@ const BasicConfigStep = ({
   const [backendCreated, setBackendCreated] = useState(false);
   const [createdBucketName, setCreatedBucketName] = useState(null);
   const [useExistingBucket, setUseExistingBucket] = useState(false);
+  // Global Prefix auto-suggests from the name until the user hand-edits it.
+  // Initialized from the current values so a resumed draft (or an
+  // already-customized prefix) isn't clobbered on mount.
+  const prefixEditedRef = useRef(
+    (newEnv.globalPrefix || "") !== derivePrefix(newEnv.name),
+  );
 
   useEffect(() => {
     if (newEnv.provider) {
@@ -156,7 +171,14 @@ const BasicConfigStep = ({
             const value = e.target.value
               .toLowerCase()
               .replace(/[^a-z0-9]/g, "");
-            setNewEnv({ ...newEnv, name: value });
+            setNewEnv({
+              ...newEnv,
+              name: value,
+              // Keep suggesting a prefix until the user edits it by hand.
+              ...(prefixEditedRef.current
+                ? {}
+                : { globalPrefix: derivePrefix(value) }),
+            });
           }}
         />
         {getFieldError("name") ? (
@@ -191,6 +213,8 @@ const BasicConfigStep = ({
           readOnly={isEditMode}
           disabled={isEditMode}
           onChange={(e) => {
+            // Any direct edit permanently stops the name -> prefix auto-sync.
+            prefixEditedRef.current = true;
             const newValue = e.target.value;
             const currentValue = newEnv.globalPrefix || "";
 

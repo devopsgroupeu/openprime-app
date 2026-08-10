@@ -94,7 +94,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(newEnv));
       setSavedAt(Date.now());
     } catch {
-      /* storage unavailable — non-fatal */
+      /* storage unavailable - non-fatal */
     }
   }, [newEnv, isEditMode]);
 
@@ -323,7 +323,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                 }}
                 isEditMode={isEditMode}
                 onEditStep={(stepId) => {
-                  // Step 1 stays unreachable in edit mode — the sidebar and the
+                  // Step 1 stays unreachable in edit mode - the sidebar and the
                   // Previous button already refuse it; this was the last way in.
                   if (isEditMode && stepId === "basic") return;
                   setCurrentStep(activeIds.indexOf(stepId) + 1);
