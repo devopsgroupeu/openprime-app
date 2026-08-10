@@ -61,6 +61,19 @@ describe("BasicConfigStep", () => {
     expect(screen.getByText(/SSH Private Key/)).toBeInTheDocument();
   });
 
+  // Guards OP-182: a provider with no provisioning path must not be selectable.
+  // Only AWS has templates/terraform; on-premise has none, so it may be visible
+  // as roadmap but never clickable.
+  it("offers AWS as the only selectable provider and marks the rest as roadmap", () => {
+    renderStep();
+    const aws = screen.getByRole("button", { name: /Amazon Web Services/ });
+    expect(aws).toBeEnabled();
+
+    const onPrem = screen.getByRole("button", { name: /On-Premise/ });
+    expect(onPrem).toBeDisabled();
+    expect(within(onPrem).getByText("Roadmap")).toBeInTheDocument();
+  });
+
   it("shows the ready-to-create summary once name/prefix/provider/region are set", () => {
     renderStep();
     const summary = screen.getByText(/Ready to create/);

@@ -259,7 +259,7 @@ const BasicConfigStep = ({
               <span className="text-sm font-bold">{provider.name}</span>
               {!provider.enabled && (
                 <span className="text-[10px] font-bold uppercase tracking-wider text-warning">
-                  Disabled
+                  Roadmap
                 </span>
               )}
             </button>

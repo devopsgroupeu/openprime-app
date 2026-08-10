@@ -70,10 +70,13 @@ export const PROVIDERS_CONFIG = {
   //     { value: 'asia-southeast1', label: 'Asia Southeast (Singapore)' }
   //   ]
   // },
+  // `enabled: false` keeps the config for existing environments and future
+  // re-enabling, but the wizard renders the provider as unselectable. On-premise
+  // has no provisioning path: templates/terraform only ships aws and kubernetes.
   onpremise: {
     name: "On-Premise",
     type: "onpremise",
-    enabled: true,
+    enabled: false,
     defaultRegion: "datacenter-1",
     regions: [
       { value: "datacenter-1", label: "Datacenter 1" },
