@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.4](https://github.com/devopsgroupeu/openprime-app/compare/v1.13.3...v1.13.4) (2026-08-10)
+
+### 🐛 Bug Fixes
+
+* add security headers, stop shipping source maps, remove the HTML-injection sink ([#37](https://github.com/devopsgroupeu/openprime-app/issues/37)) ([027c2e1](https://github.com/devopsgroupeu/openprime-app/commit/027c2e19ca7c686ce609895a496e8720e095d34d))
+
 ## [1.13.3](https://github.com/devopsgroupeu/openprime-app/compare/v1.13.2...v1.13.3) (2026-07-27)
 
 ### 🐛 Bug Fixes
