@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.6](https://github.com/devopsgroupeu/openprime-app/compare/v1.13.5...v1.13.6) (2026-08-10)
+
+### 📚 Documentation
+
+* correct app meta description to AWS-first (OP-149) ([#39](https://github.com/devopsgroupeu/openprime-app/issues/39)) ([8821067](https://github.com/devopsgroupeu/openprime-app/commit/88210671ae63becf347b33a6db20a8a80c9d6d72))
+
 ## [1.13.5](https://github.com/devopsgroupeu/openprime-app/compare/v1.13.4...v1.13.5) (2026-08-10)
 
 ### 🐛 Bug Fixes
