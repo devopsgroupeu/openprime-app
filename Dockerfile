@@ -41,16 +41,11 @@ EXPOSE 8080
 # nginx config: non-root port 8080, SPA routing, env.js, and JSON access logs
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Create environment injection script for read-only filesystem
-RUN echo '#!/bin/sh' > /docker-entrypoint.d/10-inject-env.sh && \
-    echo 'set -e' >> /docker-entrypoint.d/10-inject-env.sh && \
-    echo 'echo "🔧 Injecting runtime environment variables..."' >> /docker-entrypoint.d/10-inject-env.sh && \
-    echo '# Process env.js template with runtime variables' >> /docker-entrypoint.d/10-inject-env.sh && \
-    echo 'envsubst < /usr/share/nginx/html/env.js > /tmp/env.js' >> /docker-entrypoint.d/10-inject-env.sh && \
-    echo '# Copy processed env.js to writable location accessible by nginx' >> /docker-entrypoint.d/10-inject-env.sh && \
-    echo 'cp /tmp/env.js /var/cache/nginx/env.js' >> /docker-entrypoint.d/10-inject-env.sh && \
-    echo 'echo "✅ Environment variables injected successfully"' >> /docker-entrypoint.d/10-inject-env.sh && \
-    chmod +x /docker-entrypoint.d/10-inject-env.sh
+# Runtime injection for the read-only filesystem: env.js and the CSP, both of
+# which depend on the deployment's Keycloak/API origins. Kept as a real file
+# rather than a chain of echoes so it can be reviewed and edited.
+COPY docker/10-inject-env.sh /docker-entrypoint.d/10-inject-env.sh
+RUN chmod +x /docker-entrypoint.d/10-inject-env.sh
 
 # Switch to non-root user
 USER nginx
