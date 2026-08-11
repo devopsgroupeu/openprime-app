@@ -124,7 +124,9 @@ const EnvironmentConfiguration = ({ environment }) => {
       provider: environment.provider,
       region: environment.region,
       location: environment.location || environment.region,
-      status: environment.status,
+      // `status` deliberately omitted: nothing transitions it after creation, so
+      // it is always "pending" and exporting it implies a live state we do not
+      // track (OP-187).
       backend: environment.terraform_backend?.enabled || false,
       services: environment.services || {},
       createdAt:

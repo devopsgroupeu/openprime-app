@@ -218,8 +218,8 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
             <div className="w-2 h-2 bg-success rounded-full mr-3"></div>
             <span className="text-sm font-medium">
               {getEnabledChartsCount()} Helm chart
-              {getEnabledChartsCount() !== 1 ? "s" : ""} will be deployed to
-              your {k8sService.displayName} cluster
+              {getEnabledChartsCount() !== 1 ? "s" : ""} will be included in the
+              generated manifests for your {k8sService.displayName} cluster
             </span>
           </div>
         </div>

@@ -36,6 +36,19 @@ const HelmValuesModal = ({ chartName, values, onChange, onClose, onSave }) => {
           Edit {chartName} Values
         </h2>
 
+        {/* Generation reads only `services.eks.helmCharts.<chart>.enabled`; no
+            template consumes these values yet (OP-200). Saying so beats letting
+            the user believe their YAML reaches the generated output. */}
+        <div className="p-4 mb-4 rounded-lg border bg-warning-muted border-warning text-warning">
+          <p className="text-sm">
+            <span className="font-bold">Saved, but not applied yet.</span> These
+            values are stored with your environment and kept across edits, but
+            generation does not read them — charts are generated with their
+            defaults. To customise a chart today, edit its values file in the
+            generated repository after the push.
+          </p>
+        </div>
+
         <div className="rounded-lg p-4 bg-background border border-border">
           <textarea
             ref={textareaRef}
