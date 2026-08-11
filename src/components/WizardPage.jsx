@@ -20,24 +20,20 @@ import {
 import authService from "../services/authService";
 import { normalizeEnvironment } from "../utils/environmentShape";
 import { useToast } from "../contexts/ToastContext";
-
-const DRAFT_KEY = "op-wizard-draft";
+import { useAuth } from "../contexts/AuthContext";
+import { saveDraft, loadDraft, clearDraft } from "../utils/wizardDraft";
 
 const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const { id } = useParams();
   const isEditMode = Boolean(id);
   const navigate = useNavigate();
   const { success, error } = useToast();
+  const { user } = useAuth();
+  const userId = user?.id;
 
   const [newEnv, setNewEnv] = useState(() => {
     if (isEditMode) return null;
-    try {
-      const raw = localStorage.getItem(DRAFT_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch {
-      /* ignore unreadable draft */
-    }
-    return createEmptyEnvironment("aws");
+    return loadDraft(userId) || createEmptyEnvironment("aws");
   });
   const [savedAt, setSavedAt] = useState(null);
   const [expandedServices, setExpandedServices] = useState({});
@@ -90,13 +86,8 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   // away doesn't lose the configuration. Cleared on successful create.
   useEffect(() => {
     if (isEditMode || !newEnv) return;
-    try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(newEnv));
-      setSavedAt(Date.now());
-    } catch {
-      /* storage unavailable - non-fatal */
-    }
-  }, [newEnv, isEditMode]);
+    if (saveDraft(userId, newEnv)) setSavedAt(Date.now());
+  }, [newEnv, isEditMode, userId]);
 
   const hasKubernetesService = () =>
     newEnv?.services?.eks?.enabled ||
@@ -181,7 +172,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
         };
         await onCreateEnvironment(config);
         try {
-          localStorage.removeItem(DRAFT_KEY);
+          clearDraft(userId);
         } catch {
           /* ignore */
         }

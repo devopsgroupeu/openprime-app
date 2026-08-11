@@ -150,7 +150,13 @@ const EnvironmentConfiguration = ({ environment }) => {
     }
 
     if (environment.git_repository) {
-      config.gitRepository = environment.git_repository;
+      // Deliberately field-by-field, not a spread: this file is downloaded and
+      // (per the copy below) version-controlled, so it must never gain a secret
+      // by inheriting one that is added to git_repository later.
+      config.gitRepository = {
+        url: environment.git_repository.url || "",
+        branch: environment.git_repository.branch || "HEAD",
+      };
       // Add argocd object for Injecto compatibility
       config.argocd = {
         git_repo_url: environment.git_repository.url || "",
@@ -294,10 +300,10 @@ const EnvironmentConfiguration = ({ environment }) => {
           <div>
             <p className="font-medium mb-1">Configuration Export</p>
             <p className="text-sm opacity-90">
-              This configuration represents the complete state of your
-              environment including all services, settings, and metadata. You
-              can use this to backup, version control, or recreate this
-              environment.
+              This configuration describes your environment&apos;s services,
+              settings, and metadata. Credentials and your Git deploy key are
+              not included, so recreating an environment from this file means
+              re-entering them.
             </p>
           </div>
         </div>
