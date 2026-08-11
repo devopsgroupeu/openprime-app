@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.15.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.14.0...v1.15.0) (2026-08-11)
+
+### 🚀 Features
+
+* **security:** add a runtime-templated Content-Security-Policy ([#41](https://github.com/devopsgroupeu/openprime-app/issues/41)) ([84e32de](https://github.com/devopsgroupeu/openprime-app/commit/84e32de16d41e0fc795714eb790d5a8e11b827e4))
+
 ## [1.14.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.13.6...v1.14.0) (2026-08-10)
 
 ### 🚀 Features
