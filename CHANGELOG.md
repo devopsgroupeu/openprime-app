@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.2](https://github.com/devopsgroupeu/openprime-app/compare/v1.16.1...v1.16.2) (2026-08-12)
+
+### 🐛 Bug Fixes
+
+* **auth:** tell the truth during a Keycloak outage and retry refresh before logging out ([#45](https://github.com/devopsgroupeu/openprime-app/issues/45)) ([5691f56](https://github.com/devopsgroupeu/openprime-app/commit/5691f56f6212acfffcff8f03f7f7aa96d4458d35))
+* **config:** make database deletion protection, final snapshots and managed passwords the default ([#46](https://github.com/devopsgroupeu/openprime-app/issues/46)) ([1f0deb7](https://github.com/devopsgroupeu/openprime-app/commit/1f0deb78618d8fc110e5556f46de39d89da3eae3))
+
 ## [1.16.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.16.0...v1.16.1) (2026-08-12)
 
 ### 🐛 Bug Fixes
