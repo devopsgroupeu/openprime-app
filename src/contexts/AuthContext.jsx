@@ -29,6 +29,11 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [keycloakInstance, setKeycloakInstance] = useState(null);
+  // Distinguishes "Keycloak is unreachable" from "you are signed out". Without
+  // it the app rendered "Session expired. Redirecting to login..." during an
+  // outage — two false statements at once, under a spinner that never resolves.
+  const [authError, setAuthError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     // Mock mode: skip Keycloak entirely, start authenticated as a fake user.
@@ -39,26 +44,37 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
+    // Try the refresh a few times with growing gaps before giving up on the
+    // session. Total ~14s, which covers a pod restart or a brief network blip
+    // without the user noticing; anything longer is a real outage and logging
+    // out is then the honest outcome.
+    const refreshWithBackoff = async (attempt = 0) => {
+      const delays = [1000, 3000, 10000];
+      try {
+        await keycloak.updateToken(30);
+        console.log("Token refreshed successfully");
+      } catch {
+        if (attempt < delays.length) {
+          console.warn(
+            `Token refresh failed, retrying in ${delays[attempt]}ms (attempt ${attempt + 1}/${delays.length})`,
+          );
+          setTimeout(() => refreshWithBackoff(attempt + 1), delays[attempt]);
+          return;
+        }
+        console.error("Token refresh failed after retries, logging out");
+        logout();
+      }
+    };
+
     const initKeycloak = async () => {
       try {
         // Set up event handlers before init
         keycloak.onTokenExpired = () => {
           console.log("Token expired, attempting to update...");
-          keycloak
-            .updateToken(30)
-            .then((refreshed) => {
-              if (refreshed) {
-                console.log("Token refreshed successfully");
-              } else {
-                console.warn(
-                  "Token not refreshed, user may need to log in again",
-                );
-              }
-            })
-            .catch(() => {
-              console.error("Failed to refresh token, logging out...");
-              logout();
-            });
+          // A single failed refresh used to log the user out immediately, so one
+          // dropped request or a few seconds of Keycloak unavailability ended
+          // the session and discarded whatever was on screen. Retry first.
+          refreshWithBackoff();
         };
 
         keycloak.onAuthLogout = () => {
@@ -84,6 +100,7 @@ export const AuthProvider = ({ children }) => {
         });
 
         if (authenticated) {
+          setAuthError(null);
           setIsAuthenticated(true);
           setUser({
             id: keycloak.subject,
@@ -100,7 +117,10 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(false);
         }
       } catch (error) {
+        // Swallowing this is what produced the false "Session expired" screen:
+        // the app could not tell an outage from a signed-out user.
         console.error("Keycloak initialization failed:", error);
+        setAuthError(error instanceof Error ? error : new Error(String(error)));
       } finally {
         setIsLoading(false);
       }
@@ -132,7 +152,7 @@ export const AuthProvider = ({ children }) => {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, []);
+  }, [retryCount]);
 
   const login = () => {
     keycloak.login();
@@ -157,9 +177,18 @@ export const AuthProvider = ({ children }) => {
     return user?.roles?.includes(role) || false;
   };
 
+  /** Re-run Keycloak initialisation — backs the Retry button on the outage screen. */
+  const retryAuth = () => {
+    setAuthError(null);
+    setIsLoading(true);
+    setRetryCount((n) => n + 1);
+  };
+
   const value = {
     isAuthenticated,
     isLoading,
+    authError,
+    retryAuth,
     user,
     keycloakInstance,
     login,
