@@ -508,8 +508,8 @@ export const awsServices = {
         name: "deletionProtection",
         displayName: "Deletion Protection",
         description: "Prevent accidental deletion",
-        defaultValue: false,
-        helpText: "Recommended for production",
+        defaultValue: true,
+        helpText: "On by default; turn off only for throwaway environments",
         section: FIELD_SECTIONS.SECURITY,
       },
       skipFinalSnapshot: {
@@ -517,8 +517,9 @@ export const awsServices = {
         name: "skipFinalSnapshot",
         displayName: "Skip Final Snapshot",
         description: "Skip snapshot on deletion",
-        defaultValue: true,
-        helpText: "Set false for production databases",
+        defaultValue: false,
+        helpText:
+          "Off by default, so deleting a database still leaves a snapshot",
         section: FIELD_SECTIONS.BACKUP,
       },
       applyImmediately: {
@@ -562,8 +563,8 @@ export const awsServices = {
         name: "manageMasterUserPassword",
         displayName: "AWS Managed Password",
         description: "Store password in Secrets Manager",
-        defaultValue: false,
-        helpText: "Automatic password rotation",
+        defaultValue: true,
+        helpText: "Keeps the password out of Terraform state, and rotates it",
         section: FIELD_SECTIONS.SECURITY,
       },
       performanceInsights: {
@@ -695,7 +696,16 @@ export const awsServices = {
         name: "deletionProtection",
         displayName: "Deletion Protection",
         description: "Enable deletion protection",
-        defaultValue: false,
+        defaultValue: true,
+      },
+      manageMasterUserPassword: {
+        type: FIELD_TYPES.TOGGLE,
+        name: "manageMasterUserPassword",
+        displayName: "AWS Managed Password",
+        description: "Store password in Secrets Manager",
+        defaultValue: true,
+        helpText: "Keeps the password out of Terraform state, and rotates it",
+        section: FIELD_SECTIONS.SECURITY,
       },
       enableHttpEndpoint: {
         type: FIELD_TYPES.TOGGLE,
@@ -739,7 +749,7 @@ export const awsServices = {
         name: "skipFinalSnapshot",
         displayName: "Skip Final Snapshot",
         description: "Skip final snapshot when deleting",
-        defaultValue: true,
+        defaultValue: false,
       },
       deleteAutomatedBackups: {
         type: FIELD_TYPES.TOGGLE,
@@ -1281,7 +1291,7 @@ export const awsServices = {
         displayName: "Transit Encryption (TLS)",
         description: "Encrypt data in transit",
         defaultValue: true,
-        helpText: "Recommended for production",
+        helpText: "On by default; turn off only for throwaway environments",
         section: FIELD_SECTIONS.SECURITY,
       },
       atRestEncryption: {
@@ -1605,7 +1615,7 @@ export const awsServices = {
         displayName: "Dead Letter Queue",
         description: "Capture failed messages for debugging",
         defaultValue: false,
-        helpText: "Recommended for production",
+        helpText: "On by default; turn off only for throwaway environments",
         section: FIELD_SECTIONS.ADVANCED,
       },
       maxReceiveCount: {
