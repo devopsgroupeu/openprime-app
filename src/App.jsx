@@ -28,7 +28,7 @@ function FloatingAura() {
 }
 
 function AppContent() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, authError, retryAuth } = useAuth();
   const [environments, setEnvironments] = useState([]);
   const [environmentsLoading, setEnvironmentsLoading] = useState(false);
 
@@ -103,13 +103,39 @@ function AppContent() {
     );
   }
 
+  // An unreachable Keycloak is not an expired session. Saying so — with a way
+  // out — beats a spinner that will never resolve.
+  if (authError) {
+    return (
+      <div className="min-h-screen bg-openprime-gradient flex items-center justify-center p-6">
+        <div className="max-w-md text-center">
+          <h1 className="text-white text-2xl font-poppins font-bold mb-3">
+            Sign-in service temporarily unavailable
+          </h1>
+          <p className="text-white/80 font-poppins mb-6">
+            We could not reach the authentication service. Your account and your
+            environments are unaffected — this is a connection problem, not a
+            sign-out.
+          </p>
+          <button
+            onClick={retryAuth}
+            className="btn-op-primary"
+            aria-label="Retry connecting to the sign-in service"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-openprime-gradient flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-white text-lg font-poppins">
-            Session expired. Redirecting to login...
+            Redirecting to sign in...
           </p>
         </div>
       </div>
