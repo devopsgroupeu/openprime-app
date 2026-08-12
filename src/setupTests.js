@@ -30,7 +30,12 @@ const localStorageMock = (function () {
       delete store[key];
     }),
     key: vi.fn((index) => Object.keys(store)[index] || null),
-    length: 0,
+    // A getter, not a literal 0: with a hardcoded zero any code that walks
+    // storage via length/key() sees an empty store no matter what is in it,
+    // and its tests pass while doing nothing.
+    get length() {
+      return Object.keys(store).length;
+    },
   };
 })();
 

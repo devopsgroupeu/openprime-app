@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import keycloak from "../config/keycloak";
 import { isMockMode } from "../utils/mockMode";
+import { clearAllDrafts } from "../utils/wizardDraft";
 
 // Fake authenticated user for mock mode (no Keycloak).
 const MOCK_USER = {
@@ -62,6 +63,10 @@ export const AuthProvider = ({ children }) => {
 
         keycloak.onAuthLogout = () => {
           console.log("Keycloak auth logout triggered");
+          // Also fires for logouts this tab did not initiate — another tab, an
+          // SSO single-logout, an expired session. Clearing only in logout()
+          // would leave the draft behind in exactly those cases.
+          clearAllDrafts();
           setIsAuthenticated(false);
           setUser(null);
         };
@@ -134,6 +139,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    // Before handing the browser to Keycloak: a wizard draft is per-user state
+    // and must not outlive the session on a shared machine.
+    clearAllDrafts();
     keycloak.logout({
       redirectUri: window.location.origin,
     });

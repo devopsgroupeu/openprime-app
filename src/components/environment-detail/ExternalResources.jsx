@@ -5,8 +5,6 @@ import {
   ExternalLink,
   Key,
   KeyRound,
-  Eye,
-  EyeOff,
   X,
 } from "lucide-react";
 import { useToast } from "../../contexts/ToastContext";
@@ -26,7 +24,6 @@ const gitWebUrl = (url) =>
 
 const ExternalResources = ({ environment, onEnvironmentUpdate }) => {
   const { success, error: showError } = useToast();
-  const [showSshKey, setShowSshKey] = useState(false);
   const [showSshKeyEditor, setShowSshKeyEditor] = useState(false);
   const [newSshKey, setNewSshKey] = useState("");
   const [isSavingSshKey, setIsSavingSshKey] = useState(false);
@@ -121,33 +118,24 @@ const ExternalResources = ({ environment, onEnvironmentUpdate }) => {
                   Rotate
                 </button>
               </div>
+              {/* The key is write-only: the API returns a fingerprint instead
+                  of key material, so there is nothing left to reveal. The
+                  fingerprint is the same SHA256 your Git provider shows next to
+                  the deploy key, which is what makes it useful here. */}
               <div className="flex items-center gap-2 p-3 rounded-lg bg-surface-elevated border border-border">
                 <Key className="w-4 h-4 text-tertiary shrink-0" />
-                <p
-                  className={`text-xs font-mono flex-1 min-w-0 text-secondary ${
-                    showSshKey ? "break-all" : "truncate"
-                  }`}
-                >
-                  {gitRepo.sshKey
-                    ? showSshKey
-                      ? gitRepo.sshKey
-                      : "••••••••••••••••••••••••"
+                <p className="text-xs font-mono flex-1 min-w-0 truncate text-secondary">
+                  {gitRepo.sshKeyConfigured
+                    ? gitRepo.sshKeyFingerprint || "Configured"
                     : "Not configured"}
                 </p>
-                {gitRepo.sshKey && (
-                  <button
-                    onClick={() => setShowSshKey(!showSshKey)}
-                    title={showSshKey ? "Hide key" : "Show key"}
-                    className="p-1 rounded shrink-0 text-tertiary transition-colors hover:text-primary hover:bg-surface-elevated"
-                  >
-                    {showSshKey ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                )}
               </div>
+              {gitRepo.sshKeyConfigured && (
+                <p className="mt-2 text-xs text-tertiary">
+                  Compare this fingerprint with the deploy key in your Git
+                  provider to confirm it is the right one.
+                </p>
+              )}
             </div>
           </div>
         )}
