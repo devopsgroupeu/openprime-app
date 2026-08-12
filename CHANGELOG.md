@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.15.0...v1.16.0) (2026-08-12)
+
+### 🚀 Features
+
+* **security:** keep the git deploy key out of the browser, the export and localStorage ([#42](https://github.com/devopsgroupeu/openprime-app/issues/42)) ([961f1bb](https://github.com/devopsgroupeu/openprime-app/commit/961f1bbd67ff7edfd15f79016e4671bf9cd1bfdf))
+
 ## [1.15.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.14.0...v1.15.0) (2026-08-11)
 
 ### 🚀 Features
