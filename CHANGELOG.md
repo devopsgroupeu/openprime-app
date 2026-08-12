@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.16.0...v1.16.1) (2026-08-12)
+
+### 🐛 Bug Fixes
+
+* **ui:** stop claiming charts are deployed and custom values are applied ([#44](https://github.com/devopsgroupeu/openprime-app/issues/44)) ([6039c2e](https://github.com/devopsgroupeu/openprime-app/commit/6039c2e278e9c4b81a22255b04a2f3fa6fb3dd67))
+
 ## [1.16.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.15.0...v1.16.0) (2026-08-12)
 
 ### 🚀 Features
