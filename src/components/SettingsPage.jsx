@@ -1,11 +1,14 @@
-// src/components/SettingsPage.js
+// src/components/SettingsPage.jsx
 import { useState, useEffect } from "react";
-import { Cloud, User, Save, Plus, Edit2, Trash2, Settings } from "lucide-react";
+import { Cloud, User, Save, Settings } from "lucide-react";
 import { useToast } from "../contexts/ToastContext";
 import authService from "../services/authService";
 import CloudCredentialModal from "./modals/CloudCredentialModal";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
-import { getProviderRegions } from "../config/providersConfig";
+import AccountTab from "./settings-page/AccountTab";
+import CloudCredentialsTab from "./settings-page/CloudCredentialsTab";
+import PreferencesTab from "./settings-page/PreferencesTab";
+import SettingsTabNav from "./settings-page/SettingsTabNav";
 
 const SettingsPage = () => {
   const toast = useToast();
@@ -86,6 +89,7 @@ const SettingsPage = () => {
       console.error("Failed to load cloud credentials:", error);
     }
   };
+
   const saveSettings = async () => {
     try {
       setSaving(true);
@@ -161,7 +165,6 @@ const SettingsPage = () => {
       setSelectedCredential(null);
     } catch (error) {
       console.error("Failed to save credential:", error);
-      // Extract error message from response
       const errorMessage =
         error.response?.data?.error ||
         error.message ||
@@ -169,6 +172,7 @@ const SettingsPage = () => {
       toast.error(errorMessage, { title: "Credential Error", duration: 7000 });
     }
   };
+
   if (loading) {
     return (
       <div className="transition-colors bg-transparent">
@@ -190,26 +194,6 @@ const SettingsPage = () => {
     { id: "credentials", label: "Cloud Credentials", icon: Cloud },
   ];
 
-  const saveButton = (
-    <button
-      onClick={saveSettings}
-      disabled={saving}
-      className="btn-op-primary transition-all self-start sm:self-auto"
-    >
-      {saving ? (
-        <>
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-          Saving...
-        </>
-      ) : (
-        <>
-          <Save className="w-4 h-4 mr-2" />
-          Save Changes
-        </>
-      )}
-    </button>
-  );
-
   return (
     <div className="transition-colors bg-transparent">
       <div className="px-8 py-8">
@@ -220,198 +204,55 @@ const SettingsPage = () => {
               Manage your account and platform preferences.
             </p>
           </div>
-          {activeTab !== "credentials" && saveButton}
+          {activeTab !== "credentials" && (
+            <button
+              onClick={saveSettings}
+              disabled={saving}
+              className="btn-op-primary transition-all self-start sm:self-auto"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Changes
+                </>
+              )}
+            </button>
+          )}
         </div>
 
         <div className="flex flex-col md:flex-row gap-8">
-          {/* Left tab nav */}
-          <nav className="md:w-56 shrink-0 flex md:flex-col gap-1">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-primary-muted text-primary"
-                      : "text-secondary hover:text-primary hover:bg-surface-elevated"
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </nav>
+          <SettingsTabNav
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
 
-          {/* Right content panel */}
           <div className="flex-1 min-w-0">
             <div className="rounded-2xl border border-border bg-surface p-6">
               {activeTab === "account" && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-label mb-2">
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      value={profile.firstName}
-                      onChange={(e) =>
-                        handleProfileChange("firstName", e.target.value)
-                      }
-                      className="w-full px-4 py-2.5 transition-colors"
-                      placeholder="Enter your first name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-label mb-2">
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      value={profile.lastName}
-                      onChange={(e) =>
-                        handleProfileChange("lastName", e.target.value)
-                      }
-                      className="w-full px-4 py-2.5 transition-colors"
-                      placeholder="Enter your last name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-label mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      value={profile.email}
-                      onChange={(e) =>
-                        handleProfileChange("email", e.target.value)
-                      }
-                      className="w-full px-4 py-2.5 transition-colors"
-                      placeholder="Enter your email"
-                    />
-                  </div>
-                </div>
+                <AccountTab
+                  profile={profile}
+                  onProfileChange={handleProfileChange}
+                />
               )}
-
               {activeTab === "preferences" && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-label mb-2">
-                      Default Cloud Provider
-                    </label>
-                    <select
-                      value={userPreferences.defaultProvider}
-                      onChange={(e) =>
-                        handlePreferenceChange(
-                          "defaultProvider",
-                          e.target.value,
-                        )
-                      }
-                      className="w-full px-4 py-2.5 transition-colors"
-                    >
-                      <option value="aws">AWS</option>
-                      <option value="azure">Azure</option>
-                      <option value="gcp">Google Cloud</option>
-                      <option value="on-premise">On-Premise</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-label mb-2">
-                      Default Region
-                    </label>
-                    <select
-                      value={userPreferences.defaultRegion}
-                      onChange={(e) =>
-                        handlePreferenceChange("defaultRegion", e.target.value)
-                      }
-                      className="w-full px-4 py-2.5 transition-colors"
-                    >
-                      {getProviderRegions(userPreferences.defaultProvider).map(
-                        (region) => (
-                          <option key={region.value} value={region.value}>
-                            {region.label}
-                          </option>
-                        ),
-                      )}
-                    </select>
-                  </div>
-                </div>
+                <PreferencesTab
+                  userPreferences={userPreferences}
+                  onPreferenceChange={handlePreferenceChange}
+                />
               )}
-
               {activeTab === "credentials" && (
-                <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <p className="section-label">AWS Credentials</p>
-                    <button
-                      onClick={() => handleAddCredential("aws")}
-                      className="btn-op-primary transition-all"
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add
-                    </button>
-                  </div>
-                  <div className="space-y-3">
-                    {cloudCredentials.filter((c) => c.provider === "aws")
-                      .length === 0 ? (
-                      <div className="text-center py-8 transition-colors text-secondary">
-                        <Cloud className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                        <p>No AWS credentials configured</p>
-                        <p className="text-sm mt-1">
-                          Add your first credential to get started
-                        </p>
-                      </div>
-                    ) : (
-                      cloudCredentials
-                        .filter((c) => c.provider === "aws")
-                        .map((credential) => (
-                          <div
-                            key={credential.id}
-                            className="flex items-center justify-between p-4 rounded-lg transition-colors bg-background border border-border"
-                          >
-                            <div className="flex items-center flex-1 gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-primary-muted flex items-center justify-center shrink-0">
-                                <Cloud className="w-5 h-5 text-accent" />
-                              </div>
-                              <div>
-                                <div className="font-semibold transition-colors text-primary">
-                                  {credential.name}
-                                  {credential.isDefault && (
-                                    <span className="ml-2 px-2 py-1 bg-primary/20 text-primary rounded text-xs">
-                                      Default
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-sm transition-colors text-secondary">
-                                  Account: {credential.identifier}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() => handleEditCredential(credential)}
-                                className="p-2 rounded-lg transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated"
-                                title="Edit"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleDeleteCredential(credential)
-                                }
-                                className="p-2 rounded-lg transition-colors text-tertiary hover:text-danger hover:bg-danger-muted"
-                                title="Delete"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                    )}
-                  </div>
-                </div>
+                <CloudCredentialsTab
+                  credentials={cloudCredentials}
+                  onAddCredential={handleAddCredential}
+                  onEditCredential={handleEditCredential}
+                  onDeleteCredential={handleDeleteCredential}
+                />
               )}
             </div>
           </div>
