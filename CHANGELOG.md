@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.3](https://github.com/devopsgroupeu/openprime-app/compare/v1.16.2...v1.16.3) (2026-08-17)
+
+### 🐛 Bug Fixes
+
+* formatting and tests fix ([2a31b5c](https://github.com/devopsgroupeu/openprime-app/commit/2a31b5ce6b7efe3aa3b18b1327a6f675d2701bec))
+
+### ♻️ Code Refactoring
+
+* **settings:** address PR feedback and split tab components ([43f0f3a](https://github.com/devopsgroupeu/openprime-app/commit/43f0f3a555e6776d29ec741b1d3376f0546a3484))
+
 ## [1.16.2](https://github.com/devopsgroupeu/openprime-app/compare/v1.16.1...v1.16.2) (2026-08-12)
 
 ### 🐛 Bug Fixes
