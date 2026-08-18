@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.17.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.16.3...v1.17.0) (2026-08-18)
+
+### 🚀 Features
+
+* **wizard:** add opt-in baseline NetworkPolicy toggle for EKS ([#47](https://github.com/devopsgroupeu/openprime-app/issues/47)) ([be0c21a](https://github.com/devopsgroupeu/openprime-app/commit/be0c21acb8998e5c01ff75f3f94f267a45e24e85))
+
 ## [1.16.3](https://github.com/devopsgroupeu/openprime-app/compare/v1.16.2...v1.16.3) (2026-08-17)
 
 ### 🐛 Bug Fixes
