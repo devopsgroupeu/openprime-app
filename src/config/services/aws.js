@@ -329,6 +329,14 @@ export const awsServices = {
         min: 1,
         max: 10,
       },
+      networkPolicyEnabled: {
+        type: FIELD_TYPES.TOGGLE,
+        name: "networkPolicyEnabled",
+        displayName: "Enable baseline NetworkPolicies",
+        description:
+          "Restrict ingress to the cert-manager, external-dns, ingress-nginx and monitoring namespaces. Off by default: it changes how traffic reaches your cluster and is best enabled once the cluster is running.",
+        defaultValue: false,
+      },
       karpenterEnabled: {
         type: FIELD_TYPES.TOGGLE,
         name: "karpenterEnabled",
