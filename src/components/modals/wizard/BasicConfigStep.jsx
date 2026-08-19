@@ -208,7 +208,7 @@ const BasicConfigStep = ({
           className={`w-full px-4 py-3 text-lg transition-colors ${
             getFieldError("globalPrefix") ? "border-danger" : "border-border"
           }`}
-          placeholder="e.g., myapp-, prod-, company-"
+          placeholder="e.g., myapp-, prod-, app_test-, us-app-"
           value={newEnv.globalPrefix || ""}
           readOnly={isEditMode}
           disabled={isEditMode}
@@ -218,22 +218,44 @@ const BasicConfigStep = ({
             const newValue = e.target.value;
             const currentValue = newEnv.globalPrefix || "";
 
-            // Detect if user is deleting (backspace)
-            if (newValue.length < currentValue.length) {
-              // Remove the dash first, then remove last char, then add dash back
-              const baseWithoutDash = currentValue.replace(/-$/, "");
-              const newBase = baseWithoutDash.slice(0, -1);
-              const finalValue = newBase ? `${newBase}-` : "";
-              setNewEnv({ ...newEnv, globalPrefix: finalValue });
+            // Both quirks below stem from the same cause: the field always
+            // shows an auto-appended trailing dash, so edits made right at
+            // the end actually land before or after that dash rather than
+            // where the user thinks they are. Everywhere else (deleting or
+            // inserting in the middle), newValue already reflects exactly
+            // what the user did and can be sanitized as-is.
+            let rawBase;
+            if (
+              newValue.length < currentValue.length &&
+              currentValue.endsWith("-") &&
+              newValue === currentValue.slice(0, -1)
+            ) {
+              // Backspace at the very end deletes the auto-appended dash
+              // itself first. Without help, that dash would just reappear
+              // on re-render and "eat" the keypress - so drop the
+              // preceding real character too, matching one backspace to
+              // one deleted character.
+              rawBase = newValue.slice(0, -1);
+            } else if (
+              newValue.length > currentValue.length &&
+              currentValue.endsWith("-") &&
+              newValue.startsWith(currentValue)
+            ) {
+              // Typing at the end lands after the dash (cursor defaults
+              // there on focus) - splice it in before the dash instead.
+              rawBase = currentValue.slice(0, -1) + newValue.slice(currentValue.length);
             } else {
-              // User is typing - sanitize and add dash
-              const baseValue = newValue
-                .replace(/-+$/, "")
-                .toLowerCase()
-                .replace(/[^a-z0-9]/g, "");
-              const finalValue = baseValue ? `${baseValue}-` : "";
-              setNewEnv({ ...newEnv, globalPrefix: finalValue });
+              rawBase = newValue;
             }
+
+            // Sanitize (letters, digits, dashes and underscores allowed)
+            // and add the trailing dash back
+            const baseValue = rawBase
+              .replace(/-+$/, "")
+              .toLowerCase()
+              .replace(/[^a-z0-9_-]/g, "");
+            const finalValue = baseValue ? `${baseValue}-` : "";
+            setNewEnv({ ...newEnv, globalPrefix: finalValue });
           }}
         />
         {getFieldError("globalPrefix") ? (
@@ -244,7 +266,7 @@ const BasicConfigStep = ({
           <p className="text-xs mt-2 text-tertiary">
             {isEditMode
               ? "Fixed after creation — changing it would rename every Terraform resource."
-              : "Prefix applied to all resource names (lowercase, alphanumeric, auto-appends dash)"}
+              : "Prefix applied to all resource names (lowercase, alphanumeric with dashes/underscores, auto-appends dash)"}
           </p>
         )}
       </div>

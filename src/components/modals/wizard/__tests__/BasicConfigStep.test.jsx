@@ -89,7 +89,7 @@ describe("BasicConfigStep", () => {
         /e.g., production, staging, development/,
       );
       const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, company-/,
+        /e.g., myapp-, prod-, app_test-, us-app-/,
       );
 
       fireEvent.change(nameInput, { target: { value: "demo" } });
@@ -104,7 +104,7 @@ describe("BasicConfigStep", () => {
         /e.g., production, staging, development/,
       );
       const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, company-/,
+        /e.g., myapp-, prod-, app_test-, us-app-/,
       );
 
       fireEvent.change(nameInput, { target: { value: "demo" } });
@@ -119,7 +119,7 @@ describe("BasicConfigStep", () => {
         /e.g., production, staging, development/,
       );
       const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, company-/,
+        /e.g., myapp-, prod-, app_test-, us-app-/,
       );
 
       fireEvent.change(nameInput, { target: { value: "demo" } });
@@ -141,12 +141,86 @@ describe("BasicConfigStep", () => {
         /e.g., production, staging, development/,
       );
       const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, company-/,
+        /e.g., myapp-, prod-, app_test-, us-app-/,
       );
 
       fireEvent.change(nameInput, { target: { value: "demoapp" } });
 
       expect(prefixInput).toHaveValue("custom-");
+    });
+
+    it("allows underscores and internal dashes when hand-editing the prefix", () => {
+      renderStep(blankEnv);
+      const prefixInput = screen.getByPlaceholderText(
+        /e.g., myapp-, prod-, app_test-, us-app-/,
+      );
+
+      fireEvent.change(prefixInput, { target: { value: "app_testing-" } });
+      expect(prefixInput).toHaveValue("app_testing-");
+
+      fireEvent.change(prefixInput, { target: { value: "prod-app-" } });
+      expect(prefixInput).toHaveValue("prod-app-");
+
+      fireEvent.change(prefixInput, { target: { value: "us_app_test-" } });
+      expect(prefixInput).toHaveValue("us_app_test-");
+    });
+
+    it("still strips unsupported characters and always auto-appends a trailing dash", () => {
+      renderStep(blankEnv);
+      const prefixInput = screen.getByPlaceholderText(
+        /e.g., myapp-, prod-, app_test-, us-app-/,
+      );
+
+      fireEvent.change(prefixInput, { target: { value: "App!Test 1" } });
+      expect(prefixInput).toHaveValue("apptest1-");
+    });
+
+    // Regression: the cursor defaults to the end of the field (e.g. right
+    // after clicking/tabbing in), which sits *after* the auto-appended
+    // trailing dash. Typing there must land the new characters before the
+    // dash, not append a fresh dash after every keystroke.
+    it("keeps typing before the trailing dash when the cursor sits at the end", () => {
+      renderStep(blankEnv);
+      const prefixInput = screen.getByPlaceholderText(
+        /e.g., myapp-, prod-, app_test-, us-app-/,
+      );
+
+      for (const ch of "app_testing") {
+        const raw = prefixInput.value + ch;
+        fireEvent.change(prefixInput, { target: { value: raw } });
+      }
+
+      expect(prefixInput).toHaveValue("app_testing-");
+    });
+
+    // Regression: deleting a character out of the middle of the prefix used
+    // to be ignored entirely - the handler always chopped the *last*
+    // character off the old value instead of respecting where the
+    // deletion actually happened.
+    it("deletes the character that was actually removed, not the last one", () => {
+      renderStep({ ...awsEnv, name: "", globalPrefix: "abcdef-" });
+      const prefixInput = screen.getByPlaceholderText(
+        /e.g., myapp-, prod-, app_test-, us-app-/,
+      );
+
+      // Simulates removing "c" from the middle: caret-correct native value.
+      fireEvent.change(prefixInput, { target: { value: "abdef-" } });
+      expect(prefixInput).toHaveValue("abdef-");
+    });
+
+    it("still removes one real character per backspace at the end, despite the auto-dash", () => {
+      renderStep({ ...awsEnv, name: "", globalPrefix: "app-" });
+      const prefixInput = screen.getByPlaceholderText(
+        /e.g., myapp-, prod-, app_test-, us-app-/,
+      );
+
+      // First backspace removes the trailing dash itself...
+      fireEvent.change(prefixInput, { target: { value: "app" } });
+      expect(prefixInput).toHaveValue("ap-");
+
+      // ...second backspace removes a real character, not the dash again.
+      fireEvent.change(prefixInput, { target: { value: "ap" } });
+      expect(prefixInput).toHaveValue("a-");
     });
   });
 });
