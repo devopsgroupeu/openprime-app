@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
 import {
   Server,
@@ -58,6 +58,14 @@ const EnvironmentDetailPage = ({ onDelete }) => {
   const [isPushing, setIsPushing] = useState(false);
   const [expandedServices, setExpandedServices] = useState({});
   const { success, error } = useToast();
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const fetchEnvironment = async () => {
@@ -115,51 +123,73 @@ const EnvironmentDetailPage = ({ onDelete }) => {
     navigate("/environments");
   };
 
+  // Async job model: POST returns 202 + jobId, then we poll GET /api/jobs/:jobId
+  // until the job reaches a terminal state (succeeded/failed/cancelled).
+  const pollJob = async (jobId) => {
+    const pollIntervalMs = 2000;
+    const maxPolls = 150; // ~5 minutes — jobs run in the background worker
+    for (let i = 0; i < maxPolls; i++) {
+      if (!mountedRef.current) throw new Error("Operation cancelled");
+      const job = await authService.get(`/jobs/${jobId}`);
+      if (job.status === "succeeded") return job;
+      if (job.status === "failed") throw new Error(job.error || "Job failed");
+      if (job.status === "cancelled") throw new Error("Job was cancelled");
+      await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+    }
+    throw new Error("Operation timed out. Check the job status later.");
+  };
+
+  const triggerDownload = (blob, filename) => {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
   const generateInfrastructure = async () => {
     try {
       setIsGenerating(true);
-      const response = await authService.post(
+      const { jobId } = await authService.post(
         `/environments/${environment.id}/generate`,
         {},
-        { responseType: "blob", timeout: 120000 },
       );
-      const blob = new Blob([response.data], { type: "application/zip" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${environment.name}-infrastructure.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      success(
-        "Infrastructure repository generated and downloaded successfully",
-      );
+      const job = await pollJob(jobId);
+      if (!job.result?.downloadUrl) {
+        throw new Error("Generated artifact is not available");
+      }
+      const blob = await authService.getBlob(job.result.downloadUrl);
+      triggerDownload(blob, `${environment.name}-infrastructure.zip`);
+      success("Infrastructure repository generated and downloaded successfully");
     } catch (err) {
       console.error("Error generating infrastructure:", err);
       error(
         err.response?.data?.error ||
+          err.message ||
           "Failed to generate infrastructure. Please try again.",
       );
     } finally {
-      setIsGenerating(false);
+      if (mountedRef.current) setIsGenerating(false);
     }
   };
 
   const pushInfrastructure = async () => {
     try {
       setIsPushing(true);
-      const response = await authService.post(
+      const { jobId } = await authService.post(
         `/environments/${environment.id}/push`,
         {},
-        { timeout: 120000 },
       );
-      success(response?.message || "Infrastructure pushed to Git successfully");
+      const job = await pollJob(jobId);
+      success(job.result?.message || "Infrastructure pushed to Git successfully");
     } catch (err) {
       console.error("Error pushing to Git:", err);
       error(err.message || "Failed to push to Git. Please try again.");
     } finally {
-      setIsPushing(false);
+      if (mountedRef.current) setIsPushing(false);
     }
   };
 

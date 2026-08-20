@@ -379,10 +379,13 @@ describe("Create Environment with All Helm Charts", () => {
       await ctx.page.waitForTimeout(1000);
       console.log("✓ Opened Configuration tab");
 
-      // Download the infrastructure ZIP (Generate button)
+      // Download the infrastructure ZIP (Generate button).
+      // Async job model: the click enqueues a job (202 + jobId), the UI polls
+      // GET /api/jobs/:jobId, and only then triggers the download — so the
+      // download event can take a while (Injecto generate + worker poll).
       const generateButton = ctx.page.getByRole("button", { name: /generate/i });
       if ((await generateButton.count()) > 0) {
-        const downloadPromise = ctx.page.waitForEvent("download", { timeout: 50000 });
+        const downloadPromise = ctx.page.waitForEvent("download", { timeout: 120000 });
         await generateButton.first().click();
         const download = await downloadPromise;
         const fileName = download.suggestedFilename();

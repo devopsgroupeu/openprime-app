@@ -9,6 +9,27 @@ import {
 } from "lucide-react";
 import ProviderIcon, { isBrandedProvider } from "../icons/ProviderIcon";
 
+// Status pill — maps environment.status to the app's semantic status colors.
+const STATUS_STYLES = {
+  pending: "bg-surface-elevated text-tertiary",
+  deploying: "bg-warning-muted text-warning",
+  running: "bg-success-muted text-success",
+  stopped: "bg-surface-elevated text-tertiary",
+  failed: "bg-danger-muted text-danger",
+  destroyed: "bg-surface-elevated text-tertiary",
+};
+
+export const StatusBadge = ({ status }) => (
+  <span
+    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+      STATUS_STYLES[status] || STATUS_STYLES.pending
+    }`}
+  >
+    <span className="w-1.5 h-1.5 rounded-full bg-current" />
+    {status}
+  </span>
+);
+
 const EnvironmentHeader = ({
   environment,
   providerConfig,
@@ -35,9 +56,12 @@ const EnvironmentHeader = ({
         </button>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-extrabold text-primary">
-              {environment.name}
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-4xl font-extrabold text-primary">
+                {environment.name}
+              </h1>
+              <StatusBadge status={environment.status} />
+            </div>
             <div className="flex items-center space-x-4 mt-1">
               <span className="flex items-center gap-1.5 text-sm text-secondary">
                 <ProviderIcon

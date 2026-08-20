@@ -67,6 +67,11 @@ export class AuthService {
     return response.json();
   }
 
+  async getBlob(url) {
+    const response = await this.makeAuthenticatedRequest(url);
+    return response.blob();
+  }
+
   async post(url, data, options = {}) {
     const response = await this.makeAuthenticatedRequest(url, {
       method: "POST",
