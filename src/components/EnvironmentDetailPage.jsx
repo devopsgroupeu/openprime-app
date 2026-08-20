@@ -163,7 +163,9 @@ const EnvironmentDetailPage = ({ onDelete }) => {
       }
       const blob = await authService.getBlob(job.result.downloadUrl);
       triggerDownload(blob, `${environment.name}-infrastructure.zip`);
-      success("Infrastructure repository generated and downloaded successfully");
+      success(
+        "Infrastructure repository generated and downloaded successfully",
+      );
     } catch (err) {
       console.error("Error generating infrastructure:", err);
       error(
@@ -184,7 +186,9 @@ const EnvironmentDetailPage = ({ onDelete }) => {
         {},
       );
       const job = await pollJob(jobId);
-      success(job.result?.message || "Infrastructure pushed to Git successfully");
+      success(
+        job.result?.message || "Infrastructure pushed to Git successfully",
+      );
     } catch (err) {
       console.error("Error pushing to Git:", err);
       error(err.message || "Failed to push to Git. Please try again.");

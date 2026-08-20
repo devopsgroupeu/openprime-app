@@ -75,9 +75,12 @@ export const handlers = [
     });
   }),
   http.get("*/jobs/:jobId/download", () =>
-    HttpResponse.arrayBuffer(new TextEncoder().encode("PK\x03\x04 mock-zip").buffer, {
-      headers: { "Content-Type": "application/zip" },
-    }),
+    HttpResponse.arrayBuffer(
+      new TextEncoder().encode("PK\x03\x04 mock-zip").buffer,
+      {
+        headers: { "Content-Type": "application/zip" },
+      },
+    ),
   ),
 
   // --- Cloud credentials ---
