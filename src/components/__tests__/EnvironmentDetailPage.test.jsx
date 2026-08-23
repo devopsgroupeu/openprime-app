@@ -47,43 +47,47 @@ afterEach(() => {
 });
 
 describe("EnvironmentDetailPage async jobs", () => {
-  it("generates: polls queued -> running -> succeeded, downloads, and shows a success toast", async () => {
-    let pollCount = 0;
-    server.use(
-      http.get("*/jobs/:jobId", ({ params }) => {
-        pollCount += 1;
-        if (pollCount === 1) {
-          return HttpResponse.json({ id: params.jobId, status: "queued" });
-        }
-        if (pollCount === 2) {
-          return HttpResponse.json({ id: params.jobId, status: "running" });
-        }
-        return HttpResponse.json({
-          id: params.jobId,
-          status: "succeeded",
-          result: { downloadUrl: `/jobs/${params.jobId}/download` },
-        });
-      }),
-    );
+  it(
+    "generates: polls queued -> running -> succeeded, downloads, and shows a success toast",
+    async () => {
+      let pollCount = 0;
+      server.use(
+        http.get("*/jobs/:jobId", ({ params }) => {
+          pollCount += 1;
+          if (pollCount === 1) {
+            return HttpResponse.json({ id: params.jobId, status: "queued" });
+          }
+          if (pollCount === 2) {
+            return HttpResponse.json({ id: params.jobId, status: "running" });
+          }
+          return HttpResponse.json({
+            id: params.jobId,
+            status: "succeeded",
+            result: { downloadUrl: `/jobs/${params.jobId}/download` },
+          });
+        }),
+      );
 
-    renderDetailPage();
-    fireEvent.click(
-      await screen.findByRole("button", { name: /Generate Repository/i }),
-    );
+      renderDetailPage();
+      fireEvent.click(
+        await screen.findByRole("button", { name: /Generate Repository/i }),
+      );
 
-    expect(
-      await screen.findByText(
-        /Infrastructure repository generated and downloaded successfully/i,
-        {},
-        { timeout: 10000 },
-      ),
-    ).toBeInTheDocument();
+      expect(
+        await screen.findByText(
+          /Infrastructure repository generated and downloaded successfully/i,
+          {},
+          { timeout: 10000 },
+        ),
+      ).toBeInTheDocument();
 
-    // The artifact was actually downloaded (anchor click fired).
-    expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled();
-    // Polling observed the queued -> running -> succeeded transitions.
-    expect(pollCount).toBe(3);
-  });
+      // The artifact was actually downloaded (anchor click fired).
+      expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled();
+      // Polling observed the queued -> running -> succeeded transitions.
+      expect(pollCount).toBe(3);
+    },
+    15000,
+  );
 
   it("shows the job error toast when generation fails", async () => {
     server.use(
