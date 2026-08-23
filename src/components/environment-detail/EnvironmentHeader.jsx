@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import ProviderIcon, { isBrandedProvider } from "../icons/ProviderIcon";
 
-// Status pill — maps environment.status to the app's semantic status colors.
+// Status pill — maps environment.status (and job outcomes) to the app's
+// semantic status colors.
 const STATUS_STYLES = {
   pending: "bg-surface-elevated text-tertiary",
   deploying: "bg-warning-muted text-warning",
@@ -17,6 +18,23 @@ const STATUS_STYLES = {
   stopped: "bg-surface-elevated text-tertiary",
   failed: "bg-danger-muted text-danger",
   destroyed: "bg-surface-elevated text-tertiary",
+  queued: "bg-surface-elevated text-tertiary",
+  cancelled: "bg-surface-elevated text-tertiary",
+  succeeded: "bg-success-muted text-success",
+};
+
+// The badge reflects the most recent async job outcome (generate/push) when
+// one exists, falling back to the lifecycle status. When both jobs have run,
+// the more recent one (by last_*_at) wins.
+export const getEffectiveStatus = (environment) => {
+  const genAt = environment.last_generate_at;
+  const pushAt = environment.last_push_at;
+  const gen = environment.last_generate_status;
+  const push = environment.last_push_status;
+  if (genAt && pushAt) return pushAt > genAt ? push : gen;
+  if (genAt) return gen;
+  if (pushAt) return push;
+  return environment.status || "pending";
 };
 
 export const StatusBadge = ({ status }) => (
@@ -60,7 +78,7 @@ const EnvironmentHeader = ({
               <h1 className="text-4xl font-extrabold text-primary">
                 {environment.name}
               </h1>
-              <StatusBadge status={environment.status} />
+              <StatusBadge status={getEffectiveStatus(environment)} />
             </div>
             <div className="flex items-center space-x-4 mt-1">
               <span className="flex items-center gap-1.5 text-sm text-secondary">

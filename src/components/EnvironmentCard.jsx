@@ -1,7 +1,10 @@
 // src/components/EnvironmentCard.jsx
 import { Clock, ArrowRight } from "lucide-react";
 import ProviderIcon, { isBrandedProvider } from "./icons/ProviderIcon";
-import { StatusBadge } from "./environment-detail/EnvironmentHeader";
+import {
+  StatusBadge,
+  getEffectiveStatus,
+} from "./environment-detail/EnvironmentHeader";
 
 const relTime = (iso) => {
   if (!iso) return "recently";
@@ -45,7 +48,7 @@ const EnvironmentCard = ({ environment, onClick, onEdit }) => {
             <h3 className="text-lg font-extrabold text-primary transition-colors group-hover:accent-teal truncate">
               {environment.name}
             </h3>
-            <StatusBadge status={environment.status} />
+            <StatusBadge status={getEffectiveStatus(environment)} />
           </div>
           {(environment.globalPrefix || environment.global_prefix) && (
             <p className="text-xs font-mono text-tertiary">

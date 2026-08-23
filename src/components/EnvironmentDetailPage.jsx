@@ -129,7 +129,7 @@ const EnvironmentDetailPage = ({ onDelete }) => {
     const pollIntervalMs = 2000;
     const maxPolls = 150; // ~5 minutes — jobs run in the background worker
     for (let i = 0; i < maxPolls; i++) {
-      if (!mountedRef.current) throw new Error("Operation cancelled");
+      if (!mountedRef.current) return null;
       const job = await authService.get(`/jobs/${jobId}`);
       if (job.status === "succeeded") return job;
       if (job.status === "failed") throw new Error(job.error || "Job failed");
@@ -156,23 +156,25 @@ const EnvironmentDetailPage = ({ onDelete }) => {
       const { jobId } = await authService.post(
         `/environments/${environment.id}/generate`,
         {},
+        { headers: { "X-Async-Jobs": "true" } },
       );
       const job = await pollJob(jobId);
+      if (job === null) return;
       if (!job.result?.downloadUrl) {
         throw new Error("Generated artifact is not available");
       }
       const blob = await authService.getBlob(job.result.downloadUrl);
+      if (!mountedRef.current) return;
       triggerDownload(blob, `${environment.name}-infrastructure.zip`);
       success(
         "Infrastructure repository generated and downloaded successfully",
       );
     } catch (err) {
       console.error("Error generating infrastructure:", err);
-      error(
-        err.response?.data?.error ||
-          err.message ||
-          "Failed to generate infrastructure. Please try again.",
-      );
+      if (mountedRef.current)
+        error(
+          err.message || "Failed to generate infrastructure. Please try again.",
+        );
     } finally {
       if (mountedRef.current) setIsGenerating(false);
     }
@@ -184,14 +186,17 @@ const EnvironmentDetailPage = ({ onDelete }) => {
       const { jobId } = await authService.post(
         `/environments/${environment.id}/push`,
         {},
+        { headers: { "X-Async-Jobs": "true" } },
       );
       const job = await pollJob(jobId);
+      if (job === null) return;
       success(
         job.result?.message || "Infrastructure pushed to Git successfully",
       );
     } catch (err) {
       console.error("Error pushing to Git:", err);
-      error(err.message || "Failed to push to Git. Please try again.");
+      if (mountedRef.current)
+        error(err.message || "Failed to push to Git. Please try again.");
     } finally {
       if (mountedRef.current) setIsPushing(false);
     }

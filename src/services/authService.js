@@ -79,10 +79,6 @@ export class AuthService {
       ...options,
     });
 
-    if (options.responseType === "blob") {
-      return { data: await response.blob() };
-    }
-
     return response.json();
   }
 

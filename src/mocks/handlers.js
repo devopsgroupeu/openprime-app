@@ -69,7 +69,7 @@ export const handlers = [
         ? { message: "Infrastructure pushed to Git", commit: "abc1234" }
         : {
             message: "Infrastructure generated successfully",
-            downloadUrl: `/api/jobs/${params.jobId}/download`,
+            downloadUrl: `/jobs/${params.jobId}/download`,
           },
       error: null,
     });
