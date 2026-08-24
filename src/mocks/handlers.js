@@ -43,13 +43,44 @@ export const handlers = [
       dynamodb_table: "mock-tf-lock",
     }),
   ),
+  // Async job model: enqueue returns 202 + jobId, UI polls /jobs/:jobId,
+  // then downloads the artifact for generate jobs.
   http.post("*/environments/:id/generate", () =>
-    HttpResponse.arrayBuffer(new TextEncoder().encode("PK mock-zip").buffer, {
-      headers: { "Content-Type": "application/zip" },
-    }),
+    HttpResponse.json(
+      { jobId: "job-gen-1", type: "generate", status: "queued" },
+      { status: 202 },
+    ),
   ),
   http.post("*/environments/:id/push", () =>
-    HttpResponse.json({ success: true, message: "Pushed to mock repository" }),
+    HttpResponse.json(
+      { jobId: "job-push-1", type: "push", status: "queued" },
+      { status: 202 },
+    ),
+  ),
+  http.get("*/jobs/:jobId", ({ params }) => {
+    const isPush = String(params.jobId).includes("push");
+    return HttpResponse.json({
+      id: params.jobId,
+      type: isPush ? "push" : "generate",
+      status: "succeeded",
+      attempts: 1,
+      maxAttempts: 3,
+      result: isPush
+        ? { message: "Infrastructure pushed to Git", commit: "abc1234" }
+        : {
+            message: "Infrastructure generated successfully",
+            downloadUrl: `/jobs/${params.jobId}/download`,
+          },
+      error: null,
+    });
+  }),
+  http.get("*/jobs/:jobId/download", () =>
+    HttpResponse.arrayBuffer(
+      new TextEncoder().encode("PK\x03\x04 mock-zip").buffer,
+      {
+        headers: { "Content-Type": "application/zip" },
+      },
+    ),
   ),
 
   // --- Cloud credentials ---

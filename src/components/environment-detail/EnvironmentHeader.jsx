@@ -9,6 +9,43 @@ import {
 } from "lucide-react";
 import ProviderIcon, { isBrandedProvider } from "../icons/ProviderIcon";
 
+// Status pill — maps environment.status (and job outcomes) to the app's
+// semantic status colors.
+const STATUS_STYLES = {
+  pending: "bg-surface-elevated text-tertiary",
+  deploying: "bg-warning-muted text-warning",
+  running: "bg-success-muted text-success",
+  failed: "bg-danger-muted text-danger",
+  queued: "bg-surface-elevated text-tertiary",
+  cancelled: "bg-surface-elevated text-tertiary",
+  succeeded: "bg-success-muted text-success",
+};
+
+// The badge reflects the most recent async job outcome (generate/push) when
+// one exists, falling back to the lifecycle status. When both jobs have run,
+// the more recent one (by last_*_at) wins.
+export const getEffectiveStatus = (environment) => {
+  const genAt = environment.last_generate_at;
+  const pushAt = environment.last_push_at;
+  const gen = environment.last_generate_status;
+  const push = environment.last_push_status;
+  if (genAt && pushAt) return pushAt > genAt ? push : gen;
+  if (genAt) return gen;
+  if (pushAt) return push;
+  return environment.status || "pending";
+};
+
+export const StatusBadge = ({ status }) => (
+  <span
+    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+      STATUS_STYLES[status] || STATUS_STYLES.pending
+    }`}
+  >
+    <span className="w-1.5 h-1.5 rounded-full bg-current" />
+    {status}
+  </span>
+);
+
 const EnvironmentHeader = ({
   environment,
   providerConfig,
@@ -35,9 +72,12 @@ const EnvironmentHeader = ({
         </button>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-extrabold text-primary">
-              {environment.name}
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-4xl font-extrabold text-primary">
+                {environment.name}
+              </h1>
+              <StatusBadge status={getEffectiveStatus(environment)} />
+            </div>
             <div className="flex items-center space-x-4 mt-1">
               <span className="flex items-center gap-1.5 text-sm text-secondary">
                 <ProviderIcon
