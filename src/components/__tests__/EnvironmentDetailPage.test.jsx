@@ -192,6 +192,8 @@ describe("StatusBadge", () => {
     expect(screen.getByText("failed")).toBeInTheDocument();
 
     rerender(
+      // "stopped" is not in STATUS_STYLES — falls back to pending style,
+      // but the badge still renders the status text.
       <StatusBadge status={getEffectiveStatus({ status: "stopped" })} />,
     );
     expect(screen.getByText("stopped")).toBeInTheDocument();

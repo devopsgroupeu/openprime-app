@@ -125,16 +125,23 @@ const EnvironmentDetailPage = ({ onDelete }) => {
 
   // Async job model: POST returns 202 + jobId, then we poll GET /api/jobs/:jobId
   // until the job reaches a terminal state (succeeded/failed/cancelled).
+  // Backoff: 2s for the first 8 polls (~16s), 5s for the next 12 (~60s), then
+  // 10s — keeps total polls (~43) well under the backend jobs-route limiter
+  // while still covering ~5 min of background job execution.
   const pollJob = async (jobId) => {
-    const pollIntervalMs = 2000;
-    const maxPolls = 150; // ~5 minutes — jobs run in the background worker
+    const maxPolls = 45;
+    const getPollInterval = (pollIndex) => {
+      if (pollIndex < 8) return 2000;
+      if (pollIndex < 20) return 5000;
+      return 10000;
+    };
     for (let i = 0; i < maxPolls; i++) {
       if (!mountedRef.current) return null;
       const job = await authService.get(`/jobs/${jobId}`);
       if (job.status === "succeeded") return job;
       if (job.status === "failed") throw new Error(job.error || "Job failed");
       if (job.status === "cancelled") throw new Error("Job was cancelled");
-      await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+      await new Promise((resolve) => setTimeout(resolve, getPollInterval(i)));
     }
     throw new Error("Operation timed out. Check the job status later.");
   };
