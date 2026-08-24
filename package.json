@@ -1,6 +1,6 @@
 {
   "name": "openprime-app",
-  "version": "1.17.0",
+  "version": "1.18.0",
   "private": true,
   "dependencies": {
     "keycloak-js": "^26.2.3",

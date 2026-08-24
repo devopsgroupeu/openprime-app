@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.18.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.17.0...v1.18.0) (2026-08-24)
+
+### 🚀 Features
+
+* poll async generate/push jobs and show environment status ([77edd12](https://github.com/devopsgroupeu/openprime-app/commit/77edd12485c748e2b508333ff34c8fe4af6d2e6f))
+
+### 🐛 Bug Fixes
+
+* address review feedback — unmount guards, mock contract, status badge, tests, compatibility header ([e3243a7](https://github.com/devopsgroupeu/openprime-app/commit/e3243a7ace6389ee111db905c3b6c75a7910b9c1))
+* address second-round review findings ([c5d1580](https://github.com/devopsgroupeu/openprime-app/commit/c5d158062b9ac77f7306e83efba23fb1cf01743a))
+
 ## [1.17.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.16.3...v1.17.0) (2026-08-18)
 
 ### 🚀 Features
