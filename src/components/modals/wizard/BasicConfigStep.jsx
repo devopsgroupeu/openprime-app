@@ -208,7 +208,7 @@ const BasicConfigStep = ({
           className={`w-full px-4 py-3 text-lg transition-colors ${
             getFieldError("globalPrefix") ? "border-danger" : "border-border"
           }`}
-          placeholder="e.g., myapp-, prod-, app_test-, us-app-"
+          placeholder="e.g., myapp-, prod-, us-app-, app-test-"
           value={newEnv.globalPrefix || ""}
           readOnly={isEditMode}
           disabled={isEditMode}
@@ -254,7 +254,7 @@ const BasicConfigStep = ({
             const baseValue = rawBase
               .replace(/-+$/, "")
               .toLowerCase()
-              .replace(/[^a-z0-9_-]/g, "");
+              .replace(/[^a-z0-9-]/g, "");
             const finalValue = baseValue ? `${baseValue}-` : "";
             setNewEnv({ ...newEnv, globalPrefix: finalValue });
           }}
@@ -267,7 +267,7 @@ const BasicConfigStep = ({
           <p className="text-xs mt-2 text-tertiary">
             {isEditMode
               ? "Fixed after creation — changing it would rename every Terraform resource."
-              : "Prefix applied to all resource names (lowercase, alphanumeric with dashes/underscores, auto-appends dash)"}
+              : "Prefix applied to all resource names (lowercase, alphanumeric with dashes, auto-appends dash)"}
           </p>
         )}
       </div>
