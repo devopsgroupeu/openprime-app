@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.18.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.18.0...v1.18.1) (2026-08-30)
+
+### 🐛 Bug Fixes
+
+* **wizard:** added an option to use dashes and underscores in prefixes ([6275a93](https://github.com/devopsgroupeu/openprime-app/commit/6275a93a7e651d8e73d8f925557e6739aefdd36c))
+* **wizard:** restrict prefix charset to dashes the backend accepts ([58e82ac](https://github.com/devopsgroupeu/openprime-app/commit/58e82acc066576e5436ca7296847419e9720d275))
+
 ## [1.18.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.17.0...v1.18.0) (2026-08-24)
 
 ### 🚀 Features
