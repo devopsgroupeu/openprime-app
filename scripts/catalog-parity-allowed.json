@@ -1,0 +1,30 @@
+{
+  "_comment": [
+    "Differences the parity check should not fail on. Everything here is a",
+    "decision someone made, not a difference nobody got round to. If a line",
+    "cannot be justified in one sentence it does not belong in this file —",
+    "an allowlist that absorbs unexplained drift is how OP-227 survived for",
+    "months.",
+    "",
+    "Format: services = whole service; fields = 'service.field';",
+    "attributes = 'service.field.attribute'."
+  ],
+
+  "_why_attributes": [
+    "OP-206 recorded the template value as canonical going forward, signed off",
+    "by the owner. These are the divergences that decision covers: the wizard",
+    "will take the template's value once it hydrates from the catalog.",
+    "",
+    "rds.instanceClass and rds.version also differ, but they were NOT part of",
+    "that sign-off, so they stay blocking until someone decides."
+  ],
+  "attributes": [
+    "eks.kubernetesVersion.defaultValue",
+    "msk.kafkaVersion.defaultValue",
+    "aurora.engineVersion.defaultValue"
+  ],
+
+  "fields": [],
+
+  "services": []
+}

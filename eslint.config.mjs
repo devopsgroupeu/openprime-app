@@ -32,6 +32,16 @@ export default defineConfig([
     },
   },
 
+  // Build and maintenance scripts run under Node, not in a browser.
+  {
+    files: ["scripts/**/*.js"],
+    languageOptions: {
+      globals: globals.node,
+      ecmaVersion: "latest",
+      sourceType: "commonjs",
+    },
+  },
+
   // React-specific config
   {
     files: ["src/**/*.{js,jsx}"],
@@ -54,13 +64,20 @@ export default defineConfig([
       // Allow unescaped entities
       "react/no-unescaped-entities": "warn",
       // Allow unused vars that start with _
-      "no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+      "no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
     },
   },
 
   // Test files - add Vitest globals
   {
-    files: ["**/*.test.{js,jsx}", "**/__tests__/**/*.{js,jsx}", "**/setupTests.js"],
+    files: [
+      "**/*.test.{js,jsx}",
+      "**/__tests__/**/*.{js,jsx}",
+      "**/setupTests.js",
+    ],
     languageOptions: {
       globals: {
         ...globals.browser,
