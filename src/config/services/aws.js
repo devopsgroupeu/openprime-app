@@ -1802,30 +1802,6 @@ export const awsServices = {
     },
   },
 
-  externalDns: {
-    name: "externalDns",
-    displayName: "External DNS",
-    description: "DNS record management for Kubernetes",
-    provider: "aws",
-    category: "Networking",
-    fields: {
-      enabled: {
-        type: FIELD_TYPES.TOGGLE,
-        name: "enabled",
-        displayName: "Enable External DNS",
-        defaultValue: false,
-      },
-      targetRoleArn: {
-        type: FIELD_TYPES.TEXT,
-        name: "targetRoleArn",
-        displayName: "Target Role ARN",
-        description: "IAM Role to assume in the prod account",
-        defaultValue: "",
-        placeholder: "arn:aws:iam::PROD_ACCOUNT_ID:role/ExternalDNSRole",
-      },
-    },
-  },
-
   route53: {
     name: "route53",
     displayName: "Route 53",
