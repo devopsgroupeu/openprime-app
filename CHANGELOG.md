@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.20.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.19.0...v1.20.0) (2026-08-31)
+
+### 🚀 Features
+
+* **catalog:** check a catalog can drive the wizard before it does ([08188cf](https://github.com/devopsgroupeu/openprime-app/commit/08188cf6bc6571857b005ad02bf800519a05e4c6))
+* **catalog:** hydrate the wizard config from the runtime catalog ([632245d](https://github.com/devopsgroupeu/openprime-app/commit/632245d306e163d5fdf1c76f7fd4c66cedbbbb74))
+
+### 🐛 Bug Fixes
+
+* **catalog:** compare service availability by type so a string cannot pass ([e1ab8bb](https://github.com/devopsgroupeu/openprime-app/commit/e1ab8bb226dbcd32360652fecf7d50dfcbee906d))
+* **wizard:** align rds and msk defaults with what AWS still supports ([deb4fe4](https://github.com/devopsgroupeu/openprime-app/commit/deb4fe47ffd1cd51fe26b21ecb7c05068b5c09c9))
+* **wizard:** drop the External DNS service card that generates nothing ([50fbd66](https://github.com/devopsgroupeu/openprime-app/commit/50fbd6616fe5a7fc69179d5ccd554f995e08ea7c))
+* **wizard:** offer services a stored environment was written before ([0a5daa1](https://github.com/devopsgroupeu/openprime-app/commit/0a5daa1678b6d444a4ff455667896896f9e51f14))
+
 ## [1.19.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.18.1...v1.19.0) (2026-08-31)
 
 ### 🚀 Features
