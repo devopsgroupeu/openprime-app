@@ -30,5 +30,8 @@ jobs:
       - name: Lint code
         run: npm run lint
 
+      - name: Check catalog parity and renderability
+        run: npm run catalog:check
+
       - name: Run tests
         run: npm test

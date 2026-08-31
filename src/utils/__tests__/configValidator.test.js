@@ -336,13 +336,26 @@ describe("configValidator", () => {
     test("validates MSK service config", () => {
       const mskConfig = {
         enabled: true,
-        kafkaVersion: "3.5.1",
+        kafkaVersion: "3.9.x",
         numberOfBrokerNodes: 2,
         brokerNodeInstanceType: "kafka.t3.small",
       };
 
       const errors = validateServiceConfig("msk", mskConfig);
       expect(errors).toHaveLength(0);
+    });
+
+    // 3.5.1 was the default until AWS end-of-supported it on 2025-10-23. The
+    // validator rejecting it is what caught the stale option list.
+    test("rejects a Kafka version AWS no longer supports", () => {
+      const errors = validateServiceConfig("msk", {
+        enabled: true,
+        kafkaVersion: "3.5.1",
+        numberOfBrokerNodes: 2,
+        brokerNodeInstanceType: "kafka.t3.small",
+      });
+
+      expect(errors).toHaveLength(1);
     });
 
     test("validates WAF service config", () => {

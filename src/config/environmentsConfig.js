@@ -18,19 +18,34 @@ export const createEmptyEnvironment = (providerType = "aws") => ({
   services: createEmptyServices(providerType),
 });
 
-const createEmptyServices = (providerType) => {
-  const providerServices = getProviderServices(providerType);
-  const services = {};
+const createEmptyServices = (providerType) =>
+  backfillServices({ provider: providerType, services: {} }).services;
 
-  providerServices.forEach((serviceName) => {
+/**
+ * Add defaults for services the environment has never seen.
+ *
+ * The wizard grid renders a service only if `env.services[name]` exists, so a
+ * saved draft or a stored environment shows the service set that was current
+ * when it was written. That was harmless while the set only changed on a
+ * frontend deploy; with the runtime catalog it changes when the templates do,
+ * and a customer editing an existing environment would silently never be
+ * offered the new service.
+ *
+ * Only adds. A service the catalog no longer describes keeps its saved
+ * configuration — the grid stops offering it, but nothing is thrown away.
+ */
+export const backfillServices = (env) => {
+  if (!env) return env;
+  const services = { ...(env.services || {}) };
+
+  for (const serviceName of getProviderServices(env.provider)) {
+    if (services[serviceName]) continue;
     services[serviceName] = createDefaultServiceConfig(serviceName);
-
-    // Initialize helmCharts for Kubernetes services
     if (["eks", "aks", "gke", "kubernetes"].includes(serviceName)) {
       services[serviceName].helmCharts =
         generateDefaultHelmChartsConfig(serviceName);
     }
-  });
+  }
 
-  return services;
+  return { ...env, services };
 };
