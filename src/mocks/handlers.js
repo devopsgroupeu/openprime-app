@@ -2,7 +2,14 @@ import { http, HttpResponse } from "msw";
 import { environments, credentials, currentUser } from "./fixtures";
 
 // Wildcard origins (`*/...`) so handlers match regardless of the configured API base URL.
+import catalog from "./catalog.json";
+
 export const handlers = [
+  // The real catalog, extracted from the templates repo. Mock mode is the only
+  // place the runtime-catalog path can be exercised without a backend, and a
+  // hand-written stub would agree with whatever the code does.
+  http.get("*/catalog", () => HttpResponse.json(catalog)),
+
   // --- User ---
   http.get("*/users/me", () => HttpResponse.json(currentUser)),
   http.get("*/users/me/preferences", () =>
