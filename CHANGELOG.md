@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.19.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.18.1...v1.19.0) (2026-08-31)
+
+### 🚀 Features
+
+* **catalog:** add a parity check between the catalog and the static config ([2ae5e77](https://github.com/devopsgroupeu/openprime-app/commit/2ae5e77a01bc39d88567eaa1a3ae8025ce36c1a7))
+
 ## [1.18.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.18.0...v1.18.1) (2026-08-30)
 
 ### 🐛 Bug Fixes
