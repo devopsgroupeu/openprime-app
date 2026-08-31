@@ -98,6 +98,18 @@ function loadAllowlist() {
 // in aws.js and read by nothing — verified across src/ — so they are not either.
 const COMPARED = ["type", "defaultValue", "displayName"];
 
+// Read off the service itself, not its fields. `available` is the one that
+// bites: aws.js hides lambda with `available: false` because lambda.tf needs
+// deployment packages the wizard cannot supply, and a catalog silent about it
+// puts a service on offer whose apply fails. The field loop below could never
+// have seen that — it only ever compares fields.
+const SERVICE_COMPARED = [
+  "displayName",
+  "description",
+  "category",
+  "available",
+];
+
 function compare(staticCfg, catalog) {
   const diffs = [];
   const catServices = catalog.services || {};
@@ -119,6 +131,28 @@ function compare(staticCfg, catalog) {
     const c = catServices[key];
     const sFields = s.fields || {};
     const cFields = c.fields || {};
+
+    for (const attr of SERVICE_COMPARED) {
+      const sv = s[attr];
+      const cv = c[attr];
+      if (sv === undefined && cv === undefined) continue;
+      // Everything else is compared stringified on purpose: Python `True` and
+      // JS `true` are the same value and comparing them by type resurrects 76
+      // false differences (OP-206). `available` is the exception, because for
+      // it the type IS the meaning -- the wizard tests `available !== false`,
+      // so the string "false" leaves the service on offer. An extractor that
+      // forgets to coerce it must fail here, not read as agreement.
+      const typeDiffers = attr === "available" && typeof sv !== typeof cv;
+      if (typeDiffers || String(sv) !== String(cv)) {
+        diffs.push({
+          kind: "service-attribute",
+          service: key,
+          attribute: attr,
+          static: sv,
+          catalog: cv,
+        });
+      }
+    }
 
     for (const f of Object.keys(sFields)) {
       if (!cFields[f])
@@ -177,6 +211,10 @@ function isAllowed(diff, allow) {
     return true;
   if (diff.field && allow.fields.includes(`${diff.service}.${diff.field}`))
     return true;
+  if (diff.kind === "service-attribute")
+    return (allow.serviceAttributes || []).includes(
+      `${diff.service}.${diff.attribute}`,
+    );
   if (
     diff.attribute &&
     allow.attributes.includes(`${diff.service}.${diff.field}.${diff.attribute}`)
@@ -210,6 +248,10 @@ async function main() {
     if (d.kind === "attribute") {
       console.log(
         `  ${d.kind.padEnd(28)} ${d.service}.${d.field}.${d.attribute}: static=${JSON.stringify(d.static)} catalog=${JSON.stringify(d.catalog)}`,
+      );
+    } else if (d.kind === "service-attribute") {
+      console.log(
+        `  ${d.kind.padEnd(28)} ${d.service}.${d.attribute}: static=${JSON.stringify(d.static)} catalog=${JSON.stringify(d.catalog)}`,
       );
     } else if (d.kind === "options") {
       console.log(
