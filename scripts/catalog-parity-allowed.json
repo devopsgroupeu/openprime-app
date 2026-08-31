@@ -10,21 +10,65 @@
     "attributes = 'service.field.attribute'."
   ],
 
-  "_why_attributes": [
-    "OP-206 recorded the template value as canonical going forward, signed off",
-    "by the owner. These are the divergences that decision covers: the wizard",
-    "will take the template's value once it hydrates from the catalog.",
-    "",
-    "rds.instanceClass and rds.version also differ, but they were NOT part of",
-    "that sign-off, so they stay blocking until someone decides."
-  ],
-  "attributes": [
-    "eks.kubernetesVersion.defaultValue",
-    "msk.kafkaVersion.defaultValue",
-    "aurora.engineVersion.defaultValue"
+  "_why_enabled_labels": [
+    "The catalog labels a service's toggle after the service's own name, so it",
+    "reads 'Enable Elastic Kubernetes Service (EKS)' where the static config",
+    "says 'Enable EKS'. Both are correct; the catalog's is unambiguous in a list",
+    "of service cards, which is where the toggle is actually read. Accepted."
   ],
 
-  "fields": [],
+  "_why_empty_vs_null": [
+    "The templates ship \"\" and {} for these; the static config claims null.",
+    "The catalog reports what Terraform will actually receive, so it is the",
+    "accurate side. Accepted rather than 'fixed' in the static config, which",
+    "OP-210 deletes anyway."
+  ],
+
+  "attributes": [
+    "aurora.enabled.displayName",
+    "ecr.enabled.displayName",
+    "eks.enabled.displayName",
+    "lambda.enabled.displayName",
+    "msk.enabled.displayName",
+    "opensearch.enabled.displayName",
+    "rds.enabled.displayName",
+    "s3.enabled.displayName",
+    "sns.enabled.displayName",
+    "sqs.enabled.displayName",
+    "vpc.enabled.displayName",
+    "waf.enabled.displayName",
+
+    "cloudfront.loggingBucket.defaultValue",
+    "sns.kmsKeyId.defaultValue",
+    "vpc.publicSubnetTags.defaultValue",
+    "vpc.privateSubnetTags.defaultValue",
+    "vpc.databaseSubnetTags.defaultValue",
+
+    "msk.kafkaVersion.defaultValue",
+    "aurora.engineVersion.defaultValue",
+    "eks.kubernetesVersion.defaultValue"
+  ],
+
+  "_why_fields": [
+    "EKS addon flags and the node-group AMI switch are real Terraform knobs the",
+    "static config never exposed. They appear on the EKS service card once the",
+    "wizard hydrates from the catalog — which is the point of OP-202: a knob",
+    "added to the templates reaches the wizard without a frontend release.",
+    "",
+    "These are NOT Helm charts; those have their own wizard step and their own",
+    "config, and the catalog deliberately does not carry them (OP-200)."
+  ],
+  "fields": [
+    "eks.defaultNodeGroupUseLatestAmi",
+    "eks.addonCorednsMostRecent",
+    "eks.addonPodIdentityMostRecent",
+    "eks.addonPodIdentityBeforeCompute",
+    "eks.addonKubeProxyMostRecent",
+    "eks.addonVpcCniMostRecent",
+    "eks.addonVpcCniBeforeCompute",
+    "eks.addonEbsCsiMostRecent",
+    "eks.addonEfsCsiMostRecent"
+  ],
 
   "services": []
 }
