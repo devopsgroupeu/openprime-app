@@ -12,7 +12,10 @@ import WizardStepSidebar from "./wizard-page/WizardStepSidebar";
 import WizardFooter from "./wizard-page/WizardFooter";
 import WizardStepContent from "./wizard-page/WizardStepContent";
 import { STEP_DEFS } from "./wizard-page/stepDefs";
-import { createEmptyEnvironment } from "../config/environmentsConfig";
+import {
+  backfillServices,
+  createEmptyEnvironment,
+} from "../config/environmentsConfig";
 import {
   validateEnvironmentConfig,
   getValidationSummary,
@@ -33,7 +36,8 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
 
   const [newEnv, setNewEnv] = useState(() => {
     if (isEditMode) return null;
-    return loadDraft(userId) || createEmptyEnvironment("aws");
+    const draft = loadDraft(userId);
+    return draft ? backfillServices(draft) : createEmptyEnvironment("aws");
   });
   const [savedAt, setSavedAt] = useState(null);
   const [expandedServices, setExpandedServices] = useState({});
@@ -66,7 +70,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
         const env = await authService.get(`/environments/${id}`);
         if (!active) return;
         // The API answers in snake_case; the wizard reads camelCase.
-        setNewEnv(normalizeEnvironment(env));
+        setNewEnv(backfillServices(normalizeEnvironment(env)));
         setCurrentStep(2);
         setCompletedSteps(new Set([1]));
       } catch (err) {
