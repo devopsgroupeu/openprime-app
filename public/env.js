@@ -15,6 +15,11 @@ window._env_ = {
 
   // Backend API Configuration
   API_URL: "$REACT_APP_API_URL",
+
+  // Feature flags. Unset or unsubstituted means off — see getEnvFlag().
+  // USE_RUNTIME_CATALOG makes the wizard build itself from GET /api/catalog
+  // (extracted from the templates repo) instead of the static service config.
+  USE_RUNTIME_CATALOG: "$REACT_APP_USE_RUNTIME_CATALOG",
 };
 
 // Development debugging - shows which variables are runtime vs build-time

@@ -24,21 +24,35 @@ import authService from "../services/authService";
 import { normalizeEnvironment } from "../utils/environmentShape";
 import { useToast } from "../contexts/ToastContext";
 import { useAuth } from "../contexts/AuthContext";
-import { saveDraft, loadDraft, clearDraft } from "../utils/wizardDraft";
+import {
+  saveDraft,
+  loadDraft,
+  loadDraftCommit,
+  clearDraft,
+} from "../utils/wizardDraft";
+import { useCatalog } from "../contexts/CatalogContext";
 
 const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const { id } = useParams();
   const isEditMode = Boolean(id);
   const navigate = useNavigate();
-  const { success, error } = useToast();
+  const { success, error, info } = useToast();
   const { user } = useAuth();
   const userId = user?.id;
+  const { commit: catalogCommit } = useCatalog();
 
   const [newEnv, setNewEnv] = useState(() => {
     if (isEditMode) return null;
     const draft = loadDraft(userId);
     return draft ? backfillServices(draft) : createEmptyEnvironment("aws");
   });
+  // Captured during render, not in an effect: the draft-saving effect below is
+  // declared first and therefore runs first, rewriting the stamp to the current
+  // commit. Reading it in an effect would always compare equal and the warning
+  // would never fire.
+  const [restoredDraftCommit] = useState(() =>
+    isEditMode ? null : loadDraftCommit(userId),
+  );
   const [savedAt, setSavedAt] = useState(null);
   const [expandedServices, setExpandedServices] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
@@ -90,8 +104,30 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   // away doesn't lose the configuration. Cleared on successful create.
   useEffect(() => {
     if (isEditMode || !newEnv) return;
-    if (saveDraft(userId, newEnv)) setSavedAt(Date.now());
-  }, [newEnv, isEditMode, userId]);
+    if (saveDraft(userId, newEnv, { commit: catalogCommit }))
+      setSavedAt(Date.now());
+  }, [newEnv, isEditMode, userId, catalogCommit]);
+
+  // A draft restored from localStorage was filled in against one version of the
+  // service catalog. Once the wizard builds itself from the templates, that set
+  // of services and fields changes when the TEMPLATES change, not only on a
+  // frontend deploy — so a draft can predate fields the user is now looking at.
+  //
+  // Told, not acted on: the draft is kept exactly as it was. Silently dropping
+  // or rewriting a half-finished environment is worse than a stale field, and
+  // backfillServices() already adds anything newly on offer.
+  const [warned, setWarned] = useState(false);
+  useEffect(() => {
+    if (isEditMode || warned || !catalogCommit) return;
+    // A missing stamp means "cannot tell", not "mismatch" — a draft written
+    // before stamping existed, or written with the runtime catalog off, has
+    // none. Warning on it would nag every returning user for nothing.
+    if (!restoredDraftCommit || restoredDraftCommit === catalogCommit) return;
+    setWarned(true);
+    info(
+      "This draft was started against an earlier version of the service catalog. It has been kept as-is — some options may have changed since.",
+    );
+  }, [isEditMode, warned, catalogCommit, restoredDraftCommit, info]);
 
   const hasKubernetesService = () =>
     newEnv?.services?.eks?.enabled ||

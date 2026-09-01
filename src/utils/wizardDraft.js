@@ -31,11 +31,30 @@ function stripSecrets(environment) {
   return { ...rest, gitRepository: gitRest };
 }
 
-export function saveDraft(userId, environment) {
+/**
+ * Provenance stamped onto the stored record, never onto the environment itself.
+ * A draft is built against one version of the service catalog; if the templates
+ * move while it sits in localStorage, the fields it was filled in against may
+ * no longer be the fields the wizard now renders.
+ *
+ * Kept as one key so loadDraft() can strip it and keep returning exactly the
+ * environment it was given — callers and the API payload must not learn about
+ * this. Nested rather than flat so a later addition (a templates ref, say) does
+ * not need a second stripped key.
+ */
+const SOURCE_KEY = "__source";
+
+export function saveDraft(userId, environment, { commit } = {}) {
   try {
+    const record = stripSecrets(environment);
     localStorage.setItem(
       draftKey(userId),
-      JSON.stringify(stripSecrets(environment)),
+      JSON.stringify(
+        // Only stamp when there is something to stamp. With the runtime catalog
+        // off there is no commit, and writing `{commit: undefined}` would make
+        // an unstamped draft indistinguishable from a stamped-but-unknown one.
+        commit ? { ...record, [SOURCE_KEY]: { commit } } : record,
+      ),
     );
     return true;
   } catch {
@@ -46,9 +65,29 @@ export function saveDraft(userId, environment) {
 export function loadDraft(userId) {
   try {
     const raw = localStorage.getItem(draftKey(userId));
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const { [SOURCE_KEY]: _source, ...environment } = JSON.parse(raw);
+    return environment;
   } catch {
     return null; // unreadable draft
+  }
+}
+
+/**
+ * The catalog commit a stored draft was built against, or null.
+ *
+ * null means "cannot tell", not "matches" — a draft written before this existed,
+ * or written with the runtime catalog off, carries no stamp. Callers must treat
+ * null as "say nothing" rather than as a mismatch, or every returning user gets
+ * warned once for no reason.
+ */
+export function loadDraftCommit(userId) {
+  try {
+    const raw = localStorage.getItem(draftKey(userId));
+    if (!raw) return null;
+    return JSON.parse(raw)?.[SOURCE_KEY]?.commit ?? null;
+  } catch {
+    return null;
   }
 }
 

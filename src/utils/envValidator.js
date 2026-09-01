@@ -92,6 +92,50 @@ export const getEnvVar = (configKey) => {
 };
 
 /**
+ * Read a boolean feature flag, runtime injection first, build-time second.
+ *
+ * Deliberately NOT part of ENV_CONFIG/getEnvVar: that one fails fast on a
+ * missing value, which is right for an API URL the app cannot run without and
+ * wrong for a toggle whose absence is a valid state — and the state every
+ * image ships with. An unset flag is `false`, never an exception.
+ *
+ * `runtimeKey` is read from window._env_ (substituted from $REACT_APP_<key> by
+ * docker/10-inject-env.sh); `buildTimeKey` is the VITE_* name used by the dev
+ * server, mock mode and Vitest, none of which run envsubst.
+ *
+ * An unsubstituted template (the literal "$REACT_APP_FOO", which is what a
+ * container without the variable set produces) is treated as unset — the same
+ * guard getEnvVar applies, and the reason a missing chart value degrades to
+ * "off" rather than to a truthy string.
+ */
+export const getEnvFlag = (runtimeKey, buildTimeKey) => {
+  const isTrue = (v) => v === "true" || v === true;
+
+  if (typeof window !== "undefined" && window._env_) {
+    const value = window._env_[runtimeKey];
+    if (value !== undefined && value !== `$REACT_APP_${runtimeKey}`) {
+      return isTrue(value);
+    }
+  }
+
+  try {
+    if (typeof import.meta !== "undefined" && import.meta.env) {
+      if (buildTimeKey in import.meta.env) {
+        return isTrue(import.meta.env[buildTimeKey]);
+      }
+    }
+  } catch {
+    // import.meta not available (some test environments)
+  }
+
+  if (typeof process !== "undefined" && process.env) {
+    return isTrue(process.env[buildTimeKey]);
+  }
+
+  return false;
+};
+
+/**
  * Validate all required environment variables are available
  * Called at application startup
  */

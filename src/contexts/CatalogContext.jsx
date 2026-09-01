@@ -58,32 +58,32 @@ export function CatalogProvider({ children, fallback = null }) {
 
   if (status === "loading") return fallback;
 
+  // A failed catalog fetch is NOT a failed app. SERVICES_CONFIG is seeded with
+  // the static AWS config at module load, so nothing hydrating leaves the
+  // wizard exactly as it renders with the flag off — which is what every user
+  // sees today. Blocking here instead would turn one unreachable internal
+  // service into a total outage of app.openprime.io for everyone.
+  //
+  // The trade-off, stated because it is real: the degradation is silent to the
+  // user. `status` is exposed on the context so a surface that cares can say
+  // so, and the failure is visible in the browser console and in the backend's
+  // own 502 rate. If this ever needs to be loud, add a banner here — do not go
+  // back to blocking.
   if (status === "error") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-6">
-        <div className="text-center max-w-md">
-          <h1 className="text-xl font-semibold text-primary mb-2">
-            Service catalog unavailable
-          </h1>
-          <p className="text-sm text-tertiary mb-6">
-            {error?.status === 502
-              ? "The catalog service is not responding. Your environments are unaffected."
-              : error?.message || "The service catalog could not be loaded."}
-          </p>
-          <button
-            onClick={() => fetchCatalog({ force: true })}
-            className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium"
-          >
-            Try again
-          </button>
-        </div>
-      </div>
+    console.warn(
+      "[catalog] falling back to the static service config:",
+      error?.message || error,
     );
   }
 
   return (
     <CatalogContext.Provider
-      value={{ status, commit, retry: () => fetchCatalog({ force: true }) }}
+      value={{
+        status,
+        commit,
+        error,
+        retry: () => fetchCatalog({ force: true }),
+      }}
     >
       {children}
     </CatalogContext.Provider>

@@ -10,9 +10,20 @@ import { awsServices } from "./services/aws";
 import { azureServices } from "./services/azure";
 import { gcpServices } from "./services/gcp";
 import { onpremServices } from "./services/onprem";
+import { getEnvFlag } from "../utils/envValidator";
 
-export const USE_RUNTIME_CATALOG =
-  import.meta.env?.VITE_USE_RUNTIME_CATALOG === "true";
+// Read at runtime, not at build time. `import.meta.env` is inlined by Vite when
+// the bundle is built, and nothing in the image pipeline sets it: there is no
+// Dockerfile ARG, no CI step writing a .env, and no chart value that could
+// reach it — so a build-time flag was permanently false in every published
+// image, with the only `true` living in .env.mock. Reading it from the runtime
+// injection that already carries the Keycloak/API config makes the flag
+// settable from GitOps, and — the part that matters operationally — makes it
+// *un*settable again without a rebuild and a release.
+export const USE_RUNTIME_CATALOG = getEnvFlag(
+  "USE_RUNTIME_CATALOG",
+  "VITE_USE_RUNTIME_CATALOG",
+);
 
 // Azure, GCP and on-prem have no template directories, so no catalog can
 // describe them. They stay static under both flag states and the catalog is
@@ -23,12 +34,19 @@ const STATIC_SEED = {
   ...onpremServices,
 };
 
+// Seeded with the static AWS config unconditionally, including when the flag is
+// on. That is what makes a catalog outage degrade instead of fail: nothing
+// hydrates, and the wizard renders exactly what it renders today.
+//
+// It does not weaken the flag-on path, because hydrateServicesConfig() deletes
+// every key that is not in STATIC_SEED before assigning — so a successful
+// hydration still *replaces* the static AWS services rather than merging over
+// them, and a service the catalog drops really does disappear.
+//
 // Hydrated in place rather than replaced: every consumer holds this exact
 // object, so mutating it is what lets ~5 files keep synchronous access with no
 // signature change. Reassigning the binding would leave them on the old one.
-export const SERVICES_CONFIG = USE_RUNTIME_CATALOG
-  ? { ...STATIC_SEED }
-  : { ...STATIC_SEED, ...awsServices };
+export const SERVICES_CONFIG = { ...STATIC_SEED, ...awsServices };
 
 const CONTROLS = new Set(Object.values(FIELD_TYPES));
 

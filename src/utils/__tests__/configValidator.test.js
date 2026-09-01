@@ -182,7 +182,7 @@ describe("configValidator", () => {
     test("validates EKS service config", () => {
       const eksConfig = {
         enabled: true,
-        kubernetesVersion: "1.33",
+        kubernetesVersion: "1.36",
         enableClusterCreatorAdminPermissions: true,
         endpointPublicAccess: true,
         authenticationMode: "API",
@@ -203,7 +203,7 @@ describe("configValidator", () => {
     test("validates EKS node count constraints", () => {
       const eksConfig = {
         enabled: true,
-        kubernetesVersion: "1.33",
+        kubernetesVersion: "1.36",
         defaultNodeGroupMinSize: 5,
         defaultNodeGroupMaxSize: 2, // Invalid: min > max
       };
@@ -533,7 +533,7 @@ describe("configValidator", () => {
         provider: "aws",
         region: "us-east-1",
         services: {
-          eks: { enabled: true, kubernetesVersion: "1.33" },
+          eks: { enabled: true, kubernetesVersion: "1.36" },
           // Missing VPC dependency
         },
       };
@@ -576,7 +576,7 @@ describe("configValidator", () => {
           },
           eks: {
             enabled: true,
-            kubernetesVersion: "1.33",
+            kubernetesVersion: "1.36",
             defaultNodeGroupMinSize: 3,
             defaultNodeGroupMaxSize: 10,
             defaultNodeGroupDesiredSize: 5,

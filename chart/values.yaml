@@ -119,6 +119,15 @@ app:
     REACT_APP_KEYCLOAK_URL: "http://keycloak:8080"
     REACT_APP_KEYCLOAK_REALM: "openprime"
     REACT_APP_KEYCLOAK_CLIENT_ID: "openprime-app"
+    # Feature flags
+    # Build the wizard from GET /api/catalog (extracted from the templates
+    # repo) instead of the static service config. Default off: turning it on
+    # requires Injecto >= 0.10.0 AND openprime-app-backend >= 1.15.0 to be
+    # running, because the frontend calls the backend's catalog proxy. A
+    # catalog failure falls back to the static config, so this is safe to
+    # switch off again at any time - it is a values change plus a restart, not
+    # a rebuild.
+    REACT_APP_USE_RUNTIME_CATALOG: "false"
     # Application Environment
     NODE_ENV: "production"
 

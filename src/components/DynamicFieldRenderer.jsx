@@ -63,7 +63,30 @@ const DynamicFieldRenderer = ({
         </div>
       );
 
-    case FIELD_TYPES.DROPDOWN:
+    case FIELD_TYPES.DROPDOWN: {
+      // A stored value the option list no longer offers has to stay visible.
+      // A plain controlled <select> whose value matches no <option> does NOT
+      // render blank — the browser falls back to the FIRST option, so an
+      // environment saved with EKS 1.32 would display "1.34" while still
+      // holding 1.32 (onChange never fires, so nothing corrects it). The user
+      // then sees a value the environment does not have, and a save is
+      // rejected by configValidator for a version the UI never showed them.
+      //
+      // This is not a one-off for today's EKS bump: option lists that track a
+      // vendor's supported versions rotate — roughly every 4 months for EKS —
+      // so every rotation orphans the environments sitting on the dropped
+      // value. Handling it here fixes the class for every dropdown rather than
+      // once per list.
+      //
+      // Rendered `disabled` so it shows as the current selection but cannot be
+      // chosen again once the user moves off it.
+      const options = fieldConfig.options ?? [];
+      const isOrphaned =
+        value !== undefined &&
+        value !== null &&
+        value !== "" &&
+        !options.some((option) => option.value === value);
+
       return (
         <div>
           <label className={labelClasses}>{fieldConfig.displayName}</label>
@@ -73,17 +96,29 @@ const DynamicFieldRenderer = ({
             disabled={disabled}
             className={baseInputClasses}
           >
-            {fieldConfig.options?.map((option) => (
+            {isOrphaned && (
+              <option key={value} value={value} disabled>
+                {`${value} — no longer supported`}
+              </option>
+            )}
+            {options.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
             ))}
           </select>
+          {isOrphaned && (
+            <p className="text-xs mt-1 text-amber-600 dark:text-amber-500 font-poppins">
+              This environment uses a value that is no longer offered. Pick a
+              supported one before saving.
+            </p>
+          )}
           {fieldConfig.description && (
             <p className={descriptionClasses}>{fieldConfig.description}</p>
           )}
         </div>
       );
+    }
 
     case FIELD_TYPES.MULTISELECT:
       return (
