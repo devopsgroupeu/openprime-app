@@ -72,3 +72,21 @@ vi.mock("keycloak-js", () => {
     default: KeycloakMock,
   };
 });
+
+// --- Runtime catalog: tests run against the HYDRATED registry ----------------
+//
+// OP-208. Without this, every suite asserted against the static service config
+// and the flag-on path was covered by nothing — so a catalog that could not
+// actually stand in for aws.js would have passed CI.
+//
+// It earned its keep immediately: it found that the catalog carried no
+// validation for services.vpc.cidr, i.e. hydrating dropped the only check on a
+// VPC network range, and it did so in the same window as the backend removing
+// its own CIDR validator. Neither catalog gate could see it.
+//
+// The fixture is the same document Injecto extracts from the templates repo,
+// so "the tests pass hydrated" means the real catalog can stand in.
+import catalogFixture from "./mocks/catalog.json";
+import { hydrateServicesConfig } from "./config/servicesConfig";
+
+hydrateServicesConfig(catalogFixture);

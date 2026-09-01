@@ -186,6 +186,44 @@ function compare(staticCfg, catalog) {
         }
       }
 
+      // Validation is compared because losing it is invisible everywhere else.
+      // aws.js guarded services.vpc.cidr with a format pattern; the catalog
+      // carried none, so hydrating from it dropped the only check on a VPC
+      // network range — in the same window as the backend removing its own CIDR
+      // validator. Both gates were green: this loop only ever compared type,
+      // defaultValue and displayName.
+      //
+      // Normalised before comparing, because the two sides encode the same
+      // regex differently: aws.js holds a RegExp literal (String() gives
+      // "/^a$/") while the catalog holds the source text ("^a$"). Comparing
+      // them raw would report a difference for every pattern that matches —
+      // the false-difference trap OP-206 already worked through once.
+      // `\/` is unescaped before comparing, and only `\/`. A JS regex LITERAL
+      // must escape a forward slash or it terminates early, so aws.js is forced
+      // to write `\/`; a decorator holds plain text and writes `/`. The two are
+      // the same regex, and this is the one normalisation that difference
+      // needs — deliberately not a general de-escaper, which would start
+      // equating patterns that really do differ.
+      const patternOf = (v) => {
+        if (v === undefined) return undefined;
+        return (v instanceof RegExp ? v.source : String(v)).replace(
+          /\\\//g,
+          "/",
+        );
+      };
+      const sPat = patternOf(sFields[f].validation?.pattern);
+      const cPat = patternOf(cFields[f].validation?.pattern);
+      if (sPat !== cPat) {
+        diffs.push({
+          kind: "attribute",
+          service: key,
+          field: f,
+          attribute: "validation.pattern",
+          static: sPat,
+          catalog: cPat,
+        });
+      }
+
       const sOpts = (sFields[f].options || [])
         .map((o) => String(o.value))
         .sort();

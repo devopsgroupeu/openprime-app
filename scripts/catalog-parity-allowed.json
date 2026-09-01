@@ -45,8 +45,7 @@
     "vpc.databaseSubnetTags.defaultValue",
 
     "msk.kafkaVersion.defaultValue",
-    "aurora.engineVersion.defaultValue",
-    "eks.kubernetesVersion.defaultValue"
+    "aurora.engineVersion.defaultValue"
   ],
 
   "_why_fields": [
