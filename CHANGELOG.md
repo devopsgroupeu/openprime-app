@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.21.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.20.0...v1.21.0) (2026-09-01)
+
+### 🚀 Features
+
+* **catalog:** read USE_RUNTIME_CATALOG at runtime and fall back to the static config ([6041249](https://github.com/devopsgroupeu/openprime-app/commit/6041249fb9c5ec4c55234373f686162741b33679))
+* **wizard:** stamp the catalog commit on a draft and warn when it goes stale ([bf9702a](https://github.com/devopsgroupeu/openprime-app/commit/bf9702a58f11039d557bacd8bc2c993d51f0aec0))
+
+### 🐛 Bug Fixes
+
+* **eks:** offer only the Kubernetes versions in AWS standard support (1.34-1.36) ([d161e18](https://github.com/devopsgroupeu/openprime-app/commit/d161e187db798db7f58fcdadbd2a8860e0050c86))
+* **wizard:** keep a stored dropdown value visible when the option list no longer offers it ([2182eed](https://github.com/devopsgroupeu/openprime-app/commit/2182eedeedac57e2e0bde21fb379f26e30b69d34))
+
 ## [1.20.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.19.0...v1.20.0) (2026-08-31)
 
 ### 🚀 Features
