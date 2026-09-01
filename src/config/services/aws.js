@@ -199,14 +199,16 @@ export const awsServices = {
         name: "kubernetesVersion",
         displayName: "Kubernetes Version",
         description: "Kubernetes version",
-        defaultValue: "1.34",
+        // Only the versions in EKS *standard* support. 1.33 left standard
+        // support on 2026-07-29; anything below 1.34 is extended support, which
+        // costs more per cluster-hour and is not what a new environment should
+        // default to. Keep this list in step with the same @param decorator in
+        // openprime-infra-templates — the parity gate fails if they diverge.
+        defaultValue: "1.36",
         options: [
-          { value: "1.30", label: "1.30" },
-          { value: "1.31", label: "1.31" },
-          { value: "1.32", label: "1.32" },
-          { value: "1.33", label: "1.33" },
           { value: "1.34", label: "1.34" },
           { value: "1.35", label: "1.35" },
+          { value: "1.36", label: "1.36" },
         ],
       },
       enableClusterCreatorAdminPermissions: {
