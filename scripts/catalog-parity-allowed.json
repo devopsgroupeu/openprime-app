@@ -2,28 +2,25 @@
   "_comment": [
     "Differences the parity check should not fail on. Everything here is a",
     "decision someone made, not a difference nobody got round to. If a line",
-    "cannot be justified in one sentence it does not belong in this file —",
+    "cannot be justified in one sentence it does not belong in this file \u2014",
     "an allowlist that absorbs unexplained drift is how OP-227 survived for",
     "months.",
     "",
     "Format: services = whole service; fields = 'service.field';",
     "attributes = 'service.field.attribute'."
   ],
-
   "_why_enabled_labels": [
     "The catalog labels a service's toggle after the service's own name, so it",
     "reads 'Enable Elastic Kubernetes Service (EKS)' where the static config",
     "says 'Enable EKS'. Both are correct; the catalog's is unambiguous in a list",
     "of service cards, which is where the toggle is actually read. Accepted."
   ],
-
   "_why_empty_vs_null": [
     "The templates ship \"\" and {} for these; the static config claims null.",
     "The catalog reports what Terraform will actually receive, so it is the",
     "accurate side. Accepted rather than 'fixed' in the static config, which",
     "OP-210 deletes anyway."
   ],
-
   "attributes": [
     "aurora.enabled.displayName",
     "ecr.enabled.displayName",
@@ -37,25 +34,27 @@
     "sqs.enabled.displayName",
     "vpc.enabled.displayName",
     "waf.enabled.displayName",
-
     "cloudfront.loggingBucket.defaultValue",
     "sns.kmsKeyId.defaultValue",
     "vpc.publicSubnetTags.defaultValue",
     "vpc.privateSubnetTags.defaultValue",
     "vpc.databaseSubnetTags.defaultValue",
-
     "msk.kafkaVersion.defaultValue",
     "aurora.engineVersion.defaultValue"
   ],
-
   "_why_fields": [
     "EKS addon flags and the node-group AMI switch are real Terraform knobs the",
     "static config never exposed. They appear on the EKS service card once the",
-    "wizard hydrates from the catalog — which is the point of OP-202: a knob",
+    "wizard hydrates from the catalog \u2014 which is the point of OP-202: a knob",
     "added to the templates reaches the wizard without a frontend release.",
     "",
     "These are NOT Helm charts; those have their own wizard step and their own",
-    "config, and the catalog deliberately does not carry them (OP-200)."
+    "config, and the catalog deliberately does not carry them (OP-200).",
+    "",
+    "eks.ingressDomain is the customer's own domain, added by OP-244. The generated",
+    "output used to hardcode openprime.io \u2014 our domain \u2014 so the monitoring ingresses",
+    "resolved for nobody and the ArgoCD ALB never found a certificate. Catalog-only,",
+    "because the static config has no notion of a domain at all."
   ],
   "fields": [
     "eks.defaultNodeGroupUseLatestAmi",
@@ -66,8 +65,8 @@
     "eks.addonVpcCniMostRecent",
     "eks.addonVpcCniBeforeCompute",
     "eks.addonEbsCsiMostRecent",
-    "eks.addonEfsCsiMostRecent"
+    "eks.addonEfsCsiMostRecent",
+    "eks.ingressDomain"
   ],
-
   "services": []
 }
