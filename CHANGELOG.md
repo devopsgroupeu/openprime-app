@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.21.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.21.0...v1.21.1) (2026-09-02)
+
+### 🐛 Bug Fixes
+
+* **wizard:** ship the AWS Load Balancer Controller with the Ingress Stack template ([#56](https://github.com/devopsgroupeu/openprime-app/issues/56)) ([de4f5e6](https://github.com/devopsgroupeu/openprime-app/commit/de4f5e65ddcedaa10f8e2cb702d7d0eca8c13f90))
+
 ## [1.21.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.20.0...v1.21.0) (2026-09-01)
 
 ### 🚀 Features
