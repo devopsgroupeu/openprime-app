@@ -7,6 +7,7 @@ const ConfirmDeleteModal = ({
   onConfirm,
   title,
   message,
+  warningData,
 }) => {
   const closeButtonRef = useRef(null);
 
@@ -25,6 +26,12 @@ const ConfirmDeleteModal = ({
   useEffect(() => {
     closeButtonRef.current?.focus();
   }, []);
+
+  const hasWarning = warningData && warningData.count > 0;
+  const visibleEnvironments = warningData?.environments?.slice(0, 5) || [];
+  const remainingCount = hasWarning
+    ? warningData.count - visibleEnvironments.length
+    : 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -50,6 +57,37 @@ const ConfirmDeleteModal = ({
         </div>
 
         <div className="p-6">
+          {hasWarning && (
+            <div className="mb-4 rounded-xl border border-warning/30 bg-warning-muted p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-warning">
+                    This credential is used by {warningData.count} environment
+                    {warningData.count === 1 ? "" : "s"}. Deleting it will
+                    unlink them — they will no longer be able to generate or
+                    push infrastructure until a new credential is assigned.
+                  </p>
+                  {visibleEnvironments.length > 0 && (
+                    <ul className="mt-2 space-y-0.5 text-sm text-secondary">
+                      {visibleEnvironments.map((env) => (
+                        <li key={env.id} className="flex items-center gap-1.5">
+                          <span className="text-warning">•</span>
+                          {env.name}
+                        </li>
+                      ))}
+                      {remainingCount > 0 && (
+                        <li className="text-tertiary text-xs mt-1">
+                          and {remainingCount} more…
+                        </li>
+                      )}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <p className="mb-4 text-secondary transition-colors">
             {message ||
               `Are you sure you want to delete the environment "${environment?.name}"?`}

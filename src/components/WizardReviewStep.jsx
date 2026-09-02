@@ -1,6 +1,6 @@
 // src/components/WizardReviewStep.jsx
 // Read-only summary shown as the final wizard step before creating the environment.
-import { Pencil, Check } from "lucide-react";
+import { Pencil, Check, AlertTriangle } from "lucide-react";
 
 const PROVIDER_LABEL = {
   aws: "Amazon Web Services",
@@ -36,6 +36,15 @@ const Card = ({ title, onEdit, children }) => (
   </div>
 );
 
+const WarningCallout = ({ children }) => (
+  <div className="rounded-xl border border-warning/30 bg-warning-muted p-4">
+    <div className="flex items-start gap-3">
+      <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+      <p className="text-sm text-warning font-medium">{children}</p>
+    </div>
+  </div>
+);
+
 const asText = (v, key) =>
   v && typeof v === "object" ? v[key] || "configured" : v || null;
 
@@ -48,6 +57,36 @@ const WizardReviewStep = ({ newEnv, onEditStep, isEditMode }) => {
     .filter(([, c]) => c?.enabled)
     .map(([k]) => k);
 
+  const hasKubernetesService =
+    newEnv.services?.eks?.enabled ||
+    newEnv.services?.aks?.enabled ||
+    newEnv.services?.gke?.enabled ||
+    newEnv.services?.kubernetes?.enabled;
+  const hasHelmCharts = charts.length > 0;
+  const needsGitRepo = hasKubernetesService || hasHelmCharts;
+  const gitUrlSet = Boolean(newEnv.gitRepository?.url?.trim());
+  const sshKeySet = Boolean(
+    newEnv.gitRepository?.sshKey?.trim() ||
+    newEnv.gitRepository?.sshKeyConfigured,
+  );
+  const terraformBackendEnabled = Boolean(
+    newEnv.terraformBackend?.enabled ||
+    newEnv.terraformBackend?.bucketName?.trim(),
+  );
+  const bucketNameSet = Boolean(newEnv.terraformBackend?.bucketName?.trim());
+
+  const warnings = [
+    needsGitRepo &&
+      !gitUrlSet &&
+      "Git repository URL is required when using Kubernetes/Helm charts",
+    gitUrlSet &&
+      !sshKeySet &&
+      "An SSH key is required when a Git repository URL is set",
+    terraformBackendEnabled &&
+      !bucketNameSet &&
+      "S3 bucket name is required when Terraform backend is enabled",
+  ].filter(Boolean);
+
   return (
     <div className="space-y-4">
       <div>
@@ -58,6 +97,14 @@ const WizardReviewStep = ({ newEnv, onEditStep, isEditMode }) => {
           Confirm your configuration before creating the environment.
         </p>
       </div>
+
+      {warnings.length > 0 && (
+        <div className="space-y-3">
+          {warnings.map((warning, index) => (
+            <WarningCallout key={index}>{warning}</WarningCallout>
+          ))}
+        </div>
+      )}
 
       {/* No Edit affordance in edit mode: name and global prefix are immutable
           once an environment exists (they name live Terraform resources). */}

@@ -35,6 +35,7 @@ const SettingsPage = () => {
   const [selectedProvider, setSelectedProvider] = useState("aws");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [credentialToDelete, setCredentialToDelete] = useState(null);
+  const [credentialUsage, setCredentialUsage] = useState(null);
   const [activeTab, setActiveTab] = useState("account");
 
   useEffect(() => {
@@ -100,8 +101,12 @@ const SettingsPage = () => {
           gitIntegration,
         }),
       ]);
+      toast.success("Settings saved successfully");
     } catch (error) {
       console.error("Failed to save settings:", error);
+      const message = error.data?.error || error.message;
+      const errorId = error.requestId ? ` (Error ID: ${error.requestId})` : "";
+      toast.error(`Failed to save settings: ${message}${errorId}`);
     } finally {
       setSaving(false);
     }
@@ -126,8 +131,17 @@ const SettingsPage = () => {
     }
   };
 
-  const handleDeleteCredential = (credential) => {
+  const handleDeleteCredential = async (credential) => {
     setCredentialToDelete(credential);
+    setCredentialUsage(null);
+    try {
+      const usage = await authService.get(
+        `/cloud-credentials/${credential.id}/usage`,
+      );
+      setCredentialUsage(usage);
+    } catch (error) {
+      console.error("Failed to load credential usage:", error);
+    }
     setShowDeleteModal(true);
   };
 
@@ -138,13 +152,13 @@ const SettingsPage = () => {
       setShowDeleteModal(false);
       toast.success("Credential deleted successfully");
       setCredentialToDelete(null);
+      setCredentialUsage(null);
     } catch (error) {
       console.error("Failed to delete credential:", error);
-      const errorMessage =
-        error.response?.data?.error ||
-        error.message ||
-        "Failed to delete credential";
-      toast.error(errorMessage, { title: "Delete Error" });
+      const message =
+        error.data?.error || error.message || "Failed to delete credential";
+      const errorId = error.requestId ? ` (Error ID: ${error.requestId})` : "";
+      toast.error(`${message}${errorId}`, { title: "Delete Error" });
     }
   };
 
@@ -165,11 +179,13 @@ const SettingsPage = () => {
       setSelectedCredential(null);
     } catch (error) {
       console.error("Failed to save credential:", error);
-      const errorMessage =
-        error.response?.data?.error ||
-        error.message ||
-        "Failed to save credential";
-      toast.error(errorMessage, { title: "Credential Error", duration: 7000 });
+      const message =
+        error.data?.error || error.message || "Failed to save credential";
+      const errorId = error.requestId ? ` (Error ID: ${error.requestId})` : "";
+      toast.error(`${message}${errorId}`, {
+        title: "Credential Error",
+        duration: 7000,
+      });
     }
   };
 
@@ -277,11 +293,13 @@ const SettingsPage = () => {
           onClose={() => {
             setShowDeleteModal(false);
             setCredentialToDelete(null);
+            setCredentialUsage(null);
           }}
           onConfirm={confirmDelete}
           isOpen={showDeleteModal}
           title="Delete Credential"
-          message={`Are you sure you want to delete the credential "${credentialToDelete.name}"?`}
+          message="Are you sure you want to delete this credential? This action cannot be undone."
+          warningData={credentialUsage}
         />
       )}
     </div>

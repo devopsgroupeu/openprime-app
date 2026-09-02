@@ -55,6 +55,8 @@ const CloudCredentialModal = ({
     closeButtonRef.current?.focus();
   }, []);
 
+  const ACCOUNT_ID_REGEX = /^\d{12}$/;
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -64,6 +66,8 @@ const CloudCredentialModal = ({
 
     if (!formData.identifier.trim()) {
       newErrors.identifier = "Account ID is required";
+    } else if (!ACCOUNT_ID_REGEX.test(formData.identifier.trim())) {
+      newErrors.identifier = "Account ID must be exactly 12 digits";
     }
 
     if (!credential && !formData.accessKey.trim()) {
@@ -172,6 +176,9 @@ const CloudCredentialModal = ({
             {errors.identifier && (
               <p className="text-danger text-sm mt-1">{errors.identifier}</p>
             )}
+            <p className="text-xs text-tertiary mt-1.5">
+              Your 12-digit AWS Account ID (e.g., 123456789012)
+            </p>
           </div>
 
           <div>
