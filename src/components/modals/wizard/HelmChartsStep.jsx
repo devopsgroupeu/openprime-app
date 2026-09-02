@@ -1,6 +1,7 @@
 // src/components/modals/wizard/HelmChartsStep.js
 import { Package, Zap, Info, Sparkles } from "lucide-react";
 import HelmChartsSelector from "../../HelmChartsSelector";
+import { getHelmChartsForK8sService } from "../../../config/helmChartsConfig";
 
 const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
   // Get the enabled Kubernetes service
@@ -185,11 +186,33 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
                 onClick={() => {
                   const currentCharts =
                     newEnv.services[k8sService.name]?.helmCharts || {};
+                  // ingress-nginx exposes a Service of type LoadBalancer. On EKS
+                  // nothing provisions one unless the AWS Load Balancer
+                  // Controller is running, so ArgoCD blocks on that Service's
+                  // health and never applies the Deployment - the customer gets
+                  // an app stuck with no pods and nothing explaining why
+                  // (OP-234). Ship the controller with the stack, filtered to
+                  // the charts this Kubernetes service actually has: it is
+                  // EKS-only, and the stack is offered for AKS/GKE too.
+                  const available = new Set(
+                    getHelmChartsForK8sService(k8sService.name),
+                  );
+                  const stack = [
+                    "ingressNginx",
+                    "certManager",
+                    "externalDns",
+                    "awsLoadBalancerController",
+                  ];
                   handleHelmChartsChange({
                     ...currentCharts,
-                    ingressNginx: { enabled: true, customValues: false },
-                    certManager: { enabled: true, customValues: false },
-                    externalDns: { enabled: true, customValues: false },
+                    ...Object.fromEntries(
+                      stack
+                        .filter((chart) => available.has(chart))
+                        .map((chart) => [
+                          chart,
+                          { enabled: true, customValues: false },
+                        ]),
+                    ),
                   });
                 }}
                 className="text-xs px-3 py-1 rounded-full transition-colors bg-primary-muted text-primary hover:bg-primary-muted"
