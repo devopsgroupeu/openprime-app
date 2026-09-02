@@ -270,17 +270,20 @@ describe("BasicConfigStep", () => {
       ["App!Test 1", "apptest1-"],
       ["2024-app", "app-"],
       ["--app--", "app-"],
-    ])("always produces a value matching the canonical charset (%p)", (input) => {
-      renderStep(blankEnv);
-      const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, us-app-, app-test-/,
-      );
+    ])(
+      "always produces a value matching the canonical charset (%p)",
+      (input) => {
+        renderStep(blankEnv);
+        const prefixInput = screen.getByPlaceholderText(
+          /e.g., myapp-, prod-, us-app-, app-test-/,
+        );
 
-      fireEvent.change(prefixInput, { target: { value: input } });
-      expect(prefixInput.value === "" || GLOBAL_PREFIX_RE.test(prefixInput.value)).toBe(
-        true,
-      );
-    });
+        fireEvent.change(prefixInput, { target: { value: input } });
+        expect(
+          prefixInput.value === "" || GLOBAL_PREFIX_RE.test(prefixInput.value),
+        ).toBe(true);
+      },
+    );
 
     // Regression: deleting a character out of the middle of the prefix used
     // to be ignored entirely - the handler always chopped the *last*

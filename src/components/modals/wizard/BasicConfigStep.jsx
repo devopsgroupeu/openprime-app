@@ -253,7 +253,6 @@ const BasicConfigStep = ({
               currentValue.endsWith("-") &&
               newValue.startsWith(currentValue)
             ) {
-
               const typed = newValue.slice(currentValue.length);
               rawBase = dashIsReal
                 ? currentValue + typed
@@ -273,7 +272,8 @@ const BasicConfigStep = ({
             }
 
             const baseValue = sanitized;
-            const dashAlreadyTrailing = nextDashIsReal && baseValue.endsWith("-");
+            const dashAlreadyTrailing =
+              nextDashIsReal && baseValue.endsWith("-");
             const finalValue = !baseValue
               ? ""
               : dashAlreadyTrailing
