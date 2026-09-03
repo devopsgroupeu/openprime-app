@@ -33,13 +33,20 @@ const CloudCredentialsTab = ({
       );
 
       if (result.valid) {
-        toast.success(
-          `Credentials valid — Account: ${result.accountId || credential.identifier}`,
-        );
         setLastValidatedMap((prev) => ({
           ...prev,
           [credential.id]: result.lastValidated,
         }));
+
+        if (result.accountIdMismatch) {
+          toast.warning(
+            `Credentials are valid, but they belong to account ${result.accountId} — this credential is stored under ${credential.identifier}. Update the Account ID to match.`,
+          );
+        } else {
+          toast.success(
+            `Credentials valid — Account: ${result.accountId || credential.identifier}`,
+          );
+        }
       } else {
         const isTemporary =
           result.reason === "temporary_failure" ||
@@ -52,6 +59,12 @@ const CloudCredentialsTab = ({
         }
       }
     } catch (error) {
+      if (error.status === 404) {
+        toast.warning(
+          "Credential testing isn't available yet — the backend needs to be updated first.",
+        );
+        return;
+      }
       toast.error(error.message || "Failed to test credentials");
     } finally {
       setTestingId(null);

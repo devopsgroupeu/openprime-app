@@ -141,6 +141,7 @@ const SettingsPage = () => {
       setCredentialUsage(usage);
     } catch (error) {
       console.error("Failed to load credential usage:", error);
+      setCredentialUsage({ checkFailed: true });
     }
     setShowDeleteModal(true);
   };

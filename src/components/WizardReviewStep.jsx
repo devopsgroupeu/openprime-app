@@ -69,10 +69,7 @@ const WizardReviewStep = ({ newEnv, onEditStep }) => {
     newEnv.gitRepository?.sshKey?.trim() ||
     newEnv.gitRepository?.sshKeyConfigured,
   );
-  const terraformBackendEnabled = Boolean(
-    newEnv.terraformBackend?.enabled ||
-    newEnv.terraformBackend?.bucketName?.trim(),
-  );
+  const terraformBackendEnabled = Boolean(newEnv.terraformBackend?.enabled);
   const bucketNameSet = Boolean(newEnv.terraformBackend?.bucketName?.trim());
 
   const warnings = [

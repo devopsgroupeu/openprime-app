@@ -27,9 +27,11 @@ const ConfirmDeleteModal = ({
     closeButtonRef.current?.focus();
   }, []);
 
-  const hasWarning = warningData && warningData.count > 0;
+  const hasUsageWarning =
+    warningData && !warningData.checkFailed && warningData.count > 0;
+  const hasCheckFailed = warningData && warningData.checkFailed;
   const visibleEnvironments = warningData?.environments?.slice(0, 5) || [];
-  const remainingCount = hasWarning
+  const remainingCount = hasUsageWarning
     ? warningData.count - visibleEnvironments.length
     : 0;
 
@@ -57,7 +59,7 @@ const ConfirmDeleteModal = ({
         </div>
 
         <div className="p-6">
-          {hasWarning && (
+          {hasUsageWarning && (
             <div className="mb-4 rounded-xl border border-warning/30 bg-warning-muted p-4">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
@@ -84,6 +86,18 @@ const ConfirmDeleteModal = ({
                     </ul>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {hasCheckFailed && (
+            <div className="mb-4 rounded-xl border border-warning/30 bg-warning-muted p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+                <p className="text-sm font-medium text-warning">
+                  Couldn&apos;t check which environments use this credential —
+                  they will keep working but lose their cloud credential link.
+                </p>
               </div>
             </div>
           )}

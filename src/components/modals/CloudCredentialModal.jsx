@@ -56,6 +56,10 @@ const CloudCredentialModal = ({
   }, []);
 
   const ACCOUNT_ID_REGEX = /^\d{12}$/;
+  const originalIdentifier = credential?.identifier;
+  const identifierChanged =
+    formData.identifier.trim() !== (originalIdentifier || "").trim();
+  const shouldValidateIdentifierFormat = !credential || identifierChanged;
 
   const validateForm = () => {
     const newErrors = {};
@@ -66,7 +70,10 @@ const CloudCredentialModal = ({
 
     if (!formData.identifier.trim()) {
       newErrors.identifier = "Account ID is required";
-    } else if (!ACCOUNT_ID_REGEX.test(formData.identifier.trim())) {
+    } else if (
+      shouldValidateIdentifierFormat &&
+      !ACCOUNT_ID_REGEX.test(formData.identifier.trim())
+    ) {
       newErrors.identifier = "Account ID must be exactly 12 digits";
     }
 
