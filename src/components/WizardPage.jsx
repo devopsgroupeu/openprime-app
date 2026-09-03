@@ -75,7 +75,11 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     window.scrollTo({ top: 0 });
   }, [currentStep]);
 
-  // Load environment for edit mode; step 1 (basic config) is read-only when editing.
+  // Load environment for edit mode. Editing opens on step 2 because that is
+  // where most changes are, but step 1 stays reachable: it is no longer wholly
+  // read-only — only Environment Name and Global Prefix are locked, and the
+  // domain added for OP-244 is editable precisely so a customer who delegates a
+  // domain later does not have to recreate the environment.
   useEffect(() => {
     if (!isEditMode) return;
     let active = true;
@@ -205,6 +209,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
           globalPrefix: newEnv.globalPrefix,
           provider: newEnv.provider,
           region: newEnv.region,
+          domain: newEnv.domain || null,
           services: newEnv.services || {},
           terraformBackend: newEnv.terraformBackend || null,
           gitRepository: newEnv.gitRepository || null,
@@ -252,7 +257,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   };
 
   const handlePrevious = () => {
-    if (currentStep > 1 && !(isEditMode && currentStep === 2)) {
+    if (currentStep > 1) {
       setShowErrors(false);
       setCurrentStep(currentStep - 1);
     }
@@ -316,7 +321,6 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
           steps={steps}
           currentStep={currentStep}
           completedSteps={completedSteps}
-          isEditMode={isEditMode}
           progressPercent={progressPercent}
           onStepChange={handleStepChange}
         />

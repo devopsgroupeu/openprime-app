@@ -32,6 +32,32 @@ function renderWizard() {
   );
 }
 
+// Create mode with a caller-supplied onCreateEnvironment, so the submitted
+// payload can be asserted.
+function renderWizardCreate(onCreateEnvironment) {
+  return render(
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <MemoryRouter initialEntries={["/environments/create"]}>
+            <Routes>
+              <Route
+                path="/environments/create"
+                element={
+                  <WizardPage
+                    onCreateEnvironment={onCreateEnvironment}
+                    onUpdateEnvironment={vi.fn()}
+                  />
+                }
+              />
+            </Routes>
+          </MemoryRouter>
+        </AuthProvider>
+      </ToastProvider>
+    </ThemeProvider>,
+  );
+}
+
 // Edit mode: MSW serves the snake_case fixture from src/mocks/fixtures.js at
 // GET /environments/env-001, exactly as the real API does.
 function renderWizardEdit(onUpdateEnvironment) {
@@ -118,7 +144,12 @@ describe("WizardPage", () => {
     );
   });
 
-  it("offers no way back to the immutable basic-configuration step in edit mode", async () => {
+  // Inverted for OP-244. Step 1 used to be sealed off in edit mode because it
+  // was wholly read-only. It no longer is: it carries the domain field, which is
+  // editable on purpose so a customer who delegates a domain later does not have
+  // to recreate the environment. Sealing the step would put that field out of
+  // reach — the lock now lives on the two fields that actually need it.
+  it("lets edit mode reach the basic-configuration step, where only name and prefix are locked", async () => {
     renderWizardEdit(vi.fn());
 
     expect(await screen.findByText("Edit Environment")).toBeInTheDocument();
@@ -126,10 +157,43 @@ describe("WizardPage", () => {
       expect(screen.getByText(/Step 2 of/)).toBeInTheDocument(),
     );
 
-    // Sidebar step 1 is visible but disabled, and Previous is disabled on step 2.
-    expect(
-      screen.getByText("Basic Configuration").closest("button"),
-    ).toBeDisabled();
-    expect(screen.getByRole("button", { name: /Previous/i })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /Previous/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/Step 1 of/)).toBeInTheDocument(),
+    );
+
+    expect(screen.getByPlaceholderText(/e\.g\., production/)).toBeDisabled();
+    expect(screen.getByPlaceholderText("e.g., example.com")).not.toBeDisabled();
+  });
+
+  // The create payload is an explicit whitelist, so a new field renders,
+  // validates and reviews correctly while being dropped on the way out.
+  it("sends the domain in the create payload", async () => {
+    const onCreateEnvironment = vi.fn().mockResolvedValue({ id: "env-new" });
+    renderWizardCreate(onCreateEnvironment);
+
+    expect(await screen.findByText("Environment Name")).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\., production/), {
+      target: { value: "prod" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("e.g., example.com"), {
+      target: { value: "example.com" },
+    });
+
+    let create = screen.queryByRole("button", { name: /Create Environment/i });
+    while (!create) {
+      fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+      await waitFor(() =>
+        expect(
+          screen.queryByRole("button", { name: /Continue/i }) ||
+            screen.queryByRole("button", { name: /Create Environment/i }),
+        ).toBeInTheDocument(),
+      );
+      create = screen.queryByRole("button", { name: /Create Environment/i });
+    }
+
+    fireEvent.click(create);
+    await waitFor(() => expect(onCreateEnvironment).toHaveBeenCalledTimes(1));
+    expect(onCreateEnvironment.mock.calls[0][0].domain).toBe("example.com");
   });
 });

@@ -1,6 +1,12 @@
 import { SERVICES_CONFIG, FIELD_TYPES } from "../config/servicesConfig";
 import { PROVIDERS_CONFIG } from "../config/providersConfig";
 
+// DNS labels only, at least two of them, alphabetic TLD, 253 characters max.
+// Kept identical to the backend's environmentValidator so the wizard cannot
+// accept a domain the API rejects on submit.
+const DOMAIN_PATTERN =
+  /^(?=.{1,253}$)([A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
+
 export class ConfigValidationError extends Error {
   constructor(message, field = null, value = null) {
     super(message);
@@ -294,6 +300,19 @@ export const validateEnvironmentConfig = (environment) => {
         ),
       );
     }
+  }
+
+  // Optional: an empty domain means the environment ships no host-based
+  // ingresses at all. The shape mirrors the backend validator deliberately —
+  // the wizard must not offer a value the API then rejects.
+  if (environment.domain && !DOMAIN_PATTERN.test(environment.domain)) {
+    errors.push(
+      new ConfigValidationError(
+        "Domain must be a hostname such as example.com",
+        "domain",
+        environment.domain,
+      ),
+    );
   }
 
   // Validate services

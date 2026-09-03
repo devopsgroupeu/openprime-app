@@ -48,7 +48,7 @@ const WarningCallout = ({ children }) => (
 const asText = (v, key) =>
   v && typeof v === "object" ? v[key] || "configured" : v || null;
 
-const WizardReviewStep = ({ newEnv, onEditStep, isEditMode }) => {
+const WizardReviewStep = ({ newEnv, onEditStep }) => {
   const services = Object.entries(newEnv.services || {})
     .filter(([, c]) => c?.enabled)
     .map(([k]) => k);
@@ -106,12 +106,11 @@ const WizardReviewStep = ({ newEnv, onEditStep, isEditMode }) => {
         </div>
       )}
 
-      {/* No Edit affordance in edit mode: name and global prefix are immutable
-          once an environment exists (they name live Terraform resources). */}
-      <Card
-        title="Basic configuration"
-        onEdit={isEditMode ? undefined : () => onEditStep?.("basic")}
-      >
+      {/* The Edit affordance stays in edit mode. Name and global prefix are
+          still immutable (they name live Terraform resources) and the step
+          renders them locked, but the domain is editable on purpose — hiding
+          the whole step would put it out of reach. */}
+      <Card title="Basic configuration" onEdit={() => onEditStep?.("basic")}>
         <Row label="Name" value={newEnv.name} />
         <Row label="Global prefix" value={newEnv.globalPrefix} />
         <Row
@@ -119,6 +118,7 @@ const WizardReviewStep = ({ newEnv, onEditStep, isEditMode }) => {
           value={PROVIDER_LABEL[newEnv.provider] || newEnv.provider}
         />
         <Row label="Region" value={newEnv.region || newEnv.location} />
+        <Row label="Domain" value={newEnv.domain} />
       </Card>
 
       <Card

@@ -1,6 +1,6 @@
 // src/components/modals/wizard/BasicConfigStep.js
 import { useState, useEffect, useRef } from "react";
-import { Cloud, MapPin, Type, Key, Tag } from "lucide-react";
+import { Cloud, MapPin, Type, Key, Tag, Globe } from "lucide-react";
 import ProviderIcon from "../../icons/ProviderIcon";
 import { useToast } from "../../../contexts/ToastContext";
 import {
@@ -395,6 +395,41 @@ const BasicConfigStep = ({
             <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p>Select a cloud provider first</p>
           </div>
+        )}
+      </div>
+
+      {/* Ingress Domain */}
+      <div className="p-6 rounded-2xl border bg-surface border-border">
+        <div className="flex items-center mb-4">
+          <Globe className="w-5 h-5 mr-2 text-accent" />
+          <label className="text-sm font-semibold text-label">
+            Domain (Optional)
+          </label>
+        </div>
+        {/* Deliberately not locked in edit mode: a customer usually delegates a
+            domain after trying the product, and should not have to recreate the
+            environment to add one. */}
+        <input
+          type="text"
+          className={`w-full px-4 py-3 text-lg transition-colors ${
+            getFieldError("domain") ? "border-danger" : "border-border"
+          }`}
+          placeholder="e.g., example.com"
+          value={newEnv.domain || ""}
+          onChange={(e) =>
+            setNewEnv({ ...newEnv, domain: e.target.value.trim() })
+          }
+        />
+        {getFieldError("domain") ? (
+          <p className="text-danger text-xs mt-2">
+            {getFieldError("domain").message}
+          </p>
+        ) : (
+          <p className="text-xs mt-2 text-tertiary">
+            Your cluster publishes ArgoCD, Grafana and Prometheus on this domain
+            (e.g. argocd.example.com). Leave it empty and no host-based ingress
+            is generated at all.
+          </p>
         )}
       </div>
 
