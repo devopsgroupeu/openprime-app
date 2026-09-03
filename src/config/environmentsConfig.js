@@ -15,6 +15,7 @@ export const createEmptyEnvironment = (providerType = "aws") => ({
   globalPrefix: "",
   provider: providerType,
   region: getProviderConfig(providerType).defaultRegion,
+  domain: "",
   services: createEmptyServices(providerType),
 });
 

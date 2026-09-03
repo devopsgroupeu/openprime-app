@@ -491,6 +491,47 @@ describe("configValidator", () => {
       expect(errors).toHaveLength(0);
     });
 
+    // OP-244: the domain is optional, but a bad one must not reach the API.
+    // The shape mirrors the backend validator so the wizard cannot offer a
+    // value the API then rejects.
+    describe("domain", () => {
+      const env = (domain) => ({
+        name: "test",
+        provider: "aws",
+        region: "us-east-1",
+        domain,
+        services: {},
+      });
+      const domainErrors = (domain) =>
+        validateEnvironmentConfig(env(domain)).filter(
+          (e) => e.field === "domain",
+        );
+
+      test.each(["example.com", "sub.example.com", "a-b.co.uk"])(
+        "accepts %s",
+        (domain) => {
+          expect(domainErrors(domain)).toHaveLength(0);
+        },
+      );
+
+      test("accepts an empty domain, which ships no host-based ingresses", () => {
+        expect(domainErrors("")).toHaveLength(0);
+        expect(domainErrors(undefined)).toHaveLength(0);
+      });
+
+      test.each([
+        "localhost",
+        "https://example.com",
+        "example.com/argocd",
+        ".example.com",
+        "-bad.example.com",
+        "example .com",
+        "example.123",
+      ])("rejects %s", (domain) => {
+        expect(domainErrors(domain)).toHaveLength(1);
+      });
+    });
+
     test("validates environment without name", () => {
       const environment = {
         provider: "aws",

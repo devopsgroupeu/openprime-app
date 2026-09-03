@@ -1,12 +1,12 @@
 import { Check } from "lucide-react";
 
 // Left sidebar of the environment wizard: clickable step nav + overall progress.
-// Presentational — step state and the change handler live in WizardPage.
+// Presentational — step state and the change handler live in WizardPage, which
+// is also where a jump forward to an unvisited step is refused.
 const WizardStepSidebar = ({
   steps,
   currentStep,
   completedSteps,
-  isEditMode,
   progressPercent,
   onStepChange,
 }) => {
@@ -17,18 +17,16 @@ const WizardStepSidebar = ({
         {steps.map((step) => {
           const isActive = step.number === currentStep;
           const isCompleted = completedSteps.has(step.number);
-          const isClickable = !isEditMode || step.number > 1;
           const StepIcon = step.icon;
           return (
             <button
               key={step.number}
-              onClick={() => isClickable && onStepChange(step.number)}
-              disabled={!isClickable}
-              className={`flex w-full items-start gap-3 rounded-lg border-l-2 p-3 text-left transition-colors ${
+              onClick={() => onStepChange(step.number)}
+              className={`flex w-full cursor-pointer items-start gap-3 rounded-lg border-l-2 p-3 text-left transition-colors ${
                 isActive
                   ? "border-primary bg-primary-muted"
                   : "border-transparent hover:bg-surface-elevated"
-              } ${isClickable ? "cursor-pointer" : "cursor-not-allowed opacity-70"}`}
+              }`}
             >
               <span
                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
@@ -54,11 +52,11 @@ const WizardStepSidebar = ({
                 <span className="block text-xs text-tertiary">
                   {step.description}
                 </span>
-                {isEditMode && step.number === 1 && (
-                  <span className="mt-1 block text-[10px] font-bold uppercase tracking-wider text-warning">
-                    Read only
-                  </span>
-                )}
+                {/* Step 1 used to be wholly read-only in edit mode. Since the
+                    domain field landed it is not: only Environment Name and
+                    Global Prefix are locked, and a "Read only" badge over an
+                    editable step is worse than no badge. The lock is stated on
+                    the two fields that carry it. */}
               </span>
             </button>
           );
