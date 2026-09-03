@@ -18,7 +18,6 @@ const WizardFooter = ({
     <div className="sticky bottom-0 z-20 shrink-0 flex items-center justify-between border-t border-border bg-surface px-8 py-4">
       <button
         onClick={() => (currentStep === 1 ? onCancel() : onPrevious())}
-        disabled={isEditMode && currentStep === 2}
         className="btn-op-secondary"
       >
         <ChevronLeft className="h-4 w-4" />
