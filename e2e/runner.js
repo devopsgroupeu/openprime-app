@@ -17,13 +17,19 @@ const __dirname = dirname(__filename);
 const config = {
   baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000",
   browser: process.env.BROWSER || "chromium",
+  // playwright-core ships no browsers of its own, so a bare launch() fails with
+  // "Executable doesn't exist". A channel points it at an installed browser
+  // instead, which is what both this machine and a GitHub runner have.
+  // Unset = default launch, for anyone who has run `playwright install`.
+  channel: process.env.BROWSER_CHANNEL || "",
   headless: process.env.HEADLESS !== "false",
   timeout: 30000,
   // Keycloak auth configuration
   auth: {
     username: process.env.KEYCLOAK_USERNAME || "",
     password: process.env.KEYCLOAK_PASSWORD || "",
-    enabled: process.env.KEYCLOAK_AUTH === "true" || !!process.env.KEYCLOAK_USERNAME,
+    enabled:
+      process.env.KEYCLOAK_AUTH === "true" || !!process.env.KEYCLOAK_USERNAME,
   },
 };
 
@@ -65,15 +71,21 @@ class Expect {
       typeof this.actual !== "string" ||
       !this.actual.toLowerCase().includes(expected.toLowerCase())
     ) {
-      throw new Error(`Expected text to include "${expected}", but got "${this.actual}"`);
+      throw new Error(
+        `Expected text to include "${expected}", but got "${this.actual}"`,
+      );
     }
   }
 
   async toHaveTitle(pattern) {
     const matches =
-      pattern instanceof RegExp ? pattern.test(this.actual) : this.actual.includes(pattern);
+      pattern instanceof RegExp
+        ? pattern.test(this.actual)
+        : this.actual.includes(pattern);
     if (!matches) {
-      throw new Error(`Expected title to match "${pattern}", but got "${this.actual}"`);
+      throw new Error(
+        `Expected title to match "${pattern}", but got "${this.actual}"`,
+      );
     }
   }
 
@@ -85,7 +97,9 @@ class Expect {
 
   toContain(expected) {
     if (!this.actual || !this.actual.includes(expected)) {
-      throw new Error(`Expected to contain "${expected}", but got "${this.actual}"`);
+      throw new Error(
+        `Expected to contain "${expected}", but got "${this.actual}"`,
+      );
     }
   }
 }
@@ -106,7 +120,10 @@ class TestContext {
 
   async goto(path) {
     const url = path.startsWith("http") ? path : `${config.baseURL}${path}`;
-    await this.page.goto(url, { waitUntil: "networkidle", timeout: config.timeout });
+    await this.page.goto(url, {
+      waitUntil: "networkidle",
+      timeout: config.timeout,
+    });
   }
 
   getByRole(role, options = {}) {
@@ -146,7 +163,10 @@ async function authenticateWithKeycloak(page) {
 
   try {
     // Navigate to the app, which should redirect to Keycloak
-    await page.goto(config.baseURL, { waitUntil: "networkidle", timeout: config.timeout });
+    await page.goto(config.baseURL, {
+      waitUntil: "networkidle",
+      timeout: config.timeout,
+    });
 
     // Check if we're on Keycloak login page
     const isKeycloakPage =
@@ -160,12 +180,16 @@ async function authenticateWithKeycloak(page) {
     }
 
     // Fill in username
-    const usernameInput = page.locator('input[name="username"]').or(page.locator("#username"));
+    const usernameInput = page
+      .locator('input[name="username"]')
+      .or(page.locator("#username"));
     await usernameInput.waitFor({ state: "visible", timeout: 5000 });
     await usernameInput.fill(config.auth.username);
 
     // Fill in password
-    const passwordInput = page.locator('input[name="password"]').or(page.locator("#password"));
+    const passwordInput = page
+      .locator('input[name="password"]')
+      .or(page.locator("#password"));
     await passwordInput.fill(config.auth.password);
 
     // Click submit button
@@ -187,7 +211,9 @@ async function authenticateWithKeycloak(page) {
     console.log("  ✓ Authentication successful");
   } catch (error) {
     console.error("  ✗ Authentication failed:", error.message);
-    throw new Error(`Keycloak authentication failed: ${error.message}`, { cause: error });
+    throw new Error(`Keycloak authentication failed: ${error.message}`, {
+      cause: error,
+    });
   }
 }
 
@@ -262,7 +288,10 @@ async function runTests(testFiles) {
   }
 
   const browserType = browsers[config.browser];
-  const browser = await browserType.launch({ headless: config.headless });
+  const browser = await browserType.launch({
+    headless: config.headless,
+    ...(config.channel ? { channel: config.channel } : {}),
+  });
 
   // Shared authenticated context (reuse authentication across tests)
   let sharedContext = null;
@@ -353,10 +382,16 @@ function printResults() {
  */
 async function main() {
   try {
-    // Find all test files
+    // Find test files. Any CLI arguments are substring filters on the file name,
+    // so CI can run one spec without inheriting an unrelated red one:
+    //   node e2e/runner.js catalogOnlyService
+    const filters = process.argv.slice(2);
     const files = await readdir(__dirname);
     const testFiles = files
       .filter((file) => file.endsWith(".spec.js"))
+      .filter(
+        (file) => filters.length === 0 || filters.some((f) => file.includes(f)),
+      )
       .map((file) => join(__dirname, file));
 
     if (testFiles.length === 0) {

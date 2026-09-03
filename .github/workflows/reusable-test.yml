@@ -35,3 +35,36 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      # OP-208. Unit tests call the hydration function directly, so they would
+      # still pass if the wizard silently fell back to the static config. This
+      # serves a catalog containing a service `aws.js` does not define and
+      # asserts the wizard renders it - which the static config cannot do.
+      #
+      # Mock mode only: MSW serves the API and auth is faked, so no backend,
+      # database or Keycloak is involved. Runs in ~4s.
+      - name: Build the app in mock mode
+        run: npm run build:mock
+
+      - name: Verify a browser is available
+        # playwright-core ships no browsers, so the run uses the Chrome that is
+        # preinstalled on GitHub's ubuntu images. Checked explicitly: a missing
+        # browser should say so here rather than surface as a launch timeout.
+        run: google-chrome --version
+
+      - name: Start the preview server
+        run: |
+          npm run preview &
+          for i in $(seq 1 30); do
+            if curl -sf -o /dev/null http://localhost:4173; then
+              echo "preview up after ${i}s"; exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::preview server never came up"; exit 1
+
+      - name: A catalog-only service reaches the wizard (OP-208)
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:4173
+          BROWSER_CHANNEL: chrome
+        run: node e2e/runner.js catalogOnlyService
