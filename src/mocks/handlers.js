@@ -8,7 +8,22 @@ export const handlers = [
   // The real catalog, extracted from the templates repo. Mock mode is the only
   // place the runtime-catalog path can be exercised without a backend, and a
   // hand-written stub would agree with whatever the code does.
-  http.get("*/catalog", () => HttpResponse.json(catalog)),
+  //
+  // `window.__e2eCatalog` lets an e2e serve a different document without editing
+  // the checked-in fixture, which has to stay parity-clean for `catalog:check`.
+  // MSW resolvers run in the page, not in the service worker, so `window` is
+  // reachable here.
+  //
+  // This resolver only ever RUNS in mock mode — `index.jsx` imports ./mocks
+  // behind `isMockMode()`. It is still BUNDLED into a production build as a lazy
+  // chunk, because a dynamic import is a build-time edge regardless of the
+  // runtime guard. Checked, not assumed: a clean `npm run build` emits
+  // `assets/browser-*.js` carrying this module, and production serves it.
+  http.get("*/catalog", () =>
+    HttpResponse.json(
+      (typeof window !== "undefined" && window.__e2eCatalog) || catalog,
+    ),
+  ),
 
   // --- User ---
   http.get("*/users/me", () => HttpResponse.json(currentUser)),
