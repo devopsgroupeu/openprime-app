@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, Link } from "react-router";
 import {
   Server,
   Package,
@@ -53,6 +53,7 @@ const EnvironmentDetailPage = ({ onDelete }) => {
   const navigate = useNavigate();
   const [environment, setEnvironment] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPushing, setIsPushing] = useState(false);
@@ -72,11 +73,17 @@ const EnvironmentDetailPage = ({ onDelete }) => {
       if (id) {
         try {
           setLoading(true);
+          setFetchError(null);
           const envData = await authService.get(`/environments/${id}`);
           setEnvironment(envData);
         } catch (err) {
           console.error("Failed to fetch environment:", err);
           setEnvironment(null);
+          setFetchError({
+            status: err.status,
+            message: err.message,
+            requestId: err.requestId,
+          });
         } finally {
           setLoading(false);
         }
@@ -96,11 +103,57 @@ const EnvironmentDetailPage = ({ onDelete }) => {
     );
   }
 
+  if (fetchError) {
+    if (fetchError.status === 404) {
+      return (
+        <div className="transition-colors duration-200 bg-transparent text-primary">
+          <div className="px-8 py-16 text-center">
+            <p className="text-lg font-medium">Environment not found</p>
+            <Link
+              to="/environments"
+              className="text-accent hover:underline mt-2 inline-block"
+            >
+              Back to environments
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="transition-colors duration-200 bg-transparent text-primary">
+        <div className="px-8 py-16 text-center max-w-lg mx-auto">
+          <p className="text-lg font-medium">Something went wrong</p>
+          <p className="text-secondary mt-2">
+            {fetchError.message || "Failed to load environment"}
+          </p>
+          {fetchError.requestId && (
+            <p className="text-xs text-tertiary mt-2">
+              Error ID: {fetchError.requestId}
+            </p>
+          )}
+          <Link
+            to="/environments"
+            className="text-accent hover:underline mt-6 inline-block"
+          >
+            Back to environments
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (!environment) {
     return (
       <div className="transition-colors duration-200 bg-transparent text-primary">
         <div className="px-8 py-16 text-center">
-          <p>Environment not found</p>
+          <p className="text-lg font-medium">Environment not found</p>
+          <Link
+            to="/environments"
+            className="text-accent hover:underline mt-2 inline-block"
+          >
+            Back to environments
+          </Link>
         </div>
       </div>
     );
@@ -178,10 +231,13 @@ const EnvironmentDetailPage = ({ onDelete }) => {
       );
     } catch (err) {
       console.error("Error generating infrastructure:", err);
-      if (mountedRef.current)
+      if (mountedRef.current) {
+        const message = err.data?.error || err.message;
+        const errorId = err.requestId ? ` (Error ID: ${err.requestId})` : "";
         error(
-          err.message || "Failed to generate infrastructure. Please try again.",
+          `${message || "Failed to generate infrastructure. Please try again."}${errorId}`,
         );
+      }
     } finally {
       if (mountedRef.current) setIsGenerating(false);
     }
@@ -202,8 +258,13 @@ const EnvironmentDetailPage = ({ onDelete }) => {
       );
     } catch (err) {
       console.error("Error pushing to Git:", err);
-      if (mountedRef.current)
-        error(err.message || "Failed to push to Git. Please try again.");
+      if (mountedRef.current) {
+        const message = err.data?.error || err.message;
+        const errorId = err.requestId ? ` (Error ID: ${err.requestId})` : "";
+        error(
+          `${message || "Failed to push to Git. Please try again."}${errorId}`,
+        );
+      }
     } finally {
       if (mountedRef.current) setIsPushing(false);
     }
