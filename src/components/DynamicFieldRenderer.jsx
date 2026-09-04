@@ -57,7 +57,7 @@ const DynamicFieldRenderer = ({
               className="sr-only peer"
             />
             <div
-              className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow after:rounded-full after:h-5 after:w-5 after:transition-all bg-border-strong ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow after:rounded-full after:h-5 after:w-5 after:transition-all bg-border ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
             ></div>
           </label>
         </div>
