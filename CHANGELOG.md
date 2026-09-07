@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.22.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.22.0...v1.22.1) (2026-09-07)
+
+### 🐛 Bug Fixes
+
+* **wizard:** restore distinct disabled toggle color ([#60](https://github.com/devopsgroupeu/openprime-app/issues/60)) ([eb15c1b](https://github.com/devopsgroupeu/openprime-app/commit/eb15c1b938f96e02b8f9173fedb6e02e4d425bd8))
+
 ## [1.22.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.21.1...v1.22.0) (2026-09-03)
 
 ### 🚀 Features
