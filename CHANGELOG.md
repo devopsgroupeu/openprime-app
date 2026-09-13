@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.22.2](https://github.com/devopsgroupeu/openprime-app/compare/v1.22.1...v1.22.2) (2026-09-13)
+
+### 🐛 Bug Fixes
+
+* **wizard:** accept a dash typed one keystroke at a time in global prefix ([#54](https://github.com/devopsgroupeu/openprime-app/issues/54)) ([7c1b64b](https://github.com/devopsgroupeu/openprime-app/commit/7c1b64beacb4f93f54476138b5f0e7d2b86cb6f6))
+
 ## [1.22.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.22.0...v1.22.1) (2026-09-07)
 
 ### 🐛 Bug Fixes
