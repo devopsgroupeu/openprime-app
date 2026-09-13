@@ -13,13 +13,33 @@ import TerraformBackendSection from "./basic-config/TerraformBackendSection";
 import GitRepositorySection from "./basic-config/GitRepositorySection";
 
 // Derives the suggested Global Prefix from Environment Name, e.g. "demo" ->
-// "demo-". Mirrors the sanitization already applied to the name field.
+// "demo-". Mirrors the sanitization already applied to the name field, plus
+// a leading-digit strip: RDS/Aurora identifiers and ElastiCache replication
+// group ids require a letter first (see GLOBAL_PREFIX_RE below), which is
+// stricter than the name field's own [a-z0-9] rule, so "2024-app" as a name
+// must not suggest "2024app-" as a prefix.
+//
+// This sanitizer also guarantees a non-empty prefix ends in "-":
+// elasticache.tf's replication_group_id/subnet_group_name/parameter_group_name
+// rely on that trailing dash as their own separator and add none of their
+// own. environmentValidator.js and openprime-infra-templates' _variables.tf
+// validation both require it too now, so this isn't the only enforcement
+// point any more - but it's still the one that keeps a direct API caller
+// (who bypasses this file entirely) from ever being the first to notice.
 const slugify = (value) =>
   (value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 const derivePrefix = (name) => {
-  const slug = slugify(name);
+  const slug = slugify(name).replace(/^[0-9]+/, "");
   return slug ? `${slug}-` : "";
 };
+
+// Only read by tests - nothing here validates against it at runtime. Keep
+// this in sync with environmentValidator.js's GLOBAL_PREFIX_RE by hand: that
+// one had to change shape to avoid catastrophic backtracking
+// (^[a-z](-?[a-z0-9]+)*-?$ nests a `+` inside a `*`), and to require the
+// trailing "-" rather than merely allow it, matching
+// openprime-infra-templates' _variables.tf validation (openprime-app-backend#30).
+export const GLOBAL_PREFIX_RE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*-$/;
 
 // isEditMode locks Environment Name and Global Prefix: both are baked into every
 // generated Terraform resource name, so changing them on an existing environment
@@ -43,6 +63,7 @@ const BasicConfigStep = ({
   const prefixEditedRef = useRef(
     (newEnv.globalPrefix || "") !== derivePrefix(newEnv.name),
   );
+  const trailingDashIsRealRef = useRef(false);
 
   useEffect(() => {
     if (newEnv.provider) {
@@ -217,17 +238,22 @@ const BasicConfigStep = ({
             prefixEditedRef.current = true;
             const newValue = e.target.value;
             const currentValue = newEnv.globalPrefix || "";
+            const dashIsReal = trailingDashIsRealRef.current;
 
             // Both quirks below stem from the same cause: the field always
-            // shows an auto-appended trailing dash, so edits made right at
-            // the end actually land before or after that dash rather than
-            // where the user thinks they are. Everywhere else (deleting or
-            // inserting in the middle), newValue already reflects exactly
-            // what the user did and can be sanitized as-is.
+            // shows a trailing dash - cosmetic (auto-appended) unless
+            // dashIsReal says the user's last keystroke put a real one
+            // there - so edits made right at the end actually land before
+            // or after that dash rather than where the user thinks they
+            // are. Everywhere else (deleting or inserting in the middle),
+            // newValue already reflects exactly what the user did and can
+            // be sanitized as-is.
             let rawBase;
+            let nextDashIsReal = false;
             if (
               newValue.length < currentValue.length &&
               currentValue.endsWith("-") &&
+              !dashIsReal &&
               newValue === currentValue.slice(0, -1)
             ) {
               // Backspace at the very end deletes the auto-appended dash
@@ -241,21 +267,33 @@ const BasicConfigStep = ({
               currentValue.endsWith("-") &&
               newValue.startsWith(currentValue)
             ) {
-              // Typing at the end lands after the dash (cursor defaults
-              // there on focus) - splice it in before the dash instead.
-              rawBase =
-                currentValue.slice(0, -1) + newValue.slice(currentValue.length);
+              const typed = newValue.slice(currentValue.length);
+              rawBase = dashIsReal
+                ? currentValue + typed
+                : currentValue.slice(0, -1) + typed;
+              nextDashIsReal = typed.endsWith("-");
             } else {
               rawBase = newValue;
             }
 
-            // Sanitize (letters, digits, dashes and underscores allowed)
-            // and add the trailing dash back
-            const baseValue = rawBase
-              .replace(/-+$/, "")
+            let sanitized = rawBase
               .toLowerCase()
-              .replace(/[^a-z0-9-]/g, "");
-            const finalValue = baseValue ? `${baseValue}-` : "";
+              .replace(/[^a-z0-9-]/g, "")
+              .replace(/^[^a-z]+/, "")
+              .replace(/-{2,}/g, "-");
+            if (!nextDashIsReal) {
+              sanitized = sanitized.replace(/-+$/, "");
+            }
+
+            const baseValue = sanitized;
+            const dashAlreadyTrailing =
+              nextDashIsReal && baseValue.endsWith("-");
+            const finalValue = !baseValue
+              ? ""
+              : dashAlreadyTrailing
+                ? baseValue
+                : `${baseValue}-`;
+            trailingDashIsRealRef.current = dashAlreadyTrailing;
             setNewEnv({ ...newEnv, globalPrefix: finalValue });
           }}
         />

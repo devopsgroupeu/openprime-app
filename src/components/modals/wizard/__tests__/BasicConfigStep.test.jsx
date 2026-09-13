@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { useState } from "react";
-import BasicConfigStep from "../BasicConfigStep";
+import BasicConfigStep, { GLOBAL_PREFIX_RE } from "../BasicConfigStep";
 import { ToastProvider } from "../../../../contexts/ToastContext";
 
 // Stateful harness: BasicConfigStep is controlled (newEnv / setNewEnv), so the
@@ -211,13 +211,13 @@ describe("BasicConfigStep", () => {
       expect(prefixInput).toHaveValue("apptesting-");
     });
 
-    // Known limitation, pinned deliberately rather than left to be
-    // rediscovered: the field always shows an auto-appended trailing dash,
-    // so a dash typed at the end is indistinguishable from it and
-    // `replace(/-+$/, "")` removes it. Internal dashes therefore survive
-    // paste and hand-editing (covered above) but not sequential typing.
-    // Distinguishing the two needs state beyond the input value - OP-231.
-    it("cannot yet accept a dash typed one character at a time", () => {
+    // OP-231: the field always shows a trailing dash, cosmetic unless the
+    // user's own last keystroke put a real one there - the two are the same
+    // string ("app-" either way), so telling them apart needs a bit of
+    // state beyond the input value (trailingDashIsRealRef in
+    // BasicConfigStep). Without it, a dash typed at the end used to be
+    // mistaken for the auto-dash and silently eaten.
+    it("accepts a dash typed one character at a time", () => {
       renderStep(blankEnv);
       const prefixInput = screen.getByPlaceholderText(
         /e.g., myapp-, prod-, us-app-, app-test-/,
@@ -228,8 +228,62 @@ describe("BasicConfigStep", () => {
         fireEvent.change(prefixInput, { target: { value: raw } });
       }
 
-      expect(prefixInput).toHaveValue("apptesting-");
+      expect(prefixInput).toHaveValue("app-testing-");
     });
+
+    // A second dash typed immediately after the first is a no-op rather
+    // than growing into "app--" - RDS/Aurora identifiers and ElastiCache
+    // replication group ids both reject two consecutive hyphens.
+    it("does not grow a double hyphen when a dash is typed twice in a row", () => {
+      renderStep(blankEnv);
+      const prefixInput = screen.getByPlaceholderText(
+        /e.g., myapp-, prod-, us-app-, app-test-/,
+      );
+
+      for (const ch of "app--test") {
+        const raw = prefixInput.value + ch;
+        fireEvent.change(prefixInput, { target: { value: raw } });
+      }
+
+      expect(prefixInput).toHaveValue("app-test-");
+    });
+
+    // RDS/Aurora identifiers and ElastiCache replication group ids both
+    // reject a leading digit.
+    it("strips a leading digit, which RDS/Aurora/ElastiCache reject", () => {
+      renderStep(blankEnv);
+      const prefixInput = screen.getByPlaceholderText(
+        /e.g., myapp-, prod-, us-app-, app-test-/,
+      );
+
+      fireEvent.change(prefixInput, { target: { value: "2024-app" } });
+      expect(prefixInput).toHaveValue("app-");
+    });
+
+    // Acceptance criteria: a prefix the wizard accepts must always be one
+    // the backend and AWS accept too - assert every produced value against
+    // the canonical charset shared with environmentValidator.js and the
+    // terraform templates, not just spot-checked examples above.
+    it.each([
+      ["myapp-", "myapp-"],
+      ["app_testing-", "apptesting-"],
+      ["App!Test 1", "apptest1-"],
+      ["2024-app", "app-"],
+      ["--app--", "app-"],
+    ])(
+      "always produces a value matching the canonical charset (%p)",
+      (input) => {
+        renderStep(blankEnv);
+        const prefixInput = screen.getByPlaceholderText(
+          /e.g., myapp-, prod-, us-app-, app-test-/,
+        );
+
+        fireEvent.change(prefixInput, { target: { value: input } });
+        expect(
+          prefixInput.value === "" || GLOBAL_PREFIX_RE.test(prefixInput.value),
+        ).toBe(true);
+      },
+    );
 
     // Regression: deleting a character out of the middle of the prefix used
     // to be ignored entirely - the handler always chopped the *last*
