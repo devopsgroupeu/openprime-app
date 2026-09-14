@@ -34,23 +34,31 @@ export class AuthService {
         },
       });
 
+      const requestId =
+        response.headers.get("X-Request-ID") ||
+        response.headers.get("x-request-id");
+
       if (response.status === 401) {
         keycloak.logout({
           redirectUri: window.location.origin,
         });
-        throw new Error("Session expired");
+        const error = new Error("Session expired");
+        error.status = 401;
+        error.requestId = requestId;
+        error.data = null;
+        throw error;
       }
 
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
-        try {
-          const errorData = await response.json();
+        const errorData = await response.json().catch(() => null);
+        if (errorData) {
           errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch {
-          // If response body is not JSON, use default error message
         }
         const error = new Error(errorMessage);
         error.status = response.status;
+        error.requestId = requestId;
+        error.data = errorData;
         throw error;
       }
       return response;

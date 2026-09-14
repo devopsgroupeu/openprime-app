@@ -32,6 +32,7 @@ function AppContent() {
   const { isAuthenticated, isLoading, authError, retryAuth } = useAuth();
   const [environments, setEnvironments] = useState([]);
   const [environmentsLoading, setEnvironmentsLoading] = useState(false);
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
@@ -42,10 +43,13 @@ function AppContent() {
   const loadEnvironments = async () => {
     try {
       setEnvironmentsLoading(true);
+      setLoadError(null);
       const userEnvironments = await authService.get("/environments");
       setEnvironments(userEnvironments);
     } catch (error) {
       console.error("Failed to load environments:", error);
+      setLoadError(error.message || "Failed to load environments");
+      setEnvironments([]);
     } finally {
       setEnvironmentsLoading(false);
     }
@@ -180,7 +184,13 @@ function AppContent() {
                 />
                 <Route
                   path="/environments"
-                  element={<EnvironmentsPage environments={environments} />}
+                  element={
+                    <EnvironmentsPage
+                      environments={environments}
+                      loadError={loadError}
+                      onRetry={loadEnvironments}
+                    />
+                  }
                 />
                 <Route
                   path="/environments/:id"
