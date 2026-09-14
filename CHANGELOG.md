@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.23.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.22.2...v1.23.0) (2026-09-14)
+
+### 🚀 Features
+
+* truthful error states, credential validation UI, first-run guidance, and X-Request-ID correlation ([#55](https://github.com/devopsgroupeu/openprime-app/issues/55)) ([837740a](https://github.com/devopsgroupeu/openprime-app/commit/837740a09ce6619f0f5df2d6d2ba958d24660fae))
+
 ## [1.22.2](https://github.com/devopsgroupeu/openprime-app/compare/v1.22.1...v1.22.2) (2026-09-13)
 
 ### 🐛 Bug Fixes
