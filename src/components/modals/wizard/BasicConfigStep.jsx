@@ -47,6 +47,7 @@ export const GLOBAL_PREFIX_RE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*-$/;
 const BasicConfigStep = ({
   newEnv,
   setNewEnv,
+  sshKeys,
   validationErrors = [],
   isEditMode = false,
 }) => {
@@ -487,7 +488,7 @@ const BasicConfigStep = ({
       )}
 
       {/* Git Repository Configuration */}
-      <GitRepositorySection newEnv={newEnv} setNewEnv={setNewEnv} />
+      <GitRepositorySection newEnv={newEnv} setNewEnv={setNewEnv} sshKeys={sshKeys} />
 
       {/* Summary */}
       {newEnv.name &&

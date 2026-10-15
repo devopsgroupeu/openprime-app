@@ -5,6 +5,9 @@ import { ThemeProvider } from "../../contexts/ThemeContext";
 import { ToastProvider } from "../../contexts/ToastContext";
 import { AuthProvider } from "../../contexts/AuthContext";
 import WizardPage from "../WizardPage";
+import { generateSshKeyPair } from "../../utils/sshKeyPair";
+
+vi.mock("../../utils/sshKeyPair", () => ({ generateSshKeyPair: vi.fn() }));
 
 // WizardPage is a full page: it needs Theme/Auth (AppHeader), Toast, and a
 // router (useParams/useNavigate). In mock mode AuthProvider auto-authenticates.
@@ -85,6 +88,42 @@ function renderWizardEdit(onUpdateEnvironment) {
 }
 
 describe("WizardPage", () => {
+  it("submits the generated private key, never the public key", async () => {
+    localStorage.clear();
+    const pair = {
+      privateKey: "test-private-key-material",
+      publicKey: "ssh-rsa test-public-key-material",
+    };
+    generateSshKeyPair.mockResolvedValue(pair);
+    const onCreateEnvironment = vi.fn().mockResolvedValue({ id: "env-new" });
+    renderWizardCreate(onCreateEnvironment);
+    await screen.findByText("Environment Name");
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\., production/), {
+      target: { value: "key-test" },
+    });
+    fireEvent.click(screen.getAllByRole("checkbox")[1]);
+    fireEvent.change(
+      screen.getByPlaceholderText("git@github.com:organization/repository.git"),
+      {
+        target: { value: "git@github.com:example/infra.git" },
+      },
+    );
+    await screen.findByText("This generated key is selected for saving.");
+    for (let step = 0; step < 3; step += 1) {
+      const next = screen.queryByRole("button", { name: /Continue/i });
+      if (!next) break;
+      fireEvent.click(next);
+    }
+    fireEvent.click(
+      screen.getByRole("button", { name: /Create Environment/i }),
+    );
+    await waitFor(() => expect(onCreateEnvironment).toHaveBeenCalledTimes(1));
+    const payload = onCreateEnvironment.mock.calls[0][0];
+    expect(payload.gitRepository.sshKey).toBe(pair.privateKey);
+    expect(payload.gitRepository).not.toHaveProperty("publicKey");
+    expect(JSON.stringify(payload)).not.toContain(pair.publicKey);
+  });
+
   it("renders the wizard chrome (sidebar, step content, footer) in create mode", async () => {
     renderWizard();
 

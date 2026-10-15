@@ -1,8 +1,9 @@
 import { GitBranch, AlertTriangle } from "lucide-react";
+import SshKeyTabs from "./SshKeyTabs";
 
 // Git repository card of the wizard's Basic Configuration step.
 // Presentational: env state is owned by the parent BasicConfigStep.
-const GitRepositorySection = ({ newEnv, setNewEnv }) => {
+const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys }) => {
   const keyAlreadyConfigured = Boolean(newEnv.gitRepository?.sshKeyConfigured);
 
   return (
@@ -97,46 +98,7 @@ const GitRepositorySection = ({ newEnv, setNewEnv }) => {
             </p>
           </div>
 
-          <div>
-            <label className="text-sm font-semibold text-label block mb-2">
-              SSH Private Key (Deploy Key)
-            </label>
-            <textarea
-              className="w-full px-4 py-2 font-mono text-xs transition-colors"
-              placeholder={
-                keyAlreadyConfigured
-                  ? "Leave blank to keep the current key"
-                  : "Paste your SSH private key here"
-              }
-              rows={8}
-              value={newEnv.gitRepository?.sshKey || ""}
-              onChange={(e) =>
-                setNewEnv({
-                  ...newEnv,
-                  gitRepository: {
-                    ...newEnv.gitRepository,
-                    sshKey: e.target.value,
-                  },
-                })
-              }
-            />
-            {/* On an edit the API returns a fingerprint rather than the key, so
-                this field is legitimately empty for an environment that has one.
-                Without saying so it reads as "no key configured". */}
-            {keyAlreadyConfigured ? (
-              <p className="text-xs mt-1 text-tertiary">
-                A key is already configured
-                {newEnv.gitRepository.sshKeyFingerprint
-                  ? ` (${newEnv.gitRepository.sshKeyFingerprint})`
-                  : ""}
-                . Leave this blank to keep it, or paste a new key to replace it.
-              </p>
-            ) : (
-              <p className="text-xs mt-1 text-tertiary">
-                Private SSH key with write access to the repository
-              </p>
-            )}
-          </div>
+          <SshKeyTabs sshKeys={sshKeys} gitRepository={newEnv.gitRepository} />
 
           {/* Deployment prerequisite callout */}
           <div className="p-5 rounded-xl border mb-4 bg-warning-muted border-warning text-warning">
