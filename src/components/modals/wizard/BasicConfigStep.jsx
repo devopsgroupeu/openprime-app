@@ -11,6 +11,7 @@ import { getAllProviders } from "../../../config/providersConfig";
 import authService from "../../../services/authService";
 import TerraformBackendSection from "./basic-config/TerraformBackendSection";
 import GitRepositorySection from "./basic-config/GitRepositorySection";
+import OtherSpecificationsSection from "./basic-config/OtherSpecificationsSection";
 
 // Derives the suggested Global Prefix from Environment Name, e.g. "demo" ->
 // "demo-". Mirrors the sanitization already applied to the name field, plus
@@ -49,6 +50,8 @@ const BasicConfigStep = ({
   setNewEnv,
   validationErrors = [],
   isEditMode = false,
+  selectedSpecifications = [],
+  onSpecificationsChange,
 }) => {
   const toast = useToast();
   const [credentials, setCredentials] = useState([]);
@@ -351,6 +354,11 @@ const BasicConfigStep = ({
           ))}
         </div>
       </div>
+
+      <OtherSpecificationsSection
+        selectedSpecifications={selectedSpecifications}
+        onSpecificationsChange={onSpecificationsChange}
+      />
 
       {/* Cloud Credentials Selection */}
       {newEnv.provider && (
