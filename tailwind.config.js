@@ -134,6 +134,7 @@ module.exports = {
         // === TEXT UTILITIES ===
         // Semantic text colors (Note: .text-primary intentionally overrides brand primary for semantic text)
         ".text-primary": { color: "var(--color-text-primary)" },
+        ".text-label": { color: "var(--color-label)" },
         ".text-secondary": { color: "var(--color-text-secondary)" },
         ".text-tertiary": { color: "var(--color-text-tertiary)" },
         ".text-inverse": { color: "var(--color-text-inverse)" },

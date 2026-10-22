@@ -30,16 +30,18 @@ const OtherSpecificationsSection = ({
   const id = useId();
 
   return (
-    <section className="p-6 rounded-2xl border bg-surface border-border">
-      <div className="flex items-center mb-4">
-        <ListChecks className="w-5 h-5 mr-2 text-accent" aria-hidden="true" />
-        <h2 id={`${id}-heading`} className="text-sm font-semibold text-label">
-          Other specifications:
-        </h2>
+    <div className="p-6 rounded-2xl border bg-surface border-border">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center">
+          <ListChecks className="w-5 h-5 mr-2 text-accent" aria-hidden="true" />
+          <label
+            id={`${id}-heading`}
+            className="text-sm font-semibold text-label"
+          >
+            Other specifications
+          </label>
+        </div>
       </div>
-      <p className="text-sm font-semibold text-label mb-2">
-        Industry / standard
-      </p>
       <p id={`${id}-description`} className="text-xs text-tertiary mb-4">
         Choose industries or standards of interest.
       </p>
@@ -84,7 +86,7 @@ const OtherSpecificationsSection = ({
           );
         })}
       </div>
-    </section>
+    </div>
   );
 };
 
