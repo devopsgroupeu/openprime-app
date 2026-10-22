@@ -1,9 +1,23 @@
 import { GitBranch, AlertTriangle } from "lucide-react";
 
+// Host part of a git URL: git@host:path, ssh://user@host:port/path or
+// https://host/path. Empty when it cannot be read.
+const gitHost = (url = "") => {
+  const match = url
+    .trim()
+    .toLowerCase()
+    .match(/^(?:[a-z+]+:\/\/)?(?:[^@/]+@)?([^/:]+)/);
+  return match ? match[1] : "";
+};
+
 // Git repository card of the wizard's Basic Configuration step.
 // Presentational: env state is owned by the parent BasicConfigStep.
 const GitRepositorySection = ({ newEnv, setNewEnv }) => {
   const keyAlreadyConfigured = Boolean(newEnv.gitRepository?.sshKeyConfigured);
+  // Self-hosted GitLab is recognised only by "gitlab" in its host name.
+  const host = gitHost(newEnv.gitRepository?.url);
+  const isGitLab = host.includes("gitlab");
+  const isGitLabCom = host === "gitlab.com";
 
   return (
     <div className="p-6 rounded-2xl border bg-surface border-border">
@@ -181,6 +195,25 @@ const GitRepositorySection = ({ newEnv, setNewEnv }) => {
                     </span>
                   </li>
                 </ul>
+
+                {isGitLab && (
+                  <div className="space-y-2 text-[11px] leading-relaxed">
+                    <p className="font-bold uppercase text-[10px]">On GitLab</p>
+                    <p>
+                      CI/CD variables are protected by default, so they only
+                      reach protected branches. Protect the branch you deploy
+                      from (Settings → Repository → Protected branches), or
+                      clear &quot;Protect variable&quot; on these variables.
+                    </p>
+                    {isGitLabCom && (
+                      <p>
+                        New gitlab.com accounts must verify their identity
+                        (phone or card) before GitLab runs any pipeline. Until
+                        then the first pipeline shows as failed with 0 jobs.
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <div className="p-2 rounded text-[11px] border bg-background border-border">
                   <span className="font-bold mr-1 uppercase text-[10px]">
