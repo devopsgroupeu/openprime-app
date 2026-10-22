@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.24.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.23.0...v1.24.0) (2026-10-22)
+
+### 🚀 Features
+
+* **wizard:** more cloud providers, specification for standards/industry ([#61](https://github.com/devopsgroupeu/openprime-app/issues/61)) ([42f0670](https://github.com/devopsgroupeu/openprime-app/commit/42f0670e4e4dd36b190b2bd1c95379529d9d75df))
+
 ## [1.23.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.22.2...v1.23.0) (2026-09-14)
 
 ### 🚀 Features
