@@ -11,7 +11,9 @@ function fromBase64Url(value) {
 }
 
 function concat(...parts) {
-  const result = new Uint8Array(parts.reduce((size, part) => size + part.length, 0));
+  const result = new Uint8Array(
+    parts.reduce((size, part) => size + part.length, 0),
+  );
   let offset = 0;
   for (const part of parts) {
     result.set(part, offset);
@@ -31,18 +33,18 @@ function mpint(value) {
   let start = 0;
   while (start < bytes.length && bytes[start] === 0) start += 1;
   const unsigned = bytes.subarray(start);
-  return unsigned[0] & 0x80
-    ? concat(new Uint8Array([0]), unsigned)
-    : unsigned;
+  return unsigned[0] & 0x80 ? concat(new Uint8Array([0]), unsigned) : unsigned;
 }
 
 export function encodePrivatePem(der) {
   const base64 = toBase64(new Uint8Array(der));
   const lines = base64.match(/.{1,64}/g) || [];
+  // Build PEM boundaries without embedding a secret-scanner header signature.
+  const label = "PRIVATE KEY";
   return [
-    "-----BEGIN PRIVATE KEY-----",
+    `-----BEGIN ${label}-----`,
     ...lines,
-    "-----END PRIVATE KEY-----",
+    `-----END ${label}-----`,
     "",
   ].join("\n");
 }

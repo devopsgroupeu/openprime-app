@@ -496,7 +496,11 @@ const BasicConfigStep = ({
       )}
 
       {/* Git Repository Configuration */}
-      <GitRepositorySection newEnv={newEnv} setNewEnv={setNewEnv} sshKeys={sshKeys} />
+      <GitRepositorySection
+        newEnv={newEnv}
+        setNewEnv={setNewEnv}
+        sshKeys={sshKeys}
+      />
 
       {/* Summary */}
       {newEnv.name &&
