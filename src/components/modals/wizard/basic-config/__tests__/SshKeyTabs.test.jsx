@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import AdmZip from "adm-zip";
 import { Buffer } from "node:buffer";
@@ -43,7 +43,8 @@ afterEach(() => {
 });
 
 describe("SshKeyTabs", () => {
-  it("copies each generated key exactly and reports success", async () => {
+  it("copies each generated key exactly and briefly confirms success on its button", async () => {
+    vi.useFakeTimers();
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal(
       "navigator",
@@ -52,15 +53,30 @@ describe("SshKeyTabs", () => {
       }),
     );
     render(<SshKeyTabs sshKeys={controller()} gitRepository={{}} />);
-    fireEvent.click(screen.getByRole("button", { name: "Copy public key" }));
-    expect(await screen.findByText("Public key copied.")).toBeVisible();
+    const publicButton = screen.getByRole("button", {
+      name: "Copy public key",
+    });
+    const privateButton = screen.getByRole("button", {
+      name: "Copy private key",
+    });
+    await act(async () => fireEvent.click(publicButton));
+    expect(publicButton).toHaveAttribute("title", "Copied!");
+    expect(publicButton.querySelector(".lucide-check")).toBeInTheDocument();
+    expect(privateButton).toHaveAttribute("title", "Copy private key");
+    expect(screen.getByText("Public key copied.")).toHaveClass("sr-only");
     expect(writeText).toHaveBeenLastCalledWith(pair.publicKey);
-    fireEvent.click(screen.getByRole("button", { name: "Copy private key" }));
-    expect(await screen.findByText("Private key copied.")).toBeVisible();
+    await act(async () => fireEvent.click(privateButton));
+    expect(privateButton).toHaveAttribute("title", "Copied!");
+    expect(privateButton.querySelector(".lucide-check")).toBeInTheDocument();
+    expect(publicButton).toHaveAttribute("title", "Copy public key");
     expect(writeText).toHaveBeenLastCalledWith(pair.privateKey);
+    act(() => vi.advanceTimersByTime(1800));
+    expect(privateButton).toHaveAttribute("title", "Copy private key");
+    expect(privateButton.querySelector(".lucide-copy")).toBeInTheDocument();
+    expect(screen.queryByText("Private key copied.")).not.toBeInTheDocument();
   });
 
-  it("shows a useful message when clipboard access fails", async () => {
+  it("shows failure feedback on the copy button without reporting success", async () => {
     vi.stubGlobal(
       "navigator",
       Object.create(navigator, {
@@ -70,17 +86,29 @@ describe("SshKeyTabs", () => {
       }),
     );
     render(<SshKeyTabs sshKeys={controller()} gitRepository={{}} />);
-    fireEvent.click(screen.getByRole("button", { name: "Copy private key" }));
-    expect(
-      await screen.findByText(
-        "Could not copy. Select the text and copy it manually.",
-      ),
-    ).toBeVisible();
+    const button = screen.getByRole("button", { name: "Copy private key" });
+    await act(async () => fireEvent.click(button));
+    expect(button).toHaveAttribute("title", "Copy failed. Please try again.");
+    expect(button.querySelector(".lucide-x")).toBeInTheDocument();
+    expect(button.querySelector(".lucide-check")).not.toBeInTheDocument();
+    expect(screen.getByText("Could not copy. Please try again.")).toHaveClass(
+      "sr-only",
+    );
+    expect(button).toBeEnabled();
   });
 
-  it("clears Manual on entry and restores the read-only generated pair in Automatic", async () => {
+  it("defaults to Manual, clears it on reentry, and restores the generated pair in Auto", async () => {
     generateSshKeyPair.mockResolvedValue(pair);
     render(<Harness />);
+    expect(screen.getByRole("tab", { name: "Manual" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByRole("tabpanel", { name: "Manual" })).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Download both keys" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Auto" }));
     await screen.findByRole("button", { name: "Download both keys" });
     fireEvent.click(screen.getByRole("tab", { name: "Manual" }));
     const manual = within(screen.getByRole("tabpanel", { name: "Manual" }));
@@ -89,39 +117,56 @@ describe("SshKeyTabs", () => {
       target: { value: "pasted-key" },
     });
     expect(manual.getByRole("textbox")).toHaveValue("pasted-key");
-    fireEvent.click(screen.getByRole("tab", { name: "Automatic" }));
-    const automatic = within(
-      screen.getByRole("tabpanel", { name: "Automatic" }),
-    );
+    fireEvent.click(screen.getByRole("tab", { name: "Auto" }));
+    const automatic = within(screen.getByRole("tabpanel", { name: "Auto" }));
     expect(
       automatic.getByLabelText("SSH Public Key (Deploy Key)"),
     ).toHaveAttribute("readonly");
     expect(
       automatic.getByLabelText("SSH Private Key (Deploy Key)"),
     ).toHaveAttribute("readonly");
+    fireEvent.click(
+      automatic.getByRole("button", { name: "Unhide private key" }),
+    );
     expect(
       automatic.getByLabelText("SSH Private Key (Deploy Key)"),
     ).toHaveValue(pair.privateKey);
-    expect(automatic.getByRole("status")).toHaveTextContent(
-      "selected for saving",
-    );
+    expect(
+      automatic.getByText("This generated key is selected for saving."),
+    ).toBeVisible();
     fireEvent.click(screen.getByRole("tab", { name: "Manual" }));
     expect(manual.getByRole("textbox")).toHaveValue("");
+    fireEvent.click(screen.getByRole("tab", { name: "Auto" }));
+    expect(
+      automatic.getByLabelText("SSH Private Key (Deploy Key)"),
+    ).not.toHaveValue(pair.privateKey);
+    expect(
+      automatic.getByRole("button", { name: "Unhide private key" }),
+    ).toHaveAttribute("aria-expanded", "false");
   });
-  it("provides both generated keys and one download action in Automatic", () => {
+  it("masks the generated private key until revealed and provides one download action in Auto", () => {
     render(
       <SshKeyTabs
         sshKeys={controller()}
         gitRepository={{ sshKey: pair.privateKey }}
       />,
     );
-    const panel = within(screen.getByRole("tabpanel", { name: "Automatic" }));
+    const panel = within(screen.getByRole("tabpanel", { name: "Auto" }));
     expect(panel.getByLabelText("SSH Public Key (Deploy Key)")).toHaveValue(
       pair.publicKey,
     );
     const privateField = panel.getByLabelText("SSH Private Key (Deploy Key)");
-    expect(privateField).toHaveValue(pair.privateKey);
+    expect(privateField).not.toHaveValue(pair.privateKey);
     expect(privateField).toHaveAttribute("readonly");
+    const toggle = panel.getByRole("button", { name: "Unhide private key" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(privateField).toHaveValue(pair.privateKey);
+    expect(
+      panel.getByRole("button", { name: "Hide private key" }),
+    ).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(toggle);
+    expect(privateField).not.toHaveValue(pair.privateKey);
     expect(
       panel.getByRole("button", { name: "Download both keys" }),
     ).toBeEnabled();

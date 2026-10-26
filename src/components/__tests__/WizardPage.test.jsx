@@ -108,6 +108,10 @@ describe("WizardPage", () => {
         target: { value: "git@github.com:example/infra.git" },
       },
     );
+    fireEvent.click(screen.getByRole("tab", { name: "Auto" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Use generated key" }),
+    );
     await screen.findByText("This generated key is selected for saving.");
     for (let step = 0; step < 3; step += 1) {
       const next = screen.queryByRole("button", { name: /Continue/i });

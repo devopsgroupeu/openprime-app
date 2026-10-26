@@ -2,14 +2,25 @@ import { render, screen, fireEvent, within } from "@testing-library/react";
 import { useState } from "react";
 import BasicConfigStep, { GLOBAL_PREFIX_RE } from "../BasicConfigStep";
 import { ToastProvider } from "../../../../contexts/ToastContext";
+import { useSshKeyGeneration } from "../../../wizard-page/useSshKeyGeneration";
 
 // Stateful harness: BasicConfigStep is controlled (newEnv / setNewEnv), so the
 // toggles need a real state owner to re-render on change — mirrors the wizard.
 function Harness({ initial }) {
   const [newEnv, setNewEnv] = useState(initial);
+  const sshKeys = useSshKeyGeneration({
+    newEnv,
+    setNewEnv,
+    active: true,
+    identity: "test",
+  });
   return (
     <ToastProvider>
-      <BasicConfigStep newEnv={newEnv} setNewEnv={setNewEnv} />
+      <BasicConfigStep
+        newEnv={newEnv}
+        setNewEnv={setNewEnv}
+        sshKeys={sshKeys}
+      />
     </ToastProvider>
   );
 }
