@@ -1,5 +1,5 @@
-import { useId, useRef, useState } from "react";
-import { Copy, Download } from "lucide-react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { Check, Copy, Download, Eye, EyeOff, X } from "lucide-react";
 import { strToU8, zipSync } from "fflate";
 
 function downloadKeys(pair) {
@@ -28,14 +28,29 @@ function downloadKeys(pair) {
 export default function SshKeyTabs({ sshKeys, gitRepository }) {
   const id = useId();
   const tabs = useRef([]);
+  const initialized = useRef(false);
+  const [privateKeyVisible, setPrivateKeyVisible] = useState(false);
   const [downloadError, setDownloadError] = useState("");
-  const [copyMessage, setCopyMessage] = useState("");
   const [copying, setCopying] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState(null);
   const configured = Boolean(gitRepository?.sshKeyConfigured);
   const hasKey = Boolean(gitRepository?.sshKey?.trim());
   const busy = sshKeys.status === "generating";
-  const buttonClass =
-    "px-3 py-2 rounded-lg border border-border text-sm disabled:opacity-50";
+  const buttonClass = "btn-op-primary";
+
+  useEffect(() => {
+    if (!copyFeedback) return;
+    const timeout = setTimeout(() => setCopyFeedback(null), 1800);
+    return () => clearTimeout(timeout);
+  }, [copyFeedback]);
+
+  useLayoutEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+    sshKeys.setMode("manual");
+    // Switching modes clears the input; preserve an existing manually entered key.
+    if (gitRepository?.sshKey) sshKeys.setManualKey(gitRepository.sshKey);
+  }, [sshKeys, gitRepository?.sshKey]);
 
   const onTabKeyDown = (event, index) => {
     const next = {
@@ -59,13 +74,13 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
   };
 
   const copyKey = async (text, label) => {
-    setCopyMessage("");
+    setCopyFeedback(null);
     setCopying(true);
     try {
       await navigator.clipboard.writeText(text);
-      setCopyMessage(`${label} key copied.`);
+      setCopyFeedback({ label, success: true });
     } catch {
-      setCopyMessage("Could not copy. Select the text and copy it manually.");
+      setCopyFeedback({ label, success: false });
     } finally {
       setCopying(false);
     }
@@ -78,7 +93,7 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
         aria-label="SSH key setup"
         className="inline-flex gap-1 rounded-xl border border-border bg-background p-1"
       >
-        {["automatic", "manual"].map((mode, index) => (
+        {["manual", "automatic"].map((mode, index) => (
           <button
             key={mode}
             ref={(node) => {
@@ -91,10 +106,13 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
             aria-selected={sshKeys.mode === mode}
             tabIndex={sshKeys.mode === mode ? 0 : -1}
             onKeyDown={(event) => onTabKeyDown(event, index)}
-            onClick={() => sshKeys.setMode(mode)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${sshKeys.mode === mode ? "bg-surface text-label shadow-sm" : "text-secondary hover:text-label"}`}
+            onClick={() => {
+              setPrivateKeyVisible(false);
+              sshKeys.setMode(mode);
+            }}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${sshKeys.mode === mode ? "bg-primary-muted text-primary ring-1 ring-inset ring-primary shadow-sm" : "text-secondary hover:bg-surface hover:text-primary"}`}
           >
-            {mode === "automatic" ? "Automatic" : "Manual"}
+            {mode === "automatic" ? "Auto" : "Manual"}
           </button>
         ))}
       </div>
@@ -160,15 +178,56 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
                     >
                       {label} key
                     </label>
+                    {field === "privateKey" && (
+                      <button
+                        type="button"
+                        className="ml-auto shrink-0 rounded-lg p-2 text-secondary hover:bg-background hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                        aria-label={
+                          privateKeyVisible
+                            ? "Hide private key"
+                            : "Unhide private key"
+                        }
+                        title={
+                          privateKeyVisible
+                            ? "Hide private key"
+                            : "Unhide private key"
+                        }
+                        aria-expanded={privateKeyVisible}
+                        aria-controls={`${id}-${suffix}`}
+                        onClick={() =>
+                          setPrivateKeyVisible((visible) => !visible)
+                        }
+                      >
+                        {privateKeyVisible ? (
+                          <EyeOff className="h-4 w-4" aria-hidden="true" />
+                        ) : (
+                          <Eye className="h-4 w-4" aria-hidden="true" />
+                        )}
+                      </button>
+                    )}
                     <button
                       type="button"
-                      className="shrink-0 rounded-lg p-2 text-secondary hover:bg-background hover:text-label focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
+                      className={`shrink-0 rounded-lg p-2 transition-colors motion-safe:transition-transform motion-safe:active:scale-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50 ${copyFeedback?.label === label ? (copyFeedback.success ? "bg-success-muted text-success" : "bg-danger-muted text-danger") : "text-secondary hover:bg-background hover:text-primary"}`}
                       aria-label={`Copy ${label.toLowerCase()} key`}
-                      title={`Copy ${label.toLowerCase()} key`}
+                      title={
+                        copyFeedback?.label === label
+                          ? copyFeedback.success
+                            ? "Copied!"
+                            : "Copy failed. Please try again."
+                          : `Copy ${label.toLowerCase()} key`
+                      }
                       disabled={copying}
                       onClick={() => copyKey(sshKeys.pair[field], label)}
                     >
-                      <Copy className="h-4 w-4" aria-hidden="true" />
+                      {copyFeedback?.label === label ? (
+                        copyFeedback.success ? (
+                          <Check className="h-4 w-4" aria-hidden="true" />
+                        ) : (
+                          <X className="h-4 w-4" aria-hidden="true" />
+                        )
+                      ) : (
+                        <Copy className="h-4 w-4" aria-hidden="true" />
+                      )}
                     </button>
                   </div>
                   <textarea
@@ -177,7 +236,11 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
                     className="block h-40 w-full resize-none rounded-none border-0 bg-transparent px-4 py-3 font-mono text-xs leading-relaxed focus:ring-inset"
                     rows={7}
                     readOnly
-                    value={sshKeys.pair[field]}
+                    value={
+                      field === "privateKey" && !privateKeyVisible
+                        ? "••••••••••••••••"
+                        : sshKeys.pair[field]
+                    }
                   />
                 </div>
               ))}
@@ -215,12 +278,12 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
                 </button>
               </div>
             </div>
-            <p
-              aria-live="polite"
-              className={copyMessage ? "text-xs text-secondary" : "sr-only"}
-            >
-              {copyMessage}
-            </p>
+            <span role="status" className="sr-only">
+              {copyFeedback &&
+                (copyFeedback.success
+                  ? `${copyFeedback.label} key copied.`
+                  : "Could not copy. Please try again.")}
+            </span>
           </>
         )}
         {downloadError && <p role="alert">{downloadError}</p>}
