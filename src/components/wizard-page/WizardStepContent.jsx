@@ -17,7 +17,7 @@ const WizardStepContent = ({
   onEditHelmValues,
   onEditStep,
   isEditMode,
-  sshKeys
+  sshKeys,
   selectedSpecifications,
   onSpecificationsChange,
 }) => {
