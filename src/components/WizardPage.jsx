@@ -55,6 +55,8 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     isEditMode ? null : loadDraftCommit(userId),
   );
   const [savedAt, setSavedAt] = useState(null);
+  // Cosmetic choices stay in this wizard session, outside saved environment data.
+  const [selectedSpecifications, setSelectedSpecifications] = useState([]);
   const [expandedServices, setExpandedServices] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState(new Set());
@@ -351,6 +353,8 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                 <p className="mt-1 text-secondary">{activeStep?.description}</p>
               </div>
               <WizardStepContent
+                selectedSpecifications={selectedSpecifications}
+                onSpecificationsChange={setSelectedSpecifications}
                 currentId={currentId}
                 newEnv={newEnv}
                 setNewEnv={setNewEnv}
