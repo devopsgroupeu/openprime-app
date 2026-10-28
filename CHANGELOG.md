@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.25.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.24.0...v1.25.0) (2026-10-28)
+
+### 🚀 Features
+
+* **wizard:** show the GitLab prerequisites in the Git repository callout ([#62](https://github.com/devopsgroupeu/openprime-app/issues/62)) ([69dfab2](https://github.com/devopsgroupeu/openprime-app/commit/69dfab2a0d599c3559219b216cdc0faf632552e5))
+
 ## [1.24.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.23.0...v1.24.0) (2026-10-22)
 
 ### 🚀 Features
