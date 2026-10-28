@@ -25,7 +25,19 @@ function downloadKeys(pair) {
   }
 }
 
-export default function SshKeyTabs({ sshKeys, gitRepository }) {
+export default function SshKeyTabs({ sshKeys = {}, gitRepository }) {
+  const keyState = {
+    mode: "manual",
+    status: "idle",
+    pair: null,
+    error: "",
+    isSelected: false,
+    setMode: () => {},
+    setManualKey: () => {},
+    generate: () => {},
+    useGeneratedKey: () => {},
+    ...sshKeys,
+  };
   const id = useId();
   const tabs = useRef([]);
   const [privateKeyVisible, setPrivateKeyVisible] = useState(false);
@@ -34,7 +46,7 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
   const [copyFeedback, setCopyFeedback] = useState(null);
   const configured = Boolean(gitRepository?.sshKeyConfigured);
   const hasKey = Boolean(gitRepository?.sshKey?.trim());
-  const busy = sshKeys.status === "generating";
+  const busy = keyState.status === "generating";
   const buttonClass = "btn-op-primary";
 
   useEffect(() => {
@@ -58,7 +70,7 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
   const download = () => {
     setDownloadError("");
     try {
-      downloadKeys(sshKeys.pair);
+      downloadKeys(keyState.pair);
     } catch {
       setDownloadError("Download failed. Please try again.");
     }
@@ -94,14 +106,14 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
             role="tab"
             id={`${id}-${mode}-tab`}
             aria-controls={`${id}-${mode}-panel`}
-            aria-selected={sshKeys.mode === mode}
-            tabIndex={sshKeys.mode === mode ? 0 : -1}
+            aria-selected={keyState.mode === mode}
+            tabIndex={keyState.mode === mode ? 0 : -1}
             onKeyDown={(event) => onTabKeyDown(event, index)}
             onClick={() => {
               setPrivateKeyVisible(false);
-              sshKeys.setMode(mode);
+              keyState.setMode(mode);
             }}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${sshKeys.mode === mode ? "bg-primary-muted text-primary ring-1 ring-inset ring-primary shadow-sm" : "text-secondary hover:bg-surface hover:text-primary"}`}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${keyState.mode === mode ? "bg-primary-muted text-primary ring-1 ring-inset ring-primary shadow-sm" : "text-secondary hover:bg-surface hover:text-primary"}`}
           >
             {mode === "automatic" ? "Auto" : "Manual"}
           </button>
@@ -112,12 +124,12 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
         role="tabpanel"
         id={`${id}-automatic-panel`}
         aria-labelledby={`${id}-automatic-tab`}
-        hidden={sshKeys.mode !== "automatic"}
+        hidden={keyState.mode !== "automatic"}
         className="space-y-3"
       >
         {busy && <p role="status">Generating SSH key…</p>}
-        {sshKeys.error && <p role="alert">{sshKeys.error}</p>}
-        {!sshKeys.pair && !busy && (
+        {keyState.error && <p role="alert">{keyState.error}</p>}
+        {!keyState.pair && !busy && (
           <>
             {configured && (
               <p className="text-xs text-tertiary">
@@ -137,9 +149,9 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
             <button
               type="button"
               className={buttonClass}
-              onClick={sshKeys.generate}
+              onClick={keyState.generate}
             >
-              {sshKeys.status === "error"
+              {keyState.status === "error"
                 ? "Retry generation"
                 : configured || hasKey
                   ? "Generate replacement key"
@@ -147,7 +159,7 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
             </button>
           </>
         )}
-        {sshKeys.pair && (
+        {keyState.pair && (
           <>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {[
@@ -208,7 +220,7 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
                           : `Copy ${label.toLowerCase()} key`
                       }
                       disabled={copying}
-                      onClick={() => copyKey(sshKeys.pair[field], label)}
+                      onClick={() => copyKey(keyState.pair[field], label)}
                     >
                       {copyFeedback?.label === label ? (
                         copyFeedback.success ? (
@@ -230,7 +242,7 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
                     value={
                       field === "privateKey" && !privateKeyVisible
                         ? "••••••••••••••••"
-                        : sshKeys.pair[field]
+                        : keyState.pair[field]
                     }
                   />
                 </div>
@@ -239,7 +251,7 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
             <div className="flex flex-col gap-3 rounded-xl border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0 space-y-1">
                 <p role="status" className="text-xs font-medium text-label">
-                  {sshKeys.isSelected
+                  {keyState.isSelected
                     ? "This generated key is selected for saving."
                     : "This generated key is not selected."}
                 </p>
@@ -248,11 +260,11 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                {!sshKeys.isSelected && (
+                {!keyState.isSelected && (
                   <button
                     type="button"
                     className={buttonClass}
-                    onClick={sshKeys.useGeneratedKey}
+                    onClick={keyState.useGeneratedKey}
                   >
                     Use generated key
                   </button>
@@ -295,7 +307,7 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
         role="tabpanel"
         id={`${id}-manual-panel`}
         aria-labelledby={`${id}-manual-tab`}
-        hidden={sshKeys.mode !== "manual"}
+        hidden={keyState.mode !== "manual"}
       >
         <label
           htmlFor={`${id}-private`}
@@ -313,7 +325,7 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
           }
           rows={8}
           value={gitRepository?.sshKey || ""}
-          onChange={(event) => sshKeys.setManualKey(event.target.value)}
+          onChange={(event) => keyState.setManualKey(event.target.value)}
         />
         <p className="text-xs mt-1 text-tertiary">
           {configured
