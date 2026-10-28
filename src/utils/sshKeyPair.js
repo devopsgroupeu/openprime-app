@@ -62,6 +62,7 @@ export async function generateSshKeyPair() {
   if (!globalThis.isSecureContext || !globalThis.crypto?.subtle) {
     throw new Error("Automatic generation requires HTTPS or localhost.");
   }
+  // Keep RSA until the backend fingerprint parser supports Ed25519 keys.
   const pair = await crypto.subtle.generateKey(
     {
       name: "RSASSA-PKCS1-v1_5",

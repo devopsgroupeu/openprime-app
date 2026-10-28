@@ -8,7 +8,7 @@ import {
 import { generateSshKeyPair } from "../../utils/sshKeyPair";
 
 const emptyState = () => ({
-  mode: "automatic",
+  mode: "manual",
   status: "idle",
   pair: null,
   error: "",

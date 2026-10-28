@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Check, Copy, Download, Eye, EyeOff, X } from "lucide-react";
 import { strToU8, zipSync } from "fflate";
 
@@ -28,7 +28,6 @@ function downloadKeys(pair) {
 export default function SshKeyTabs({ sshKeys, gitRepository }) {
   const id = useId();
   const tabs = useRef([]);
-  const initialized = useRef(false);
   const [privateKeyVisible, setPrivateKeyVisible] = useState(false);
   const [downloadError, setDownloadError] = useState("");
   const [copying, setCopying] = useState(false);
@@ -43,14 +42,6 @@ export default function SshKeyTabs({ sshKeys, gitRepository }) {
     const timeout = setTimeout(() => setCopyFeedback(null), 1800);
     return () => clearTimeout(timeout);
   }, [copyFeedback]);
-
-  useLayoutEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
-    sshKeys.setMode("manual");
-    // Switching modes clears the input; preserve an existing manually entered key.
-    if (gitRepository?.sshKey) sshKeys.setManualKey(gitRepository.sshKey);
-  }, [sshKeys, gitRepository?.sshKey]);
 
   const onTabKeyDown = (event, index) => {
     const next = {
