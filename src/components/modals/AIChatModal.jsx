@@ -10,6 +10,19 @@ import {
   validateServiceConfiguration,
 } from "./ai-chat/suggestions";
 
+// OP-263: the assistant gets an allow-list of wizard fields, never the whole
+// wizard state. That state holds the git deploy key (gitRepository.sshKey) once
+// a user pastes or generates one, and whatever is sent here reaches the backend
+// and the model. Add a field only if it is safe to hand to the model.
+const AI_CONTEXT_FIELDS = ["name", "provider", "region", "services"];
+
+const toAiContext = (wizardValues) =>
+  Object.fromEntries(
+    AI_CONTEXT_FIELDS.filter(
+      (field) => wizardValues?.[field] !== undefined,
+    ).map((field) => [field, wizardValues[field]]),
+  );
+
 /**
  * AI Chat Modal Component
  * Provides an interactive chat interface for getting AI assistance with service configurations
@@ -205,10 +218,11 @@ const AIChatModal = ({
           : "";
 
       // Build context for AI (system messages + conversation history)
+      const aiContext = toAiContext(wizardValues);
       const payloadMessages = [
         {
           type: "system",
-          message: `The current environment configuration is: ${JSON.stringify(wizardValues)}`,
+          message: `The current environment configuration is: ${JSON.stringify(aiContext)}`,
         },
         {
           type: "system",
@@ -254,7 +268,7 @@ const AIChatModal = ({
         body: JSON.stringify({
           messages: payloadMessages,
           topic: serviceTitle,
-          wizardValues,
+          wizardValues: aiContext,
           currentService: currentServiceName,
         }),
       });
