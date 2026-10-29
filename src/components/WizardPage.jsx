@@ -31,6 +31,7 @@ import {
   clearDraft,
 } from "../utils/wizardDraft";
 import { useCatalog } from "../contexts/CatalogContext";
+import { useSshKeyGeneration } from "./wizard-page/useSshKeyGeneration.js";
 
 const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const { id } = useParams();
@@ -149,6 +150,12 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const steps = activeIds.map((id, i) => ({ ...STEP_DEFS[id], number: i + 1 }));
   const totalSteps = steps.length;
   const currentId = activeIds[currentStep - 1] || "basic";
+  const sshKeys = useSshKeyGeneration({
+    newEnv,
+    setNewEnv,
+    active: currentId === "basic",
+    identity: `${userId || "anonymous"}:${id || "create"}`,
+  });
 
   const validateCurrentStep = useCallback(() => {
     if (!newEnv) return false;
@@ -367,6 +374,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                   if (isEditMode && stepId === "basic") return;
                   setCurrentStep(activeIds.indexOf(stepId) + 1);
                 }}
+                sshKeys={sshKeys}
               />
             </div>
           </div>

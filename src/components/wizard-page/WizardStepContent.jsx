@@ -17,6 +17,7 @@ const WizardStepContent = ({
   onEditHelmValues,
   onEditStep,
   isEditMode,
+  sshKeys,
   selectedSpecifications,
   onSpecificationsChange,
 }) => {
@@ -36,6 +37,7 @@ const WizardStepContent = ({
                 )
               : []
           }
+          sshKeys={sshKeys}
         />
       );
     case "services":
