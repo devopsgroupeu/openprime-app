@@ -3,8 +3,7 @@
 // endpoint as the floating Aura window, but embedded (no float/minimize chrome).
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Sparkles } from "lucide-react";
-import { getApiUrl } from "../utils/envValidator";
-import keycloak from "../config/keycloak";
+import authService from "../services/authService";
 
 const INTRO = [
   {
@@ -46,12 +45,8 @@ const WizardAssistant = ({ context }) => {
     setMessages((p) => [...p, bot]);
 
     try {
-      const res = await fetch(`${getApiUrl()}/ai/chat`, {
+      const res = await authService.makeAuthenticatedRequest("/ai/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${keycloak.token}`,
-        },
         body: JSON.stringify({ messages: [...messages, userMsg], context }),
       });
       if (!res.ok || !res.body) throw new Error("AI unavailable");

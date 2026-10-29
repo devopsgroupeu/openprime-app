@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { X, Send, MessageCircle, Bot } from "lucide-react";
-import { getApiUrl } from "../../utils/envValidator";
-import keycloak from "../../config/keycloak";
+import authService from "../../services/authService";
 import { SERVICES_CONFIG, FIELD_TYPES } from "../../config/servicesConfig";
 import ChatMessage from "./ai-chat/ChatMessage";
 import SuggestionBox from "./ai-chat/SuggestionBox";
@@ -185,8 +184,6 @@ const AIChatModal = ({
     setMessages((prev) => [...prev, aiMessage]);
 
     try {
-      const apiUrl = getApiUrl();
-
       let currentServiceName = service;
       if (!currentServiceName || !SERVICES_CONFIG[currentServiceName]) {
         currentServiceName = findServiceByDisplayName(serviceTitle);
@@ -252,12 +249,8 @@ const AIChatModal = ({
         { type: "user", message: userMessage.content },
       ];
 
-      const response = await fetch(`${apiUrl}/ai/chat`, {
+      const response = await authService.makeAuthenticatedRequest("/ai/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${keycloak.token}`,
-        },
         body: JSON.stringify({
           messages: payloadMessages,
           topic: serviceTitle,

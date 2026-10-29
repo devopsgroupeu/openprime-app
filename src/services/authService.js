@@ -24,8 +24,9 @@ export class AuthService {
         }, timeout)
       : null;
 
-    try {
-      const response = await fetch(`${this.baseURL}${url}`, {
+    // Headers are built per attempt so a retry carries the refreshed token.
+    const send = () =>
+      fetch(`${this.baseURL}${url}`, {
         ...fetchOptions,
         signal: controller.signal,
         headers: {
@@ -34,11 +35,35 @@ export class AuthService {
         },
       });
 
+    try {
+      // OP-271: refresh a token about to expire before sending, instead of
+      // letting the request leave with it. A failure here is not fatal: the
+      // token may still be valid, and mock mode has no session to refresh.
+      // The server's answer decides.
+      await keycloak.updateToken(30).catch(() => {});
+      let response = await send();
+
+      // The token can still expire or be revoked in flight. Logging out on the
+      // first 401 threw away whatever the user had open, a half-filled wizard
+      // included, so refresh once and retry; only a failed refresh means the
+      // session is gone.
+      let sessionExpired = false;
+      if (response.status === 401) {
+        try {
+          await keycloak.updateToken(-1);
+        } catch {
+          sessionExpired = true;
+        }
+        if (!sessionExpired) {
+          response = await send();
+        }
+      }
+
       const requestId =
         response.headers.get("X-Request-ID") ||
         response.headers.get("x-request-id");
 
-      if (response.status === 401) {
+      if (sessionExpired) {
         keycloak.logout({
           redirectUri: window.location.origin,
         });
