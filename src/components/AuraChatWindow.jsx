@@ -1,8 +1,7 @@
 // src/components/AuraChatWindow.js
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Sparkles, Minimize2 } from "lucide-react";
-import { getApiUrl } from "../utils/envValidator";
-import keycloak from "../config/keycloak";
+import authService from "../services/authService";
 
 export const INITIAL_MESSAGES = [
   {
@@ -67,14 +66,9 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
     setMessages((prev) => [...prev, botMessage]);
 
     try {
-      const apiUrl = getApiUrl();
       // POST request to AI chat endpoint
-      const response = await fetch(`${apiUrl}/ai/chat`, {
+      const response = await authService.makeAuthenticatedRequest("/ai/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${keycloak.token}`,
-        },
         body: JSON.stringify({ messages: [...messages, userMessage] }),
       });
 
