@@ -44,8 +44,10 @@ jobs:
           version: "v3.12.0"
 
       - name: Log in to Container Registry
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ${{ inputs.registry }} --username ${{ github.actor }} --password-stdin
+          echo "$REGISTRY_TOKEN" | helm registry login ${{ inputs.registry }} --username ${{ github.actor }} --password-stdin
 
       - name: Update Chart Version
         id: update
