@@ -49,12 +49,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npx semantic-release > semantic-release.log 2>&1
-          cat semantic-release.log
+          # pipefail: a failed release fails this step, after tee has already printed its log
+          set -o pipefail
+          npx semantic-release 2>&1 | tee semantic-release.log
           if grep -q "Published release" semantic-release.log; then
-            echo "new_release_published=true" >> $GITHUB_OUTPUT
+            echo "new_release_published=true" >> "$GITHUB_OUTPUT"
           else
-            echo "new_release_published=false" >> $GITHUB_OUTPUT
+            echo "new_release_published=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Extract version
