@@ -9,6 +9,9 @@ on:
       - "docs/**"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -19,6 +22,9 @@ jobs:
 
   publish-docker:
     needs: test
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/reusable-docker-publish.yml
     with:
       tags: |
@@ -27,6 +33,9 @@ jobs:
 
   publish-helm:
     needs: [test, publish-docker]
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/reusable-helm-publish.yml
     with:
       image-tag: ${{ needs.publish-docker.outputs.image-version }}
