@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.26.4](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.3...v1.26.4) (2026-10-29)
+
+### 🐛 Bug Fixes
+
+* **deps:** upgrade react-router to 7.18.2 and apply non-breaking dev dependency fixes (OP-191) ([#67](https://github.com/devopsgroupeu/openprime-app/issues/67)) ([24b9116](https://github.com/devopsgroupeu/openprime-app/commit/24b9116086561212606c5bb64a737846c9183278))
+
 ## [1.26.3](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.2...v1.26.3) (2026-10-29)
 
 ### 🐛 Bug Fixes
