@@ -53,6 +53,8 @@ spec:
             {{- toYaml .Values.healthCheck.readinessProbe | nindent 12 }}
           {{- end }}
           env:
+            {{- $_ := required "app.env.REACT_APP_API_URL is required: the public backend API URL the browser calls, e.g. https://api.example.com/api" .Values.app.env.REACT_APP_API_URL }}
+            {{- $_ := required "app.env.REACT_APP_KEYCLOAK_URL is required: the public Keycloak URL the browser signs in at, e.g. https://keycloak.example.com" .Values.app.env.REACT_APP_KEYCLOAK_URL }}
             {{- range $key, $value := .Values.app.env }}
             - name: {{ $key }}
               value: {{ $value | quote }}

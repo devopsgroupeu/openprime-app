@@ -113,10 +113,13 @@ app:
   # Environment variables for the React app
   # These are injected at runtime using the runtime environment injection system
   env:
-    # Backend API Configuration
-    REACT_APP_API_URL: "http://openprime-backend:3001/api"
-    # Keycloak Authentication Configuration
-    REACT_APP_KEYCLOAK_URL: "http://keycloak:8080"
+    # Both URLs are required and have no default: the browser calls them
+    # directly, so they must be public addresses (https://...), never in-cluster
+    # service names.
+    # Backend API Configuration, e.g. "https://api.example.com/api"
+    REACT_APP_API_URL: ""
+    # Keycloak Authentication Configuration, e.g. "https://keycloak.example.com"
+    REACT_APP_KEYCLOAK_URL: ""
     REACT_APP_KEYCLOAK_REALM: "openprime"
     REACT_APP_KEYCLOAK_CLIENT_ID: "openprime-app"
     # Feature flags

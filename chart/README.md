@@ -10,14 +10,18 @@ This Helm chart deploys the OpenPrime React frontend application to a Kubernetes
 
 ## Installing the Chart
 
-To install the chart with the release name `openprime-app`:
+To install the chart with the release name `openprime-app`. The backend API and Keycloak URLs are required and have no default: the browser calls both directly, so they must be public addresses, not in-cluster service names.
 
 ```bash
 # From OCI registry (recommended)
-helm install openprime-app oci://ghcr.io/devopsgroupeu/helm/openprime-app --version 0.2.0
+helm install openprime-app oci://ghcr.io/devopsgroupeu/helm/openprime-app --version 0.2.0 \
+  --set app.env.REACT_APP_API_URL=https://api.example.com/api \
+  --set app.env.REACT_APP_KEYCLOAK_URL=https://keycloak.example.com
 
 # From local chart
-helm install openprime-app ./chart
+helm install openprime-app ./chart \
+  --set app.env.REACT_APP_API_URL=https://api.example.com/api \
+  --set app.env.REACT_APP_KEYCLOAK_URL=https://keycloak.example.com
 ```
 
 ## Uninstalling the Chart
@@ -82,8 +86,8 @@ The following table lists the configurable parameters of the OpenPrime App chart
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `app.env.REACT_APP_API_URL` | Backend API URL | `http://openprime-backend:3001` |
-| `app.env.REACT_APP_KEYCLOAK_URL` | Keycloak URL | `http://keycloak:8080` |
+| `app.env.REACT_APP_API_URL` | Public backend API URL the browser calls, e.g. `https://api.example.com/api` | **Required**, no default |
+| `app.env.REACT_APP_KEYCLOAK_URL` | Public Keycloak URL the browser signs in at, e.g. `https://keycloak.example.com` | **Required**, no default |
 | `app.env.REACT_APP_KEYCLOAK_REALM` | Keycloak realm | `openprime` |
 | `app.env.REACT_APP_KEYCLOAK_CLIENT_ID` | Keycloak client ID | `openprime-frontend` |
 
@@ -146,8 +150,8 @@ replicaCount: 1
 
 app:
   env:
-    REACT_APP_API_URL: "http://openprime-backend-dev:3001"
-    REACT_APP_KEYCLOAK_URL: "http://keycloak-dev:8080"
+    REACT_APP_API_URL: "https://api.dev.example.com/api"
+    REACT_APP_KEYCLOAK_URL: "https://keycloak.dev.example.com"
     NODE_ENV: "development"
 
 resources:
