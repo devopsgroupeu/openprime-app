@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.26.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.0...v1.26.1) (2026-10-29)
+
+### 🐛 Bug Fixes
+
+* **chart:** require the public API and Keycloak URLs instead of in-cluster defaults (OP-270) ([#66](https://github.com/devopsgroupeu/openprime-app/issues/66)) ([b607374](https://github.com/devopsgroupeu/openprime-app/commit/b607374835dbbaa6787d6f9868792847c93b2e7b))
+
 ## [1.26.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.25.0...v1.26.0) (2026-10-29)
 
 ### 🚀 Features
