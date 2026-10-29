@@ -43,6 +43,12 @@ afterEach(() => {
 });
 
 describe("SshKeyTabs", () => {
+  it("refuses to render without a key controller instead of inert tabs", () => {
+    // React reports the render error to console.error before rethrowing it.
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(() => render(<SshKeyTabs gitRepository={{}} />)).toThrow();
+  });
+
   it("copies each generated key exactly and briefly confirms success on its button", async () => {
     vi.useFakeTimers();
     const writeText = vi.fn().mockResolvedValue(undefined);
