@@ -71,7 +71,7 @@
     "eslint-plugin-react": "^7.37.5",
     "globals": "^17.3.0",
     "jsdom": "^28.1.0",
-    "lint-staged": "^16.2.7",
+    "lint-staged": "^17.6.0",
     "msw": "^2.14.6",
     "playwright-core": "^1.58.2",
     "postcss": "^8.5.6",
