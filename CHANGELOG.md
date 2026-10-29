@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.26.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.25.0...v1.26.0) (2026-10-29)
+
+### 🚀 Features
+
+* add automatic SSH key generation (OP-254) ([#63](https://github.com/devopsgroupeu/openprime-app/issues/63)) ([cb910c4](https://github.com/devopsgroupeu/openprime-app/commit/cb910c428a0b43ff12a39f2deff49e443e69236b))
+
 ## [1.25.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.24.0...v1.25.0) (2026-10-28)
 
 ### 🚀 Features
