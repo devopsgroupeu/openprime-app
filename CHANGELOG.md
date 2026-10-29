@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.26.2](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.1...v1.26.2) (2026-10-29)
+
+### 🐛 Bug Fixes
+
+* **auth:** refresh the token before requests and retry once on 401 (OP-271) ([#65](https://github.com/devopsgroupeu/openprime-app/issues/65)) ([000abba](https://github.com/devopsgroupeu/openprime-app/commit/000abba15fa2066963262c09a894ccebf5faefc9))
+
 ## [1.26.1](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.0...v1.26.1) (2026-10-29)
 
 ### 🐛 Bug Fixes
