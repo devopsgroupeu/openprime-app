@@ -14,7 +14,6 @@ const gitHost = (url = "") => {
 // Git repository card of the wizard's Basic Configuration step.
 // Presentational: env state is owned by the parent BasicConfigStep.
 const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys }) => {
-  const keyAlreadyConfigured = Boolean(newEnv.gitRepository?.sshKeyConfigured);
   // Self-hosted GitLab is recognised only by "gitlab" in its host name.
   const host = gitHost(newEnv.gitRepository?.url);
   const isGitLab = host.includes("gitlab");

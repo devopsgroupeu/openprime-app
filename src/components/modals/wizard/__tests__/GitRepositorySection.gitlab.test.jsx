@@ -14,9 +14,26 @@ const envWithRepo = (url) => ({
   },
 });
 
+// SshKeyTabs needs a controller; these tests only read the callout.
+const sshKeys = {
+  mode: "manual",
+  status: "idle",
+  pair: null,
+  error: "",
+  isSelected: false,
+  setMode: vi.fn(),
+  setManualKey: vi.fn(),
+  generate: vi.fn(),
+  useGeneratedKey: vi.fn(),
+};
+
 const renderWith = (url) =>
   render(
-    <GitRepositorySection newEnv={envWithRepo(url)} setNewEnv={() => {}} />,
+    <GitRepositorySection
+      newEnv={envWithRepo(url)}
+      setNewEnv={() => {}}
+      sshKeys={sshKeys}
+    />,
   );
 
 const protectedNote = () => screen.queryByText(/protected by default/i);

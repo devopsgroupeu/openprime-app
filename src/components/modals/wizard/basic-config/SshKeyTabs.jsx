@@ -25,19 +25,9 @@ function downloadKeys(pair) {
   }
 }
 
-export default function SshKeyTabs({ sshKeys = {}, gitRepository }) {
-  const keyState = {
-    mode: "manual",
-    status: "idle",
-    pair: null,
-    error: "",
-    isSelected: false,
-    setMode: () => {},
-    setManualKey: () => {},
-    generate: () => {},
-    useGeneratedKey: () => {},
-    ...sshKeys,
-  };
+// sshKeys is the useSshKeyGeneration controller and is required: without it
+// the tabs would render and silently do nothing.
+export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
   const id = useId();
   const tabs = useRef([]);
   const [privateKeyVisible, setPrivateKeyVisible] = useState(false);
