@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.26.6](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.5...v1.26.6) (2026-10-30)
+
+### 🐛 Bug Fixes
+
+* **nginx:** add HSTS, hide server version and pin base image ([#83](https://github.com/devopsgroupeu/openprime-app/issues/83)) ([094921e](https://github.com/devopsgroupeu/openprime-app/commit/094921e5e590dae8c24ff57faebbcea7fd7f0c53))
+
 ## [1.26.5](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.4...v1.26.5) (2026-10-30)
 
 ### ♻️ Code Refactoring
