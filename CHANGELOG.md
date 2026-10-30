@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.26.5](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.4...v1.26.5) (2026-10-30)
+
+### ♻️ Code Refactoring
+
+* **wizard:** require the SSH key controller and drop an unused variable (OP-254) ([#69](https://github.com/devopsgroupeu/openprime-app/issues/69)) ([7cae152](https://github.com/devopsgroupeu/openprime-app/commit/7cae152c4990d611677888d2ab451f739a4c15bf))
+
 ## [1.26.4](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.3...v1.26.4) (2026-10-29)
 
 ### 🐛 Bug Fixes
