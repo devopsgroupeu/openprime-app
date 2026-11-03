@@ -1,6 +1,6 @@
 {
   "name": "openprime-app",
-  "version": "1.26.7",
+  "version": "1.26.8",
   "private": true,
   "dependencies": {
     "fflate": "^0.8.3",

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.26.8](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.7...v1.26.8) (2026-11-03)
+
+### 🏗️ Build System
+
+* **deps:** vite 8 with @vitejs/plugin-react 6, esbuild declared (OP-280) ([#90](https://github.com/devopsgroupeu/openprime-app/issues/90)) ([c9fc491](https://github.com/devopsgroupeu/openprime-app/commit/c9fc491ed84fd0ccb9878228792af576e8fd4a6b))
+
 ## [1.26.7](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.6...v1.26.7) (2026-11-02)
 
 ### 🏗️ Build System
