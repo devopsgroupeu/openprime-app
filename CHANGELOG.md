@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.26.9](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.8...v1.26.9) (2026-11-03)
+
+### 🏗️ Build System
+
+* **deps:** bump node from 24.5.0-alpine to 26.13.0-alpine ([#85](https://github.com/devopsgroupeu/openprime-app/issues/85)) ([e737dbe](https://github.com/devopsgroupeu/openprime-app/commit/e737dbef895fd3369f204bef7428d321224842de))
+
 ## [1.26.8](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.7...v1.26.8) (2026-11-03)
 
 ### 🏗️ Build System
