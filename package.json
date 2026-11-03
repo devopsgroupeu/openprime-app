@@ -59,12 +59,13 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^25.3.0",
-    "@vitejs/plugin-react": "^5.1.4",
+    "@vitejs/plugin-react": "^6.2.1",
     "@vitest/coverage-v8": "^4.1.12",
     "adm-zip": "^0.6.1",
     "autoprefixer": "^10.6.2",
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
+    "esbuild": "^0.28.2",
     "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.7",
@@ -78,7 +79,7 @@
     "prettier": "^3.9.10",
     "semantic-release": "^25.0.9",
     "tailwindcss": "^3.4.19",
-    "vite": "^7.3.1",
+    "vite": "^8.3.5",
     "vitest": "^4.1.12"
   },
   "config": {
