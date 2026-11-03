@@ -12,11 +12,18 @@ updates:
     groups:
       actions:
         update-types: [minor, patch]
+      actions-major:
+        update-types: [major]
 
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
+    # Until OpenPrime-280: commitlint 21 hoists conventional-changelog-conventionalcommits 10,
+    # which needs conventional-changelog-writer 9 and breaks the next release's notes.
+    ignore:
+      - dependency-name: "@commitlint/*"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: build
       prefix-development: chore
