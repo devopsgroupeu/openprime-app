@@ -1,6 +1,14 @@
 import { getProviderRegions } from "../../config/providersConfig";
 
 const PreferencesTab = ({ userPreferences, onPreferenceChange }) => {
+  // The select used to send "on-premise"; everything else, providersConfig
+  // included, spells it "onpremise". A value stored by the old select is shown
+  // as On-Premise instead of the first option (OP-271).
+  const defaultProvider =
+    userPreferences.defaultProvider === "on-premise"
+      ? "onpremise"
+      : userPreferences.defaultProvider;
+
   return (
     <div className="space-y-4">
       <div>
@@ -12,7 +20,7 @@ const PreferencesTab = ({ userPreferences, onPreferenceChange }) => {
         </label>
         <select
           id="settings-default-provider"
-          value={userPreferences.defaultProvider}
+          value={defaultProvider}
           onChange={(e) =>
             onPreferenceChange("defaultProvider", e.target.value)
           }
@@ -21,7 +29,7 @@ const PreferencesTab = ({ userPreferences, onPreferenceChange }) => {
           <option value="aws">AWS</option>
           <option value="azure">Azure</option>
           <option value="gcp">Google Cloud</option>
-          <option value="on-premise">On-Premise</option>
+          <option value="onpremise">On-Premise</option>
         </select>
       </div>
       <div>
@@ -37,7 +45,7 @@ const PreferencesTab = ({ userPreferences, onPreferenceChange }) => {
           onChange={(e) => onPreferenceChange("defaultRegion", e.target.value)}
           className="w-full px-4 py-2.5 transition-colors"
         >
-          {getProviderRegions(userPreferences.defaultProvider).map((region) => (
+          {getProviderRegions(defaultProvider).map((region) => (
             <option key={region.value} value={region.value}>
               {region.label}
             </option>
