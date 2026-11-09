@@ -11,6 +11,12 @@ on:
 permissions:
   contents: read
 
+# One release at a time: two runs started by quick merges would both compute
+# the same next version. A newer run waits; it supersedes an older waiting one.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   test:
     uses: ./.github/workflows/reusable-test.yml
