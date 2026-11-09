@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.26.10](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.9...v1.26.10) (2026-11-09)
+
+### 🐛 Bug Fixes
+
+* **settings:** send onpremise as the default provider and show its regions (OP-271) ([#98](https://github.com/devopsgroupeu/openprime-app/issues/98)) ([8f823af](https://github.com/devopsgroupeu/openprime-app/commit/8f823af4ae56fd4a07d00b4334ab182071ceac3e))
+
 ## [1.26.9](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.8...v1.26.9) (2026-11-03)
 
 ### 🏗️ Build System
