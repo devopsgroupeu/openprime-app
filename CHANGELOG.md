@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.26.11](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.10...v1.26.11) (2026-11-10)
+
+### 🐛 Bug Fixes
+
+* **wizard:** ask for a read-only Argo CD deploy key (OP-265) ([#99](https://github.com/devopsgroupeu/openprime-app/issues/99)) ([d52d79d](https://github.com/devopsgroupeu/openprime-app/commit/d52d79d0a032c5babaa632b808df98e31aac3b42))
+
 ## [1.26.10](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.9...v1.26.10) (2026-11-09)
 
 ### 🐛 Bug Fixes
