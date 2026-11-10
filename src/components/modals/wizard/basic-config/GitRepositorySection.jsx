@@ -151,8 +151,15 @@ const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys }) => {
                       TF_VAR_git_repo_ssh_key
                     </code>
                     <span className="block mt-1 opacity-80">
-                      A private SSH key (Deployment Key) used by Terraform and
-                      ArgoCD to authenticate against private repositories.
+                      The private key of a second, read-only deploy key that
+                      ArgoCD uses to pull this repository. Do not reuse the key
+                      above: it can push. Create one with{" "}
+                      <code className="px-1 py-0.5 rounded font-mono bg-background">
+                        ssh-keygen -t ed25519 -N &quot;&quot; -f
+                        argocd-deploy-key
+                      </code>{" "}
+                      and add argocd-deploy-key.pub as a deploy key without
+                      write access.
                     </span>
                   </li>
                 </ul>
