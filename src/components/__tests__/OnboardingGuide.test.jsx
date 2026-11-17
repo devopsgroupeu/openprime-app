@@ -101,16 +101,23 @@ describe("OnboardingGuide", () => {
     expect(localStorage.getItem("openprime-onboarding-deployed")).toBe("true");
   });
 
-  it("stays hidden once the user hides it", () => {
+  it("collapses to one line when hidden and can be shown again", () => {
     const { unmount } = renderGuide({
       environments: [],
-      hasCredentials: false,
+      hasCredentials: true,
     });
     fireEvent.click(screen.getByRole("button", { name: "Hide" }));
-    expect(screen.queryByText(/of 5 done/)).not.toBeInTheDocument();
+    expect(screen.queryByText("1 of 5 done")).not.toBeInTheDocument();
+    expect(screen.getByText("Setup guide: 1 of 5 done")).toBeInTheDocument();
 
+    // Hidden survives a reload...
     unmount();
-    renderGuide({ environments: [], hasCredentials: false });
-    expect(screen.queryByText(/of 5 done/)).not.toBeInTheDocument();
+    renderGuide({ environments: [], hasCredentials: true });
+    expect(screen.getByText("Setup guide: 1 of 5 done")).toBeInTheDocument();
+
+    // ...and "Show" brings the full guide back.
+    fireEvent.click(screen.getByRole("button", { name: "Show" }));
+    expect(screen.getByText("1 of 5 done")).toBeInTheDocument();
+    expect(localStorage.getItem("openprime-onboarding-hidden")).toBeNull();
   });
 });

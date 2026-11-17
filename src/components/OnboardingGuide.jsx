@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { CheckCircle, Circle, ExternalLink, X } from "lucide-react";
+import { CheckCircle, Circle, ExternalLink, ListChecks, X } from "lucide-react";
 
 // Step-by-step guide from sign-up to a running environment (OP-283). Written for
 // someone without a technical background: one sentence per step, one button,
@@ -8,7 +8,8 @@ import { CheckCircle, Circle, ExternalLink, X } from "lucide-react";
 //
 // Deployment runs in the user's own pipeline, which the app does not track yet,
 // so the last step is ticked by the user. Both that tick and "Hide" live in
-// localStorage, i.e. per browser.
+// localStorage, i.e. per browser. A hidden guide collapses to one line with a
+// "Show" button rather than disappearing, so it can always be brought back.
 
 const HIDDEN_KEY = "openprime-onboarding-hidden";
 const DEPLOYED_KEY = "openprime-onboarding-deployed";
@@ -25,9 +26,10 @@ const readFlag = (key) => {
   }
 };
 
-const writeFlag = (key) => {
+const writeFlag = (key, value = true) => {
   try {
-    localStorage.setItem(key, "true");
+    if (value) localStorage.setItem(key, "true");
+    else localStorage.removeItem(key);
   } catch {
     // Private mode or blocked storage: the guide still works for this visit.
   }
@@ -116,7 +118,28 @@ const OnboardingGuide = ({ environments = [], hasCredentials = false }) => {
   ];
 
   const doneCount = steps.filter((step) => step.done).length;
-  if (hidden || doneCount === steps.length) return null;
+  if (doneCount === steps.length) return null;
+
+  if (hidden) {
+    return (
+      <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-surface px-4 py-3 mb-8">
+        <p className="flex items-center gap-2 text-sm text-secondary">
+          <ListChecks className="w-4 h-4 text-accent" aria-hidden="true" />
+          Setup guide: {doneCount} of {steps.length} done
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            writeFlag(HIDDEN_KEY, false);
+            setHidden(false);
+          }}
+          className="text-sm font-semibold text-accent hover:underline"
+        >
+          Show
+        </button>
+      </div>
+    );
+  }
 
   const currentId = steps.find((step) => !step.done)?.id;
 
