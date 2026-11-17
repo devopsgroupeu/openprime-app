@@ -4,6 +4,36 @@ import { environments, credentials, currentUser } from "./fixtures";
 // Wildcard origins (`*/...`) so handlers match regardless of the configured API base URL.
 import catalog from "./catalog.json";
 
+// Walkthrough mode: open the app with ?mock=empty to start with no environments
+// and no credentials and keep whatever you create (sessionStorage, so a reload
+// keeps it and ?mock=empty starts over). It exists to walk the onboarding guide
+// end to end. Without the flag the fixtures are served exactly as before.
+const WALKTHROUGH_KEY = "openprime-mock-walkthrough";
+const walkthrough = (() => {
+  if (typeof window === "undefined") return null;
+  try {
+    if (new URLSearchParams(window.location.search).get("mock") === "empty") {
+      const fresh = { environments: [], credentials: [], seq: 0 };
+      sessionStorage.setItem(WALKTHROUGH_KEY, JSON.stringify(fresh));
+      return fresh;
+    }
+    const saved = sessionStorage.getItem(WALKTHROUGH_KEY);
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+})();
+const saveWalkthrough = () => {
+  try {
+    sessionStorage.setItem(WALKTHROUGH_KEY, JSON.stringify(walkthrough));
+  } catch {
+    // Storage blocked: the walkthrough still works until the next reload.
+  }
+};
+const envList = () => (walkthrough ? walkthrough.environments : environments);
+const credList = () => (walkthrough ? walkthrough.credentials : credentials);
+const now = () => new Date().toISOString();
+
 export const handlers = [
   // The real catalog, extracted from the templates repo. Mock mode is the only
   // place the runtime-catalog path can be exercised without a backend, and a
@@ -41,23 +71,49 @@ export const handlers = [
   ),
 
   // --- Environments ---
-  http.get("*/environments", () => HttpResponse.json(environments)),
+  http.get("*/environments", () => HttpResponse.json(envList())),
   http.get("*/environments/:id", ({ params }) => {
-    const env = environments.find((e) => e.id === params.id);
+    const env = envList().find((e) => e.id === params.id);
     return env
       ? HttpResponse.json(env)
       : new HttpResponse(null, { status: 404 });
   }),
-  http.post("*/environments", async ({ request }) =>
-    HttpResponse.json(
-      { id: "env-new", status: "pending", ...(await request.json()) },
-      { status: 201 },
-    ),
-  ),
-  http.put("*/environments/:id", async ({ request, params }) =>
-    HttpResponse.json({ id: params.id, ...(await request.json()) }),
-  ),
-  http.delete("*/environments/:id", () => HttpResponse.json({ success: true })),
+  http.post("*/environments", async ({ request }) => {
+    const body = await request.json();
+    if (!walkthrough) {
+      return HttpResponse.json(
+        { id: "env-new", status: "pending", ...body },
+        { status: 201 },
+      );
+    }
+    const env = {
+      ...body,
+      id: `env-${++walkthrough.seq}`,
+      status: "pending",
+      created_at: now(),
+      updated_at: now(),
+    };
+    walkthrough.environments.unshift(env);
+    saveWalkthrough();
+    return HttpResponse.json(env, { status: 201 });
+  }),
+  http.put("*/environments/:id", async ({ request, params }) => {
+    const body = await request.json();
+    const env = walkthrough?.environments.find((e) => e.id === params.id);
+    if (!env) return HttpResponse.json({ id: params.id, ...body });
+    Object.assign(env, body, { id: params.id, updated_at: now() });
+    saveWalkthrough();
+    return HttpResponse.json(env);
+  }),
+  http.delete("*/environments/:id", ({ params }) => {
+    if (walkthrough) {
+      walkthrough.environments = walkthrough.environments.filter(
+        (e) => e.id !== params.id,
+      );
+      saveWalkthrough();
+    }
+    return HttpResponse.json({ success: true });
+  }),
   http.post("*/environments/terraform-backend/create", () =>
     HttpResponse.json({
       success: true,
@@ -73,12 +129,20 @@ export const handlers = [
       { status: 202 },
     ),
   ),
-  http.post("*/environments/:id/push", () =>
-    HttpResponse.json(
+  http.post("*/environments/:id/push", ({ params }) => {
+    const env = walkthrough?.environments.find((e) => e.id === params.id);
+    if (env) {
+      Object.assign(env, {
+        last_push_status: "succeeded",
+        last_push_at: now(),
+      });
+      saveWalkthrough();
+    }
+    return HttpResponse.json(
       { jobId: "job-push-1", type: "push", status: "queued" },
       { status: 202 },
-    ),
-  ),
+    );
+  }),
   http.get("*/jobs/:jobId", ({ params }) => {
     const isPush = String(params.jobId).includes("push");
     return HttpResponse.json({
@@ -106,24 +170,44 @@ export const handlers = [
   ),
 
   // --- Cloud credentials ---
-  http.get("*/cloud-credentials", () => HttpResponse.json({ credentials })),
+  http.get("*/cloud-credentials", () =>
+    HttpResponse.json({ credentials: credList() }),
+  ),
   http.get("*/cloud-credentials/:id", ({ params }) =>
     HttpResponse.json(
-      credentials.find((c) => c.id === params.id) || credentials[0],
+      credList().find((c) => c.id === params.id) || credList()[0],
     ),
   ),
-  http.post("*/cloud-credentials", async ({ request }) =>
-    HttpResponse.json(
-      { id: "cred-new", ...(await request.json()) },
-      { status: 201 },
-    ),
-  ),
+  http.post("*/cloud-credentials", async ({ request }) => {
+    const body = await request.json();
+    if (!walkthrough) {
+      return HttpResponse.json({ id: "cred-new", ...body }, { status: 201 });
+    }
+    // Keep only what the list shows: whatever was typed as a secret is not
+    // written to sessionStorage.
+    const cred = {
+      id: `cred-${++walkthrough.seq}`,
+      name: body.name,
+      provider: body.provider || "aws",
+      identifier: "AKIA****MOCK",
+      created_at: now(),
+    };
+    walkthrough.credentials.push(cred);
+    saveWalkthrough();
+    return HttpResponse.json(cred, { status: 201 });
+  }),
   http.put("*/cloud-credentials/:id", async ({ request, params }) =>
     HttpResponse.json({ id: params.id, ...(await request.json()) }),
   ),
-  http.delete("*/cloud-credentials/:id", () =>
-    HttpResponse.json({ success: true }),
-  ),
+  http.delete("*/cloud-credentials/:id", ({ params }) => {
+    if (walkthrough) {
+      walkthrough.credentials = walkthrough.credentials.filter(
+        (c) => c.id !== params.id,
+      );
+      saveWalkthrough();
+    }
+    return HttpResponse.json({ success: true });
+  }),
 
   // --- AI assistant (non-streaming mock) ---
   http.post("*/ai/chat", () =>
