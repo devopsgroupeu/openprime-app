@@ -55,6 +55,17 @@ function AppContent() {
     }
   };
 
+  // Re-read the list without the full-page loader. The environments page calls
+  // it on every visit, so a push made on the detail page shows up there (the
+  // onboarding guide ticks its push step from it). A failure keeps the list.
+  const refreshEnvironments = async () => {
+    try {
+      setEnvironments(await authService.get("/environments"));
+    } catch (error) {
+      console.error("Failed to refresh environments:", error);
+    }
+  };
+
   const handleCreateEnvironment = async (newEnv) => {
     try {
       const createdEnvironment = await authService.post(
@@ -189,6 +200,7 @@ function AppContent() {
                       environments={environments}
                       loadError={loadError}
                       onRetry={loadEnvironments}
+                      onRefresh={refreshEnvironments}
                     />
                   }
                 />

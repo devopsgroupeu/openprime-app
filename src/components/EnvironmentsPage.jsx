@@ -6,10 +6,16 @@ import EnvironmentCard from "./EnvironmentCard";
 import OnboardingGuide from "./OnboardingGuide";
 import authService from "../services/authService";
 
-const EnvironmentsPage = ({ environments, loadError, onRetry }) => {
+const EnvironmentsPage = ({ environments, loadError, onRetry, onRefresh }) => {
   const navigate = useNavigate();
   const hasEnvironments = environments.length > 0;
   const [hasCredentials, setHasCredentials] = useState(false);
+
+  useEffect(() => {
+    onRefresh?.();
+    // Once per visit: onRefresh is a new function on every App render, so it
+    // is deliberately not a dependency.
+  }, []);
 
   useEffect(() => {
     if (!loadError) {
