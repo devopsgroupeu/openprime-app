@@ -1,7 +1,6 @@
 import { useId } from "react";
 import {
   BadgeCheck,
-  Check,
   FileCheck,
   HeartPulse,
   Landmark,
@@ -23,10 +22,9 @@ const OPTIONS = [
   { id: "nis2", label: "NIS2", Icon: Network },
 ];
 
-const OtherSpecificationsSection = ({
-  selectedSpecifications,
-  onSpecificationsChange,
-}) => {
+// Roadmap only: nothing reads a selection yet, so the options render like the
+// disabled providers (visible, never clickable) instead of pretending to work.
+const OtherSpecificationsSection = () => {
   const id = useId();
 
   return (
@@ -43,7 +41,8 @@ const OtherSpecificationsSection = ({
         </div>
       </div>
       <p id={`${id}-description`} className="text-xs text-tertiary mb-4">
-        Choose industries or standards of interest.
+        Industry and compliance presets are on the roadmap. They do not change
+        the generated infrastructure yet.
       </p>
       <div
         role="group"
@@ -52,39 +51,20 @@ const OtherSpecificationsSection = ({
         className="grid gap-3"
         style={{ gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))" }}
       >
-        {OPTIONS.map(({ id: optionId, label, Icon }) => {
-          const selected = selectedSpecifications.includes(optionId);
-          return (
-            <button
-              key={optionId}
-              type="button"
-              aria-pressed={selected}
-              onClick={() =>
-                onSpecificationsChange(
-                  selected
-                    ? selectedSpecifications.filter(
-                        (value) => value !== optionId,
-                      )
-                    : [...selectedSpecifications, optionId],
-                )
-              }
-              className={`relative flex flex-col items-center justify-center gap-2.5 p-5 rounded-xl border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
-                selected
-                  ? "border-primary text-accent"
-                  : "border-border text-secondary hover:border-primary/50 hover:text-primary"
-              }`}
-            >
-              {selected && (
-                <Check
-                  className="absolute top-2 right-2 w-4 h-4"
-                  aria-hidden="true"
-                />
-              )}
-              <Icon className="w-7 h-7" aria-hidden="true" />
-              <span className="text-sm font-bold">{label}</span>
-            </button>
-          );
-        })}
+        {OPTIONS.map(({ id: optionId, label, Icon }) => (
+          <button
+            key={optionId}
+            type="button"
+            disabled
+            className="flex flex-col items-center justify-center gap-2.5 p-5 rounded-xl border-2 transition-all border-border text-tertiary cursor-not-allowed opacity-50"
+          >
+            <Icon className="w-7 h-7" aria-hidden="true" />
+            <span className="text-sm font-bold">{label}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-warning">
+              Roadmap
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   );

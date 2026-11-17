@@ -85,6 +85,19 @@ describe("BasicConfigStep", () => {
     expect(within(onPrem).getByText("Roadmap")).toBeInTheDocument();
   });
 
+  // Guards OP-256: nothing reads the industry/standards presets yet, so they may
+  // be visible as roadmap like the providers but never clickable.
+  it("shows the industry and standards presets as roadmap, never clickable", () => {
+    renderStep();
+    const group = screen.getByRole("group", { name: "Other specifications" });
+    const options = within(group).getAllByRole("button");
+    expect(options).toHaveLength(8);
+    for (const option of options) {
+      expect(option).toBeDisabled();
+      expect(within(option).getByText("Roadmap")).toBeInTheDocument();
+    }
+  });
+
   it("shows the ready-to-create summary once name/prefix/provider/region are set", () => {
     renderStep();
     const summary = screen.getByText(/Ready to create/);
