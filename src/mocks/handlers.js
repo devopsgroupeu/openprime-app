@@ -15,6 +15,10 @@ const walkthrough = (() => {
     if (new URLSearchParams(window.location.search).get("mock") === "empty") {
       const fresh = { environments: [], credentials: [], seq: 0 };
       sessionStorage.setItem(WALKTHROUGH_KEY, JSON.stringify(fresh));
+      // Start the onboarding guide over too (its ticks live in localStorage).
+      Object.keys(localStorage)
+        .filter((key) => key.startsWith("openprime-onboarding-"))
+        .forEach((key) => localStorage.removeItem(key));
       return fresh;
     }
     const saved = sessionStorage.getItem(WALKTHROUGH_KEY);

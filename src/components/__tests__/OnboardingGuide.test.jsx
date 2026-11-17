@@ -74,6 +74,24 @@ describe("OnboardingGuide", () => {
     expect(screen.getByText("3 of 5 done")).toBeInTheDocument();
   });
 
+  it("lets someone with a repository already skip creating one", () => {
+    renderGuide({ environments: [], hasCredentials: true });
+    const repo = stepNamed("Create an empty repository on GitHub");
+    expect(
+      within(repo).getByText(/replaces files with the same name/),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      within(repo).getByRole("button", { name: "I already have a repository" }),
+    );
+    expect(screen.getByText("2 of 5 done")).toBeInTheDocument();
+    expect(stepNamed("Describe your environment")).toHaveAttribute(
+      "aria-current",
+      "step",
+    );
+    expect(localStorage.getItem("openprime-onboarding-own-repo")).toBe("true");
+  });
+
   it("opens GitHub in a new tab for the repository step", () => {
     renderGuide({ environments: [], hasCredentials: true });
     const link = within(

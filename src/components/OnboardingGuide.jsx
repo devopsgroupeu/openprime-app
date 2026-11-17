@@ -13,6 +13,7 @@ import { CheckCircle, Circle, ExternalLink, ListChecks, X } from "lucide-react";
 
 const HIDDEN_KEY = "openprime-onboarding-hidden";
 const DEPLOYED_KEY = "openprime-onboarding-deployed";
+const OWN_REPO_KEY = "openprime-onboarding-own-repo";
 
 const NEW_GITHUB_REPO_URL = "https://github.com/new";
 
@@ -51,6 +52,7 @@ const OnboardingGuide = ({
   const navigate = useNavigate();
   const [hidden, setHidden] = useState(() => readFlag(HIDDEN_KEY));
   const [deployed, setDeployed] = useState(() => readFlag(DEPLOYED_KEY));
+  const [ownRepo, setOwnRepo] = useState(() => readFlag(OWN_REPO_KEY));
   const [showDeployHowTo, setShowDeployHowTo] = useState(false);
 
   const pushTarget =
@@ -70,8 +72,18 @@ const OnboardingGuide = ({
       title: "Create an empty repository on GitHub",
       description:
         "Your infrastructure code will live there. Create it empty and private, then copy its SSH address (it starts with git@github.com:).",
-      done: environments.some((env) => Boolean(repoUrlOf(env))),
+      done: ownRepo || environments.some((env) => Boolean(repoUrlOf(env))),
       action: { label: "Open GitHub", href: NEW_GITHUB_REPO_URL },
+      secondary: {
+        label: "I already have a repository",
+        onClick: () => {
+          writeFlag(OWN_REPO_KEY);
+          setOwnRepo(true);
+        },
+      },
+      // The push copies the generated tree over a clone of the branch, so files
+      // with the same path are replaced (backend environmentService push).
+      note: "Using one you already have? OpenPrime adds its files next to yours and replaces files with the same name, such as README.md.",
     },
     {
       id: "environment",
@@ -252,6 +264,9 @@ const OnboardingGuide = ({
                         </button>
                       )}
                     </div>
+                    {step.note && (
+                      <p className="text-xs text-tertiary mt-2">{step.note}</p>
+                    )}
                   </>
                 )}
               </div>
