@@ -18,8 +18,6 @@ const WizardStepContent = ({
   onEditStep,
   isEditMode,
   sshKeys,
-  selectedSpecifications,
-  onSpecificationsChange,
 }) => {
   switch (currentId) {
     case "basic":
@@ -28,8 +26,6 @@ const WizardStepContent = ({
           newEnv={newEnv}
           setNewEnv={setNewEnv}
           isEditMode={isEditMode}
-          selectedSpecifications={selectedSpecifications}
-          onSpecificationsChange={onSpecificationsChange}
           validationErrors={
             showErrors
               ? validationErrors.filter((e) =>

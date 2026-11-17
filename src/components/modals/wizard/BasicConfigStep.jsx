@@ -51,8 +51,6 @@ const BasicConfigStep = ({
   sshKeys,
   validationErrors = [],
   isEditMode = false,
-  selectedSpecifications = [],
-  onSpecificationsChange,
 }) => {
   const toast = useToast();
   const [credentials, setCredentials] = useState([]);
@@ -356,10 +354,7 @@ const BasicConfigStep = ({
         </div>
       </div>
 
-      <OtherSpecificationsSection
-        selectedSpecifications={selectedSpecifications}
-        onSpecificationsChange={onSpecificationsChange}
-      />
+      <OtherSpecificationsSection />
 
       {/* Cloud Credentials Selection */}
       {newEnv.provider && (
