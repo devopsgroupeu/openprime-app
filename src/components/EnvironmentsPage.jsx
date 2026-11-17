@@ -4,12 +4,29 @@ import { useNavigate } from "react-router";
 import { Plus, Server, AlertCircle, RefreshCw } from "lucide-react";
 import EnvironmentCard from "./EnvironmentCard";
 import OnboardingGuide from "./OnboardingGuide";
+import CloudCredentialModal from "./modals/CloudCredentialModal";
+import { useToast } from "../contexts/ToastContext";
 import authService from "../services/authService";
 
 const EnvironmentsPage = ({ environments, loadError, onRetry, onRefresh }) => {
   const navigate = useNavigate();
   const hasEnvironments = environments.length > 0;
   const [hasCredentials, setHasCredentials] = useState(false);
+  const [connectingAws, setConnectingAws] = useState(false);
+  const toast = useToast();
+
+  const saveAwsCredential = async (credentialData) => {
+    try {
+      await authService.post("/cloud-credentials", credentialData);
+      setHasCredentials(true);
+      setConnectingAws(false);
+      toast.success("AWS account connected");
+    } catch (error) {
+      const message =
+        error.data?.error || error.message || "Could not connect AWS";
+      toast.error(message, { title: "AWS connection failed", duration: 7000 });
+    }
+  };
 
   useEffect(() => {
     onRefresh?.();
@@ -53,6 +70,7 @@ const EnvironmentsPage = ({ environments, loadError, onRetry, onRefresh }) => {
           <OnboardingGuide
             environments={environments}
             hasCredentials={hasCredentials}
+            onConnectAws={() => setConnectingAws(true)}
           />
         )}
 
@@ -106,6 +124,12 @@ const EnvironmentsPage = ({ environments, loadError, onRetry, onRefresh }) => {
           </div>
         )}
       </div>
+      <CloudCredentialModal
+        provider="aws"
+        isOpen={connectingAws}
+        onClose={() => setConnectingAws(false)}
+        onSave={saveAwsCredential}
+      />
     </div>
   );
 };

@@ -38,16 +38,17 @@ describe("OnboardingGuide", () => {
   beforeEach(() => localStorage.clear());
 
   it("starts a new user at connecting AWS, with nothing done", () => {
-    renderGuide({ environments: [], hasCredentials: false });
+    const onConnectAws = vi.fn();
+    renderGuide({ environments: [], hasCredentials: false, onConnectAws });
 
     expect(screen.getByText("0 of 5 done")).toBeInTheDocument();
     const aws = stepNamed("Connect your AWS account");
     expect(aws).toHaveAttribute("aria-current", "step");
 
-    fireEvent.click(within(aws).getByRole("button", { name: "Add AWS key" }));
-    expect(screen.getByTestId("location")).toHaveTextContent(
-      "/settings?tab=credentials",
-    );
+    fireEvent.click(within(aws).getByRole("button", { name: "Connect AWS" }));
+    expect(onConnectAws).toHaveBeenCalled();
+    // No documentation to read on the way.
+    expect(within(aws).queryByRole("link")).not.toBeInTheDocument();
   });
 
   it("ticks the steps the app can see and points at the next one", () => {

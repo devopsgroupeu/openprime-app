@@ -14,8 +14,6 @@ import { CheckCircle, Circle, ExternalLink, ListChecks, X } from "lucide-react";
 const HIDDEN_KEY = "openprime-onboarding-hidden";
 const DEPLOYED_KEY = "openprime-onboarding-deployed";
 
-const CREDENTIALS_GUIDE_URL =
-  "https://docs.openprime.io/docs/guides/cloud-credentials";
 const NEW_GITHUB_REPO_URL = "https://github.com/new";
 
 const readFlag = (key) => {
@@ -45,7 +43,11 @@ const DEPLOY_HOW_TO = [
   "The run opens an issue in your repository. Comment approve on it to let it continue.",
 ];
 
-const OnboardingGuide = ({ environments = [], hasCredentials = false }) => {
+const OnboardingGuide = ({
+  environments = [],
+  hasCredentials = false,
+  onConnectAws,
+}) => {
   const navigate = useNavigate();
   const [hidden, setHidden] = useState(() => readFlag(HIDDEN_KEY));
   const [deployed, setDeployed] = useState(() => readFlag(DEPLOYED_KEY));
@@ -59,13 +61,9 @@ const OnboardingGuide = ({ environments = [], hasCredentials = false }) => {
       id: "aws",
       title: "Connect your AWS account",
       description:
-        "OpenPrime needs an access key to create things in your AWS account.",
+        "OpenPrime needs access to your AWS account to build things in it. It takes one copy and paste.",
       done: hasCredentials,
-      action: {
-        label: "Add AWS key",
-        onClick: () => navigate("/settings?tab=credentials"),
-      },
-      link: { label: "How do I get one?", href: CREDENTIALS_GUIDE_URL },
+      action: onConnectAws && { label: "Connect AWS", onClick: onConnectAws },
     },
     {
       id: "repo",
@@ -252,16 +250,6 @@ const OnboardingGuide = ({ environments = [], hasCredentials = false }) => {
                         >
                           {step.secondary.label}
                         </button>
-                      )}
-                      {step.link && (
-                        <a
-                          href={step.link.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-semibold text-accent hover:underline"
-                        >
-                          {step.link.label}
-                        </a>
                       )}
                     </div>
                   </>
