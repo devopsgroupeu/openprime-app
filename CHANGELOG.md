@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 * **wizard:** show the industry and standards presets as roadmap (OP-256) ([#106](https://github.com/devopsgroupeu/openprime-app/issues/106)) ([9796278](https://github.com/devopsgroupeu/openprime-app/commit/9796278b78b2d7cbd00324841457d00e36cbc744))
 
+## [1.26.13](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.12...v1.26.13) (2026-11-17)
+
+### 🐛 Bug Fixes
+
+* **wizard:** show the industry and standards presets as roadmap (OP-256) ([#106](https://github.com/devopsgroupeu/openprime-app/issues/106)) ([9796278](https://github.com/devopsgroupeu/openprime-app/commit/9796278b78b2d7cbd00324841457d00e36cbc744))
+
 ## [1.26.12](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.11...v1.26.12) (2026-11-13)
 
 ### 🏗️ Build System
