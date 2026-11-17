@@ -36,7 +36,12 @@ const SettingsPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [credentialToDelete, setCredentialToDelete] = useState(null);
   const [credentialUsage, setCredentialUsage] = useState(null);
-  const [activeTab, setActiveTab] = useState("account");
+  // ?tab=credentials lets the onboarding guide open the right tab directly.
+  const [activeTab, setActiveTab] = useState(() =>
+    new URLSearchParams(window.location.search).get("tab") === "credentials"
+      ? "credentials"
+      : "account",
+  );
 
   useEffect(() => {
     loadUserData();

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Plus, Server, AlertCircle, RefreshCw } from "lucide-react";
 import EnvironmentCard from "./EnvironmentCard";
-import PrerequisitesChecklist from "./PrerequisitesChecklist";
+import OnboardingGuide from "./OnboardingGuide";
 import authService from "../services/authService";
 
 const EnvironmentsPage = ({ environments, loadError, onRetry }) => {
@@ -12,7 +12,7 @@ const EnvironmentsPage = ({ environments, loadError, onRetry }) => {
   const [hasCredentials, setHasCredentials] = useState(false);
 
   useEffect(() => {
-    if (!hasEnvironments && !loadError) {
+    if (!loadError) {
       authService
         .get("/cloud-credentials")
         .then((res) => {
@@ -20,7 +20,7 @@ const EnvironmentsPage = ({ environments, loadError, onRetry }) => {
         })
         .catch(() => setHasCredentials(false));
     }
-  }, [hasEnvironments, loadError]);
+  }, [loadError]);
 
   return (
     <div className="transition-colors duration-200 bg-transparent">
@@ -42,6 +42,13 @@ const EnvironmentsPage = ({ environments, loadError, onRetry }) => {
             New Environment
           </button>
         </div>
+
+        {!loadError && (
+          <OnboardingGuide
+            environments={environments}
+            hasCredentials={hasCredentials}
+          />
+        )}
 
         {loadError ? (
           <div className="flex flex-col items-center justify-center text-center py-20">
@@ -90,7 +97,6 @@ const EnvironmentsPage = ({ environments, loadError, onRetry }) => {
                 Create your first environment to get started.
               </p>
             </div>
-            <PrerequisitesChecklist hasCredentials={hasCredentials} />
           </div>
         )}
       </div>
