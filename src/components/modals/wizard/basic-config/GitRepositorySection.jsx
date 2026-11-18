@@ -125,25 +125,32 @@ const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys }) => {
                 </div>
 
                 <p className="text-xs leading-relaxed opacity-90">
-                  To enable automated infrastructure deployment via CI/CD, the
-                  following secrets must be configured within your
-                  repository&apos;s environment variables. These credentials
-                  allow the pipeline to authenticate with your cloud provider
-                  and securely access private Git resources.
+                  To enable automated infrastructure deployment via CI/CD, set
+                  the following in your repository. The pipeline signs in to AWS
+                  with short-lived roles, so no AWS access keys are stored.
                 </p>
 
                 <ul className="text-[11px] space-y-2 list-none">
                   <li className="leading-relaxed">
                     <code className="px-1 py-0.5 rounded font-mono bg-background">
-                      AWS_ACCESS_KEY_ID
+                      AWS_PLAN_ROLE_ARN
+                    </code>
+                    ,{" "}
+                    <code className="px-1 py-0.5 rounded font-mono bg-background">
+                      AWS_APPLY_ROLE_ARN
                     </code>{" "}
                     &{" "}
                     <code className="px-1 py-0.5 rounded font-mono bg-background">
-                      AWS_SECRET_ACCESS_KEY
+                      AWS_DESTROY_ROLE_ARN
                     </code>
                     <span className="block mt-1 opacity-80">
-                      IAM credentials with the necessary permissions to
-                      provision and manage the resources.
+                      Repository variables (not secrets) naming the roles the
+                      pipeline uses. Create the roles once by running{" "}
+                      <code className="px-1 py-0.5 rounded font-mono bg-background">
+                        terraform/bootstrap
+                      </code>{" "}
+                      from the generated repository with AWS administrator
+                      credentials; its README explains how.
                     </span>
                   </li>
                   <li className="leading-relaxed">
@@ -169,9 +176,10 @@ const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys }) => {
                     <p className="font-bold uppercase text-[10px]">On GitLab</p>
                     <p>
                       CI/CD variables are protected by default, so they only
-                      reach protected branches. Protect the branch you deploy
-                      from (Settings → Repository → Protected branches), or
-                      clear &quot;Protect variable&quot; on these variables.
+                      reach protected branches. Clear &quot;Protect
+                      variable&quot; on the three role variables, and protect
+                      the branch you deploy from (Settings → Repository →
+                      Protected branches) or clear it on the Argo CD key too.
                     </p>
                     {isGitLabCom && (
                       <p>
@@ -188,9 +196,9 @@ const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys }) => {
                     Security Note:
                   </span>
                   <span className="italic opacity-90">
-                    These variables must be stored as encrypted Secrets (e.g.,
-                    GitHub Actions Secrets) and should never be logged or
-                    committed to source control.
+                    TF_VAR_git_repo_ssh_key must be stored as an encrypted
+                    secret (e.g., a GitHub Actions secret) and should never be
+                    logged or committed to source control.
                   </span>
                 </div>
               </div>
