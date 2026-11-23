@@ -58,15 +58,8 @@
     "config, and the catalog deliberately does not carry them (OP-200)."
   ],
   "fields": [
-    "eks.defaultNodeGroupUseLatestAmi",
-    "eks.addonCorednsMostRecent",
-    "eks.addonPodIdentityMostRecent",
     "eks.addonPodIdentityBeforeCompute",
-    "eks.addonKubeProxyMostRecent",
-    "eks.addonVpcCniMostRecent",
-    "eks.addonVpcCniBeforeCompute",
-    "eks.addonEbsCsiMostRecent",
-    "eks.addonEfsCsiMostRecent"
+    "eks.addonVpcCniBeforeCompute"
   ],
 
   "services": []

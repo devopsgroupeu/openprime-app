@@ -556,42 +556,6 @@
           "min": "1",
           "max": "10"
         },
-        "defaultNodeGroupUseLatestAmi": {
-          "name": "defaultNodeGroupUseLatestAmi",
-          "path": "services.eks.defaultNodeGroupUseLatestAmi",
-          "tfVar": "default_node_group_use_latest_ami",
-          "valueType": "boolean",
-          "defaultValue": true,
-          "file": "/Users/reibek/Code/DevOpsGroup/customers/[OP] OpenPrime/openprime-infra-templates/templates/terraform/aws/terraform.auto.tfvars",
-          "line": 78,
-          "displayName": "Use Latest Node AMI",
-          "description": "Launch node groups on the newest AMI Amazon publishes for the cluster version",
-          "type": "toggle"
-        },
-        "addonCorednsMostRecent": {
-          "name": "addonCorednsMostRecent",
-          "path": "services.eks.addonCorednsMostRecent",
-          "tfVar": "eks_addon_coredns_most_recent",
-          "valueType": "boolean",
-          "defaultValue": true,
-          "file": "/Users/reibek/Code/DevOpsGroup/customers/[OP] OpenPrime/openprime-infra-templates/templates/terraform/aws/terraform.auto.tfvars",
-          "line": 91,
-          "displayName": "CoreDNS: Latest Version",
-          "description": "Install the most recent CoreDNS addon rather than the cluster default",
-          "type": "toggle"
-        },
-        "addonPodIdentityMostRecent": {
-          "name": "addonPodIdentityMostRecent",
-          "path": "services.eks.addonPodIdentityMostRecent",
-          "tfVar": "eks_addon_pod_identity_most_recent",
-          "valueType": "boolean",
-          "defaultValue": true,
-          "file": "/Users/reibek/Code/DevOpsGroup/customers/[OP] OpenPrime/openprime-infra-templates/templates/terraform/aws/terraform.auto.tfvars",
-          "line": 93,
-          "displayName": "Pod Identity: Latest Version",
-          "description": "Install the most recent Pod Identity Agent addon",
-          "type": "toggle"
-        },
         "addonPodIdentityBeforeCompute": {
           "name": "addonPodIdentityBeforeCompute",
           "path": "services.eks.addonPodIdentityBeforeCompute",
@@ -604,30 +568,6 @@
           "description": "Install the Pod Identity Agent before nodes join, so workloads can assume roles from the first boot",
           "type": "toggle"
         },
-        "addonKubeProxyMostRecent": {
-          "name": "addonKubeProxyMostRecent",
-          "path": "services.eks.addonKubeProxyMostRecent",
-          "tfVar": "eks_addon_kube_proxy_most_recent",
-          "valueType": "boolean",
-          "defaultValue": true,
-          "file": "/Users/reibek/Code/DevOpsGroup/customers/[OP] OpenPrime/openprime-infra-templates/templates/terraform/aws/terraform.auto.tfvars",
-          "line": 97,
-          "displayName": "kube-proxy: Latest Version",
-          "description": "Install the most recent kube-proxy addon",
-          "type": "toggle"
-        },
-        "addonVpcCniMostRecent": {
-          "name": "addonVpcCniMostRecent",
-          "path": "services.eks.addonVpcCniMostRecent",
-          "tfVar": "eks_addon_vpc_cni_most_recent",
-          "valueType": "boolean",
-          "defaultValue": true,
-          "file": "/Users/reibek/Code/DevOpsGroup/customers/[OP] OpenPrime/openprime-infra-templates/templates/terraform/aws/terraform.auto.tfvars",
-          "line": 99,
-          "displayName": "VPC CNI: Latest Version",
-          "description": "Install the most recent VPC CNI addon",
-          "type": "toggle"
-        },
         "addonVpcCniBeforeCompute": {
           "name": "addonVpcCniBeforeCompute",
           "path": "services.eks.addonVpcCniBeforeCompute",
@@ -638,30 +578,6 @@
           "line": 101,
           "displayName": "VPC CNI Before Compute",
           "description": "Install the VPC CNI before nodes join; without it the first nodes can come up without pod networking",
-          "type": "toggle"
-        },
-        "addonEbsCsiMostRecent": {
-          "name": "addonEbsCsiMostRecent",
-          "path": "services.eks.addonEbsCsiMostRecent",
-          "tfVar": "eks_addon_ebs_csi_most_recent",
-          "valueType": "boolean",
-          "defaultValue": true,
-          "file": "/Users/reibek/Code/DevOpsGroup/customers/[OP] OpenPrime/openprime-infra-templates/templates/terraform/aws/terraform.auto.tfvars",
-          "line": 103,
-          "displayName": "EBS CSI: Latest Version",
-          "description": "Install the most recent EBS CSI driver addon",
-          "type": "toggle"
-        },
-        "addonEfsCsiMostRecent": {
-          "name": "addonEfsCsiMostRecent",
-          "path": "services.eks.addonEfsCsiMostRecent",
-          "tfVar": "eks_addon_efs_csi_most_recent",
-          "valueType": "boolean",
-          "defaultValue": true,
-          "file": "/Users/reibek/Code/DevOpsGroup/customers/[OP] OpenPrime/openprime-infra-templates/templates/terraform/aws/terraform.auto.tfvars",
-          "line": 105,
-          "displayName": "EFS CSI: Latest Version",
-          "description": "Install the most recent EFS CSI driver addon",
           "type": "toggle"
         },
         "karpenterNodepoolArch": {
