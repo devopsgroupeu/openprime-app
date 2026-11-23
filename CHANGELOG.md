@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.26.14](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.13...v1.26.14) (2026-11-23)
+
+### 🏗️ Build System
+
+* **deps:** bump nginx from `713fc2e` to `fed7e14` ([#108](https://github.com/devopsgroupeu/openprime-app/issues/108)) ([d17662b](https://github.com/devopsgroupeu/openprime-app/commit/d17662b97dacd8b439abf570636de9e9d7f16105))
+* **deps:** bump node ([#107](https://github.com/devopsgroupeu/openprime-app/issues/107)) ([8618c75](https://github.com/devopsgroupeu/openprime-app/commit/8618c7539670c1356f7f6e2c4676348f0680eca2))
+
 ## [1.26.13](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.12...v1.26.13) (2026-11-17)
 
 ### 🐛 Bug Fixes
