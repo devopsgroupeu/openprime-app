@@ -57,10 +57,7 @@ describe("HelmChartsStep — Ingress Stack quick template (OP-234)", () => {
     // for AKS/GKE too, so enabling it unconditionally would put a chart into the
     // config that the selector cannot render and generation would drop.
     const charts = chartsAfterIngressStack("gke");
-    expect(enabledNames(charts)).toEqual([
-      "certManager",
-      "externalDns",
-    ]);
+    expect(enabledNames(charts)).toEqual(["certManager", "externalDns"]);
     expect(charts.awsLoadBalancerController).toBeUndefined();
   });
 
