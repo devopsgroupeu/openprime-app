@@ -302,8 +302,9 @@ export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
         {downloadError && <p role="alert">{downloadError}</p>}
         <div className="space-y-1 text-xs leading-relaxed text-tertiary">
           <p>
-            Add the public key to your repository&apos;s deploy keys with write
-            access.{" "}
+            Add the public key to your repository&apos;s deploy keys and tick{" "}
+            <strong className="text-warning">Allow write access</strong>;
+            without it the push is refused.{" "}
             {deployKeys && (
               <a
                 href={deployKeys.href}

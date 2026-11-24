@@ -120,6 +120,7 @@ describe("WizardPage in the setup guide", () => {
       "href",
       "https://github.com/acme/infra/settings/keys/new",
     );
+    expect(screen.getByText("Allow write access")).toBeVisible();
   });
 
   it("chooses the AWS key connected in step 1", async () => {

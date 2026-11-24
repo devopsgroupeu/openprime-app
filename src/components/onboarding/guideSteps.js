@@ -120,7 +120,7 @@ export const wizardPoints = (wizard) => {
             label: "Add it on GitHub",
             part: 1,
             target: "wizard-deploy-keys-link",
-            text: "This opens the page on GitHub where the key goes. Paste the key there, tick Allow write access and click Add key.",
+            text: "This opens the page on GitHub where the key goes. Paste the key, tick Allow write access and click Add key. Without write access, OpenPrime cannot send your code to the repository.",
             link: deployKeys,
             done: Boolean(wizard.deployKeysOpened || wizard.keyEntered),
           },

@@ -432,10 +432,19 @@ const GuideDock = () => {
                                   aria-hidden="true"
                                 />
                               </a>
-                              <p className="text-xs text-secondary">
-                                Paste the key there, tick Allow write access and
-                                click Add key.
-                              </p>
+                              <ol className="list-decimal space-y-1 pl-4 text-xs text-secondary">
+                                <li>Paste the key into the Key box.</li>
+                                {/* Easy to miss on GitHub's form, and without
+                                    it every push is refused. */}
+                                <li className="rounded-md bg-warning-muted px-1.5 py-1 text-primary">
+                                  <strong className="text-warning">
+                                    Tick Allow write access.
+                                  </strong>{" "}
+                                  Without it, OpenPrime cannot send your code to
+                                  the repository.
+                                </li>
+                                <li>Click Add key.</li>
+                              </ol>
                             </div>
                           )}
                           {hint && (

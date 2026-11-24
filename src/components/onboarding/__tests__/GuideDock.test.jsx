@@ -279,6 +279,8 @@ describe("GuideDock", () => {
       "href",
       "https://github.com/acme/infra/settings/keys/new",
     );
+    // Without write access every push is refused.
+    expect(within(dock).getByText("Tick Allow write access.")).toBeVisible();
 
     fireEvent.click(link);
 
