@@ -6,13 +6,14 @@ import { useToast } from "../../contexts/ToastContext";
 import authService from "../../services/authService";
 import CloudCredentialModal from "../modals/CloudCredentialModal";
 import GuideSpotlight from "./GuideSpotlight";
+import DeployGuideDialog from "./DeployGuideDialog";
 import {
-  DEPLOY_HOW_TO,
   GITHUB_NEW_REPO_URL,
   STEPS,
   STEP_ORDER,
   awsPoints,
   pushPoint,
+  repoUrlOf,
   whereHint,
   wizardPoints,
 } from "./guideSteps";
@@ -147,13 +148,14 @@ const GuideDock = () => {
   const { pathname } = useLocation();
   const toast = useToast();
   const [targetFound, setTargetFound] = useState(false);
-  const [showDeployHowTo, setShowDeployHowTo] = useState(false);
+  const [deployGuideOpen, setDeployGuideOpen] = useState(false);
   const [justDone, setJustDone] = useState(null);
   const previous = useRef(undefined);
   const ready = Boolean(guide?.ready);
   const current = guide?.current ?? null;
   const setShowing = guide?.setShowing;
   const closeShowing = useCallback(() => setShowing?.(false), [setShowing]);
+  const closeDeployGuide = useCallback(() => setDeployGuideOpen(false), []);
   // The toast API is a new object on every render; an effect depending on it
   // would re-run and cancel its own timer.
   const toastRef = useRef(toast);
@@ -268,11 +270,10 @@ const GuideDock = () => {
       <>
         <button
           type="button"
-          onClick={() => setShowDeployHowTo((open) => !open)}
-          aria-expanded={showDeployHowTo}
-          className="btn-op-secondary"
+          onClick={() => setDeployGuideOpen(true)}
+          className="btn-op-primary"
         >
-          {showDeployHowTo ? "Hide steps" : "Show me how"}
+          Show me how
         </button>
         <button
           type="button"
@@ -452,13 +453,6 @@ const GuideDock = () => {
                               {hint}
                             </p>
                           )}
-                          {current === "deploy" && showDeployHowTo && (
-                            <ol className="list-decimal space-y-1 pl-4 text-xs text-secondary">
-                              {DEPLOY_HOW_TO.map((line) => (
-                                <li key={line}>{line}</li>
-                              ))}
-                            </ol>
-                          )}
                           {actions && (
                             <div className="flex flex-wrap items-center gap-3">
                               {actions}
@@ -508,6 +502,16 @@ const GuideDock = () => {
         isOpen={guide.connectingAws}
         onClose={guide.closeConnectAws}
         onSave={saveAwsCredential}
+      />
+
+      <DeployGuideDialog
+        isOpen={deployGuideOpen && current === "deploy"}
+        repoUrl={repoUrlOf(guide.pushTarget) || guide.repoUrl}
+        onClose={closeDeployGuide}
+        onDone={() => {
+          setDeployGuideOpen(false);
+          guide.markDeployed();
+        }}
       />
     </>
   );

@@ -39,19 +39,12 @@ export const STEPS = {
   deploy: {
     title: "Start the deployment",
     description:
-      "Your repository's pipeline builds everything in your AWS account. Until OpenPrime can start it itself, this happens on GitHub.",
+      "Your repository's pipeline builds everything in your AWS account. It is set up, started and approved on GitHub; the guide has every link and value ready.",
     doneText: "Deployment started.",
   },
 };
 
 export const GITHUB_NEW_REPO_URL = "https://github.com/new";
-
-export const DEPLOY_HOW_TO = [
-  "In your repository on GitHub, open Settings → Secrets and variables → Actions.",
-  "Add two secrets with the same AWS key you gave OpenPrime: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.",
-  "Open Actions → Terraform Deployment → Run workflow, and choose apply.",
-  "The run opens an issue in your repository. Comment approve on it to let it continue.",
-];
 
 export const repoUrlOf = (env) =>
   (env?.git_repository || env?.gitRepository)?.url || "";

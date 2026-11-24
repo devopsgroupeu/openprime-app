@@ -156,6 +156,44 @@ describe("GuideDock", () => {
 
   // The dead end reported on 2026-11-24: the repository was created on
   // GitHub and nothing in the guide said how to move on.
+  it("walks the deployment in a dialog and finishes the guide from there", async () => {
+    serve({ credentials: KEY });
+    renderDock({
+      environments: [
+        {
+          id: "env-1",
+          git_repository: { url: REPO },
+          last_push_status: "succeeded",
+        },
+      ],
+    });
+
+    fireEvent.click(
+      within(await findDock()).getByRole("button", { name: "Show me how" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Start the deployment",
+    });
+    expect(
+      within(dialog).getByRole("link", { name: /Open Terraform Deployment/ }),
+    ).toHaveAttribute(
+      "href",
+      "https://github.com/acme/infra/actions/workflows/terraform-deploy.yml",
+    );
+
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Both approved, done" }),
+    );
+
+    await waitFor(() =>
+      expect(saved).toEqual([{ onboarding: { deployed: true } }]),
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("complementary", { name: "Setup guide" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("moves on once the new repository's address is pasted", async () => {
     serve({ credentials: KEY });
     renderDock();

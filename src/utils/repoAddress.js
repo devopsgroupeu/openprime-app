@@ -29,10 +29,12 @@ export const normalizeRepoAddress = (input = "") => {
   return repoPath.includes("/") ? `git@${host}:${repoPath}.git` : null;
 };
 
-// The page where a deploy key is added, for a github.com address in any form
+// The GitHub pages a new user is sent to, for a github.com address in any form
 // the wizard accepts (git@github.com:o/r.git, ssh://git@github.com/o/r,
 // https://github.com/o/r). Null for other hosts: there is no address to build.
-export const deployKeysLink = (repoUrl = "") => {
+// The workflow file is the one the templates generate
+// (templates/.github/workflows/terraform-deploy.yml).
+export const githubPages = (repoUrl = "") => {
   const match = String(repoUrl)
     .trim()
     .match(
@@ -40,8 +42,20 @@ export const deployKeysLink = (repoUrl = "") => {
     );
   if (!match) return null;
   const [, owner, repo] = match;
+  const base = `https://github.com/${owner}/${repo}`;
   return {
-    href: `https://github.com/${owner}/${repo}/settings/keys/new`,
-    label: `Open deploy keys for ${owner}/${repo}`,
+    name: `${owner}/${repo}`,
+    deployKeysNew: `${base}/settings/keys/new`,
+    secretsNew: `${base}/settings/secrets/actions/new`,
+    workflow: `${base}/actions/workflows/terraform-deploy.yml`,
+    issues: `${base}/issues`,
   };
+};
+
+// The page where a deploy key is added, with the label the guide shows.
+export const deployKeysLink = (repoUrl = "") => {
+  const pages = githubPages(repoUrl);
+  return pages
+    ? { href: pages.deployKeysNew, label: `Open deploy keys for ${pages.name}` }
+    : null;
 };
