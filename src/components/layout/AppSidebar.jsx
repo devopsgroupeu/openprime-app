@@ -1,73 +1,157 @@
-// src/components/layout/AppSidebar.jsx
-import { NavLink } from "react-router";
-import { Server, Settings, X } from "lucide-react";
+import { Link, useLocation } from "react-router";
+import { ChevronLeft, Layers, Plus, Search } from "lucide-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarSeparator,
+} from "@/components/ui/sidebar";
+import { version } from "../../../package.json";
+import logoInverse from "../../assets/openprime-logo-color-inverse.svg";
+import symbol from "../../assets/openprime-symbol-color.svg";
+import { SETTINGS_TABS } from "../SettingsPage";
+import { MOD_KEY } from "./CommandPalette";
+import UserMenu from "./UserMenu";
 
-const NAV_ITEMS = [
-  { to: "/environments", label: "Environments", icon: Server },
-  { to: "/settings", label: "Settings", icon: Settings, end: true },
-];
+function NavItem({ to, icon: Icon, label, active }) {
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton tooltip={label} isActive={active} asChild>
+        <Link to={to} aria-current={active ? "page" : undefined}>
+          <Icon />
+          <span>{label}</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
 
-const linkClass = ({ isActive }) =>
-  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium border-l-2 transition-colors ${
-    isActive
-      ? "border-primary bg-primary-muted text-primary"
-      : "border-transparent text-secondary hover:text-primary hover:bg-surface-elevated"
-  }`;
+function MainNav({ pathname, onSearch }) {
+  return (
+    <>
+      <SidebarGroup>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <NavItem
+              to="/environments/create"
+              icon={Plus}
+              label="New environment"
+            />
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip={`Search (${MOD_KEY} K)`}
+                onClick={onSearch}
+              >
+                <Search />
+                <span>Search</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+      <SidebarSeparator />
+      <SidebarGroup>
+        <SidebarGroupLabel>Platform</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <NavItem
+              to="/environments"
+              icon={Layers}
+              label="Environments"
+              active={pathname.startsWith("/environments")}
+            />
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    </>
+  );
+}
 
-const NavList = ({ onItemClick }) => (
-  <nav className="flex flex-col gap-1 p-4">
-    <p className="section-label px-3 mb-2">Platform</p>
-    {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
-      <NavLink
-        key={to}
-        to={to}
-        end={end}
-        className={linkClass}
-        onClick={onItemClick}
-      >
-        <Icon className="w-4 h-4" />
-        <span>{label}</span>
-      </NavLink>
-    ))}
-  </nav>
-);
+function SettingsNav({ pathname }) {
+  return (
+    <>
+      <SidebarGroup>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <NavItem
+              to="/environments"
+              icon={ChevronLeft}
+              label="Back to app"
+            />
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+      <SidebarSeparator />
+      <SidebarGroup>
+        <SidebarGroupLabel>Settings</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {SETTINGS_TABS.map((tab) => (
+              <NavItem
+                key={tab.id}
+                to={`/settings/${tab.id}`}
+                icon={tab.icon}
+                label={tab.label}
+                active={pathname === `/settings/${tab.id}`}
+              />
+            ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    </>
+  );
+}
 
-const AppSidebar = ({ mobileOpen, onClose }) => (
-  <>
-    {/* Desktop — static rail */}
-    <aside
-      className="hidden lg:flex flex-col w-64 shrink-0 border-r border-border sticky top-20 h-[calc(100vh-5rem)]"
-      aria-label="Primary navigation"
-    >
-      <NavList />
-    </aside>
+/**
+ * Deep-green app sidebar (port of openprime-ai AppSidebar / SettingsSidebar):
+ * main nav everywhere, swapped for the settings nav on /settings/*.
+ */
+export default function AppSidebar({ onSearch }) {
+  const { pathname } = useLocation();
+  const inSettings = pathname.startsWith("/settings");
 
-    {/* Mobile — slide-in drawer */}
-    {mobileOpen && (
-      <div className="lg:hidden fixed inset-0 z-50">
-        <div
-          className="absolute inset-0 bg-black/50 animate-fade-in"
-          onClick={onClose}
-        />
-        <aside
-          className="absolute left-0 top-0 h-full w-64 bg-surface border-r border-border shadow-elevation-4 animate-slide-up"
-          aria-label="Primary navigation"
+  return (
+    <Sidebar variant="inset" collapsible="icon" className="border-r-0">
+      <SidebarHeader className="p-3">
+        <Link
+          to="/environments"
+          aria-label="OpenPrime home"
+          className="flex h-8 items-center rounded-md px-2 outline-hidden ring-sidebar-ring focus-visible:ring-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
         >
-          <div className="flex items-center justify-between px-4 h-20 border-b border-border">
-            <span className="section-label">Menu</span>
-            <button
-              onClick={onClose}
-              className="p-2 -mr-2 rounded-lg text-tertiary hover:text-primary hover:bg-surface-elevated"
-              aria-label="Close menu"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <NavList onItemClick={onClose} />
-        </aside>
-      </div>
-    )}
-  </>
-);
-
-export default AppSidebar;
+          <img
+            src={logoInverse}
+            alt=""
+            className="h-5 w-auto group-data-[collapsible=icon]:hidden"
+          />
+          <img
+            src={symbol}
+            alt=""
+            className="hidden h-auto w-6 group-data-[collapsible=icon]:block"
+          />
+        </Link>
+      </SidebarHeader>
+      <SidebarContent>
+        {inSettings ? (
+          <SettingsNav pathname={pathname} />
+        ) : (
+          <MainNav pathname={pathname} onSearch={onSearch} />
+        )}
+      </SidebarContent>
+      <SidebarFooter className="p-3">
+        {inSettings && (
+          <span className="px-2 text-xs text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
+            v{version}
+          </span>
+        )}
+        <UserMenu />
+      </SidebarFooter>
+    </Sidebar>
+  );
+}

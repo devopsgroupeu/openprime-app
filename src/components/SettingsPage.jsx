@@ -1,6 +1,7 @@
 // src/components/SettingsPage.jsx
 import { useState, useEffect } from "react";
-import { Cloud, User, Save, Settings } from "lucide-react";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router";
+import { KeyRound, Save, SlidersHorizontal, User } from "lucide-react";
 import { useToast } from "../contexts/ToastContext";
 import authService from "../services/authService";
 import CloudCredentialModal from "./modals/CloudCredentialModal";
@@ -8,10 +9,18 @@ import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
 import AccountTab from "./settings-page/AccountTab";
 import CloudCredentialsTab from "./settings-page/CloudCredentialsTab";
 import PreferencesTab from "./settings-page/PreferencesTab";
-import SettingsTabNav from "./settings-page/SettingsTabNav";
+
+export const SETTINGS_TABS = [
+  { id: "account", label: "Account", icon: User },
+  { id: "preferences", label: "Preferences", icon: SlidersHorizontal },
+  { id: "cloud-credentials", label: "Cloud credentials", icon: KeyRound },
+];
 
 const SettingsPage = () => {
   const toast = useToast();
+  const { tab: activeTab } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [userPreferences, setUserPreferences] = useState({
     theme: "light",
     notifications: true,
@@ -36,12 +45,20 @@ const SettingsPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [credentialToDelete, setCredentialToDelete] = useState(null);
   const [credentialUsage, setCredentialUsage] = useState(null);
-  const [activeTab, setActiveTab] = useState("account");
 
   useEffect(() => {
     loadUserData();
     loadCloudCredentials();
   }, []);
+
+  // The command palette's "Add AWS credentials" lands here with this state:
+  // open the add dialog once, then drop the state so reload/back don't reopen.
+  useEffect(() => {
+    if (location.state?.addCredential) {
+      handleAddCredential("aws");
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.state]);
 
   const loadUserData = async () => {
     try {
@@ -190,6 +207,10 @@ const SettingsPage = () => {
     }
   };
 
+  if (!SETTINGS_TABS.some((tab) => tab.id === activeTab)) {
+    return <Navigate to="/settings/account" replace />;
+  }
+
   if (loading) {
     return (
       <div className="transition-colors bg-transparent">
@@ -205,12 +226,6 @@ const SettingsPage = () => {
     );
   }
 
-  const tabs = [
-    { id: "account", label: "Account", icon: User },
-    { id: "preferences", label: "Preferences", icon: Settings },
-    { id: "credentials", label: "Cloud Credentials", icon: Cloud },
-  ];
-
   return (
     <div className="transition-colors bg-transparent">
       <div className="px-8 py-8">
@@ -221,7 +236,7 @@ const SettingsPage = () => {
               Manage your account and platform preferences.
             </p>
           </div>
-          {activeTab !== "credentials" && (
+          {activeTab !== "cloud-credentials" && (
             <button
               onClick={saveSettings}
               disabled={saving}
@@ -242,37 +257,27 @@ const SettingsPage = () => {
           )}
         </div>
 
-        <div className="flex flex-col md:flex-row gap-8">
-          <SettingsTabNav
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-          />
-
-          <div className="flex-1 min-w-0">
-            <div className="rounded-2xl border border-border bg-surface p-6">
-              {activeTab === "account" && (
-                <AccountTab
-                  profile={profile}
-                  onProfileChange={handleProfileChange}
-                />
-              )}
-              {activeTab === "preferences" && (
-                <PreferencesTab
-                  userPreferences={userPreferences}
-                  onPreferenceChange={handlePreferenceChange}
-                />
-              )}
-              {activeTab === "credentials" && (
-                <CloudCredentialsTab
-                  credentials={cloudCredentials}
-                  onAddCredential={handleAddCredential}
-                  onEditCredential={handleEditCredential}
-                  onDeleteCredential={handleDeleteCredential}
-                />
-              )}
-            </div>
-          </div>
+        <div className="rounded-2xl border border-border bg-surface p-6">
+          {activeTab === "account" && (
+            <AccountTab
+              profile={profile}
+              onProfileChange={handleProfileChange}
+            />
+          )}
+          {activeTab === "preferences" && (
+            <PreferencesTab
+              userPreferences={userPreferences}
+              onPreferenceChange={handlePreferenceChange}
+            />
+          )}
+          {activeTab === "cloud-credentials" && (
+            <CloudCredentialsTab
+              credentials={cloudCredentials}
+              onAddCredential={handleAddCredential}
+              onEditCredential={handleEditCredential}
+              onDeleteCredential={handleDeleteCredential}
+            />
+          )}
         </div>
       </div>
 

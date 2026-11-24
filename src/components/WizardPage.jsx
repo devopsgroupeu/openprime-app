@@ -2,9 +2,10 @@
 // Full-page environment wizard (replaces the former modal). InfraFlow 3-column layout:
 // WizardSidebar (steps + progress) | step form | live code-preview panel.
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { CheckCircle } from "lucide-react";
-import AppHeader from "./layout/AppHeader";
+import ThemeToggle from "./layout/ThemeToggle";
+import symbol from "../assets/openprime-symbol-color.svg";
 import WizardAssistant from "./WizardAssistant";
 import AIChatModal from "./modals/AIChatModal";
 import HelmValuesModal from "./modals/HelmValuesModal";
@@ -32,6 +33,20 @@ import {
 } from "../utils/wizardDraft";
 import { useCatalog } from "../contexts/CatalogContext";
 import { useSshKeyGeneration } from "./wizard-page/useSshKeyGeneration.js";
+
+// Minimal chrome until the wizard gets its own top bar: home link + theme.
+const WizardTopBar = () => (
+  <header className="sticky top-0 z-40 flex h-10 shrink-0 items-center justify-between border-b border-border bg-background px-4">
+    <Link
+      to="/environments"
+      aria-label="OpenPrime home"
+      className="flex items-center rounded-md p-1 outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <img src={symbol} alt="" className="h-5 w-auto" />
+    </Link>
+    <ThemeToggle />
+  </header>
+);
 
 const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const { id } = useParams();
@@ -311,7 +326,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   if (!newEnv) {
     return (
       <div className="min-h-screen flex flex-col">
-        <AppHeader />
+        <WizardTopBar />
         <div className="flex flex-1 items-center justify-center">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
         </div>
@@ -321,7 +336,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <AppHeader />
+      <WizardTopBar />
       <div className="flex flex-1 min-h-0">
         {/* Wizard steps sidebar */}
         <WizardStepSidebar
@@ -390,7 +405,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
         </main>
 
         {/* AI assistant */}
-        <aside className="hidden xl:block w-96 shrink-0 border-l border-border p-4 sticky top-20 h-[calc(100vh-5rem)]">
+        <aside className="hidden xl:block w-96 shrink-0 border-l border-border p-4 sticky top-10 h-[calc(100vh-2.5rem)]">
           <WizardAssistant
             context={{
               name: newEnv.name,

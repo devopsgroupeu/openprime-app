@@ -1,15 +1,22 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router";
 import { ThemeProvider } from "../../contexts/ThemeContext";
 import { ToastProvider } from "../../contexts/ToastContext";
 import { AuthProvider } from "../../contexts/AuthContext";
 import SettingsPage from "../SettingsPage";
 
-function renderSettingsPage() {
+// The tab nav moved to the settings sidebar (see AppSidebar.test.jsx); the
+// page now reads its tab from the URL.
+function renderSettingsPage(path = "/settings/account", state) {
   return render(
     <ThemeProvider>
       <ToastProvider>
         <AuthProvider>
-          <SettingsPage />
+          <MemoryRouter initialEntries={[{ pathname: path, state }]}>
+            <Routes>
+              <Route path="/settings/:tab" element={<SettingsPage />} />
+            </Routes>
+          </MemoryRouter>
         </AuthProvider>
       </ToastProvider>
     </ThemeProvider>,
@@ -18,23 +25,12 @@ function renderSettingsPage() {
 
 describe("SettingsPage", () => {
   it("renders the settings chrome and account tab", async () => {
-    renderSettingsPage();
+    renderSettingsPage("/settings/account");
 
     // Header
     expect(await screen.findByText("Settings")).toBeInTheDocument();
     expect(
       screen.getByText("Manage your account and platform preferences."),
-    ).toBeInTheDocument();
-
-    // Tab nav
-    expect(
-      screen.getByRole("button", { name: /Account/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Preferences/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Cloud Credentials/i }),
     ).toBeInTheDocument();
 
     // Account form loaded from MSW fixtures
@@ -48,11 +44,8 @@ describe("SettingsPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("switches to the preferences tab and shows provider/region selects", async () => {
-    renderSettingsPage();
-
-    await screen.findByText("Settings");
-    fireEvent.click(screen.getByRole("button", { name: /Preferences/i }));
+  it("shows the preferences tab at /settings/preferences", async () => {
+    renderSettingsPage("/settings/preferences");
 
     expect(
       await screen.findByLabelText(/Default Cloud Provider/i),
@@ -65,11 +58,8 @@ describe("SettingsPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("switches to the credentials tab and lists AWS credentials", async () => {
-    renderSettingsPage();
-
-    await screen.findByText("Settings");
-    fireEvent.click(screen.getByRole("button", { name: /Cloud Credentials/i }));
+  it("shows the credentials tab at /settings/cloud-credentials", async () => {
+    renderSettingsPage("/settings/cloud-credentials");
 
     expect(await screen.findByText("AWS Credentials")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Add/i })).toBeInTheDocument();
@@ -81,5 +71,12 @@ describe("SettingsPage", () => {
         screen.queryByRole("button", { name: /Save Changes/i }),
       ).not.toBeInTheDocument(),
     );
+  });
+
+  it("opens the add credential dialog when navigated to with addCredential", async () => {
+    renderSettingsPage("/settings/cloud-credentials", { addCredential: true });
+
+    expect(await screen.findByText("AWS Credentials")).toBeInTheDocument();
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 });

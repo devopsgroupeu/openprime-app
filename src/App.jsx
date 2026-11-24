@@ -177,7 +177,7 @@ function AppContent() {
         >
           <BrowserRouter>
             <Routes>
-              <Route element={<AppLayout />}>
+              <Route element={<AppLayout environments={environments} />}>
                 <Route
                   path="/"
                   element={<Navigate to="/environments" replace />}
@@ -198,7 +198,11 @@ function AppContent() {
                     <EnvironmentDetailPage onDelete={handleDeleteEnvironment} />
                   }
                 />
-                <Route path="/settings" element={<SettingsPage />} />
+                <Route
+                  path="/settings"
+                  element={<Navigate to="/settings/account" replace />}
+                />
+                <Route path="/settings/:tab" element={<SettingsPage />} />
               </Route>
               <Route
                 path="/environments/create"

@@ -9,7 +9,7 @@ import { generateSshKeyPair } from "../../utils/sshKeyPair";
 
 vi.mock("../../utils/sshKeyPair", () => ({ generateSshKeyPair: vi.fn() }));
 
-// WizardPage is a full page: it needs Theme/Auth (AppHeader), Toast, and a
+// WizardPage is a full page: it needs Theme (top bar)/Auth, Toast, and a
 // router (useParams/useNavigate). In mock mode AuthProvider auto-authenticates.
 function renderWizard() {
   return render(

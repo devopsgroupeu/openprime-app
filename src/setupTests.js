@@ -15,6 +15,22 @@ globalThis.TextDecoder = TextDecoder;
 // jsdom doesn't implement scrollIntoView (used by chat/list auto-scroll effects)
 Element.prototype.scrollIntoView = vi.fn();
 
+// jsdom doesn't implement matchMedia (used by the sidebar's useIsMobile).
+// Desktop width: every query reports "no match".
+window.matchMedia = (query) => ({
+  matches: false,
+  media: query,
+  addEventListener: () => {},
+  removeEventListener: () => {},
+});
+
+// jsdom doesn't implement ResizeObserver (used by cmdk's list).
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
 // Mock localStorage
 const localStorageMock = (function () {
   let store = {};
