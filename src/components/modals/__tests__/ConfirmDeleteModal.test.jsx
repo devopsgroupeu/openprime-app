@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import ConfirmDeleteModal from "../ConfirmDeleteModal";
 
 const baseProps = {
@@ -104,5 +104,51 @@ describe("ConfirmDeleteModal", () => {
       screen.queryByText(/credential is used by/i),
     ).not.toBeInTheDocument();
     expect(screen.queryByText(/couldn't check/i)).not.toBeInTheDocument();
+  });
+
+  it("calls onClose once on Escape", () => {
+    const onClose = vi.fn();
+    render(
+      <ConfirmDeleteModal
+        {...baseProps}
+        onClose={onClose}
+        title="Delete Credential"
+      />,
+    );
+
+    fireEvent.keyDown(screen.getByRole("alertdialog"), { key: "Escape" });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls onConfirm from the Delete button, then closes", async () => {
+    const onConfirm = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <ConfirmDeleteModal
+        {...baseProps}
+        onConfirm={onConfirm}
+        onClose={onClose}
+        title="Delete Credential"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+  });
+
+  it("names the environment when deleting one (EnvironmentDetailPage)", () => {
+    render(
+      <ConfirmDeleteModal
+        environment={{ id: "env-001", name: "demo-prod" }}
+        onClose={() => {}}
+        onConfirm={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+    expect(screen.getByText('Delete "demo-prod"?')).toBeInTheDocument();
   });
 });

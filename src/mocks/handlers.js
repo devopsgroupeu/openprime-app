@@ -107,10 +107,17 @@ export const handlers = [
 
   // --- Cloud credentials ---
   http.get("*/cloud-credentials", () => HttpResponse.json({ credentials })),
+  // Same envelope as the backend: the edit dialog reads `credential`.
   http.get("*/cloud-credentials/:id", ({ params }) =>
-    HttpResponse.json(
-      credentials.find((c) => c.id === params.id) || credentials[0],
-    ),
+    HttpResponse.json({
+      credential: credentials.find((c) => c.id === params.id) || credentials[0],
+    }),
+  ),
+  http.get("*/cloud-credentials/:id/usage", () =>
+    HttpResponse.json({
+      count: 1,
+      environments: [{ id: "env-001", name: "demo-prod" }],
+    }),
   ),
   http.post("*/cloud-credentials", async ({ request }) =>
     HttpResponse.json(

@@ -14,7 +14,10 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 
-/** Destructive confirm: names the object, focus on Cancel, optional type-to-confirm. */
+/**
+ * Destructive confirm: names the object, focus on Cancel, optional type-to-confirm.
+ * `children` (e.g. a warning Callout) render between the description and the input.
+ */
 export function ConfirmDestructiveDialog({
   open,
   onOpenChange,
@@ -23,6 +26,7 @@ export function ConfirmDestructiveDialog({
   confirmLabel,
   typeToConfirm,
   onConfirm,
+  children,
 }) {
   const [typed, setTyped] = useState("");
   const [pending, setPending] = useState(false);
@@ -56,6 +60,7 @@ export function ConfirmDestructiveDialog({
             {description ?? "This can't be undone."}
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {children}
         {typeToConfirm !== undefined ? (
           <Field>
             <FieldLabel htmlFor={inputId}>

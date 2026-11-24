@@ -3,6 +3,7 @@ import { http, HttpResponse } from "msw";
 import { server } from "../../../mocks/server";
 import { ThemeProvider } from "../../../contexts/ThemeContext";
 import { ToastProvider } from "../../../contexts/ToastContext";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import CloudCredentialsTab from "../CloudCredentialsTab";
 
 const credential = {
@@ -16,13 +17,16 @@ function renderTab(props = {}) {
   return render(
     <ThemeProvider>
       <ToastProvider>
-        <CloudCredentialsTab
-          credentials={[credential]}
-          onAddCredential={() => {}}
-          onEditCredential={() => {}}
-          onDeleteCredential={() => {}}
-          {...props}
-        />
+        {/* The app shell provides the tooltips. */}
+        <TooltipProvider>
+          <CloudCredentialsTab
+            credentials={[credential]}
+            onAddCredential={() => {}}
+            onEditCredential={() => {}}
+            onDeleteCredential={() => {}}
+            {...props}
+          />
+        </TooltipProvider>
       </ToastProvider>
     </ThemeProvider>,
   );
@@ -47,7 +51,7 @@ describe("CloudCredentialsTab", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(/Credentials valid — Account: 123456789012/),
+        screen.getByText(/Credentials valid for account 123456789012/),
       ).toBeInTheDocument(),
     );
   });

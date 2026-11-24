@@ -12,7 +12,7 @@ describe("CloudCredentialModal", () => {
   it("rejects a non-12-digit account ID when creating a new credential", () => {
     render(<CloudCredentialModal {...baseProps} />);
 
-    fireEvent.change(screen.getByPlaceholderText("e.g., Production Account"), {
+    fireEvent.change(screen.getByPlaceholderText("e.g. Production account"), {
       target: { value: "New Credential" },
     });
     fireEvent.change(screen.getByPlaceholderText("123456789012"), {
@@ -28,7 +28,7 @@ describe("CloudCredentialModal", () => {
       },
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Add/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Add credentials/i }));
 
     expect(
       screen.getByText("Account ID must be exactly 12 digits"),
@@ -39,7 +39,7 @@ describe("CloudCredentialModal", () => {
     const onSave = vi.fn();
     render(<CloudCredentialModal {...baseProps} onSave={onSave} />);
 
-    fireEvent.change(screen.getByPlaceholderText("e.g., Production Account"), {
+    fireEvent.change(screen.getByPlaceholderText("e.g. Production account"), {
       target: { value: "New Credential" },
     });
     fireEvent.change(screen.getByPlaceholderText("123456789012"), {
@@ -55,7 +55,7 @@ describe("CloudCredentialModal", () => {
       },
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Add/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Add credentials/i }));
 
     expect(
       screen.queryByText("Account ID must be exactly 12 digits"),
@@ -81,11 +81,11 @@ describe("CloudCredentialModal", () => {
       />,
     );
 
-    fireEvent.change(screen.getByPlaceholderText("e.g., Production Account"), {
+    fireEvent.change(screen.getByPlaceholderText("e.g. Production account"), {
       target: { value: "Updated Legacy Credential" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /Update/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Save changes/i }));
 
     expect(
       screen.queryByText("Account ID must be exactly 12 digits"),
@@ -108,10 +108,19 @@ describe("CloudCredentialModal", () => {
       target: { value: "12345" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /Update/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Save changes/i }));
 
     expect(
       screen.getByText("Account ID must be exactly 12 digits"),
     ).toBeInTheDocument();
+  });
+
+  it("closes on Escape through onClose", () => {
+    const onClose = vi.fn();
+    render(<CloudCredentialModal {...baseProps} onClose={onClose} />);
+
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

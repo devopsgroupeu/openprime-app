@@ -1,56 +1,54 @@
-const AccountTab = ({ profile, onProfileChange }) => {
-  return (
-    <div className="space-y-4">
-      <div>
-        <label
-          htmlFor="settings-first-name"
-          className="block text-sm font-semibold text-label mb-2"
-        >
-          First Name
-        </label>
-        <input
-          id="settings-first-name"
-          type="text"
-          value={profile.firstName}
-          onChange={(e) => onProfileChange("firstName", e.target.value)}
-          className="w-full px-4 py-2.5 transition-colors"
-          placeholder="Enter your first name"
+import {
+  SettingsRow,
+  SettingsRowGroup,
+  SettingsSection,
+} from "@/components/shared/settings";
+import { Input } from "@/components/ui/input";
+
+const FIELDS = [
+  {
+    key: "firstName",
+    id: "settings-first-name",
+    label: "First name",
+    autoComplete: "given-name",
+  },
+  {
+    key: "lastName",
+    id: "settings-last-name",
+    label: "Last name",
+    autoComplete: "family-name",
+  },
+  {
+    key: "email",
+    id: "settings-email",
+    label: "Email",
+    type: "email",
+    autoComplete: "email",
+  },
+];
+
+const AccountTab = ({ profile, onProfileChange }) => (
+  <SettingsSection title="Profile">
+    <SettingsRowGroup>
+      {FIELDS.map((field) => (
+        <SettingsRow
+          key={field.key}
+          title={field.label}
+          controlId={field.id}
+          control={
+            <Input
+              id={field.id}
+              type={field.type ?? "text"}
+              autoComplete={field.autoComplete}
+              value={profile[field.key]}
+              onChange={(e) => onProfileChange(field.key, e.target.value)}
+              className="sm:w-64"
+            />
+          }
         />
-      </div>
-      <div>
-        <label
-          htmlFor="settings-last-name"
-          className="block text-sm font-semibold text-label mb-2"
-        >
-          Last Name
-        </label>
-        <input
-          id="settings-last-name"
-          type="text"
-          value={profile.lastName}
-          onChange={(e) => onProfileChange("lastName", e.target.value)}
-          className="w-full px-4 py-2.5 transition-colors"
-          placeholder="Enter your last name"
-        />
-      </div>
-      <div>
-        <label
-          htmlFor="settings-email"
-          className="block text-sm font-semibold text-label mb-2"
-        >
-          Email
-        </label>
-        <input
-          id="settings-email"
-          type="email"
-          value={profile.email}
-          onChange={(e) => onProfileChange("email", e.target.value)}
-          className="w-full px-4 py-2.5 transition-colors"
-          placeholder="Enter your email"
-        />
-      </div>
-    </div>
-  );
-};
+      ))}
+    </SettingsRowGroup>
+  </SettingsSection>
+);
 
 export default AccountTab;

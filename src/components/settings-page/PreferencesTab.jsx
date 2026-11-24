@@ -1,58 +1,81 @@
 import { getProviderRegions } from "../../config/providersConfig";
+import {
+  SettingsRow,
+  SettingsRowGroup,
+  SettingsSection,
+} from "@/components/shared/settings";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+
+const PROVIDERS = [
+  { value: "aws", label: "AWS" },
+  { value: "azure", label: "Azure" },
+  { value: "gcp", label: "Google Cloud" },
+  { value: "onpremise", label: "On-premises" },
+];
+
+// `!` keeps room for the chevron against legacy.css's select padding (gone in
+// Task 11).
+const SELECT_CLASS = "pr-9!";
 
 const PreferencesTab = ({ userPreferences, onPreferenceChange }) => {
   // The select used to send "on-premise"; everything else, providersConfig
   // included, spells it "onpremise". A value stored by the old select is shown
-  // as On-Premise instead of the first option (OP-271).
+  // as On-premises instead of the first option (OP-271).
   const defaultProvider =
     userPreferences.defaultProvider === "on-premise"
       ? "onpremise"
       : userPreferences.defaultProvider;
 
   return (
-    <div className="space-y-4">
-      <div>
-        <label
-          htmlFor="settings-default-provider"
-          className="block text-sm font-semibold text-label mb-2"
-        >
-          Default Cloud Provider
-        </label>
-        <select
-          id="settings-default-provider"
-          value={defaultProvider}
-          onChange={(e) =>
-            onPreferenceChange("defaultProvider", e.target.value)
+    <SettingsSection title="Defaults">
+      <SettingsRowGroup>
+        <SettingsRow
+          title="Default cloud provider"
+          description="The cloud provider you work with most."
+          controlId="settings-default-provider"
+          control={
+            <NativeSelect
+              id="settings-default-provider"
+              className={SELECT_CLASS}
+              value={defaultProvider}
+              onChange={(e) =>
+                onPreferenceChange("defaultProvider", e.target.value)
+              }
+            >
+              {PROVIDERS.map((p) => (
+                <NativeSelectOption key={p.value} value={p.value}>
+                  {p.label}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
           }
-          className="w-full px-4 py-2.5 transition-colors"
-        >
-          <option value="aws">AWS</option>
-          <option value="azure">Azure</option>
-          <option value="gcp">Google Cloud</option>
-          <option value="onpremise">On-Premise</option>
-        </select>
-      </div>
-      <div>
-        <label
-          htmlFor="settings-default-region"
-          className="block text-sm font-semibold text-label mb-2"
-        >
-          Default Region
-        </label>
-        <select
-          id="settings-default-region"
-          value={userPreferences.defaultRegion}
-          onChange={(e) => onPreferenceChange("defaultRegion", e.target.value)}
-          className="w-full px-4 py-2.5 transition-colors"
-        >
-          {getProviderRegions(defaultProvider).map((region) => (
-            <option key={region.value} value={region.value}>
-              {region.label}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
+        />
+        <SettingsRow
+          title="Default region"
+          description="The list follows the provider above."
+          controlId="settings-default-region"
+          control={
+            <NativeSelect
+              id="settings-default-region"
+              className={SELECT_CLASS}
+              value={userPreferences.defaultRegion}
+              onChange={(e) =>
+                onPreferenceChange("defaultRegion", e.target.value)
+              }
+            >
+              {getProviderRegions(defaultProvider).map((region) => (
+                <NativeSelectOption key={region.value} value={region.value}>
+                  {region.label}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          }
+        />
+      </SettingsRowGroup>
+    </SettingsSection>
   );
 };
 
