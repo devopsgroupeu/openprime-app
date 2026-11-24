@@ -55,11 +55,8 @@ const BasicConfigStep = ({
 }) => {
   const toast = useToast();
   // Setup guide (OP-283): the AWS key can be connected from the guide while
-  // this form is open, so the list is read again when that happens. During the
-  // guide the key connected in step 1 is also chosen for the new environment.
-  const guide = useOnboarding();
-  const awsConnected = Boolean(guide?.steps?.[0]?.done);
-  const pickGuideCredential = !isEditMode && Boolean(guide?.active);
+  // this form is open, so the list is read again when that happens.
+  const awsConnected = Boolean(useOnboarding()?.steps?.[0]?.done);
   const [credentials, setCredentials] = useState([]);
   const [loadingCredentials, setLoadingCredentials] = useState(false);
   const [creatingBackend, setCreatingBackend] = useState(false);
@@ -78,8 +75,7 @@ const BasicConfigStep = ({
     if (newEnv.provider) {
       loadCredentials(newEnv.provider);
     }
-    // Also once the guide has loaded, which can be after this form opened.
-  }, [newEnv.provider, awsConnected, pickGuideCredential]);
+  }, [newEnv.provider, awsConnected]);
 
   const loadCredentials = async (provider) => {
     try {
@@ -89,12 +85,14 @@ const BasicConfigStep = ({
       );
       const list = response.credentials || [];
       setCredentials(list);
-      // The default key (step 1 saves it as default), else the only one. With
-      // several and none default it is the user's choice, not a guess.
+      // A new environment starts with the default key (the setup guide saves
+      // the one it connects as default), else the only one. With several and
+      // none default it is the user's choice, not a guess. An environment being
+      // edited keeps what it has.
       const pick =
         list.find((cred) => cred.isDefault) ||
         (list.length === 1 ? list[0] : null);
-      if (pickGuideCredential && pick) {
+      if (!isEditMode && pick) {
         setNewEnv((prev) =>
           prev.cloudCredentialId
             ? prev

@@ -194,8 +194,9 @@ describe("WizardPage in the setup guide", () => {
       ),
     ).not.toBeInTheDocument();
     expect(screen.getByText("Overall Progress")).toBeInTheDocument();
+    // The only saved key is chosen for every new environment, guide or not.
     expect(
-      await screen.findByDisplayValue("No credentials (manual configuration)"),
+      await screen.findByDisplayValue("aws-sandbox - AKIA****MOCK"),
     ).toBeInTheDocument();
 
     await createEnvironment();

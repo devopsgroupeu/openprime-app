@@ -206,6 +206,24 @@ describe("WizardPage", () => {
     expect(screen.getByPlaceholderText("e.g., example.com")).not.toBeDisabled();
   });
 
+  // A new environment starts with the default (or only) saved key; one being
+  // edited keeps its own choice, here none, although a key is saved.
+  it("does not choose a saved key for an environment being edited", async () => {
+    renderWizardEdit(vi.fn());
+
+    await waitFor(() =>
+      expect(screen.getByText(/Step 2 of/)).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Previous/i }));
+
+    expect(
+      await screen.findByRole("option", { name: "aws-sandbox - AKIA****MOCK" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByDisplayValue("No credentials (manual configuration)"),
+    ).toBeInTheDocument();
+  });
+
   // The create payload is an explicit whitelist, so a new field renders,
   // validates and reviews correctly while being dropped on the way out.
   it("sends the domain in the create payload", async () => {
