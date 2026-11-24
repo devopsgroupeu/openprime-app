@@ -203,6 +203,7 @@ export const handlers = [
       name: body.name,
       provider: body.provider || "aws",
       identifier: "AKIA****MOCK",
+      isDefault: Boolean(body.isDefault),
       created_at: now(),
     };
     walkthrough.credentials.push(cred);

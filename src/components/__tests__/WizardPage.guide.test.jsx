@@ -6,6 +6,7 @@ import { ToastProvider } from "../../contexts/ToastContext";
 import { AuthProvider } from "../../contexts/AuthContext";
 import { OnboardingProvider } from "../../contexts/OnboardingContext";
 import WizardPage from "../WizardPage";
+import GuideDock from "../onboarding/GuideDock";
 import { generateSshKeyPair } from "../../utils/sshKeyPair";
 import { http, HttpResponse } from "msw";
 import { server } from "../../mocks/server";
@@ -20,7 +21,7 @@ function LocationProbe() {
   return <p data-testid="location">{useLocation().pathname}</p>;
 }
 
-function renderWizard({ onCreateEnvironment, guided }) {
+function renderWizard({ onCreateEnvironment, guided, withDock = false }) {
   const wizard = (
     <Routes>
       <Route
@@ -43,6 +44,7 @@ function renderWizard({ onCreateEnvironment, guided }) {
             {guided ? (
               <OnboardingProvider environments={[]}>
                 {wizard}
+                {withDock && <GuideDock />}
               </OnboardingProvider>
             ) : (
               wizard
@@ -111,6 +113,63 @@ describe("WizardPage in the setup guide", () => {
     ).toBeInTheDocument();
   });
 
+  it("chooses the AWS key connected in step 1", async () => {
+    renderWizard({ onCreateEnvironment: vi.fn(), guided: true });
+
+    expect(
+      await screen.findByDisplayValue("aws-sandbox - AKIA****MOCK"),
+    ).toBeInTheDocument();
+  });
+
+  // Reported 2026-11-24: AWS connected from the guide while the form was open,
+  // and the form kept saying "No saved credentials found".
+  it("reads the keys again when AWS is connected from the guide while the form is open", async () => {
+    const saved = [];
+    server.use(
+      http.get("*/cloud-credentials", () =>
+        HttpResponse.json({ credentials: saved }),
+      ),
+      http.post("*/cloud-credentials", async ({ request }) => {
+        const body = await request.json();
+        const cred = {
+          id: "cred-9",
+          name: body.name,
+          provider: "aws",
+          identifier: "AKIA****9999",
+          isDefault: body.isDefault,
+        };
+        saved.push(cred);
+        return HttpResponse.json(cred, { status: 201 });
+      }),
+    );
+    renderWizard({
+      onCreateEnvironment: vi.fn(),
+      guided: true,
+      withDock: true,
+    });
+
+    expect(
+      await screen.findByText("No saved credentials found"),
+    ).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("button", { name: "Connect AWS" }));
+    fireEvent.change(
+      await screen.findByPlaceholderText("openprime:123456789012:AKIA…"),
+      {
+        target: {
+          value:
+            "openprime:123456789012:AKIAIOSFODNN7EXAMPLE:wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        },
+      },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Connect" }));
+
+    expect(
+      await screen.findByDisplayValue(
+        "AWS 123456789012 - AKIA****9999 (Default)",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("goes to the new environment after Create, where the push step is", async () => {
     const onCreateEnvironment = vi.fn().mockResolvedValue({ id: "env-9" });
     renderWizard({ onCreateEnvironment, guided: true });
@@ -135,6 +194,9 @@ describe("WizardPage in the setup guide", () => {
       ),
     ).not.toBeInTheDocument();
     expect(screen.getByText("Overall Progress")).toBeInTheDocument();
+    expect(
+      await screen.findByDisplayValue("No credentials (manual configuration)"),
+    ).toBeInTheDocument();
 
     await createEnvironment();
 

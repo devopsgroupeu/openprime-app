@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { Cloud, MapPin, Type, Key, Tag, Globe } from "lucide-react";
 import ProviderIcon from "../../icons/ProviderIcon";
 import { useToast } from "../../../contexts/ToastContext";
+import { useOnboarding } from "../../../contexts/OnboardingContext";
 import {
   PROVIDERS,
   createEmptyEnvironment,
@@ -53,6 +54,12 @@ const BasicConfigStep = ({
   isEditMode = false,
 }) => {
   const toast = useToast();
+  // Setup guide (OP-283): the AWS key can be connected from the guide while
+  // this form is open, so the list is read again when that happens. During the
+  // guide the key connected in step 1 is also chosen for the new environment.
+  const guide = useOnboarding();
+  const awsConnected = Boolean(guide?.steps?.[0]?.done);
+  const pickGuideCredential = !isEditMode && Boolean(guide?.active);
   const [credentials, setCredentials] = useState([]);
   const [loadingCredentials, setLoadingCredentials] = useState(false);
   const [creatingBackend, setCreatingBackend] = useState(false);
@@ -71,7 +78,8 @@ const BasicConfigStep = ({
     if (newEnv.provider) {
       loadCredentials(newEnv.provider);
     }
-  }, [newEnv.provider]);
+    // Also once the guide has loaded, which can be after this form opened.
+  }, [newEnv.provider, awsConnected, pickGuideCredential]);
 
   const loadCredentials = async (provider) => {
     try {
@@ -79,7 +87,20 @@ const BasicConfigStep = ({
       const response = await authService.get(
         `/cloud-credentials?provider=${provider}`,
       );
-      setCredentials(response.credentials || []);
+      const list = response.credentials || [];
+      setCredentials(list);
+      // The default key (step 1 saves it as default), else the only one. With
+      // several and none default it is the user's choice, not a guess.
+      const pick =
+        list.find((cred) => cred.isDefault) ||
+        (list.length === 1 ? list[0] : null);
+      if (pickGuideCredential && pick) {
+        setNewEnv((prev) =>
+          prev.cloudCredentialId
+            ? prev
+            : { ...prev, cloudCredentialId: pick.id },
+        );
+      }
     } catch (error) {
       console.error("Failed to load credentials:", error);
       setCredentials([]);
