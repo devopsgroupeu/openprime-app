@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import GitRepositorySection from "../basic-config/GitRepositorySection";
 
 // OP-250 / OP-251: the GitLab walk (OP-248) hit two GitLab-only prerequisites
@@ -27,7 +27,9 @@ const sshKeys = {
   useGeneratedKey: vi.fn(),
 };
 
-const renderWith = (url) =>
+// The notes live in the closed "What your CI needs" disclosure: open it first,
+// so an absent note means absent, not merely collapsed.
+const renderWith = (url) => {
   render(
     <GitRepositorySection
       newEnv={envWithRepo(url)}
@@ -35,11 +37,27 @@ const renderWith = (url) =>
       sshKeys={sshKeys}
     />,
   );
+  fireEvent.click(screen.getByRole("button", { name: /what your ci needs/i }));
+};
 
 const protectedNote = () => screen.queryByText(/protected by default/i);
 const verificationNote = () => screen.queryByText(/verify their identity/i);
 
 describe("GitRepositorySection — GitLab prerequisites", () => {
+  it("keeps the CI prerequisites closed until asked for", () => {
+    render(
+      <GitRepositorySection
+        newEnv={envWithRepo("git@gitlab.com:acme/infra.git")}
+        setNewEnv={() => {}}
+        sshKeys={sshKeys}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: /what your ci needs/i }),
+    ).toHaveAttribute("aria-expanded", "false");
+    expect(protectedNote()).not.toBeInTheDocument();
+  });
+
   it("shows no GitLab notes for a GitHub repository", () => {
     renderWith("git@github.com:acme/infra.git");
     expect(protectedNote()).not.toBeInTheDocument();

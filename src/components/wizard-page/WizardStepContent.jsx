@@ -14,6 +14,7 @@ const WizardStepContent = ({
   onAskAI,
   showErrors,
   validationErrors,
+  basicErrors,
   onEditHelmValues,
   onEditStep,
   isEditMode,
@@ -26,13 +27,7 @@ const WizardStepContent = ({
           newEnv={newEnv}
           setNewEnv={setNewEnv}
           isEditMode={isEditMode}
-          validationErrors={
-            showErrors
-              ? validationErrors.filter((e) =>
-                  ["name", "provider", "region"].includes(e.field),
-                )
-              : []
-          }
+          validationErrors={showErrors ? basicErrors : []}
           sshKeys={sshKeys}
         />
       );

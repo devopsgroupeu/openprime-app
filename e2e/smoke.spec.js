@@ -72,7 +72,7 @@ describe("Application Smoke Tests", () => {
     await ctx.page.waitForTimeout(500);
 
     // Verify wizard modal opened
-    const wizardHeading = ctx.page.getByText(/basic configuration/i).first();
+    const wizardHeading = ctx.page.getByRole("heading", { level: 1, name: "Basics" });
     expect(await wizardHeading.isVisible()).toBe(true);
 
     // Close the wizard

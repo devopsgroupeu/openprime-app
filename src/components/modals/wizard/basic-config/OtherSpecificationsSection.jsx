@@ -1,72 +1,44 @@
 import { useId } from "react";
-import {
-  BadgeCheck,
-  FileCheck,
-  HeartPulse,
-  Landmark,
-  ListChecks,
-  Network,
-  Rocket,
-  Shield,
-  ShoppingCart,
-} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const OPTIONS = [
-  { id: "healthcare", label: "Healthcare", Icon: HeartPulse },
-  { id: "ecommerce", label: "Ecommerce", Icon: ShoppingCart },
-  { id: "fintech", label: "Fintech", Icon: Landmark },
-  { id: "defence", label: "Defence", Icon: Shield },
-  { id: "startup", label: "Startup", Icon: Rocket },
-  { id: "iso27001", label: "ISO27001", Icon: BadgeCheck },
-  { id: "dora", label: "DORA", Icon: FileCheck },
-  { id: "nis2", label: "NIS2", Icon: Network },
+  "Healthcare",
+  "E-commerce",
+  "Fintech",
+  "Defence",
+  "Startup",
+  "ISO 27001",
+  "DORA",
+  "NIS2",
 ];
 
-// Roadmap only: nothing reads a selection yet, so the options render like the
-// disabled providers (visible, never clickable) instead of pretending to work.
+// Roadmap only: nothing reads a selection yet, so the presets are plain chips,
+// never controls that pretend to work.
 const OtherSpecificationsSection = () => {
   const id = useId();
 
   return (
-    <div className="p-6 rounded-2xl border bg-surface border-border">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
-          <ListChecks className="w-5 h-5 mr-2 text-accent" aria-hidden="true" />
-          <label
-            id={`${id}-heading`}
-            className="text-sm font-semibold text-label"
-          >
-            Other specifications
-          </label>
-        </div>
+    <section
+      aria-labelledby={`${id}-heading`}
+      className="flex flex-col gap-2 border-t pt-6"
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 id={`${id}-heading`} className="text-sm font-medium">
+          Industry and compliance presets
+        </h2>
+        <Badge variant="outline">Roadmap</Badge>
       </div>
-      <p id={`${id}-description`} className="text-xs text-tertiary mb-4">
-        Industry and compliance presets are on the roadmap. They do not change
-        the generated infrastructure yet.
+      <p className="text-xs text-muted-foreground">
+        They do not change the generated infrastructure yet.
       </p>
-      <div
-        role="group"
-        aria-labelledby={`${id}-heading`}
-        aria-describedby={`${id}-description`}
-        className="grid gap-3"
-        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))" }}
-      >
-        {OPTIONS.map(({ id: optionId, label, Icon }) => (
-          <button
-            key={optionId}
-            type="button"
-            disabled
-            className="flex flex-col items-center justify-center gap-2.5 p-5 rounded-xl border-2 transition-all border-border text-tertiary cursor-not-allowed opacity-50"
-          >
-            <Icon className="w-7 h-7" aria-hidden="true" />
-            <span className="text-sm font-bold">{label}</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-warning">
-              Roadmap
-            </span>
-          </button>
+      <ul aria-labelledby={`${id}-heading`} className="flex flex-wrap gap-1.5">
+        {OPTIONS.map((label) => (
+          <li key={label}>
+            <Badge variant="tag">{label}</Badge>
+          </li>
         ))}
-      </div>
-    </div>
+      </ul>
+    </section>
   );
 };
 

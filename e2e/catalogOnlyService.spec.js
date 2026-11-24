@@ -85,9 +85,9 @@ async function gotoWizardWithCatalog(ctx, catalog) {
   await ctx.waitForLoadState("networkidle");
 }
 
-/** Step 1 needs a name before Continue is enabled. */
+/** Step 1 needs a name before Continue moves on. */
 async function advanceToServicesStep(ctx) {
-  await ctx.page.getByPlaceholder(/e\.g\., production/).fill("catalogonlytest");
+  await ctx.page.getByPlaceholder("e.g. production").fill("catalogonlytest");
   await ctx.page.getByRole("button", { name: /Continue/i }).click();
   await ctx.page.getByText(/\/ \d+ services/).waitFor({ timeout: 10000 });
 }

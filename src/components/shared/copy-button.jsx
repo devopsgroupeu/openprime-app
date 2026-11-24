@@ -10,8 +10,9 @@ import {
 import { useToast } from "@/contexts/ToastContext";
 
 /**
- * Copies `text`; the icon turns into a check for 1.5 s (in-view feedback, no
- * toast). Icon-only with a tooltip, or a secondary button with `visibleLabel`.
+ * Copies `text`; for 1.5 s the icon turns into a check and the name into
+ * "Copied" (in-view feedback, no toast). Icon-only with a tooltip, or a
+ * secondary button with `visibleLabel`.
  */
 export function CopyButton({ text, label, visibleLabel, size, className }) {
   const toast = useToast();
@@ -30,12 +31,12 @@ export function CopyButton({ text, label, visibleLabel, size, className }) {
       type="button"
       variant={visibleLabel ? "secondary" : "ghost"}
       size={size ?? (visibleLabel ? "default" : "icon-sm")}
-      aria-label={label}
+      aria-label={copied ? "Copied" : label}
       className={className}
       onClick={copy}
     >
       {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
-      {visibleLabel}
+      {visibleLabel && copied ? "Copied" : visibleLabel}
     </Button>
   );
   if (visibleLabel) return button;

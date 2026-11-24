@@ -1,4 +1,17 @@
-import { GitBranch, AlertTriangle } from "lucide-react";
+import { useId } from "react";
+import { ChevronRight } from "lucide-react";
+import {
+  SettingsRow,
+  SettingsRowGroup,
+  SettingsSection,
+} from "@/components/shared/settings";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import SshKeyTabs from "./SshKeyTabs";
 
 // Host part of a git URL: git@host:path, ssh://user@host:port/path or
@@ -11,194 +24,157 @@ const gitHost = (url = "") => {
   return match ? match[1] : "";
 };
 
-// Git repository card of the wizard's Basic Configuration step.
-// Presentational: env state is owned by the parent BasicConfigStep.
+const Code = ({ children }) => (
+  <code className="rounded-sm bg-muted px-1 py-0.5 font-mono text-xs">
+    {children}
+  </code>
+);
+
+// The repository secrets the generated pipeline reads, closed by default.
+function CiRequirements({ isGitLab, isGitLabCom }) {
+  return (
+    <Collapsible>
+      <CollapsibleTrigger className="group flex w-full items-center gap-2 p-3.5 text-left text-sm font-medium outline-none transition-[background-color] duration-(--dur-fast) hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
+        <ChevronRight
+          aria-hidden
+          className="size-4 text-muted-foreground transition-transform duration-(--dur-fast) group-data-[state=open]:rotate-90"
+        />
+        What your CI needs
+      </CollapsibleTrigger>
+      <CollapsibleContent className="flex flex-col gap-4 px-3.5 pb-3.5 pl-9.5 text-sm">
+        <p className="text-muted-foreground">
+          The generated pipeline deploys with these secrets. Add them to your
+          repository&apos;s CI/CD variables.
+        </p>
+        <dl className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <dt>
+              <Code>AWS_ACCESS_KEY_ID</Code> and{" "}
+              <Code>AWS_SECRET_ACCESS_KEY</Code>
+            </dt>
+            <dd className="text-muted-foreground">
+              IAM credentials with the permissions to provision and manage the
+              resources.
+            </dd>
+          </div>
+          <div className="flex flex-col gap-1">
+            <dt>
+              <Code>TF_VAR_git_repo_ssh_key</Code>
+            </dt>
+            <dd className="text-muted-foreground">
+              The private key of a second, read-only deploy key that Argo CD
+              uses to pull this repository. Do not reuse the key above: it can
+              push. Create one with{" "}
+              <Code>
+                ssh-keygen -t ed25519 -N &quot;&quot; -f argocd-deploy-key
+              </Code>{" "}
+              and add argocd-deploy-key.pub as a deploy key without write
+              access.
+            </dd>
+          </div>
+        </dl>
+        {isGitLab && (
+          <div className="flex flex-col gap-1">
+            <p className="font-medium">On GitLab</p>
+            <p className="text-muted-foreground">
+              CI/CD variables are protected by default, so they only reach
+              protected branches. Protect the branch you deploy from (Settings
+              &gt; Repository &gt; Protected branches), or clear &quot;Protect
+              variable&quot; on these variables.
+            </p>
+            {isGitLabCom && (
+              <p className="text-muted-foreground">
+                New gitlab.com accounts must verify their identity (phone or
+                card) before GitLab runs any pipeline. Until then the first
+                pipeline shows as failed with 0 jobs.
+              </p>
+            )}
+          </div>
+        )}
+        <p className="text-muted-foreground">
+          Store them as encrypted secrets, for example GitHub Actions secrets.
+          Never log them or commit them to the repository.
+        </p>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+// Git repository section of the wizard's Basics step. Presentational: env
+// state is owned by the parent BasicConfigStep.
 const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys }) => {
+  const id = useId();
+  const git = newEnv.gitRepository;
   // Self-hosted GitLab is recognised only by "gitlab" in its host name.
-  const host = gitHost(newEnv.gitRepository?.url);
+  const host = gitHost(git?.url);
   const isGitLab = host.includes("gitlab");
   const isGitLabCom = host === "gitlab.com";
+  const setGit = (changes) =>
+    setNewEnv({ ...newEnv, gitRepository: { ...git, ...changes } });
 
   return (
-    <div className="p-6 rounded-2xl border bg-surface border-border">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
-          <GitBranch className="w-5 h-5 mr-2 text-accent" />
-          <label className="text-sm font-semibold text-label">
-            Git Repository (Optional)
-          </label>
-        </div>
-        <label className="relative inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            className="sr-only peer"
-            checked={newEnv.gitRepository?.enabled || false}
-            onChange={(e) =>
-              setNewEnv({
-                ...newEnv,
-                gitRepository: {
-                  ...newEnv.gitRepository,
-                  enabled: e.target.checked,
-                  url: newEnv.gitRepository?.url || "",
-                  branch: newEnv.gitRepository?.branch || "main",
-                  sshKey: newEnv.gitRepository?.sshKey || "",
-                },
-              })
+    <SettingsSection
+      title="Git repository"
+      description="Optional. OpenPrime pushes the generated code to this repository."
+      action={
+        <Switch
+          aria-label="Push to a git repository"
+          checked={git?.enabled || false}
+          onCheckedChange={(checked) =>
+            setGit({
+              enabled: checked,
+              url: git?.url || "",
+              branch: git?.branch || "main",
+              sshKey: git?.sshKey || "",
+            })
+          }
+        />
+      }
+    >
+      {git?.enabled && (
+        <SettingsRowGroup>
+          <SettingsRow
+            title="Repository URL"
+            controlId={`${id}-url`}
+            description="The SSH URL OpenPrime pushes to."
+            control={
+              <Input
+                id={`${id}-url`}
+                className="font-mono sm:w-72"
+                placeholder="git@github.com:org/repo.git"
+                value={git?.url || ""}
+                onChange={(e) => setGit({ url: e.target.value })}
+              />
             }
           />
-          <div className="w-11 h-6 rounded-full peer transition-colors bg-border-strong peer-checked:bg-primary">
-            <div
-              className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full shadow transition-transform ${
-                newEnv.gitRepository?.enabled ? "translate-x-5" : ""
-              }`}
-            ></div>
-          </div>
-        </label>
-      </div>
-
-      <p className="text-xs mb-4 text-tertiary">
-        Configure Git repository for infrastructure code storage and version
-        control
-      </p>
-
-      {newEnv.gitRepository?.enabled && (
-        <div className="space-y-4 mt-4">
-          <div>
-            <label className="text-sm font-semibold text-label block mb-2">
-              Repository URL
-            </label>
-            <input
-              type="text"
-              className="w-full px-4 py-2 transition-colors"
-              placeholder="git@github.com:organization/repository.git"
-              value={newEnv.gitRepository?.url || ""}
-              onChange={(e) =>
-                setNewEnv({
-                  ...newEnv,
-                  gitRepository: {
-                    ...newEnv.gitRepository,
-                    url: e.target.value,
-                  },
-                })
-              }
-            />
-            <p className="text-xs mt-1 text-tertiary">
-              SSH URL of the Git repository for infrastructure code
-            </p>
-          </div>
-
-          <div>
-            <label className="text-sm font-semibold text-label block mb-2">
-              Target Branch / Revision
-            </label>
-            <input
-              type="text"
-              className="w-full px-4 py-2 transition-colors"
-              placeholder="main"
-              value={newEnv.gitRepository?.branch || ""}
-              onChange={(e) =>
-                setNewEnv({
-                  ...newEnv,
-                  gitRepository: {
-                    ...newEnv.gitRepository,
-                    branch: e.target.value,
-                  },
-                })
-              }
-            />
-            <p className="text-xs mt-1 text-tertiary">
-              Branch or Git revision ArgoCD will track (e.g. main, HEAD, v1.2.0)
-            </p>
-          </div>
-
-          <SshKeyTabs sshKeys={sshKeys} gitRepository={newEnv.gitRepository} />
-
-          {/* Deployment prerequisite callout */}
-          <div className="p-5 rounded-xl border mb-4 bg-warning-muted border-warning text-warning">
-            <div className="flex items-start">
-              <AlertTriangle className="w-5 h-5 mr-3 mt-0.5 shrink-0" />
-              <div className="space-y-3 min-w-0">
-                <div>
-                  <p className="text-sm font-bold mb-0.5">
-                    Deployment Prerequisites
-                  </p>
-                </div>
-
-                <p className="text-xs leading-relaxed opacity-90">
-                  To enable automated infrastructure deployment via CI/CD, the
-                  following secrets must be configured within your
-                  repository&apos;s environment variables. These credentials
-                  allow the pipeline to authenticate with your cloud provider
-                  and securely access private Git resources.
-                </p>
-
-                <ul className="text-[11px] space-y-2 list-none">
-                  <li className="leading-relaxed">
-                    <code className="px-1 py-0.5 rounded-sm font-mono bg-background">
-                      AWS_ACCESS_KEY_ID
-                    </code>{" "}
-                    &{" "}
-                    <code className="px-1 py-0.5 rounded-sm font-mono bg-background">
-                      AWS_SECRET_ACCESS_KEY
-                    </code>
-                    <span className="block mt-1 opacity-80">
-                      IAM credentials with the necessary permissions to
-                      provision and manage the resources.
-                    </span>
-                  </li>
-                  <li className="leading-relaxed">
-                    <code className="px-1 py-0.5 rounded-sm font-mono bg-background">
-                      TF_VAR_git_repo_ssh_key
-                    </code>
-                    <span className="block mt-1 opacity-80">
-                      The private key of a second, read-only deploy key that
-                      ArgoCD uses to pull this repository. Do not reuse the key
-                      above: it can push. Create one with{" "}
-                      <code className="px-1 py-0.5 rounded-sm font-mono bg-background">
-                        ssh-keygen -t ed25519 -N &quot;&quot; -f
-                        argocd-deploy-key
-                      </code>{" "}
-                      and add argocd-deploy-key.pub as a deploy key without
-                      write access.
-                    </span>
-                  </li>
-                </ul>
-
-                {isGitLab && (
-                  <div className="space-y-2 text-[11px] leading-relaxed">
-                    <p className="font-bold uppercase text-[10px]">On GitLab</p>
-                    <p>
-                      CI/CD variables are protected by default, so they only
-                      reach protected branches. Protect the branch you deploy
-                      from (Settings → Repository → Protected branches), or
-                      clear &quot;Protect variable&quot; on these variables.
-                    </p>
-                    {isGitLabCom && (
-                      <p>
-                        New gitlab.com accounts must verify their identity
-                        (phone or card) before GitLab runs any pipeline. Until
-                        then the first pipeline shows as failed with 0 jobs.
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                <div className="p-2 rounded-sm text-[11px] border bg-background border-border">
-                  <span className="font-bold mr-1 uppercase text-[10px]">
-                    Security Note:
-                  </span>
-                  <span className="italic opacity-90">
-                    These variables must be stored as encrypted Secrets (e.g.,
-                    GitHub Actions Secrets) and should never be logged or
-                    committed to source control.
-                  </span>
-                </div>
+          <SettingsRow
+            title="Branch or revision"
+            controlId={`${id}-branch`}
+            description="What Argo CD tracks, e.g. main, HEAD or v1.2.0."
+            control={
+              <Input
+                id={`${id}-branch`}
+                className="font-mono sm:w-72"
+                placeholder="main"
+                value={git?.branch || ""}
+                onChange={(e) => setGit({ branch: e.target.value })}
+              />
+            }
+          />
+          <SettingsRow
+            fullWidth
+            title="Deploy key"
+            description="OpenPrime pushes with this SSH key, so it needs write access."
+            control={
+              <div className="w-full">
+                <SshKeyTabs sshKeys={sshKeys} gitRepository={git} />
               </div>
-            </div>
-          </div>
-        </div>
+            }
+          />
+          <CiRequirements isGitLab={isGitLab} isGitLabCom={isGitLabCom} />
+        </SettingsRowGroup>
       )}
-    </div>
+    </SettingsSection>
   );
 };
 

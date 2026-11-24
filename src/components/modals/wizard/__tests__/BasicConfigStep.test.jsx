@@ -1,7 +1,9 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { useState } from "react";
+import { MemoryRouter } from "react-router";
 import BasicConfigStep, { GLOBAL_PREFIX_RE } from "../BasicConfigStep";
 import { ToastProvider } from "../../../../contexts/ToastContext";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useSshKeyGeneration } from "../../../wizard-page/useSshKeyGeneration";
 
 // Stateful harness: BasicConfigStep is controlled (newEnv / setNewEnv), so the
@@ -15,13 +17,17 @@ function Harness({ initial }) {
     identity: "test",
   });
   return (
-    <ToastProvider>
-      <BasicConfigStep
-        newEnv={newEnv}
-        setNewEnv={setNewEnv}
-        sshKeys={sshKeys}
-      />
-    </ToastProvider>
+    <MemoryRouter>
+      <TooltipProvider>
+        <ToastProvider>
+          <BasicConfigStep
+            newEnv={newEnv}
+            setNewEnv={setNewEnv}
+            sshKeys={sshKeys}
+          />
+        </ToastProvider>
+      </TooltipProvider>
+    </MemoryRouter>
   );
 }
 
@@ -40,12 +46,18 @@ const renderStep = (initial = awsEnv) => render(<Harness initial={initial} />);
 describe("BasicConfigStep", () => {
   it("renders all config sections for an AWS environment", () => {
     renderStep();
-    expect(screen.getByText("Environment Name")).toBeInTheDocument();
-    expect(screen.getByText("Global Prefix")).toBeInTheDocument();
-    expect(screen.getByText("Cloud Provider")).toBeInTheDocument();
-    expect(screen.getByText("Deployment Region")).toBeInTheDocument();
-    expect(screen.getByText(/Terraform Backend/)).toBeInTheDocument();
-    expect(screen.getByText(/Git Repository/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Name")).toBeInTheDocument();
+    expect(screen.getByLabelText("Resource prefix")).toBeInTheDocument();
+    expect(
+      screen.getByRole("radiogroup", { name: "Cloud provider" }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Region")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Terraform state backend" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Git repository" }),
+    ).toBeInTheDocument();
   });
 
   it("loads cloud credentials from the API (MSW) for the selected provider", async () => {
@@ -56,20 +68,23 @@ describe("BasicConfigStep", () => {
   it("reveals the Terraform Backend config when its toggle is enabled", () => {
     renderStep();
     expect(
-      screen.queryByText("S3 Bucket Configuration"),
+      screen.queryByRole("radio", { name: /Create a new bucket/ }),
     ).not.toBeInTheDocument();
-    // toggles order: [0] Terraform Backend, [1] Git Repository
-    fireEvent.click(screen.getAllByRole("checkbox")[0]);
-    expect(screen.getByText("S3 Bucket Configuration")).toBeInTheDocument();
-    expect(screen.getByText("Create New Bucket")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("switch", { name: /state backend/i }));
+    expect(
+      screen.getByRole("radio", { name: /Create a new bucket/ }),
+    ).toBeChecked();
+    expect(
+      screen.getByRole("radio", { name: /Use an existing bucket/ }),
+    ).toBeInTheDocument();
   });
 
   it("reveals the Git Repository config when its toggle is enabled", () => {
     renderStep();
     expect(screen.queryByText("Repository URL")).not.toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole("checkbox")[1]);
+    fireEvent.click(screen.getByRole("switch", { name: /git repository/i }));
     expect(screen.getByText("Repository URL")).toBeInTheDocument();
-    expect(screen.getByText(/SSH Private Key/)).toBeInTheDocument();
+    expect(screen.getByText(/SSH private key/i)).toBeInTheDocument();
   });
 
   // Guards OP-182: a provider with no provisioning path must not be selectable.
@@ -77,31 +92,32 @@ describe("BasicConfigStep", () => {
   // as roadmap but never clickable.
   it("offers AWS as the only selectable provider and marks the rest as roadmap", () => {
     renderStep();
-    const aws = screen.getByRole("button", { name: /Amazon Web Services/ });
+    const aws = screen.getByRole("radio", { name: /AWS/ });
     expect(aws).toBeEnabled();
+    expect(aws).toBeChecked();
 
-    const onPrem = screen.getByRole("button", { name: /On-Premise/ });
+    const onPrem = screen.getByRole("radio", { name: /On-premises/ });
     expect(onPrem).toBeDisabled();
-    expect(within(onPrem).getByText("Roadmap")).toBeInTheDocument();
+    expect(within(onPrem.closest("label")).getByText("Roadmap")).toBeVisible();
   });
 
   // Guards OP-256: nothing reads the industry/standards presets yet, so they may
-  // be visible as roadmap like the providers but never clickable.
+  // be visible as roadmap but never clickable: plain chips, not controls.
   it("shows the industry and standards presets as roadmap, never clickable", () => {
     renderStep();
-    const group = screen.getByRole("group", { name: "Other specifications" });
-    const options = within(group).getAllByRole("button");
-    expect(options).toHaveLength(8);
-    for (const option of options) {
-      expect(option).toBeDisabled();
-      expect(within(option).getByText("Roadmap")).toBeInTheDocument();
-    }
+    const section = screen.getByRole("region", {
+      name: "Industry and compliance presets",
+    });
+    const list = within(section).getByRole("list");
+    expect(within(list).getAllByRole("listitem")).toHaveLength(8);
+    expect(within(section).queryAllByRole("button")).toHaveLength(0);
+    expect(within(section).getByText("Roadmap")).toBeInTheDocument();
   });
 
-  it("shows the ready-to-create summary once name/prefix/provider/region are set", () => {
+  // The Review step summarises the configuration; Basics no longer repeats it.
+  it("has no ready-to-create summary box", () => {
     renderStep();
-    const summary = screen.getByText(/Ready to create/);
-    expect(within(summary).getByText(/production/)).toBeInTheDocument();
+    expect(screen.queryByText(/Ready to create/)).not.toBeInTheDocument();
   });
 
   describe("Global Prefix auto-suggest", () => {
@@ -109,12 +125,8 @@ describe("BasicConfigStep", () => {
 
     it("suggests a dash-suffixed prefix as the name is typed", () => {
       renderStep(blankEnv);
-      const nameInput = screen.getByPlaceholderText(
-        /e.g., production, staging, development/,
-      );
-      const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, us-app-, app-test-/,
-      );
+      const nameInput = screen.getByPlaceholderText("e.g. production");
+      const prefixInput = screen.getByPlaceholderText("e.g. myapp-");
 
       fireEvent.change(nameInput, { target: { value: "demo" } });
 
@@ -124,12 +136,8 @@ describe("BasicConfigStep", () => {
 
     it("keeps the prefix in sync while the name keeps changing", () => {
       renderStep(blankEnv);
-      const nameInput = screen.getByPlaceholderText(
-        /e.g., production, staging, development/,
-      );
-      const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, us-app-, app-test-/,
-      );
+      const nameInput = screen.getByPlaceholderText("e.g. production");
+      const prefixInput = screen.getByPlaceholderText("e.g. myapp-");
 
       fireEvent.change(nameInput, { target: { value: "demo" } });
       fireEvent.change(nameInput, { target: { value: "demoapp" } });
@@ -139,12 +147,8 @@ describe("BasicConfigStep", () => {
 
     it("stops auto-syncing once the prefix has been edited by hand", () => {
       renderStep(blankEnv);
-      const nameInput = screen.getByPlaceholderText(
-        /e.g., production, staging, development/,
-      );
-      const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, us-app-, app-test-/,
-      );
+      const nameInput = screen.getByPlaceholderText("e.g. production");
+      const prefixInput = screen.getByPlaceholderText("e.g. myapp-");
 
       fireEvent.change(nameInput, { target: { value: "demo" } });
       expect(prefixInput).toHaveValue("demo-");
@@ -161,12 +165,8 @@ describe("BasicConfigStep", () => {
 
     it("does not overwrite an already-customized prefix loaded from a draft", () => {
       renderStep({ ...awsEnv, name: "demo", globalPrefix: "custom-" });
-      const nameInput = screen.getByPlaceholderText(
-        /e.g., production, staging, development/,
-      );
-      const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, us-app-, app-test-/,
-      );
+      const nameInput = screen.getByPlaceholderText("e.g. production");
+      const prefixInput = screen.getByPlaceholderText("e.g. myapp-");
 
       fireEvent.change(nameInput, { target: { value: "demoapp" } });
 
@@ -175,9 +175,7 @@ describe("BasicConfigStep", () => {
 
     it("keeps internal dashes when hand-editing the prefix", () => {
       renderStep(blankEnv);
-      const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, us-app-, app-test-/,
-      );
+      const prefixInput = screen.getByPlaceholderText("e.g. myapp-");
 
       fireEvent.change(prefixInput, { target: { value: "app-testing-" } });
       expect(prefixInput).toHaveValue("app-testing-");
@@ -196,9 +194,7 @@ describe("BasicConfigStep", () => {
     // fails later. See OP-231 for agreeing one charset across all layers.
     it("strips underscores, which the backend and AWS both reject", () => {
       renderStep(blankEnv);
-      const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, us-app-, app-test-/,
-      );
+      const prefixInput = screen.getByPlaceholderText("e.g. myapp-");
 
       fireEvent.change(prefixInput, { target: { value: "app_testing-" } });
       expect(prefixInput).toHaveValue("apptesting-");
@@ -209,9 +205,7 @@ describe("BasicConfigStep", () => {
 
     it("still strips unsupported characters and always auto-appends a trailing dash", () => {
       renderStep(blankEnv);
-      const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, us-app-, app-test-/,
-      );
+      const prefixInput = screen.getByPlaceholderText("e.g. myapp-");
 
       fireEvent.change(prefixInput, { target: { value: "App!Test 1" } });
       expect(prefixInput).toHaveValue("apptest1-");
@@ -223,9 +217,7 @@ describe("BasicConfigStep", () => {
     // dash, not append a fresh dash after every keystroke.
     it("keeps typing before the trailing dash when the cursor sits at the end", () => {
       renderStep(blankEnv);
-      const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, us-app-, app-test-/,
-      );
+      const prefixInput = screen.getByPlaceholderText("e.g. myapp-");
 
       for (const ch of "apptesting") {
         const raw = prefixInput.value + ch;
@@ -243,9 +235,7 @@ describe("BasicConfigStep", () => {
     // mistaken for the auto-dash and silently eaten.
     it("accepts a dash typed one character at a time", () => {
       renderStep(blankEnv);
-      const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, us-app-, app-test-/,
-      );
+      const prefixInput = screen.getByPlaceholderText("e.g. myapp-");
 
       for (const ch of "app-testing") {
         const raw = prefixInput.value + ch;
@@ -260,9 +250,7 @@ describe("BasicConfigStep", () => {
     // replication group ids both reject two consecutive hyphens.
     it("does not grow a double hyphen when a dash is typed twice in a row", () => {
       renderStep(blankEnv);
-      const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, us-app-, app-test-/,
-      );
+      const prefixInput = screen.getByPlaceholderText("e.g. myapp-");
 
       for (const ch of "app--test") {
         const raw = prefixInput.value + ch;
@@ -276,9 +264,7 @@ describe("BasicConfigStep", () => {
     // reject a leading digit.
     it("strips a leading digit, which RDS/Aurora/ElastiCache reject", () => {
       renderStep(blankEnv);
-      const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, us-app-, app-test-/,
-      );
+      const prefixInput = screen.getByPlaceholderText("e.g. myapp-");
 
       fireEvent.change(prefixInput, { target: { value: "2024-app" } });
       expect(prefixInput).toHaveValue("app-");
@@ -298,9 +284,7 @@ describe("BasicConfigStep", () => {
       "always produces a value matching the canonical charset (%p)",
       (input) => {
         renderStep(blankEnv);
-        const prefixInput = screen.getByPlaceholderText(
-          /e.g., myapp-, prod-, us-app-, app-test-/,
-        );
+        const prefixInput = screen.getByPlaceholderText("e.g. myapp-");
 
         fireEvent.change(prefixInput, { target: { value: input } });
         expect(
@@ -315,9 +299,7 @@ describe("BasicConfigStep", () => {
     // deletion actually happened.
     it("deletes the character that was actually removed, not the last one", () => {
       renderStep({ ...awsEnv, name: "", globalPrefix: "abcdef-" });
-      const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, us-app-, app-test-/,
-      );
+      const prefixInput = screen.getByPlaceholderText("e.g. myapp-");
 
       // Simulates removing "c" from the middle: caret-correct native value.
       fireEvent.change(prefixInput, { target: { value: "abdef-" } });
@@ -326,9 +308,7 @@ describe("BasicConfigStep", () => {
 
     it("still removes one real character per backspace at the end, despite the auto-dash", () => {
       renderStep({ ...awsEnv, name: "", globalPrefix: "app-" });
-      const prefixInput = screen.getByPlaceholderText(
-        /e.g., myapp-, prod-, us-app-, app-test-/,
-      );
+      const prefixInput = screen.getByPlaceholderText("e.g. myapp-");
 
       // First backspace removes the trailing dash itself...
       fireEvent.change(prefixInput, { target: { value: "app" } });

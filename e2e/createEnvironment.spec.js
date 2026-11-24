@@ -66,7 +66,7 @@ describe("Create Environment with All Helm Charts", () => {
       await ctx.page.waitForTimeout(500);
 
       // Wait for wizard modal to appear
-      const wizardHeading = ctx.page.getByText(/basic configuration/i).first();
+      const wizardHeading = ctx.page.getByRole("heading", { level: 1, name: "Basics" });
       expect(await wizardHeading.isVisible()).toBe(true);
       console.log("✓ Wizard opened");
     });
@@ -111,15 +111,11 @@ describe("Create Environment with All Helm Charts", () => {
     // Step 4: Enable Terraform Backend
     await test.step("Enable Terraform backend", async () => {
       // Find and click the Terraform Backend toggle
-      const backendSection = ctx.page
-        .locator("text=Terraform Backend (Optional)")
-        .locator("..")
-        .locator("..");
-      const backendCheckbox = backendSection.locator('input[type="checkbox"]');
+      const backendSwitch = ctx.page.getByRole("switch", { name: /state backend/i });
 
-      const isChecked = await backendCheckbox.isChecked().catch(() => false);
+      const isChecked = (await backendSwitch.getAttribute("aria-checked")) === "true";
       if (!isChecked) {
-        await backendCheckbox.check({ force: true });
+        await backendSwitch.click();
         await ctx.page.waitForTimeout(500);
         console.log("✓ Terraform backend enabled");
       } else {
@@ -134,15 +130,11 @@ describe("Create Environment with All Helm Charts", () => {
 
     // Step 4b: Enable Git Repository with URL and branch
     await test.step("Configure Git repository", async () => {
-      const gitSection = ctx.page
-        .locator("text=Git Repository (Optional)")
-        .locator("..")
-        .locator("..");
-      const gitToggle = gitSection.locator('input[type="checkbox"]');
+      const gitSwitch = ctx.page.getByRole("switch", { name: /git repository/i });
 
-      const isChecked = await gitToggle.isChecked().catch(() => false);
+      const isChecked = (await gitSwitch.getAttribute("aria-checked")) === "true";
       if (!isChecked) {
-        await gitToggle.check({ force: true });
+        await gitSwitch.click();
         await ctx.page.waitForTimeout(300);
       }
 

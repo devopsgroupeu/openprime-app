@@ -20,6 +20,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./contexts/ToastContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CatalogProvider } from "./contexts/CatalogContext";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 // The wizard has its own inline Aura assistant, so hide the floating one there.
 function FloatingAura() {
@@ -163,58 +164,63 @@ function AppContent() {
             </div>
           }
         >
-          <BrowserRouter>
-            <Routes>
-              <Route element={<AppLayout environments={environments} />}>
+          {/* Every route has tooltips, including the wizard outside the shell. */}
+          <TooltipProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route element={<AppLayout environments={environments} />}>
+                  <Route
+                    path="/"
+                    element={<Navigate to="/environments" replace />}
+                  />
+                  <Route
+                    path="/environments"
+                    element={
+                      <EnvironmentsPage
+                        environments={environments}
+                        loading={environmentsLoading}
+                        loadError={loadError}
+                        onRetry={loadEnvironments}
+                        onDelete={handleDeleteEnvironment}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/environments/:id"
+                    element={
+                      <EnvironmentDetailPage
+                        onDelete={handleDeleteEnvironment}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/settings"
+                    element={<Navigate to="/settings/account" replace />}
+                  />
+                  <Route path="/settings/:tab" element={<SettingsPage />} />
+                </Route>
                 <Route
-                  path="/"
-                  element={<Navigate to="/environments" replace />}
-                />
-                <Route
-                  path="/environments"
+                  path="/environments/create"
                   element={
-                    <EnvironmentsPage
-                      environments={environments}
-                      loading={environmentsLoading}
-                      loadError={loadError}
-                      onRetry={loadEnvironments}
-                      onDelete={handleDeleteEnvironment}
+                    <WizardPage
+                      onCreateEnvironment={handleCreateEnvironment}
+                      onUpdateEnvironment={handleUpdateEnvironment}
                     />
                   }
                 />
                 <Route
-                  path="/environments/:id"
+                  path="/environments/:id/edit"
                   element={
-                    <EnvironmentDetailPage onDelete={handleDeleteEnvironment} />
+                    <WizardPage
+                      onCreateEnvironment={handleCreateEnvironment}
+                      onUpdateEnvironment={handleUpdateEnvironment}
+                    />
                   }
                 />
-                <Route
-                  path="/settings"
-                  element={<Navigate to="/settings/account" replace />}
-                />
-                <Route path="/settings/:tab" element={<SettingsPage />} />
-              </Route>
-              <Route
-                path="/environments/create"
-                element={
-                  <WizardPage
-                    onCreateEnvironment={handleCreateEnvironment}
-                    onUpdateEnvironment={handleUpdateEnvironment}
-                  />
-                }
-              />
-              <Route
-                path="/environments/:id/edit"
-                element={
-                  <WizardPage
-                    onCreateEnvironment={handleCreateEnvironment}
-                    onUpdateEnvironment={handleUpdateEnvironment}
-                  />
-                }
-              />
-            </Routes>
-            <FloatingAura />
-          </BrowserRouter>
+              </Routes>
+              <FloatingAura />
+            </BrowserRouter>
+          </TooltipProvider>
         </CatalogProvider>
       </ToastProvider>
     </ThemeProvider>

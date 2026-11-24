@@ -1,18 +1,40 @@
 // src/components/WizardPage.jsx
-// Full-page environment wizard (replaces the former modal). InfraFlow 3-column layout:
-// WizardSidebar (steps + progress) | step form | live code-preview panel.
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { Link, useNavigate, useParams } from "react-router";
-import { CheckCircle } from "lucide-react";
-import ThemeToggle from "./layout/ThemeToggle";
-import symbol from "../assets/openprime-symbol-color.svg";
+// Full-screen environment wizard, outside the app shell: its own top bar, a
+// vertical stepper, the step form with its footer, and the Aura column.
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useNavigate, useParams } from "react-router";
+import { PanelRight } from "lucide-react";
 import WizardAssistant from "./WizardAssistant";
 import AIChatModal from "./modals/AIChatModal";
 import HelmValuesModal from "./modals/HelmValuesModal";
-import WizardStepSidebar from "./wizard-page/WizardStepSidebar";
+import WizardTopBar from "./wizard-page/WizardTopBar";
+import WizardStepSidebar, {
+  WizardStepProgress,
+} from "./wizard-page/WizardStepSidebar";
 import WizardFooter from "./wizard-page/WizardFooter";
 import WizardStepContent from "./wizard-page/WizardStepContent";
 import { STEP_DEFS } from "./wizard-page/stepDefs";
+import { PageHeader } from "@/components/shared/page-header";
+import { PageShell } from "@/components/shared/page-shell";
+import { guardedNavigate, useUnsavedGuard } from "@/components/shared/save-bar";
+import { SettingsPageSkeleton } from "@/components/shared/skeletons";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   backfillServices,
   createEmptyEnvironment,
@@ -34,19 +56,31 @@ import {
 import { useCatalog } from "../contexts/CatalogContext";
 import { useSshKeyGeneration } from "./wizard-page/useSshKeyGeneration.js";
 
-// Minimal chrome until the wizard gets its own top bar: home link + theme.
-const WizardTopBar = () => (
-  <header className="sticky top-0 z-40 flex h-10 shrink-0 items-center justify-between border-b border-border bg-background px-4">
-    <Link
-      to="/environments"
-      aria-label="OpenPrime home"
-      className="flex items-center rounded-md p-1 outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <img src={symbol} alt="" className="h-5 w-auto" />
-    </Link>
-    <ThemeToggle />
-  </header>
-);
+// The Aura column (xl and up) remembers whether it was closed.
+const AURA_PANEL_KEY = "op-wizard-aura-open";
+const readAuraOpen = () => {
+  try {
+    return localStorage.getItem(AURA_PANEL_KEY) !== "false";
+  } catch {
+    return true;
+  }
+};
+
+// Messages under the Basics fields. The rule is the step's gate (name, prefix,
+// provider, region); the domain error is only shown, it does not gate.
+const basicFieldErrors = (env, validationErrors) =>
+  [
+    !env.name?.trim() && {
+      field: "name",
+      message: "Enter a name for this environment.",
+    },
+    !env.globalPrefix?.trim() && {
+      field: "globalPrefix",
+      message: "Enter a resource prefix.",
+    },
+    !env.region && { field: "region", message: "Choose a region." },
+    validationErrors.find((e) => e.field === "domain"),
+  ].filter(Boolean);
 
 const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const { id } = useParams();
@@ -85,15 +119,29 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const [aiChatMessages, setAiChatMessages] = useState({});
   const [valuesEditor, setValuesEditor] = useState(null);
   const [editingHelmValues, setEditingHelmValues] = useState("");
+  // Edit mode: the loaded environment, to tell whether the user changed it.
+  const [baseline, setBaseline] = useState(null);
+  const [auraOpen, setAuraOpen] = useState(readAuraOpen);
+  // Bumped when Continue or Create finds errors: focus the first invalid field.
+  const [focusRequest, setFocusRequest] = useState(0);
+  const scrollerRef = useRef(null);
 
   // Always land at the top when opening the wizard or switching steps.
   useEffect(() => {
-    window.scrollTo({ top: 0 });
+    if (scrollerRef.current) scrollerRef.current.scrollTop = 0;
   }, [currentStep]);
+
+  useEffect(() => {
+    if (!focusRequest) return;
+    const field = scrollerRef.current?.querySelector('[aria-invalid="true"]');
+    if (!field) return;
+    field.scrollIntoView({ block: "center" });
+    field.focus({ preventScroll: true });
+  }, [focusRequest]);
 
   // Load environment for edit mode. Editing opens on step 2 because that is
   // where most changes are, but step 1 stays reachable: it is no longer wholly
-  // read-only — only Environment Name and Global Prefix are locked, and the
+  // read-only: only Environment Name and Global Prefix are locked, and the
   // domain added for OP-244 is editable precisely so a customer who delegates a
   // domain later does not have to recreate the environment.
   useEffect(() => {
@@ -104,12 +152,13 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
         const env = await authService.get(`/environments/${id}`);
         if (!active) return;
         // The API answers in snake_case; the wizard reads camelCase.
-        setNewEnv(backfillServices(normalizeEnvironment(env)));
+        const loaded = backfillServices(normalizeEnvironment(env));
+        setNewEnv(loaded);
+        setBaseline(JSON.stringify(loaded));
         setCurrentStep(2);
         setCompletedSteps(new Set([1]));
       } catch (err) {
-        error(`Failed to load environment: ${err.message}`, {
-          title: "Error",
+        error(`Couldn't load the environment. ${err.message}`, {
           duration: 6000,
         });
         navigate("/environments");
@@ -145,7 +194,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     if (!restoredDraftCommit || restoredDraftCommit === catalogCommit) return;
     setWarned(true);
     info(
-      "This draft was started against an earlier version of the service catalog. It has been kept as-is — some options may have changed since.",
+      "This draft was started against an earlier version of the service catalog. It was kept as it was, so some options may have changed since.",
     );
   }, [isEditMode, warned, catalogCommit, restoredDraftCommit, info]);
 
@@ -170,36 +219,38 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     identity: `${userId || "anonymous"}:${id || "create"}`,
   });
 
+  // The gate of the Basics step; every other step always lets the user on.
+  const basicsComplete = Boolean(
+    newEnv?.name?.trim() &&
+    newEnv?.globalPrefix?.trim() &&
+    newEnv?.provider &&
+    newEnv?.region,
+  );
+
   const validateCurrentStep = useCallback(() => {
     if (!newEnv) return false;
     try {
       const errors = validateEnvironmentConfig(newEnv);
       setValidationErrors(getValidationSummary(errors).errors);
-      switch (currentId) {
-        case "basic":
-          return Boolean(
-            newEnv.name?.trim() &&
-            newEnv.globalPrefix?.trim() &&
-            newEnv.provider &&
-            newEnv.region,
-          );
-        default:
-          return true;
-      }
     } catch {
       setValidationErrors([]);
-      return currentId === "basic"
-        ? Boolean(
-            newEnv.name?.trim() &&
-            newEnv.globalPrefix?.trim() &&
-            newEnv.provider &&
-            newEnv.region,
-          )
-        : true;
     }
-  }, [newEnv, currentId]);
+    return currentId === "basic" ? basicsComplete : true;
+  }, [newEnv, currentId, basicsComplete]);
 
   const canGoNext = useMemo(() => validateCurrentStep(), [validateCurrentStep]);
+
+  const dirty = useMemo(
+    () =>
+      isEditMode && baseline !== null && JSON.stringify(newEnv) !== baseline,
+    [isEditMode, baseline, newEnv],
+  );
+  const leaveGuard = useUnsavedGuard(dirty && !isLoading);
+
+  const showFieldErrors = () => {
+    setShowErrors(true);
+    setFocusRequest((n) => n + 1);
+  };
 
   const handleStepChange = (stepNumber) => {
     if (stepNumber <= currentStep || completedSteps.has(stepNumber)) {
@@ -209,21 +260,18 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   };
 
   const submit = async () => {
+    // Reachable through the stepper with an emptied Basics step: send the
+    // user back to the fields instead of a toast.
     if (!newEnv?.name || !newEnv?.globalPrefix) {
-      error("Please enter an environment name and global prefix", {
-        title: "Validation Error",
-        duration: 5000,
-      });
+      setCurrentStep(1);
+      showFieldErrors();
       return;
     }
     setIsLoading(true);
     try {
       if (isEditMode) {
         await onUpdateEnvironment({ ...newEnv });
-        success(`Environment "${newEnv.name}" updated successfully`, {
-          title: "Environment Updated",
-          duration: 4000,
-        });
+        success(`Saved changes to ${newEnv.name}.`, { duration: 4000 });
         navigate(`/environments/${id}`);
       } else {
         const config = {
@@ -243,19 +291,13 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
         } catch {
           /* ignore */
         }
-        success(`Environment "${newEnv.name}" created successfully`, {
-          title: "Environment Created",
-          duration: 4000,
-        });
+        success(`Created ${newEnv.name}.`, { duration: 4000 });
         navigate("/environments");
       }
     } catch (err) {
       error(
-        `Failed to ${isEditMode ? "update" : "create"} environment: ${err.message}`,
-        {
-          title: "Error",
-          duration: 7000,
-        },
+        `Couldn't ${isEditMode ? "save changes to" : "create"} ${newEnv.name}. ${err.message}`,
+        { duration: 7000 },
       );
     } finally {
       setIsLoading(false);
@@ -264,13 +306,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
 
   const handleNext = () => {
     if (!canGoNext) {
-      setShowErrors(true);
-      if (validationErrors.length > 0) {
-        error(`Validation Error: ${validationErrors[0].message}`, {
-          title: "Configuration Invalid",
-          duration: 5000,
-        });
-      }
+      showFieldErrors();
       return;
     }
     setShowErrors(false);
@@ -320,50 +356,117 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     setEditingHelmValues("");
   };
 
-  const progressPercent = Math.round((currentStep / totalSteps) * 100);
-  const activeStep = steps[currentStep - 1];
+  // Create mode leaves without asking: the draft is already saved. Edit mode
+  // asks first when there are unsaved edits (useUnsavedGuard).
+  const leaveTo = isEditMode ? `/environments/${id}` : "/environments";
+  const handleCancel = () => {
+    if (isEditMode) {
+      guardedNavigate(() => navigate(leaveTo));
+      return;
+    }
+    if (savedAt) info("Draft saved. Resume it from New environment.");
+    navigate(leaveTo);
+  };
+
+  const toggleAura = () => {
+    const next = !auraOpen;
+    setAuraOpen(next);
+    try {
+      localStorage.setItem(AURA_PANEL_KEY, String(next));
+    } catch {
+      /* the column just forgets */
+    }
+  };
+
+  const breadcrumbs = isEditMode
+    ? [
+        { label: "Environments", to: "/environments" },
+        { label: newEnv?.name || "Environment", to: `/environments/${id}` },
+        { label: "Edit" },
+      ]
+    : [
+        { label: "Environments", to: "/environments" },
+        { label: "New environment" },
+      ];
+
+  const assistant = newEnv ? (
+    <WizardAssistant
+      context={{
+        name: newEnv.name,
+        provider: newEnv.provider,
+        region: newEnv.region,
+        step: currentStep,
+      }}
+    />
+  ) : null;
+
+  const topBar = (
+    <WizardTopBar
+      breadcrumbs={breadcrumbs}
+      savedAt={isEditMode ? null : savedAt}
+      auraOpen={auraOpen}
+      onToggleAura={toggleAura}
+      onCancel={handleCancel}
+      auraSheet={
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="sm" className="xl:hidden">
+              <PanelRight aria-hidden />
+              Aura
+            </Button>
+          </SheetTrigger>
+          <SheetContent
+            aria-describedby={undefined}
+            className="w-full gap-0 p-3 pt-12 sm:max-w-md"
+          >
+            <SheetTitle className="sr-only">Aura</SheetTitle>
+            {assistant}
+          </SheetContent>
+        </Sheet>
+      }
+    />
+  );
 
   if (!newEnv) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <WizardTopBar />
-        <div className="flex flex-1 items-center justify-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+      <div className="flex h-dvh flex-col bg-background">
+        {topBar}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <PageShell width="settings">
+            <SettingsPageSkeleton />
+          </PageShell>
         </div>
       </div>
     );
   }
 
+  const stepperSteps = steps.map((step) => ({
+    ...step,
+    invalid:
+      step.id === "basic" && completedSteps.has(step.number) && !basicsComplete,
+  }));
+  const activeStep = steps[currentStep - 1];
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <WizardTopBar />
-      <div className="flex flex-1 min-h-0">
-        {/* Wizard steps sidebar */}
+    <div className="flex h-dvh flex-col bg-background">
+      {topBar}
+      <div className="flex min-h-0 flex-1">
         <WizardStepSidebar
-          steps={steps}
+          steps={stepperSteps}
           currentStep={currentStep}
           completedSteps={completedSteps}
-          progressPercent={progressPercent}
           onStepChange={handleStepChange}
         />
 
-        {/* Center: form + sticky footer */}
-        <main className="flex flex-1 min-w-0 flex-col">
-          <div className="custom-scrollbar flex-1 overflow-y-auto">
-            <div className="px-8 py-8">
-              <div className="mb-6">
-                <div className="flex items-center justify-between gap-4">
-                  <h1 className="text-4xl font-extrabold text-primary">
-                    {isEditMode ? "Edit Environment" : "Create New Environment"}
-                  </h1>
-                  {!isEditMode && savedAt && (
-                    <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-tertiary">
-                      <CheckCircle className="h-3.5 w-3.5 text-success" />
-                      Draft saved
-                    </span>
-                  )}
-                </div>
-                <p className="mt-1 text-secondary">{activeStep?.description}</p>
+        <main className="flex min-w-0 flex-1 flex-col">
+          <div ref={scrollerRef} className="min-h-0 flex-1 overflow-y-auto">
+            <PageShell key={currentId} width="settings">
+              <div className="flex flex-col gap-3">
+                <WizardStepProgress steps={steps} currentStep={currentStep} />
+                <PageHeader
+                  title={activeStep?.title}
+                  description={activeStep?.summary}
+                />
               </div>
               <WizardStepContent
                 currentId={currentId}
@@ -374,6 +477,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                 onAskAI={handleAskAI}
                 showErrors={showErrors}
                 validationErrors={validationErrors}
+                basicErrors={basicFieldErrors(newEnv, validationErrors)}
                 onEditHelmValues={(chart, values) => {
                   setValuesEditor(chart);
                   setEditingHelmValues(values);
@@ -387,35 +491,49 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                 }}
                 sshKeys={sshKeys}
               />
-            </div>
+            </PageShell>
           </div>
 
           <WizardFooter
             currentStep={currentStep}
             totalSteps={totalSteps}
-            progressPercent={progressPercent}
             isEditMode={isEditMode}
             isLoading={isLoading}
-            canGoNext={canGoNext}
-            onCancel={() => navigate("/environments")}
             onPrevious={handlePrevious}
             onNext={handleNext}
             onSubmit={submit}
           />
         </main>
 
-        {/* AI assistant */}
-        <aside className="hidden xl:block w-96 shrink-0 border-l border-border p-4 sticky top-10 h-[calc(100vh-2.5rem)]">
-          <WizardAssistant
-            context={{
-              name: newEnv.name,
-              provider: newEnv.provider,
-              region: newEnv.region,
-              step: currentStep,
-            }}
-          />
-        </aside>
+        {auraOpen ? (
+          <aside
+            aria-label="Aura"
+            className="hidden w-80 shrink-0 flex-col border-l p-3 xl:flex"
+          >
+            {assistant}
+          </aside>
+        ) : null}
       </div>
+
+      <AlertDialog
+        open={leaveGuard.pending}
+        onOpenChange={(open) => !open && leaveGuard.stay()}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your edits to {newEnv.name} will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={leaveGuard.leave}>
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {aiChatModal.isOpen && (
         <AIChatModal

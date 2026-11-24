@@ -42,7 +42,6 @@ const HelmValuesModal = ({ chartName, values, onChange, onClose, onSave }) => {
             aria-label={`YAML values for ${name}`}
             className="field-sizing-fixed h-64 resize-none pr-20 font-mono text-xs leading-relaxed md:text-xs"
           />
-          {/* Labelled, not icon-only: the wizard has no TooltipProvider. */}
           <CopyButton
             text={values ?? ""}
             label="Copy values"

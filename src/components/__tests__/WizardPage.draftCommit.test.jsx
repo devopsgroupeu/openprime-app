@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ThemeProvider } from "../../contexts/ThemeContext";
 import { ToastProvider } from "../../contexts/ToastContext";
 import { AuthProvider } from "../../contexts/AuthContext";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import WizardPage from "../WizardPage";
 import { saveDraft, loadDraftCommit } from "../../utils/wizardDraft";
 
@@ -30,19 +31,21 @@ function renderWizard() {
     <ThemeProvider>
       <ToastProvider>
         <AuthProvider>
-          <MemoryRouter initialEntries={["/environments/create"]}>
-            <Routes>
-              <Route
-                path="/environments/create"
-                element={
-                  <WizardPage
-                    onCreateEnvironment={vi.fn()}
-                    onUpdateEnvironment={vi.fn()}
-                  />
-                }
-              />
-            </Routes>
-          </MemoryRouter>
+          <TooltipProvider>
+            <MemoryRouter initialEntries={["/environments/create"]}>
+              <Routes>
+                <Route
+                  path="/environments/create"
+                  element={
+                    <WizardPage
+                      onCreateEnvironment={vi.fn()}
+                      onUpdateEnvironment={vi.fn()}
+                    />
+                  }
+                />
+              </Routes>
+            </MemoryRouter>
+          </TooltipProvider>
         </AuthProvider>
       </ToastProvider>
     </ThemeProvider>,
@@ -89,9 +92,7 @@ describe("WizardPage — stale draft warning", () => {
   it("stays silent when the draft matches the current catalog", async () => {
     saveDraft(USER_ID, draft(), { commit: "new-commit" });
     renderWizard();
-    await waitFor(() =>
-      expect(screen.getByText(/Create Environment|Basic/i)).toBeTruthy(),
-    );
+    await screen.findByRole("heading", { level: 1, name: "Basics" });
     expect(screen.queryByText(WARNING)).toBeNull();
   });
 
@@ -100,9 +101,7 @@ describe("WizardPage — stale draft warning", () => {
     // runtime catalog off, carry no stamp. Warning on those would nag everyone.
     saveDraft(USER_ID, draft());
     renderWizard();
-    await waitFor(() =>
-      expect(screen.getByText(/Create Environment|Basic/i)).toBeTruthy(),
-    );
+    await screen.findByRole("heading", { level: 1, name: "Basics" });
     expect(screen.queryByText(WARNING)).toBeNull();
   });
 
@@ -110,9 +109,7 @@ describe("WizardPage — stale draft warning", () => {
     CATALOG.commit = null;
     saveDraft(USER_ID, draft(), { commit: "old-commit" });
     renderWizard();
-    await waitFor(() =>
-      expect(screen.getByText(/Create Environment|Basic/i)).toBeTruthy(),
-    );
+    await screen.findByRole("heading", { level: 1, name: "Basics" });
     expect(screen.queryByText(WARNING)).toBeNull();
   });
 

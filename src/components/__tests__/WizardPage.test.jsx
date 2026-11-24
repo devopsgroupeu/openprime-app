@@ -1,91 +1,68 @@
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router";
 import { vi } from "vitest";
 import { ThemeProvider } from "../../contexts/ThemeContext";
 import { ToastProvider } from "../../contexts/ToastContext";
 import { AuthProvider } from "../../contexts/AuthContext";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import WizardPage from "../WizardPage";
 import { generateSshKeyPair } from "../../utils/sshKeyPair";
 
 vi.mock("../../utils/sshKeyPair", () => ({ generateSshKeyPair: vi.fn() }));
 
-// WizardPage is a full page: it needs Theme (top bar)/Auth, Toast, and a
-// router (useParams/useNavigate). In mock mode AuthProvider auto-authenticates.
-function renderWizard() {
+// WizardPage is a full page: it needs Theme (toasts)/Auth, Toast, Tooltip (the
+// app root provides it) and a router (useParams/useNavigate). In mock mode
+// AuthProvider auto-authenticates. The two plain routes show where Cancel goes.
+function renderAt(path, { onCreateEnvironment, onUpdateEnvironment } = {}) {
+  const wizard = (
+    <WizardPage
+      onCreateEnvironment={onCreateEnvironment ?? vi.fn()}
+      onUpdateEnvironment={onUpdateEnvironment ?? vi.fn()}
+    />
+  );
   return render(
     <ThemeProvider>
       <ToastProvider>
         <AuthProvider>
-          <MemoryRouter initialEntries={["/environments/create"]}>
-            <Routes>
-              <Route
-                path="/environments/create"
-                element={
-                  <WizardPage
-                    onCreateEnvironment={vi.fn()}
-                    onUpdateEnvironment={vi.fn()}
-                  />
-                }
-              />
-            </Routes>
-          </MemoryRouter>
+          <TooltipProvider>
+            <MemoryRouter initialEntries={[path]}>
+              <Routes>
+                <Route path="/environments/create" element={wizard} />
+                <Route path="/environments/:id/edit" element={wizard} />
+                <Route path="/environments" element={<p>Environment list</p>} />
+                <Route
+                  path="/environments/:id"
+                  element={<p>Environment detail</p>}
+                />
+              </Routes>
+            </MemoryRouter>
+          </TooltipProvider>
         </AuthProvider>
       </ToastProvider>
     </ThemeProvider>,
   );
 }
+
+const renderWizard = () => renderAt("/environments/create");
 
 // Create mode with a caller-supplied onCreateEnvironment, so the submitted
 // payload can be asserted.
-function renderWizardCreate(onCreateEnvironment) {
-  return render(
-    <ThemeProvider>
-      <ToastProvider>
-        <AuthProvider>
-          <MemoryRouter initialEntries={["/environments/create"]}>
-            <Routes>
-              <Route
-                path="/environments/create"
-                element={
-                  <WizardPage
-                    onCreateEnvironment={onCreateEnvironment}
-                    onUpdateEnvironment={vi.fn()}
-                  />
-                }
-              />
-            </Routes>
-          </MemoryRouter>
-        </AuthProvider>
-      </ToastProvider>
-    </ThemeProvider>,
-  );
-}
+const renderWizardCreate = (onCreateEnvironment) =>
+  renderAt("/environments/create", { onCreateEnvironment });
 
 // Edit mode: MSW serves the snake_case fixture from src/mocks/fixtures.js at
 // GET /environments/env-001, exactly as the real API does.
-function renderWizardEdit(onUpdateEnvironment) {
-  return render(
-    <ThemeProvider>
-      <ToastProvider>
-        <AuthProvider>
-          <MemoryRouter initialEntries={["/environments/env-001/edit"]}>
-            <Routes>
-              <Route
-                path="/environments/:id/edit"
-                element={
-                  <WizardPage
-                    onCreateEnvironment={vi.fn()}
-                    onUpdateEnvironment={onUpdateEnvironment}
-                  />
-                }
-              />
-            </Routes>
-          </MemoryRouter>
-        </AuthProvider>
-      </ToastProvider>
-    </ThemeProvider>,
-  );
-}
+const renderWizardEdit = (onUpdateEnvironment) =>
+  renderAt("/environments/env-001/edit", { onUpdateEnvironment });
+
+// The step's h1 names the step the wizard is on.
+const stepHeading = (name) => screen.findByRole("heading", { level: 1, name });
 
 describe("WizardPage", () => {
   it("submits the generated private key, never the public key", async () => {
@@ -97,18 +74,19 @@ describe("WizardPage", () => {
     generateSshKeyPair.mockResolvedValue(pair);
     const onCreateEnvironment = vi.fn().mockResolvedValue({ id: "env-new" });
     renderWizardCreate(onCreateEnvironment);
-    await screen.findByText("Environment Name");
-    fireEvent.change(screen.getByPlaceholderText(/e\.g\., production/), {
+    await stepHeading("Basics");
+    fireEvent.change(screen.getByPlaceholderText("e.g. production"), {
       target: { value: "key-test" },
     });
-    fireEvent.click(screen.getAllByRole("checkbox")[1]);
+    fireEvent.click(screen.getByRole("switch", { name: /git repository/i }));
     fireEvent.change(
-      screen.getByPlaceholderText("git@github.com:organization/repository.git"),
+      screen.getByPlaceholderText("git@github.com:org/repo.git"),
       {
         target: { value: "git@github.com:example/infra.git" },
       },
     );
-    fireEvent.click(screen.getByRole("tab", { name: "Auto" }));
+    // Radix tabs activate on mouse down.
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Auto" }));
     await screen.findByText("This generated key is selected for saving.");
     for (let step = 0; step < 3; step += 1) {
       const next = screen.queryByRole("button", { name: /Continue/i });
@@ -125,23 +103,185 @@ describe("WizardPage", () => {
     expect(JSON.stringify(payload)).not.toContain(pair.publicKey);
   });
 
-  it("renders the wizard chrome (sidebar, step content, footer) in create mode", async () => {
+  it("renders the wizard chrome (top bar, stepper, step content, footer) in create mode", async () => {
     renderWizard();
 
-    // Sidebar steps (extracted WizardStepSidebar + stepDefs)
-    expect(await screen.findByText("Basic Configuration")).toBeInTheDocument();
-    expect(screen.getByText("Services Configuration")).toBeInTheDocument();
-    expect(screen.getByText("Review")).toBeInTheDocument();
+    // Stepper (WizardStepSidebar + stepDefs); the current step is marked.
+    const stepper = await screen.findByRole("navigation", { name: "Steps" });
+    expect(within(stepper).getByText("Basics")).toBeInTheDocument();
+    expect(within(stepper).getByText("Services")).toBeInTheDocument();
+    expect(within(stepper).getByText("Review")).toBeInTheDocument();
+    expect(
+      within(stepper).getByText("Basics").closest("[aria-current]"),
+    ).toHaveAttribute("aria-current", "step");
 
-    // Title + step-1 content (WizardStepContent -> BasicConfigStep)
-    expect(screen.getByText("Create New Environment")).toBeInTheDocument();
-    expect(screen.getByText("Environment Name")).toBeInTheDocument();
+    // Top bar: breadcrumbs and Cancel.
+    const crumbs = screen.getByRole("navigation", { name: "Breadcrumb" });
+    expect(within(crumbs).getByText("New environment")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
 
-    // Footer (extracted WizardFooter): step 1 shows Cancel + Continue
-    expect(screen.getByRole("button", { name: /Cancel/i })).toBeInTheDocument();
+    // The step title is the h1; step-1 content (BasicConfigStep) below it.
+    expect(await stepHeading("Basics")).toBeInTheDocument();
+    expect(screen.getByLabelText("Name")).toBeInTheDocument();
+
+    // Footer: no Back on step 1, Continue.
+    expect(screen.queryByRole("button", { name: "Back" })).toBeNull();
     expect(
       screen.getByRole("button", { name: /Continue/i }),
     ).toBeInTheDocument();
+  });
+
+  it("keeps Continue enabled and points at the first invalid field instead of a toast", async () => {
+    localStorage.clear();
+    renderWizardCreate(vi.fn());
+    await stepHeading("Basics");
+
+    const next = screen.getByRole("button", { name: /Continue/i });
+    expect(next).toBeEnabled();
+    fireEvent.click(next);
+
+    const name = screen.getByLabelText("Name");
+    expect(name).toHaveAttribute("aria-invalid", "true");
+    expect(name).toHaveAccessibleDescription(
+      "Enter a name for this environment.",
+    );
+    expect(screen.getByLabelText("Resource prefix")).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    await waitFor(() => expect(name).toHaveFocus());
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Basics",
+    );
+    expect(screen.queryByText(/Validation Error/i)).toBeNull();
+
+    // Fixing the field clears its error.
+    fireEvent.change(name, { target: { value: "prod" } });
+    expect(name).not.toHaveAttribute("aria-invalid");
+  });
+
+  it("flags an emptied Basics step and sends Create back to its fields", async () => {
+    localStorage.clear();
+    const onCreateEnvironment = vi.fn();
+    renderWizardCreate(onCreateEnvironment);
+    fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
+      target: { value: "prod" },
+    });
+    const toLastStep = async () => {
+      while (!screen.queryByRole("button", { name: /Create environment/i })) {
+        fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+        await waitFor(() =>
+          expect(
+            screen.queryByRole("button", { name: /Continue/i }) ||
+              screen.queryByRole("button", { name: /Create environment/i }),
+          ).toBeInTheDocument(),
+        );
+      }
+    };
+    await toLastStep();
+
+    // Back to Basics through the stepper, empty the name, jump forward again.
+    const stepper = screen.getByRole("navigation", { name: "Steps" });
+    fireEvent.click(within(stepper).getByRole("button", { name: /Basics/ }));
+    await stepHeading("Basics");
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "" } });
+    fireEvent.click(within(stepper).getByRole("button", { name: /Services/ }));
+    await stepHeading("Services");
+    expect(within(stepper).getByText("Needs attention")).toBeInTheDocument();
+
+    await toLastStep();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Create environment/i }),
+    );
+
+    await stepHeading("Basics");
+    await waitFor(() => expect(screen.getByLabelText("Name")).toHaveFocus());
+    expect(onCreateEnvironment).not.toHaveBeenCalled();
+  });
+
+  it("leaves create mode on Cancel and says the draft is kept", async () => {
+    localStorage.clear();
+    renderWizardCreate(vi.fn());
+    await stepHeading("Basics");
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(await screen.findByText("Environment list")).toBeInTheDocument();
+    expect(
+      screen.getByText("Draft saved. Resume it from New environment."),
+    ).toBeInTheDocument();
+  });
+
+  it("asks before discarding unsaved edits on Cancel", async () => {
+    renderWizardEdit(vi.fn());
+    await stepHeading("Services");
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.change(await screen.findByPlaceholderText("e.g. example.com"), {
+      target: { value: "new.example.com" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "Discard changes?",
+    });
+    expect(
+      within(dialog).getByText("Your edits to demo-prod will be lost."),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Keep editing" }),
+    );
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(screen.getByPlaceholderText("e.g. example.com")).toHaveValue(
+      "new.example.com",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Discard",
+      }),
+    );
+    expect(await screen.findByText("Environment detail")).toBeInTheDocument();
+  });
+
+  it("leaves edit mode without asking when nothing changed", async () => {
+    renderWizardEdit(vi.fn());
+    await stepHeading("Services");
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(await screen.findByText("Environment detail")).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("remembers that the Aura column was closed", async () => {
+    localStorage.clear();
+    renderWizard();
+    await stepHeading("Basics");
+    expect(
+      screen.getByRole("complementary", { name: "Aura" }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Aura", pressed: true }),
+    );
+
+    expect(screen.queryByRole("complementary", { name: "Aura" })).toBeNull();
+    expect(localStorage.getItem("op-wizard-aura-open")).toBe("false");
+  });
+
+  it("marks a step completed with a check once the user advances past it", async () => {
+    localStorage.clear();
+    renderWizardCreate(vi.fn());
+    fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
+      target: { value: "prod" },
+    });
+    expect(screen.queryByRole("img", { name: "Completed" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+
+    await stepHeading("Services");
+    expect(screen.getAllByRole("img", { name: "Completed" })).toHaveLength(1);
   });
 
   // Regression for OP-213: the API answers snake_case (global_prefix) while the
@@ -152,11 +292,8 @@ describe("WizardPage", () => {
     const onUpdateEnvironment = vi.fn().mockResolvedValue({ id: "env-001" });
     renderWizardEdit(onUpdateEnvironment);
 
-    // Edit mode opens on step 2 (services); Save Changes lives on the last step.
-    expect(await screen.findByText("Edit Environment")).toBeInTheDocument();
-    await waitFor(() =>
-      expect(screen.getByText(/Step 2 of/)).toBeInTheDocument(),
-    );
+    // Edit mode opens on step 2 (services); Save changes lives on the last step.
+    await stepHeading("Services");
     let save = screen.queryByRole("button", { name: /Save Changes/i });
     while (!save) {
       fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
@@ -192,18 +329,13 @@ describe("WizardPage", () => {
   it("lets edit mode reach the basic-configuration step, where only name and prefix are locked", async () => {
     renderWizardEdit(vi.fn());
 
-    expect(await screen.findByText("Edit Environment")).toBeInTheDocument();
-    await waitFor(() =>
-      expect(screen.getByText(/Step 2 of/)).toBeInTheDocument(),
-    );
+    await stepHeading("Services");
 
-    fireEvent.click(screen.getByRole("button", { name: /Previous/i }));
-    await waitFor(() =>
-      expect(screen.getByText(/Step 1 of/)).toBeInTheDocument(),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    await stepHeading("Basics");
 
-    expect(screen.getByPlaceholderText(/e\.g\., production/)).toBeDisabled();
-    expect(screen.getByPlaceholderText("e.g., example.com")).not.toBeDisabled();
+    expect(screen.getByPlaceholderText("e.g. production")).toBeDisabled();
+    expect(screen.getByPlaceholderText("e.g. example.com")).not.toBeDisabled();
   });
 
   // The create payload is an explicit whitelist, so a new field renders,
@@ -212,11 +344,11 @@ describe("WizardPage", () => {
     const onCreateEnvironment = vi.fn().mockResolvedValue({ id: "env-new" });
     renderWizardCreate(onCreateEnvironment);
 
-    expect(await screen.findByText("Environment Name")).toBeInTheDocument();
-    fireEvent.change(screen.getByPlaceholderText(/e\.g\., production/), {
+    await stepHeading("Basics");
+    fireEvent.change(screen.getByPlaceholderText("e.g. production"), {
       target: { value: "prod" },
     });
-    fireEvent.change(screen.getByPlaceholderText("e.g., example.com"), {
+    fireEvent.change(screen.getByPlaceholderText("e.g. example.com"), {
       target: { value: "example.com" },
     });
 
