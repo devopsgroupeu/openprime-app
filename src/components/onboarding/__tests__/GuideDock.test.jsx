@@ -250,6 +250,50 @@ describe("GuideDock", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("after the key is copied, links to the repository's deploy keys page", async () => {
+    serve({ credentials: KEY, onboarding: { repoUrl: REPO } });
+    renderDock({
+      path: "/environments/create",
+      page: (
+        <WizardProbe
+          wizard={{
+            part: 1,
+            partCount: 3,
+            partTitle: "Basic Configuration",
+            name: "prod",
+            repoUrl: REPO,
+            keyCopied: true,
+          }}
+        />
+      ),
+    });
+
+    const dock = await findDock();
+    await waitFor(() =>
+      expect(currentPoint(dock)).toHaveTextContent("Add it on GitHub"),
+    );
+    const link = within(dock).getByRole("link", {
+      name: /Open deploy keys for acme\/infra/,
+    });
+    expect(link).toHaveAttribute(
+      "href",
+      "https://github.com/acme/infra/settings/keys/new",
+    );
+
+    fireEvent.click(link);
+
+    await waitFor(() =>
+      expect(currentPoint(dock)).toHaveTextContent("Click Create Environment"),
+    );
+    // Still there if the tab was closed by mistake.
+    expect(
+      within(dock).getByRole("link", { name: "Open again" }),
+    ).toHaveAttribute(
+      "href",
+      "https://github.com/acme/infra/settings/keys/new",
+    );
+  });
+
   it("sends the user back when the next field is in an earlier part", async () => {
     serve({ credentials: KEY, onboarding: { repoUrl: REPO } });
     renderDock({

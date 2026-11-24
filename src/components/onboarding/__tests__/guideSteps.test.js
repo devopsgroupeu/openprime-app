@@ -1,11 +1,4 @@
-import {
-  awsPoints,
-  deployKeysLink,
-  normalizeRepoAddress,
-  pushPoint,
-  whereHint,
-  wizardPoints,
-} from "../guideSteps";
+import { awsPoints, pushPoint, whereHint, wizardPoints } from "../guideSteps";
 
 const wizard = (fields) => ({
   part: 1,
@@ -16,60 +9,6 @@ const wizard = (fields) => ({
   ...fields,
 });
 const currentLabel = (points) => points.find((point) => !point.done)?.label;
-
-describe("deployKeysLink", () => {
-  it.each([
-    "git@github.com:acme/infra.git",
-    "git@github.com:acme/infra",
-    "ssh://git@github.com/acme/infra.git",
-    "https://github.com/acme/infra.git",
-    "https://github.com/acme/infra/",
-  ])("builds the deploy keys page from %s", (url) => {
-    expect(deployKeysLink(url)).toEqual({
-      href: "https://github.com/acme/infra/settings/keys/new",
-      label: "Open deploy keys for acme/infra",
-    });
-  });
-
-  it.each(["git@gitlab.com:acme/infra.git", "", "git@github.com:acme"])(
-    "has no link for %j",
-    (url) => {
-      expect(deployKeysLink(url)).toBeNull();
-    },
-  );
-});
-
-describe("normalizeRepoAddress", () => {
-  it.each([
-    ["https://github.com/acme/infra", "git@github.com:acme/infra.git"],
-    ["https://github.com/acme/infra.git", "git@github.com:acme/infra.git"],
-    ["github.com/acme/infra/", "git@github.com:acme/infra.git"],
-    // Copied from a page inside the repository.
-    [
-      "https://github.com/acme/infra/tree/main",
-      "git@github.com:acme/infra.git",
-    ],
-    ["  git@github.com:acme/infra.git ", "git@github.com:acme/infra.git"],
-    [
-      "ssh://git@github.com/acme/infra.git",
-      "ssh://git@github.com/acme/infra.git",
-    ],
-    // GitLab nests groups.
-    [
-      "https://gitlab.com/acme/platform/infra",
-      "git@gitlab.com:acme/platform/infra.git",
-    ],
-  ])("turns %s into %s", (input, address) => {
-    expect(normalizeRepoAddress(input)).toBe(address);
-  });
-
-  it.each(["", "infra", "https://github.com/acme", "not an address at all"])(
-    "refuses %j",
-    (input) => {
-      expect(normalizeRepoAddress(input)).toBeNull();
-    },
-  );
-});
 
 describe("awsPoints", () => {
   it("starts at opening the terminal", () => {
@@ -101,7 +40,7 @@ describe("wizardPoints", () => {
           wizard({ name: "prod", repoUrl: "git@github.com:acme/infra.git" }),
         ),
       ),
-    ).toBe("Add the key on GitHub");
+    ).toBe("Copy the key");
     expect(
       currentLabel(
         wizardPoints(
@@ -112,23 +51,52 @@ describe("wizardPoints", () => {
           }),
         ),
       ),
+    ).toBe("Add it on GitHub");
+    expect(
+      currentLabel(
+        wizardPoints(
+          wizard({
+            name: "prod",
+            repoUrl: "git@github.com:acme/infra.git",
+            keyCopied: true,
+            deployKeysOpened: true,
+          }),
+        ),
+      ),
     ).toBe("Click Create Environment");
+  });
+
+  // Copying the key used to finish the step and take the link away before
+  // GitHub was opened.
+  it("keeps the GitHub step open after the key is copied", () => {
+    const points = wizardPoints(
+      wizard({
+        name: "prod",
+        repoUrl: "git@github.com:acme/infra.git",
+        keyCopied: true,
+      }),
+    );
+    expect(points.find((point) => !point.done).link.href).toBe(
+      "https://github.com/acme/infra/settings/keys/new",
+    );
+  });
+
+  it("has no GitHub step for a repository elsewhere", () => {
+    const labels = wizardPoints(
+      wizard({ repoUrl: "git@gitlab.com:acme/infra.git" }),
+    ).map((point) => point.label);
+    expect(labels).not.toContain("Add it on GitHub");
   });
 
   it("counts a key typed in by hand as added", () => {
     const points = wizardPoints(
-      wizard({ name: "prod", repoUrl: "x", keyEntered: true }),
+      wizard({
+        name: "prod",
+        repoUrl: "git@github.com:acme/infra.git",
+        keyEntered: true,
+      }),
     );
-    expect(points[2].done).toBe(true);
-  });
-
-  it("links the key step to the repository's deploy keys", () => {
-    const [, , key] = wizardPoints(
-      wizard({ repoUrl: "git@github.com:acme/infra.git" }),
-    );
-    expect(key.link.href).toBe(
-      "https://github.com/acme/infra/settings/keys/new",
-    );
+    expect(currentLabel(points)).toBe("Click Create Environment");
   });
 
   it("says Continue before the last part and Create on it", () => {

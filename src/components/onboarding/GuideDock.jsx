@@ -12,11 +12,11 @@ import {
   STEPS,
   STEP_ORDER,
   awsPoints,
-  normalizeRepoAddress,
   pushPoint,
   whereHint,
   wizardPoints,
 } from "./guideSteps";
+import { normalizeRepoAddress } from "../../utils/repoAddress";
 
 // The setup guide (OP-283): a panel in the bottom-left corner of every page
 // until the first environment runs. Same five steps and words everywhere, the
@@ -199,6 +199,9 @@ const GuideDock = () => {
     points = [pushPoint(detailEnv)];
   }
   const point = points?.find((item) => !item.done) ?? null;
+  // The guide cannot see GitHub; opening the deploy keys page counts as done.
+  const markDeployKeysOpened = () =>
+    guide.setWizard((prev) => prev && { ...prev, deployKeysOpened: true });
   const hint = onWizard ? whereHint(point, guide.wizard) : null;
 
   const saveAwsCredential = async (credentialData) => {
@@ -400,9 +403,40 @@ const GuideDock = () => {
                                     }`}
                                   />
                                   {item.label}
+                                  {item.link && item.done && (
+                                    <a
+                                      href={item.link.href}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="font-semibold text-accent no-underline hover:underline"
+                                    >
+                                      Open again
+                                    </a>
+                                  )}
                                 </li>
                               ))}
                             </ol>
+                          )}
+                          {point?.link && (
+                            <div className="space-y-1.5">
+                              <a
+                                href={point.link.href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={markDeployKeysOpened}
+                                className="btn-op-primary"
+                              >
+                                {point.link.label}
+                                <ExternalLink
+                                  className="h-4 w-4"
+                                  aria-hidden="true"
+                                />
+                              </a>
+                              <p className="text-xs text-secondary">
+                                Paste the key there, tick Allow write access and
+                                click Add key.
+                              </p>
+                            </div>
                           )}
                           {hint && (
                             <p className="text-xs font-semibold accent-teal">
@@ -456,7 +490,6 @@ const GuideDock = () => {
         showing={guide.showing}
         title={point?.label}
         text={point?.text}
-        link={point?.link}
         onClose={closeShowing}
         onFound={setTargetFound}
       />

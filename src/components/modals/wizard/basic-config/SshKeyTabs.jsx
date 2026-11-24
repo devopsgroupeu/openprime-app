@@ -1,7 +1,16 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Check, Copy, Download, Eye, EyeOff, X } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Download,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  X,
+} from "lucide-react";
 import { strToU8, zipSync } from "fflate";
 import { useOnboarding } from "../../../../contexts/OnboardingContext";
+import { deployKeysLink } from "../../../../utils/repoAddress";
 
 function downloadKeys(pair) {
   const archive = zipSync(
@@ -31,6 +40,8 @@ function downloadKeys(pair) {
 export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
   const id = useId();
   const setGuideWizard = useOnboarding()?.setWizard;
+  // The page on GitHub that takes the key, built from the repository address.
+  const deployKeys = deployKeysLink(gitRepository?.url);
   const tabs = useRef([]);
   const [privateKeyVisible, setPrivateKeyVisible] = useState(false);
   const [downloadError, setDownloadError] = useState("");
@@ -292,7 +303,24 @@ export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
         <div className="space-y-1 text-xs leading-relaxed text-tertiary">
           <p>
             Add the public key to your repository&apos;s deploy keys with write
-            access.
+            access.{" "}
+            {deployKeys && (
+              <a
+                href={deployKeys.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-guide="wizard-deploy-keys-link"
+                onClick={() =>
+                  setGuideWizard?.(
+                    (prev) => prev && { ...prev, deployKeysOpened: true },
+                  )
+                }
+                className="inline-flex items-center gap-1 font-semibold text-accent hover:underline"
+              >
+                {deployKeys.label}
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+              </a>
+            )}
           </p>
           <p>
             Generated in your browser; the selected private key is sent to

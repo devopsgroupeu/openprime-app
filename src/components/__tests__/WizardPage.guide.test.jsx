@@ -111,6 +111,15 @@ describe("WizardPage in the setup guide", () => {
     expect(
       await screen.findByDisplayValue("git@github.com:acme/infra.git"),
     ).toBeInTheDocument();
+    // Next to the generated key: where on GitHub it goes.
+    expect(
+      await screen.findByRole("link", {
+        name: /Open deploy keys for acme\/infra/,
+      }),
+    ).toHaveAttribute(
+      "href",
+      "https://github.com/acme/infra/settings/keys/new",
+    );
   });
 
   it("chooses the AWS key connected in step 1", async () => {

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { ExternalLink } from "lucide-react";
 
 // Rings the element marked data-guide={target}. While `showing`, it also dims
 // the rest of the page and explains the click next to the element. Only the
@@ -23,15 +22,7 @@ const findTarget = (target) =>
 const CALLOUT_WIDTH = 320;
 const GAP = 14;
 
-const GuideSpotlight = ({
-  target,
-  showing,
-  title,
-  text,
-  link,
-  onClose,
-  onFound,
-}) => {
+const GuideSpotlight = ({ target, showing, title, text, onClose, onFound }) => {
   const [rect, setRect] = useState(null);
 
   useEffect(() => {
@@ -126,20 +117,7 @@ const GuideSpotlight = ({
             {title}
           </p>
           <p className="mt-2 text-base text-primary">{text}</p>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            {link ? (
-              <a
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-semibold text-accent hover:underline"
-              >
-                {link.label}
-                <ExternalLink className="h-4 w-4" aria-hidden="true" />
-              </a>
-            ) : (
-              <span />
-            )}
+          <div className="mt-4 flex justify-end">
             <button type="button" onClick={onClose} className="btn-op-primary">
               Got it
             </button>

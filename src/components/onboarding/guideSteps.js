@@ -4,6 +4,8 @@
 // (its data-guide name, which the highlight rings) and the sentence shown next
 // to it. Pure functions, so the dock and its tests read the same table.
 
+import { deployKeysLink } from "../../utils/repoAddress";
+
 export const STEP_ORDER = ["aws", "repo", "environment", "push", "deploy"];
 
 export const STEPS = {
@@ -51,53 +53,8 @@ export const DEPLOY_HOW_TO = [
   "The run opens an issue in your repository. Comment approve on it to let it continue.",
 ];
 
-// The push needs the SSH address (git@host:owner/repo.git). People paste what
-// they have, most often the web address from the browser's address bar, so a
-// web address is turned into the SSH one. Null when it is not a repository
-// address at all.
-export const normalizeRepoAddress = (input = "") => {
-  const value = String(input).trim();
-  if (/^git@[\w.-]+:[\w.-]+(\/[\w.-]+)+$/.test(value)) return value;
-  if (/^ssh:\/\/[\w.-]+@[\w.-]+(:\d+)?(\/[\w.-]+){2,}$/.test(value)) {
-    return value;
-  }
-  const web = value.match(
-    /^(?:https?:\/\/)?((?:[\w-]+\.)+[a-z]{2,})\/([\w.-]+(?:\/[\w.-]+)+?)(?:\.git)?\/?$/i,
-  );
-  if (!web) return null;
-  const [, host, path] = web;
-  // On GitHub a repository is always owner/name; anything after it is a page
-  // inside the repository (/tree/main, /settings). GitLab nests groups.
-  const repoPath =
-    host.toLowerCase() === "github.com"
-      ? path
-          .split("/")
-          .slice(0, 2)
-          .join("/")
-          .replace(/\.git$/, "")
-      : path;
-  return repoPath.includes("/") ? `git@${host}:${repoPath}.git` : null;
-};
-
 export const repoUrlOf = (env) =>
   (env?.git_repository || env?.gitRepository)?.url || "";
-
-// The page where a deploy key is added, for a github.com address in any form
-// the wizard accepts (git@github.com:o/r.git, ssh://git@github.com/o/r,
-// https://github.com/o/r). Null for other hosts: there is no address to build.
-export const deployKeysLink = (repoUrl = "") => {
-  const match = String(repoUrl)
-    .trim()
-    .match(
-      /^(?:https:\/\/|ssh:\/\/)?(?:git@)?github\.com[:/]([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/i,
-    );
-  if (!match) return null;
-  const [, owner, repo] = match;
-  return {
-    href: `https://github.com/${owner}/${repo}/settings/keys/new`,
-    label: `Open deploy keys for ${owner}/${repo}`,
-  };
-};
 
 // The three parts of the AWS connect dialog. Progress only moves forward: a
 // user who opened CloudShell by hand and copied the command has done both.
@@ -131,40 +88,56 @@ export const awsPoints = ({ opened, copied, parsed } = {}) => [
 
 // What matters in the wizard, in the order it is done. Name, repository and
 // key are all in its first part.
-export const wizardPoints = (wizard) => [
-  {
-    label: "Name it",
-    part: 1,
-    target: "wizard-name",
-    text: "Type a short name, for example production.",
-    done: Boolean(wizard.name?.trim()),
-  },
-  {
-    label: "Paste your repository address",
-    part: 1,
-    target: "wizard-repo-url",
-    text: "Paste your repository's SSH address. It starts with git@github.com:",
-    done: Boolean(wizard.repoUrl?.trim()),
-  },
-  {
-    label: "Add the key on GitHub",
-    part: 1,
-    target: "wizard-public-key",
-    text: "Copy this key. Open your repository's deploy keys, paste it and tick Allow write access.",
-    link: deployKeysLink(wizard.repoUrl),
-    done: Boolean(wizard.keyCopied || wizard.keyEntered),
-  },
-  {
-    label: "Click Create Environment",
-    part: null,
-    target: "wizard-next",
-    text:
-      wizard.part < wizard.partCount
-        ? "Click Continue. In the next parts pick what you need. Create Environment is at the end."
-        : "Click Create Environment.",
-    done: false,
-  },
-];
+export const wizardPoints = (wizard) => {
+  const deployKeys = deployKeysLink(wizard.repoUrl);
+  return [
+    {
+      label: "Name it",
+      part: 1,
+      target: "wizard-name",
+      text: "Type a short name, for example production.",
+      done: Boolean(wizard.name?.trim()),
+    },
+    {
+      label: "Paste your repository address",
+      part: 1,
+      target: "wizard-repo-url",
+      text: "Paste your repository's SSH address. It starts with git@github.com:",
+      done: Boolean(wizard.repoUrl?.trim()),
+    },
+    {
+      label: "Copy the key",
+      part: 1,
+      target: "wizard-public-key",
+      text: "Copy this key with the copy button. Next, you add it to your repository on GitHub.",
+      done: Boolean(wizard.keyCopied || wizard.keyEntered),
+    },
+    // Only where the page that takes the key can be linked (github.com). The
+    // guide cannot see GitHub, so opening that page counts as done.
+    ...(deployKeys
+      ? [
+          {
+            label: "Add it on GitHub",
+            part: 1,
+            target: "wizard-deploy-keys-link",
+            text: "This opens the page on GitHub where the key goes. Paste the key there, tick Allow write access and click Add key.",
+            link: deployKeys,
+            done: Boolean(wizard.deployKeysOpened || wizard.keyEntered),
+          },
+        ]
+      : []),
+    {
+      label: "Click Create Environment",
+      part: null,
+      target: "wizard-next",
+      text:
+        wizard.part < wizard.partCount
+          ? "Click Continue. In the next parts pick what you need. Create Environment is at the end."
+          : "Click Create Environment.",
+      done: false,
+    },
+  ];
+};
 
 export const pushPoint = (env) =>
   repoUrlOf(env)
