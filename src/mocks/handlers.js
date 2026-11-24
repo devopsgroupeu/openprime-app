@@ -20,6 +20,11 @@ const walkthrough = (() => {
         seq: 0,
       };
       sessionStorage.setItem(WALKTHROUGH_KEY, JSON.stringify(fresh));
+      // Start over once. Left in the address, any reload (the dev server
+      // reloads on every code change) would wipe what was created since.
+      const url = new URL(window.location.href);
+      url.searchParams.delete("mock");
+      window.history.replaceState(window.history.state, "", url);
       return fresh;
     }
     const saved = sessionStorage.getItem(WALKTHROUGH_KEY);
@@ -36,6 +41,35 @@ const saveWalkthrough = () => {
   }
 };
 const envList = () => (walkthrough ? walkthrough.environments : environments);
+
+// A repository the way the API sends it back: never the deploy key, but
+// whether one is set and its fingerprint (backend utils/sshKey.js). A blank key
+// on an update keeps the stored one, as on the server.
+const mockFingerprint = (key) => {
+  let hash = 0;
+  for (const char of key) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return `SHA256:mock${hash.toString(36)}`;
+};
+const redactGit = (submitted, stored) => {
+  if (!submitted) return submitted;
+  const {
+    sshKey,
+    sshKeyConfigured: _c,
+    sshKeyFingerprint: _f,
+    ...rest
+  } = submitted;
+  return sshKey?.trim()
+    ? {
+        ...rest,
+        sshKeyConfigured: true,
+        sshKeyFingerprint: mockFingerprint(sshKey),
+      }
+    : {
+        ...rest,
+        sshKeyConfigured: Boolean(stored?.sshKeyConfigured),
+        sshKeyFingerprint: stored?.sshKeyFingerprint ?? null,
+      };
+};
 const credList = () => (walkthrough ? walkthrough.credentials : credentials);
 // Stored and merged one level deep like the backend, so the setup guide's
 // ticks survive a reload. Outside the walkthrough a copy, so tests in one file
@@ -101,6 +135,7 @@ export const handlers = [
     }
     const env = {
       ...body,
+      gitRepository: redactGit(body.gitRepository),
       id: `env-${++walkthrough.seq}`,
       status: "pending",
       created_at: now(),
@@ -114,7 +149,11 @@ export const handlers = [
     const body = await request.json();
     const env = walkthrough?.environments.find((e) => e.id === params.id);
     if (!env) return HttpResponse.json({ id: params.id, ...body });
-    Object.assign(env, body, { id: params.id, updated_at: now() });
+    Object.assign(env, body, {
+      gitRepository: redactGit(body.gitRepository, env.gitRepository),
+      id: params.id,
+      updated_at: now(),
+    });
     saveWalkthrough();
     return HttpResponse.json(env);
   }),
@@ -186,10 +225,11 @@ export const handlers = [
   http.get("*/cloud-credentials", () =>
     HttpResponse.json({ credentials: credList() }),
   ),
+  // Wrapped like the API's answer; Settings reads response.credential.
   http.get("*/cloud-credentials/:id", ({ params }) =>
-    HttpResponse.json(
-      credList().find((c) => c.id === params.id) || credList()[0],
-    ),
+    HttpResponse.json({
+      credential: credList().find((c) => c.id === params.id) || credList()[0],
+    }),
   ),
   http.post("*/cloud-credentials", async ({ request }) => {
     const body = await request.json();
