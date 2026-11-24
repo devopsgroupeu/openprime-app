@@ -11,7 +11,7 @@ const WizardStepSidebar = ({
   onStepChange,
 }) => {
   return (
-    <aside className="hidden lg:flex w-72 shrink-0 flex-col border-r border-border bg-surface/40 p-6 sticky top-20 h-[calc(100vh-5rem)]">
+    <aside className="hidden lg:flex w-72 shrink-0 flex-col border-r border-border p-6 sticky top-20 h-[calc(100vh-5rem)]">
       <p className="section-label mb-4">Provisioning Process</p>
       <nav className="space-y-2">
         {steps.map((step) => {
@@ -62,7 +62,7 @@ const WizardStepSidebar = ({
           );
         })}
       </nav>
-      <div className="mt-auto rounded-2xl border border-primary/10 bg-primary-muted p-4">
+      <div className="mt-auto rounded-2xl border bg-primary-muted p-4">
         <div className="mb-2 flex items-end justify-between">
           <span className="section-label">Overall Progress</span>
           <span className="text-xs font-bold accent-teal">

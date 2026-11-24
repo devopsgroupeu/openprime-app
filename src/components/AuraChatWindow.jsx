@@ -180,13 +180,13 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setIsMinimized(true)}
-            className="p-1 rounded text-tertiary hover:text-primary hover:bg-surface-elevated transition-colors"
+            className="p-1 rounded-sm text-tertiary hover:text-primary hover:bg-surface-elevated transition-colors"
           >
             <Minimize2 className="w-4 h-4" />
           </button>
           <button
             onClick={onClose}
-            className="p-1 rounded text-tertiary hover:text-primary hover:bg-surface-elevated transition-colors"
+            className="p-1 rounded-sm text-tertiary hover:text-primary hover:bg-surface-elevated transition-colors"
           >
             ×
           </button>
@@ -277,7 +277,7 @@ const AuraChatWindow = ({ onClose, messages, setMessages }) => {
             onKeyDown={handleKeyDown}
             placeholder="Ask Aura anything about infrastructure..."
             rows={1}
-            className="flex-1 px-3 py-2 border rounded-lg resize-none transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 bg-background border-border text-primary placeholder-tertiary focus:border-primary"
+            className="flex-1 px-3 py-2 border rounded-lg resize-none transition-colors focus:outline-hidden focus:ring-2 focus:ring-primary/20 bg-background border-border text-primary placeholder-tertiary focus:border-primary"
             style={{ maxHeight: "80px" }}
           />
           <button

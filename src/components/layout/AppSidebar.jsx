@@ -36,7 +36,7 @@ const AppSidebar = ({ mobileOpen, onClose }) => (
   <>
     {/* Desktop — static rail */}
     <aside
-      className="hidden lg:flex flex-col w-64 shrink-0 border-r border-border bg-surface/40 sticky top-20 h-[calc(100vh-5rem)]"
+      className="hidden lg:flex flex-col w-64 shrink-0 border-r border-border sticky top-20 h-[calc(100vh-5rem)]"
       aria-label="Primary navigation"
     >
       <NavList />

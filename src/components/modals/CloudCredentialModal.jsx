@@ -126,7 +126,7 @@ const CloudCredentialModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs">
       <div
         role="dialog"
         aria-modal="true"
@@ -249,7 +249,7 @@ const CloudCredentialModal = ({
               id="isDefault"
               checked={formData.isDefault}
               onChange={(e) => handleChange("isDefault", e.target.checked)}
-              className="w-4 h-4 text-primary rounded focus:ring-primary"
+              className="w-4 h-4 text-primary rounded-sm focus:ring-primary"
             />
             <label
               htmlFor="isDefault"

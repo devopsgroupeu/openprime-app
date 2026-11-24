@@ -26,7 +26,7 @@ const AuraChatButton = () => {
       <div className="fixed bottom-6 right-6 z-60">
         <button
           onClick={toggleChat}
-          className={`aura-chat-button relative w-14 h-14 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 bg-primary hover:bg-openprime-gradient focus:ring-primary/50 ${isOpen ? "rotate-180" : ""}`}
+          className={`aura-chat-button relative w-14 h-14 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110 focus:outline-hidden focus:ring-4 bg-primary hover:bg-openprime-gradient focus:ring-primary/50 ${isOpen ? "rotate-180" : ""}`}
         >
           {/* Animated background glow */}
           <div className="absolute inset-0 rounded-full bg-primary opacity-20 animate-pulse"></div>

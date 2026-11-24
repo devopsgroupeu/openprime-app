@@ -357,7 +357,7 @@ const AIChatModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
       <div
         role="dialog"
         aria-modal="true"
@@ -439,7 +439,7 @@ const AIChatModal = ({
               onChange={(e) => setInputText(e.target.value)}
               placeholder={`Ask about ${serviceTitle}...`}
               disabled={isLoading}
-              className="flex-1 px-3 py-2 rounded-lg border bg-background border-border text-primary placeholder-tertiary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-muted"
+              className="flex-1 px-3 py-2 rounded-lg border bg-background border-border text-primary placeholder-tertiary focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary-muted"
             />
             <button
               type="submit"

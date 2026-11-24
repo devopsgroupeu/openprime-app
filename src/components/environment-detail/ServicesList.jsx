@@ -134,7 +134,7 @@ const ServicesList = ({ environment, expandedServices, onToggleService }) => {
                   <dd
                     className={
                       stacked
-                        ? "mt-1 text-xs font-mono text-primary whitespace-pre-wrap break-words"
+                        ? "mt-1 text-xs font-mono text-primary whitespace-pre-wrap wrap-break-word"
                         : "text-sm font-mono text-primary text-right truncate"
                     }
                   >

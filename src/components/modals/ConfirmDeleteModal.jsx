@@ -36,7 +36,7 @@ const ConfirmDeleteModal = ({
     : 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs">
       <div
         role="dialog"
         aria-modal="true"
@@ -60,7 +60,7 @@ const ConfirmDeleteModal = ({
 
         <div className="p-6">
           {hasUsageWarning && (
-            <div className="mb-4 rounded-xl border border-warning/30 bg-warning-muted p-4">
+            <div className="mb-4 rounded-xl border bg-warning-muted p-4">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
                 <div>
@@ -91,7 +91,7 @@ const ConfirmDeleteModal = ({
           )}
 
           {hasCheckFailed && (
-            <div className="mb-4 rounded-xl border border-warning/30 bg-warning-muted p-4">
+            <div className="mb-4 rounded-xl border bg-warning-muted p-4">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
                 <p className="text-sm font-medium text-warning">

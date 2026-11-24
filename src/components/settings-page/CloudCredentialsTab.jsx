@@ -113,7 +113,7 @@ const CloudCredentialsTab = ({
                     <div className="font-semibold transition-colors text-primary truncate">
                       {credential.name}
                       {credential.isDefault && (
-                        <span className="ml-2 px-2 py-1 bg-primary/20 text-primary rounded text-xs">
+                        <span className="ml-2 px-2 py-1 bg-primary/20 text-primary rounded-sm text-xs">
                           Default
                         </span>
                       )}

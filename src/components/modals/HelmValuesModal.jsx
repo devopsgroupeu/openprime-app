@@ -22,7 +22,7 @@ const HelmValuesModal = ({ chartName, values, onChange, onClose, onSave }) => {
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
       <div
         role="dialog"
         aria-modal="true"
@@ -52,7 +52,7 @@ const HelmValuesModal = ({ chartName, values, onChange, onClose, onSave }) => {
         <div className="rounded-lg p-4 bg-background border border-border">
           <textarea
             ref={textareaRef}
-            className="w-full h-64 bg-transparent font-mono text-sm resize-none focus:outline-none text-success"
+            className="w-full h-64 bg-transparent font-mono text-sm resize-none focus:outline-hidden text-success"
             value={values}
             onChange={(e) => onChange(e.target.value)}
             spellCheck="false"

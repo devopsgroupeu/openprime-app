@@ -279,9 +279,9 @@ const EnvironmentConfiguration = ({ environment }) => {
 
       <div className="rounded-2xl border border-border bg-surface-overlay overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-2 bg-surface-elevated border-b border-border">
-          <span className="h-2.5 w-2.5 rounded-full bg-danger/60" />
-          <span className="h-2.5 w-2.5 rounded-full bg-warning/60" />
-          <span className="h-2.5 w-2.5 rounded-full bg-success/60" />
+          <span className="h-2.5 w-2.5 rounded-full" />
+          <span className="h-2.5 w-2.5 rounded-full" />
+          <span className="h-2.5 w-2.5 rounded-full" />
           <span className="ml-2 font-mono text-[10px] uppercase tracking-wide text-tertiary">
             {environment.name}.{format === "yaml" ? "yaml" : "json"}
           </span>

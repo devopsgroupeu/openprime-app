@@ -183,7 +183,7 @@ const ExternalResources = ({ environment, onEnvironmentUpdate }) => {
       {showSshKeyEditor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50 backdrop-blur-xs"
             onClick={() => {
               setShowSshKeyEditor(false);
               setNewSshKey("");
@@ -219,7 +219,7 @@ const ExternalResources = ({ environment, onEnvironmentUpdate }) => {
                 onChange={(e) => setNewSshKey(e.target.value)}
                 rows={8}
                 placeholder="Paste your SSH private key here..."
-                className="w-full px-4 py-3 rounded-lg border font-mono text-xs resize-none transition-colors bg-background border-border text-primary placeholder-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full px-4 py-3 rounded-lg border font-mono text-xs resize-none transition-colors bg-background border-border text-primary placeholder-tertiary focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary"
               />
               <div className="flex justify-end space-x-3">
                 <button

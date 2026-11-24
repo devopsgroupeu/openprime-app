@@ -35,7 +35,7 @@ const AppHeader = ({ onMenuClick }) => {
 
   return (
     <header
-      className="sticky top-0 z-40 h-20 border-b border-border bg-surface/80 backdrop-blur-md"
+      className="sticky top-0 z-40 h-20 border-b border-border backdrop-blur-md"
       role="banner"
     >
       <div className="h-full px-6 flex items-center justify-between">

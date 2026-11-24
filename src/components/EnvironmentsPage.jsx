@@ -45,7 +45,7 @@ const EnvironmentsPage = ({ environments, loadError, onRetry }) => {
 
         {loadError ? (
           <div className="flex flex-col items-center justify-center text-center py-20">
-            <div className="w-16 h-16 rounded-2xl bg-danger/10 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center">
               <AlertCircle className="w-7 h-7 text-danger" />
             </div>
             <h3 className="text-lg font-extrabold text-primary mt-4">

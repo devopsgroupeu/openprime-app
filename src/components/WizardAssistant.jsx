@@ -192,7 +192,7 @@ const WizardAssistant = ({ context }) => {
             onKeyDown={onKeyDown}
             rows={1}
             placeholder="Ask Aura…"
-            className="flex-1 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-primary placeholder-tertiary focus:border-primary focus:outline-none"
+            className="flex-1 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-primary placeholder-tertiary focus:border-primary focus:outline-hidden"
             style={{ maxHeight: "80px" }}
           />
           <button

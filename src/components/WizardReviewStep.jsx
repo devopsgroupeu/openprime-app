@@ -37,7 +37,7 @@ const Card = ({ title, onEdit, children }) => (
 );
 
 const WarningCallout = ({ children }) => (
-  <div className="rounded-xl border border-warning/30 bg-warning-muted p-4">
+  <div className="rounded-xl border bg-warning-muted p-4">
     <div className="flex items-start gap-3">
       <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
       <p className="text-sm text-warning font-medium">{children}</p>

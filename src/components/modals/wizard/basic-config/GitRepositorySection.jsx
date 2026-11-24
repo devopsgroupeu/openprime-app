@@ -134,11 +134,11 @@ const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys }) => {
 
                 <ul className="text-[11px] space-y-2 list-none">
                   <li className="leading-relaxed">
-                    <code className="px-1 py-0.5 rounded font-mono bg-background">
+                    <code className="px-1 py-0.5 rounded-sm font-mono bg-background">
                       AWS_ACCESS_KEY_ID
                     </code>{" "}
                     &{" "}
-                    <code className="px-1 py-0.5 rounded font-mono bg-background">
+                    <code className="px-1 py-0.5 rounded-sm font-mono bg-background">
                       AWS_SECRET_ACCESS_KEY
                     </code>
                     <span className="block mt-1 opacity-80">
@@ -147,14 +147,14 @@ const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys }) => {
                     </span>
                   </li>
                   <li className="leading-relaxed">
-                    <code className="px-1 py-0.5 rounded font-mono bg-background">
+                    <code className="px-1 py-0.5 rounded-sm font-mono bg-background">
                       TF_VAR_git_repo_ssh_key
                     </code>
                     <span className="block mt-1 opacity-80">
                       The private key of a second, read-only deploy key that
                       ArgoCD uses to pull this repository. Do not reuse the key
                       above: it can push. Create one with{" "}
-                      <code className="px-1 py-0.5 rounded font-mono bg-background">
+                      <code className="px-1 py-0.5 rounded-sm font-mono bg-background">
                         ssh-keygen -t ed25519 -N &quot;&quot; -f
                         argocd-deploy-key
                       </code>{" "}
@@ -183,7 +183,7 @@ const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys }) => {
                   </div>
                 )}
 
-                <div className="p-2 rounded text-[11px] border bg-background border-border">
+                <div className="p-2 rounded-sm text-[11px] border bg-background border-border">
                   <span className="font-bold mr-1 uppercase text-[10px]">
                     Security Note:
                   </span>

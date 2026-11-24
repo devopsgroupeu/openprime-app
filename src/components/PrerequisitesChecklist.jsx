@@ -64,9 +64,7 @@ const PrerequisitesChecklist = ({ hasCredentials = false }) => {
             <div
               key={item.id}
               className={`flex items-start gap-3 p-3 rounded-xl border transition-colors ${
-                item.done
-                  ? "bg-success-muted/30 border-success/30"
-                  : "bg-background border-border"
+                item.done ? "" : "bg-background border-border"
               }`}
             >
               <div

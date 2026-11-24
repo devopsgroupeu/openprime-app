@@ -103,7 +103,7 @@ export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
               setPrivateKeyVisible(false);
               keyState.setMode(mode);
             }}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${keyState.mode === mode ? "bg-primary-muted text-primary ring-1 ring-inset ring-primary shadow-sm" : "text-secondary hover:bg-surface hover:text-primary"}`}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-primary ${keyState.mode === mode ? "bg-primary-muted text-primary ring-1 ring-inset ring-primary shadow-xs" : "text-secondary hover:bg-surface hover:text-primary"}`}
           >
             {mode === "automatic" ? "Auto" : "Manual"}
           </button>
@@ -174,7 +174,7 @@ export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
                     {field === "privateKey" && (
                       <button
                         type="button"
-                        className="ml-auto shrink-0 rounded-lg p-2 text-secondary hover:bg-background hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                        className="ml-auto shrink-0 rounded-lg p-2 text-secondary hover:bg-background hover:text-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-primary"
                         aria-label={
                           privateKeyVisible
                             ? "Hide private key"
@@ -200,7 +200,7 @@ export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
                     )}
                     <button
                       type="button"
-                      className={`shrink-0 rounded-lg p-2 transition-colors motion-safe:transition-transform motion-safe:active:scale-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50 ${copyFeedback?.label === label ? (copyFeedback.success ? "bg-success-muted text-success" : "bg-danger-muted text-danger") : "text-secondary hover:bg-background hover:text-primary"}`}
+                      className={`shrink-0 rounded-lg p-2 transition-colors motion-safe:transition-transform motion-safe:active:scale-90 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50 ${copyFeedback?.label === label ? (copyFeedback.success ? "bg-success-muted text-success" : "bg-danger-muted text-danger") : "text-secondary hover:bg-background hover:text-primary"}`}
                       aria-label={`Copy ${label.toLowerCase()} key`}
                       title={
                         copyFeedback?.label === label
@@ -261,7 +261,7 @@ export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
                 )}
                 <button
                   type="button"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   onClick={download}
                   aria-label="Download both keys"
                   title="Download both keys"

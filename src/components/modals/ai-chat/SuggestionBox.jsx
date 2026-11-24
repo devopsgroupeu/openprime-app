@@ -9,7 +9,7 @@ const SuggestionBox = ({ suggestion, onApply, onDismiss }) => {
         <Bot className="w-4 h-4 text-accent" />
       </div>
 
-      <div className="relative p-4 rounded-lg border bg-warning-muted text-warning border-warning shadow flex-1">
+      <div className="relative p-4 rounded-lg border bg-warning-muted text-warning border-warning shadow-sm flex-1">
         <strong>💡 Suggested config changes:</strong>
         <pre className="mt-2 text-sm">
           {JSON.stringify(suggestion, null, 2)}
