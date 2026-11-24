@@ -166,6 +166,8 @@ export default defineConfig([
     rules: {
       // Allow Tailwind directives
       "css/no-invalid-at-rules": "off",
+      // Design tokens are defined in index.css and used from other files.
+      "css/no-invalid-properties": ["error", { allowUnknownVariables: true }],
       // Warn for non-baseline features instead of error
       "css/use-baseline": "warn",
     },
