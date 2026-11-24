@@ -21,7 +21,7 @@ import {
 import { keyLabels, shortcut } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 import { useTheme } from "../../contexts/ThemeContext";
-import { getEffectiveStatus } from "../environment-detail/EnvironmentHeader";
+import { getEffectiveStatus, statusDisplay } from "@/utils/environmentStats";
 import { SETTINGS_TABS } from "../SettingsPage";
 import { DOCS_URL } from "./UserMenu";
 
@@ -34,11 +34,10 @@ const NAVIGATE = [
   })),
 ];
 
+// Dot per status tone (statusDisplay, the same rule as StatusBadge).
 const STATUS_DOT = {
-  running: "bg-primary",
-  succeeded: "bg-primary",
-  failed: "bg-destructive",
-  error: "bg-destructive",
+  success: "bg-primary",
+  destructive: "bg-destructive",
 };
 
 function Shortcut({ id }) {
@@ -149,8 +148,9 @@ export default function CommandPalette({
                       aria-hidden="true"
                       className={cn(
                         "mx-1 size-2 shrink-0 rounded-full",
-                        STATUS_DOT[getEffectiveStatus(env)] ??
-                          "bg-muted-foreground",
+                        STATUS_DOT[
+                          statusDisplay(getEffectiveStatus(env)).tone
+                        ] ?? "bg-muted-foreground",
                       )}
                     />
                     <span className="truncate">{env.name}</span>

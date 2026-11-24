@@ -2,7 +2,8 @@ import {
   enabledServices,
   filterAndSortEnvironments,
   getEffectiveStatus,
-  statusCounts,
+  statusDisplay,
+  statusFilters,
   summarizeEnvironments,
 } from "../environmentStats";
 
@@ -35,10 +36,10 @@ const staging = {
 };
 
 describe("summarizeEnvironments", () => {
-  it("counts environments, running ones, enabled services and regions", () => {
+  it("counts environments, ready ones, enabled services and regions", () => {
     expect(summarizeEnvironments([prod, staging])).toEqual({
       total: 2,
-      running: 1,
+      ready: 1,
       services: 5,
       regions: 2,
     });
@@ -47,19 +48,29 @@ describe("summarizeEnvironments", () => {
   it("returns zeros for no environments", () => {
     expect(summarizeEnvironments([])).toEqual({
       total: 0,
-      running: 0,
+      ready: 0,
       services: 0,
       regions: 0,
     });
   });
 
-  it("counts running by the effective status the badge shows", () => {
+  it("counts ready by the effective status the badge shows", () => {
     const generated = {
-      ...prod,
+      ...staging,
+      status: "pending",
       last_generate_at: "2026-07-01T10:00:00Z",
       last_generate_status: "succeeded",
     };
-    expect(summarizeEnvironments([generated]).running).toBe(0);
+    const broken = {
+      ...prod,
+      last_push_at: "2026-07-01T10:00:00Z",
+      last_push_status: "failed",
+    };
+    expect(summarizeEnvironments([generated]).ready).toBe(1);
+    expect(summarizeEnvironments([broken]).ready).toBe(0);
+    expect(
+      summarizeEnvironments([{ ...staging, status: "pending" }]).ready,
+    ).toBe(0);
   });
 
   it("counts a region once however many environments use it", () => {
@@ -92,12 +103,57 @@ describe("getEffectiveStatus", () => {
   });
 });
 
-describe("statusCounts", () => {
-  it("counts environments per effective status", () => {
-    expect(statusCounts([prod, staging, { ...staging, id: "env-3" }])).toEqual({
-      running: 1,
-      stopped: 2,
+describe("statusDisplay", () => {
+  it("reads job outcomes as Ready or Failed and no job as Not generated", () => {
+    expect(statusDisplay("succeeded")).toMatchObject({
+      key: "ready",
+      label: "Ready",
     });
+    expect(statusDisplay("failed")).toMatchObject({
+      key: "failed",
+      label: "Failed",
+    });
+    expect(statusDisplay("pending")).toMatchObject({
+      key: "not-generated",
+      label: "Not generated",
+    });
+  });
+
+  it("keeps legacy and unknown statuses readable", () => {
+    expect(statusDisplay("running").key).toBe("ready");
+    expect(statusDisplay("deploying").label).toBe("Processing");
+    expect(statusDisplay("stopped").label).toBe("Stopped");
+    expect(statusDisplay("destroyed").label).toBe("Destroyed");
+    expect(statusDisplay("archived")).toMatchObject({
+      key: "archived",
+      label: "Archived",
+    });
+    expect(statusDisplay(undefined).label).toBe("Unknown");
+  });
+});
+
+describe("statusFilters", () => {
+  it("lists only occurring statuses, Ready, Not generated, Failed first", () => {
+    const pending = { ...staging, status: "pending" };
+    const failed = {
+      ...prod,
+      last_generate_at: "2026-07-01T10:00:00Z",
+      last_generate_status: "failed",
+    };
+    const generated = {
+      ...pending,
+      last_generate_at: "2026-07-01T10:00:00Z",
+      last_generate_status: "succeeded",
+    };
+    expect(
+      statusFilters([staging, failed, pending, generated, prod, pending]),
+    ).toEqual([
+      { value: "ready", label: "Ready", count: 2 },
+      { value: "not-generated", label: "Not generated", count: 2 },
+      { value: "failed", label: "Failed", count: 1 },
+      { value: "stopped", label: "Stopped", count: 1 },
+    ]);
+    expect(statusFilters([])).toEqual([]);
   });
 });
 
@@ -160,10 +216,11 @@ describe("filterAndSortEnvironments", () => {
     expect(run({ query: "nothing" })).toEqual([]);
   });
 
-  it("filters by effective status and combines with search", () => {
+  it("filters by status key and combines with search", () => {
     expect(run({ status: "stopped" })).toEqual(["demo-staging", "Sandbox"]);
-    expect(run({ status: "running" })).toEqual(["demo-prod"]);
+    expect(run({ status: "ready" })).toEqual(["demo-prod"]);
     expect(run({ status: "stopped", query: "demo" })).toEqual(["demo-staging"]);
+    expect(run({ status: "failed" })).toEqual([]);
   });
 
   it("does not reorder the list it was given", () => {

@@ -3,9 +3,10 @@ import { render, screen } from "@testing-library/react";
 import { StatusBadge } from "@/components/ui/status-badge";
 
 describe("StatusBadge", () => {
+  // Legacy lifecycle "running" reads as Ready (OpenPrime never deploys).
   it("renders running as a success badge", () => {
     render(<StatusBadge status="running" />);
-    const badge = screen.getByText("Running");
+    const badge = screen.getByText("Ready");
     expect(badge).toHaveAttribute("data-tone", "success");
   });
 
@@ -25,17 +26,17 @@ describe("StatusBadge", () => {
     );
   });
 
-  // Every environment status (backend enum + job outcomes): label, tone and
+  // Every effective status (job outcomes + backend enum): label, tone and
   // the StatusPill that draws it (data-status names what is shown).
   it.each([
-    ["running", "Running", "success", "ready"],
-    ["succeeded", "Succeeded", "success", "ready"],
-    ["stopped", "Stopped", "neutral", "stopped"],
+    ["succeeded", "Ready", "success", "ready"],
     ["failed", "Failed", "destructive", "failed"],
-    ["error", "Error", "destructive", "failed"],
-    ["pending", "Pending", "warning", "processing"],
-    ["deploying", "Deploying", "warning", "processing"],
-    ["queued", "Queued", "warning", "processing"],
+    ["pending", "Not generated", "neutral", "notGenerated"],
+    ["queued", "Processing", "warning", "processing"],
+    ["deploying", "Processing", "warning", "processing"],
+    ["running", "Ready", "success", "ready"],
+    ["error", "Failed", "destructive", "failed"],
+    ["stopped", "Stopped", "neutral", "stopped"],
     ["destroyed", "Destroyed", "neutral", "unknown"],
     [undefined, "Unknown", "neutral", "unknown"],
   ])("renders %s as %s (%s)", (status, label, tone, pill) => {
@@ -45,9 +46,11 @@ describe("StatusBadge", () => {
     expect(badge).toHaveAttribute("data-status", pill);
   });
 
-  it("shows a spinner only for in-flight statuses", () => {
+  it("shows a spinner only while a job runs, not before the first one", () => {
     const { container, rerender } = render(<StatusBadge status="deploying" />);
     expect(container.querySelector(".animate-spin")).not.toBeNull();
+    rerender(<StatusBadge status="pending" />);
+    expect(container.querySelector(".animate-spin")).toBeNull();
     rerender(<StatusBadge status="stopped" />);
     expect(container.querySelector(".animate-spin")).toBeNull();
   });

@@ -23,7 +23,7 @@ const STATUS_STYLES = {
 };
 
 // The one effective-status rule lives with the list helpers; re-exported for
-// the existing importers (CommandPalette, tests).
+// existing importers (the detail page tests).
 export { getEffectiveStatus };
 
 export const StatusBadge = ({ status }) => (

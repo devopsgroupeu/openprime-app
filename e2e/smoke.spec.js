@@ -53,7 +53,10 @@ describe("Application Smoke Tests", () => {
   test("should display create environment button", async (ctx) => {
     await navigateAndAuth(ctx);
 
-    const createButton = ctx.page.getByRole("button", { name: /new environment/i });
+    const createButton = ctx.page
+      .getByRole("main")
+      .getByRole("link", { name: /new environment/i })
+      .first();
     expect(await createButton.isVisible()).toBe(true);
     expect(await createButton.isEnabled()).toBe(true);
   });
@@ -61,7 +64,10 @@ describe("Application Smoke Tests", () => {
   test("should open and close environment wizard", async (ctx) => {
     await navigateAndAuth(ctx);
 
-    const createButton = ctx.page.getByRole("button", { name: /new environment/i });
+    const createButton = ctx.page
+      .getByRole("main")
+      .getByRole("link", { name: /new environment/i })
+      .first();
     await createButton.click();
     await ctx.page.waitForTimeout(500);
 
@@ -84,7 +90,10 @@ describe("Application Smoke Tests", () => {
     await navigateAndAuth(ctx);
 
     // Open wizard
-    const createButton = ctx.page.getByRole("button", { name: /new environment/i });
+    const createButton = ctx.page
+      .getByRole("main")
+      .getByRole("link", { name: /new environment/i })
+      .first();
     await createButton.click();
     await ctx.page.waitForTimeout(500);
 

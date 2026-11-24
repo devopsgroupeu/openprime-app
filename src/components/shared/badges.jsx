@@ -25,6 +25,7 @@ const STATUS_PILLS = {
     label: "Couldn't connect",
   },
   // Environment and job states (StatusBadge).
+  notGenerated: { variant: "neutral", Icon: null, label: "Not generated" },
   stopped: { variant: "neutral", Icon: null, label: "Stopped" },
   failed: { variant: "error", Icon: CircleAlert, label: "Failed" },
   unknown: { variant: "neutral", Icon: null, label: "Unknown" },

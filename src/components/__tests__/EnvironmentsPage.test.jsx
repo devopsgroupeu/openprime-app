@@ -6,7 +6,7 @@ import {
   within,
 } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { server } from "../../mocks/server";
 import { ThemeProvider } from "../../contexts/ThemeContext";
 import { ToastProvider } from "../../contexts/ToastContext";
@@ -19,7 +19,9 @@ const prod = {
   global_prefix: "op-",
   provider: "aws",
   region: "eu-west-1",
-  status: "running",
+  status: "pending",
+  last_generate_at: "2026-06-19T10:00:00Z",
+  last_generate_status: "succeeded",
   services: {
     vpc: { enabled: true },
     eks: { enabled: true },
@@ -33,7 +35,7 @@ const staging = {
   global_prefix: "stg-",
   provider: "aws",
   region: "eu-west-3",
-  status: "stopped",
+  status: "pending",
   services: { vpc: { enabled: true }, s3: { enabled: true } },
   updated_at: "2026-06-22T08:30:00Z",
 };
@@ -43,7 +45,7 @@ const sandbox = {
   global_prefix: "sbx-",
   provider: "aws",
   region: "us-east-1",
-  status: "running",
+  status: "pending",
   last_generate_at: "2026-06-10T10:00:00Z",
   last_generate_status: "failed",
   services: {
@@ -60,13 +62,19 @@ const sandbox = {
 };
 const ALL = [prod, staging, sandbox];
 
+// Shows the query string, so tests can read the URL state.
+function Search() {
+  return <output aria-label="Query">{useLocation().search}</output>;
+}
+
 // The app shell provides the tooltips; the page needs Theme (Toast) and a router.
-function renderPage(props = {}) {
+function renderPage(props = {}, path = "/environments") {
   return render(
     <ThemeProvider>
       <ToastProvider>
         <TooltipProvider>
-          <MemoryRouter initialEntries={["/environments"]}>
+          <MemoryRouter initialEntries={[path]}>
+            <Search />
             <Routes>
               <Route
                 path="/environments"
@@ -118,7 +126,7 @@ describe("EnvironmentsPage", () => {
         document.querySelectorAll('[data-slot="stat-card"]'),
         (card) => card.textContent,
       ),
-    ).toEqual(["Environments3", "Running1", "Services enabled13", "Regions3"]);
+    ).toEqual(["Environments3", "Ready1", "Services enabled13", "Regions3"]);
     // Recently modified first by default.
     expect(cardNames()).toEqual(["demo-staging", "demo-prod", "zeta-sandbox"]);
     expect(screen.getByRole("link", { name: "demo-prod" })).toHaveAttribute(
@@ -138,14 +146,32 @@ describe("EnvironmentsPage", () => {
     expect(within(icons).getByText("+2")).toBeInTheDocument();
   });
 
-  it("offers All, Running, Stopped and every other status that occurs", () => {
-    renderPage();
+  it("offers All and only the statuses that occur, Ready first", () => {
+    renderPage({ environments: [staging, sandbox, prod] });
     const tabs = screen.getByRole("group", { name: "Show" });
     expect(
       within(tabs)
         .getAllByRole("button")
         .map((b) => b.textContent),
-    ).toEqual(["All 3", "Running 1", "Stopped 1", "Failed 1"]);
+    ).toEqual(["All 3", "Ready 1", "Not generated 1", "Failed 1"]);
+
+    renderPage({ environments: [staging] });
+    expect(
+      within(screen.getAllByRole("group", { name: "Show" })[1])
+        .getAllByRole("button")
+        .map((b) => b.textContent),
+    ).toEqual(["All 1", "Not generated 1"]);
+  });
+
+  it("labels the cards by the last job outcome", () => {
+    renderPage();
+    const status = (name) =>
+      within(screen.getByRole("link", { name }).closest("article")).getByText(
+        /Ready|Not generated|Failed/,
+      ).textContent;
+    expect(status("demo-prod")).toBe("Ready");
+    expect(status("demo-staging")).toBe("Not generated");
+    expect(status("zeta-sandbox")).toBe("Failed");
   });
 
   it("searches by name, prefix and region", () => {
@@ -162,16 +188,45 @@ describe("EnvironmentsPage", () => {
     expect(cardNames()).toEqual(["demo-staging", "demo-prod"]);
   });
 
-  it("filters by status", () => {
+  it("filters by status and keeps the filter in the URL", async () => {
     renderPage();
+    const query = screen.getByRole("status", { name: "Query" });
 
-    const stopped = screen.getByRole("button", { name: "Stopped 1" });
-    fireEvent.click(stopped);
-    expect(stopped).toHaveAttribute("aria-pressed", "true");
+    const notGenerated = screen.getByRole("button", {
+      name: "Not generated 1",
+    });
+    fireEvent.click(notGenerated);
+    await waitFor(() =>
+      expect(notGenerated).toHaveAttribute("aria-pressed", "true"),
+    );
     expect(cardNames()).toEqual(["demo-staging"]);
+    expect(query).toHaveTextContent("?status=not-generated");
 
     fireEvent.click(screen.getByRole("button", { name: "Failed 1" }));
-    expect(cardNames()).toEqual(["zeta-sandbox"]);
+    await waitFor(() => expect(cardNames()).toEqual(["zeta-sandbox"]));
+    expect(query).toHaveTextContent("?status=failed");
+
+    fireEvent.click(screen.getByRole("button", { name: "All 3" }));
+    await waitFor(() => expect(cardNames()).toHaveLength(3));
+    expect(query).toBeEmptyDOMElement();
+  });
+
+  it("opens with the status filter from the URL", () => {
+    renderPage({}, "/environments?status=ready");
+    expect(screen.getByRole("button", { name: "Ready 1" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(cardNames()).toEqual(["demo-prod"]);
+  });
+
+  it("treats a status no environment has as All", () => {
+    renderPage({}, "/environments?status=stopped");
+    expect(screen.getByRole("button", { name: "All 3" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(cardNames()).toHaveLength(3);
   });
 
   it("sorts by name or by services and remembers the choice", async () => {
@@ -222,20 +277,22 @@ describe("EnvironmentsPage", () => {
     expect(cardNames()).toHaveLength(3);
   });
 
-  it("recovers from a status filter without matches with Clear filters", () => {
-    renderPage();
+  it("recovers from a status filter without matches with Clear filters", async () => {
+    renderPage({}, "/environments?status=not-generated");
 
-    fireEvent.click(screen.getByRole("button", { name: "Stopped 1" }));
     fireEvent.change(search(), { target: { value: "prod" } });
     expect(screen.getByText("No environments found")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
     expect(search()).toHaveValue("");
-    expect(screen.getByRole("button", { name: "All 3" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "All 3" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      ),
     );
     expect(cardNames()).toHaveLength(3);
+    expect(screen.getByRole("status", { name: "Query" })).toBeEmptyDOMElement();
   });
 
   it("shows the first-run empty state with the setup tips", async () => {

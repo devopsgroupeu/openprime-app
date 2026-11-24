@@ -57,9 +57,10 @@ describe("Create Environment with All Helm Charts", () => {
 
     // Step 2: Open environment creation wizard
     await test.step("Open environment creation wizard", async () => {
-      const createButton = ctx.page.getByRole("button", {
-        name: /new environment/i,
-      });
+      const createButton = ctx.page
+        .getByRole("main")
+        .getByRole("link", { name: /new environment/i })
+        .first();
       expect(await createButton.isVisible()).toBe(true);
       await createButton.click();
       await ctx.page.waitForTimeout(500);

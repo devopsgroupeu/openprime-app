@@ -1,6 +1,6 @@
 // src/components/EnvironmentsPage.jsx
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { Plus, Server } from "lucide-react";
 
 import EnvironmentCard from "./EnvironmentCard";
@@ -11,7 +11,7 @@ import { useToast } from "../contexts/ToastContext";
 import {
   SORTS,
   filterAndSortEnvironments,
-  statusCounts,
+  statusFilters,
   summarizeEnvironments,
 } from "../utils/environmentStats";
 import { ListToolbar } from "@/components/shared/list-toolbar";
@@ -29,7 +29,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { statusLabel } from "@/components/ui/status-badge";
 
 const SORT_KEY = "openprime-environments-sort";
 const SORT_LABELS = {
@@ -48,21 +47,12 @@ const readSort = () => {
   }
 };
 
-// Running and Stopped always; any other status only when it occurs.
-const statusOptions = (environments) => {
-  const counts = statusCounts(environments);
-  const others = Object.keys(counts)
-    .filter((s) => s !== "running" && s !== "stopped")
-    .sort();
-  return [
-    { value: "all", label: "All", count: environments.length },
-    ...["running", "stopped", ...others].map((s) => ({
-      value: s,
-      label: statusLabel(s),
-      count: counts[s] ?? 0,
-    })),
-  ];
-};
+// Below sm the stats shrink to one line each ("2 Environments") so the first
+// card stays above the fold; from sm on they are regular StatCards.
+const STAT_STRIP = [
+  "grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-4",
+  "max-sm:[&>*]:flex-row-reverse max-sm:[&>*]:items-baseline max-sm:[&>*]:justify-end max-sm:[&>*]:gap-1.5 max-sm:[&>*]:px-2.5 max-sm:[&>*]:py-1.5",
+].join(" ");
 
 const NewEnvironmentButton = ({ size }) => (
   <Button size={size} asChild>
@@ -82,7 +72,9 @@ const EnvironmentsPage = ({
 }) => {
   const toast = useToast();
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("all");
+  // The status filter is shareable and survives Back: it lives in ?status=.
+  const [params, setParams] = useSearchParams();
+  const status = params.get("status") ?? "all";
   const [sort, setSort] = useState(readSort);
   const [deleting, setDeleting] = useState(null);
   const [hasCredentials, setHasCredentials] = useState(false);
@@ -116,8 +108,22 @@ const EnvironmentsPage = ({
     }
   };
 
-  const options = statusOptions(environments);
-  // A status whose last environment went away falls back to All.
+  const setStatus = (value) =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (value === "all") next.delete("status");
+        else next.set("status", value);
+        return next;
+      },
+      { replace: true },
+    );
+
+  const options = [
+    { value: "all", label: "All", count: environments.length },
+    ...statusFilters(environments),
+  ];
+  // A status no environment has (an old link, the last one deleted) is All.
   const activeStatus = options.some((o) => o.value === status) ? status : "all";
   const visible = filterAndSortEnvironments(environments, {
     query,
@@ -170,9 +176,9 @@ const EnvironmentsPage = ({
         </>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className={STAT_STRIP}>
             <StatCard label="Environments" value={stats.total} />
-            <StatCard label="Running" value={stats.running} />
+            <StatCard label="Ready" value={stats.ready} />
             <StatCard label="Services enabled" value={stats.services} />
             <StatCard label="Regions" value={stats.regions} />
           </div>
