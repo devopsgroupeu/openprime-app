@@ -31,7 +31,8 @@ function FloatingAura() {
 function AppContent() {
   const { isAuthenticated, isLoading, authError, retryAuth } = useAuth();
   const [environments, setEnvironments] = useState([]);
-  const [environmentsLoading, setEnvironmentsLoading] = useState(false);
+  // True until the first load ends, so the list never flashes its empty state.
+  const [environmentsLoading, setEnvironmentsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
@@ -147,19 +148,6 @@ function AppContent() {
     );
   }
 
-  if (environmentsLoading) {
-    return (
-      <div className="min-h-screen bg-openprime-gradient flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-white text-lg font-poppins">
-            Loading environments...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <ThemeProvider>
       <ToastProvider>
@@ -187,8 +175,10 @@ function AppContent() {
                   element={
                     <EnvironmentsPage
                       environments={environments}
+                      loading={environmentsLoading}
                       loadError={loadError}
                       onRetry={loadEnvironments}
+                      onDelete={handleDeleteEnvironment}
                     />
                   }
                 />

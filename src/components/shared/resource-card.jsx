@@ -3,7 +3,11 @@ import { Link } from "react-router";
 import { IconTile } from "@/components/shared/icon-tile";
 import { cn } from "@/lib/utils";
 
-/** The only card: ring, tile, name, description, meta footer; actions fade in on hover. */
+/**
+ * The only card: ring, tile, name, description, optional `children` above the
+ * meta footer; actions fade in on hover. It enters with `motion-enter`, staggered
+ * by ResourceCardGrid.
+ */
 export function ResourceCard({
   href,
   title,
@@ -14,12 +18,13 @@ export function ResourceCard({
   badges,
   meta,
   actions,
+  children,
 }) {
   return (
     <article
       data-slot="resource-card"
       className={cn(
-        "group relative flex flex-col gap-3 rounded-lg bg-card p-3.5 text-card-foreground shadow-(--shadow-ring-xs)",
+        "group motion-enter relative flex flex-col gap-3 rounded-lg bg-card p-3.5 text-card-foreground shadow-(--shadow-ring-xs)",
         "transition-[background-color,box-shadow] duration-(--dur-fast) hover:bg-accent/40 hover:shadow-(--shadow-ring-sm)",
         "has-[a[data-stretched]:focus-visible]:ring-2 has-[a[data-stretched]:focus-visible]:ring-ring",
       )}
@@ -32,9 +37,11 @@ export function ResourceCard({
         {actions ? (
           <div
             data-slot="resource-card-actions"
+            // aria-expanded, not data-state: the "More actions" tooltip owns
+            // the trigger's data-state, so it never reads "open".
             className={cn(
               "relative z-10 -mt-1 -mr-1 flex items-center gap-0.5 opacity-0 transition-opacity duration-(--dur-fast)",
-              "group-focus-within:opacity-100 group-hover:opacity-100 has-[[data-state=open]]:opacity-100",
+              "group-focus-within:opacity-100 group-hover:opacity-100 has-[[aria-expanded=true]]:opacity-100",
               "max-md:opacity-100 pointer-coarse:opacity-100",
             )}
           >
@@ -47,6 +54,8 @@ export function ResourceCard({
           <h3 className="truncate text-md font-semibold">
             <Link
               to={href}
+              // The link covers the card, so a truncated name shows on hover.
+              title={typeof title === "string" ? title : undefined}
               data-stretched
               className="outline-none after:absolute after:inset-0 after:rounded-lg after:content-['']"
             >
@@ -63,6 +72,7 @@ export function ResourceCard({
           </p>
         ) : null}
       </div>
+      {children}
       {meta ? (
         <div
           data-slot="resource-card-meta"
@@ -80,7 +90,7 @@ export function ResourceCardGrid({ children }) {
     <div
       data-slot="resource-card-grid"
       // Columns follow the available width (a folder rail beside the grid), not the viewport.
-      className="motion-stagger grid grid-cols-[repeat(auto-fill,minmax(min(18rem,100%),1fr))] gap-4 [&>*]:motion-enter"
+      className="motion-stagger grid grid-cols-[repeat(auto-fill,minmax(min(18rem,100%),1fr))] gap-4"
     >
       {children}
     </div>

@@ -8,6 +8,7 @@ import {
   GitBranch,
 } from "lucide-react";
 import ProviderIcon, { isBrandedProvider } from "../icons/ProviderIcon";
+import { getEffectiveStatus } from "../../utils/environmentStats";
 
 // Status pill — maps environment.status (and job outcomes) to the app's
 // semantic status colors.
@@ -21,19 +22,9 @@ const STATUS_STYLES = {
   succeeded: "bg-success-muted text-success",
 };
 
-// The badge reflects the most recent async job outcome (generate/push) when
-// one exists, falling back to the lifecycle status. When both jobs have run,
-// the more recent one (by last_*_at) wins.
-export const getEffectiveStatus = (environment) => {
-  const genAt = environment.last_generate_at;
-  const pushAt = environment.last_push_at;
-  const gen = environment.last_generate_status;
-  const push = environment.last_push_status;
-  if (genAt && pushAt) return pushAt > genAt ? push : gen;
-  if (genAt) return gen;
-  if (pushAt) return push;
-  return environment.status || "pending";
-};
+// The one effective-status rule lives with the list helpers; re-exported for
+// the existing importers (CommandPalette, tests).
+export { getEffectiveStatus };
 
 export const StatusBadge = ({ status }) => (
   <span

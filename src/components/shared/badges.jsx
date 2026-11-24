@@ -24,6 +24,10 @@ const STATUS_PILLS = {
     Icon: CircleAlert,
     label: "Couldn't connect",
   },
+  // Environment and job states (StatusBadge).
+  stopped: { variant: "neutral", Icon: null, label: "Stopped" },
+  failed: { variant: "error", Icon: CircleAlert, label: "Failed" },
+  unknown: { variant: "neutral", Icon: null, label: "Unknown" },
 };
 
 /** Status next to a title (Ready, Processing, Needs review...); text and icon carry meaning. */

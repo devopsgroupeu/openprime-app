@@ -1,36 +1,26 @@
 import { StatusPill } from "@/components/shared/badges";
 
-// Environment/job status -> tone -> the shared status pill that draws it
-// (success check, in-flight spinner, error alert, plain neutral).
-const STATUS_TONE = {
-  running: "success",
-  succeeded: "success",
-  stopped: "neutral",
-  failed: "destructive",
-  error: "destructive",
-  pending: "warning",
-  deploying: "warning",
-  queued: "warning",
+// Environment/job status -> [tone, StatusPill status]: success check,
+// in-flight spinner ("processing"), error alert, plain neutral.
+const STATUSES = {
+  running: ["success", "ready"],
+  succeeded: ["success", "ready"],
+  stopped: ["neutral", "stopped"],
+  failed: ["destructive", "failed"],
+  error: ["destructive", "failed"],
+  pending: ["warning", "processing"],
+  deploying: ["warning", "processing"],
+  queued: ["warning", "processing"],
 };
 
-const TONE_PILL = {
-  success: "ready",
-  warning: "processing",
-  destructive: "couldntConnect",
-  neutral: "invited",
-};
-
-const label = (status) =>
+/** "Running", "Deploying"...; a missing status reads "Unknown". */
+export const statusLabel = (status) =>
   status ? status.charAt(0).toUpperCase() + status.slice(1) : "Unknown";
 
 /** StatusBadge - the one environment/job status pill (thin wrapper over StatusPill). */
 export function StatusBadge({ status }) {
-  const tone = STATUS_TONE[status] ?? "neutral";
+  const [tone, pill] = STATUSES[status] ?? ["neutral", "unknown"];
   return (
-    <StatusPill
-      status={TONE_PILL[tone]}
-      label={label(status)}
-      data-tone={tone}
-    />
+    <StatusPill status={pill} label={statusLabel(status)} data-tone={tone} />
   );
 }

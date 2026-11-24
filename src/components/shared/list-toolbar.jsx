@@ -62,7 +62,8 @@ export function SearchField({ value, onChange, label, className }) {
         placeholder={label}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="[&::-webkit-search-cancel-button]:hidden"
+        // `!` beats legacy.css's input[type=search] box (gone in Task 11).
+        className="h-full! rounded-none! border-0! bg-transparent! py-0! pr-2! pl-2! text-base! shadow-none! md:text-sm! [&::-webkit-search-cancel-button]:hidden"
       />
       {value ? (
         <InputGroupAddon align="inline-end">
@@ -79,12 +80,13 @@ export function SearchField({ value, onChange, label, className }) {
   );
 }
 
-const results = (n) =>
-  n === 0 ? "No results" : n === 1 ? "1 result" : `${n} results`;
+const results = (n, [one, other]) =>
+  n === 0 ? `No ${other}` : n === 1 ? `1 ${one}` : `${n} ${other}`;
 
 /**
  * List page toolbar: filter tabs left; filters, search and sort right; state in the URL.
- * `origins` are the FilterTabs options (`{ value, label, count? }`).
+ * `origins` are the FilterTabs options (`{ value, label, count? }`); `resultNoun`
+ * names what `resultCount` counts (`[one, other]`, default results).
  */
 export function ListToolbar({
   search,
@@ -96,6 +98,7 @@ export function ListToolbar({
   filters,
   sort,
   resultCount,
+  resultNoun = ["result", "results"],
 }) {
   return (
     <div
@@ -116,7 +119,7 @@ export function ListToolbar({
             aria-live="polite"
             className="text-xs text-muted-foreground tabular-nums"
           >
-            {results(resultCount)}
+            {results(resultCount, resultNoun)}
           </p>
         ) : null}
       </div>

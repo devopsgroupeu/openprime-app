@@ -24,4 +24,31 @@ describe("StatusBadge", () => {
       "neutral",
     );
   });
+
+  // Every environment status (backend enum + job outcomes): label, tone and
+  // the StatusPill that draws it (data-status names what is shown).
+  it.each([
+    ["running", "Running", "success", "ready"],
+    ["succeeded", "Succeeded", "success", "ready"],
+    ["stopped", "Stopped", "neutral", "stopped"],
+    ["failed", "Failed", "destructive", "failed"],
+    ["error", "Error", "destructive", "failed"],
+    ["pending", "Pending", "warning", "processing"],
+    ["deploying", "Deploying", "warning", "processing"],
+    ["queued", "Queued", "warning", "processing"],
+    ["destroyed", "Destroyed", "neutral", "unknown"],
+    [undefined, "Unknown", "neutral", "unknown"],
+  ])("renders %s as %s (%s)", (status, label, tone, pill) => {
+    render(<StatusBadge status={status} />);
+    const badge = screen.getByText(label);
+    expect(badge).toHaveAttribute("data-tone", tone);
+    expect(badge).toHaveAttribute("data-status", pill);
+  });
+
+  it("shows a spinner only for in-flight statuses", () => {
+    const { container, rerender } = render(<StatusBadge status="deploying" />);
+    expect(container.querySelector(".animate-spin")).not.toBeNull();
+    rerender(<StatusBadge status="stopped" />);
+    expect(container.querySelector(".animate-spin")).toBeNull();
+  });
 });

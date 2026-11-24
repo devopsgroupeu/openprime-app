@@ -1,0 +1,356 @@
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { http, HttpResponse } from "msw";
+import { MemoryRouter, Route, Routes } from "react-router";
+import { server } from "../../mocks/server";
+import { ThemeProvider } from "../../contexts/ThemeContext";
+import { ToastProvider } from "../../contexts/ToastContext";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import EnvironmentsPage from "../EnvironmentsPage";
+
+const prod = {
+  id: "env-1",
+  name: "demo-prod",
+  global_prefix: "op-",
+  provider: "aws",
+  region: "eu-west-1",
+  status: "running",
+  services: {
+    vpc: { enabled: true },
+    eks: { enabled: true },
+    rds: { enabled: true },
+  },
+  updated_at: "2026-06-20T12:00:00Z",
+};
+const staging = {
+  id: "env-2",
+  name: "demo-staging",
+  global_prefix: "stg-",
+  provider: "aws",
+  region: "eu-west-3",
+  status: "stopped",
+  services: { vpc: { enabled: true }, s3: { enabled: true } },
+  updated_at: "2026-06-22T08:30:00Z",
+};
+const sandbox = {
+  id: "env-3",
+  name: "zeta-sandbox",
+  global_prefix: "sbx-",
+  provider: "aws",
+  region: "us-east-1",
+  status: "running",
+  last_generate_at: "2026-06-10T10:00:00Z",
+  last_generate_status: "failed",
+  services: {
+    vpc: { enabled: true },
+    eks: { enabled: true },
+    rds: { enabled: true },
+    s3: { enabled: true },
+    sqs: { enabled: true },
+    sns: { enabled: true },
+    lambda: { enabled: true },
+    ecr: { enabled: true },
+  },
+  updated_at: "2026-06-01T00:00:00Z",
+};
+const ALL = [prod, staging, sandbox];
+
+// The app shell provides the tooltips; the page needs Theme (Toast) and a router.
+function renderPage(props = {}) {
+  return render(
+    <ThemeProvider>
+      <ToastProvider>
+        <TooltipProvider>
+          <MemoryRouter initialEntries={["/environments"]}>
+            <Routes>
+              <Route
+                path="/environments"
+                element={<EnvironmentsPage environments={ALL} {...props} />}
+              />
+              <Route path="/environments/:id/edit" element={<p>Wizard</p>} />
+            </Routes>
+          </MemoryRouter>
+        </TooltipProvider>
+      </ToastProvider>
+    </ThemeProvider>,
+  );
+}
+
+const cardNames = () =>
+  screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+const search = () =>
+  screen.getByRole("searchbox", { name: "Search by name, prefix or region" });
+const openMenu = (name) =>
+  fireEvent.pointerDown(
+    screen.getByRole("button", { name: `More actions for ${name}` }),
+    { button: 0, ctrlKey: false },
+  );
+const pickSort = async (label) => {
+  fireEvent.keyDown(
+    screen.getByRole("combobox", { name: "Sort environments" }),
+    {
+      key: "Enter",
+    },
+  );
+  fireEvent.keyDown(await screen.findByRole("option", { name: label }), {
+    key: "Enter",
+  });
+};
+
+beforeEach(() => {
+  localStorage.clear();
+});
+
+describe("EnvironmentsPage", () => {
+  it("shows the header, the stat strip and a card per environment", () => {
+    renderPage();
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Environments" }),
+    ).toBeInTheDocument();
+    expect(
+      Array.from(
+        document.querySelectorAll('[data-slot="stat-card"]'),
+        (card) => card.textContent,
+      ),
+    ).toEqual(["Environments3", "Running1", "Services enabled13", "Regions3"]);
+    // Recently modified first by default.
+    expect(cardNames()).toEqual(["demo-staging", "demo-prod", "zeta-sandbox"]);
+    expect(screen.getByRole("link", { name: "demo-prod" })).toHaveAttribute(
+      "href",
+      "/environments/env-1",
+    );
+    expect(screen.getByText("3 environments")).toBeInTheDocument();
+  });
+
+  it("shows up to six service icons and counts the rest", () => {
+    renderPage();
+    const card = screen
+      .getByRole("link", { name: "zeta-sandbox" })
+      .closest("article");
+    const icons = within(card).getByRole("list", { name: "Enabled services" });
+    expect(within(icons).getAllByRole("listitem")).toHaveLength(7);
+    expect(within(icons).getByText("+2")).toBeInTheDocument();
+  });
+
+  it("offers All, Running, Stopped and every other status that occurs", () => {
+    renderPage();
+    const tabs = screen.getByRole("group", { name: "Show" });
+    expect(
+      within(tabs)
+        .getAllByRole("button")
+        .map((b) => b.textContent),
+    ).toEqual(["All 3", "Running 1", "Stopped 1", "Failed 1"]);
+  });
+
+  it("searches by name, prefix and region", () => {
+    renderPage();
+
+    fireEvent.change(search(), { target: { value: "eu-west-3" } });
+    expect(cardNames()).toEqual(["demo-staging"]);
+    expect(screen.getByText("1 environment")).toBeInTheDocument();
+
+    fireEvent.change(search(), { target: { value: "SBX" } });
+    expect(cardNames()).toEqual(["zeta-sandbox"]);
+
+    fireEvent.change(search(), { target: { value: "demo" } });
+    expect(cardNames()).toEqual(["demo-staging", "demo-prod"]);
+  });
+
+  it("filters by status", () => {
+    renderPage();
+
+    const stopped = screen.getByRole("button", { name: "Stopped 1" });
+    fireEvent.click(stopped);
+    expect(stopped).toHaveAttribute("aria-pressed", "true");
+    expect(cardNames()).toEqual(["demo-staging"]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Failed 1" }));
+    expect(cardNames()).toEqual(["zeta-sandbox"]);
+  });
+
+  it("sorts by name or by services and remembers the choice", async () => {
+    const { unmount } = renderPage();
+
+    await pickSort("Name A to Z");
+    expect(cardNames()).toEqual(["demo-prod", "demo-staging", "zeta-sandbox"]);
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      "openprime-environments-sort",
+      "name",
+    );
+
+    await pickSort("Most services");
+    expect(cardNames()).toEqual(["zeta-sandbox", "demo-prod", "demo-staging"]);
+
+    unmount();
+    renderPage();
+    expect(
+      screen.getByRole("combobox", { name: "Sort environments" }),
+    ).toHaveTextContent("Most services");
+    expect(cardNames()).toEqual(["zeta-sandbox", "demo-prod", "demo-staging"]);
+  });
+
+  it("ignores an unknown stored sort", () => {
+    localStorage.setItem("openprime-environments-sort", "bogus");
+    renderPage();
+    expect(
+      screen.getByRole("combobox", { name: "Sort environments" }),
+    ).toHaveTextContent("Recently modified");
+  });
+
+  it("recovers from a search without matches with Clear search", () => {
+    renderPage();
+
+    fireEvent.change(search(), { target: { value: "nope" } });
+    expect(screen.getByText("No environments found")).toBeInTheDocument();
+    expect(
+      screen.getByText('No environments match "nope".'),
+    ).toBeInTheDocument();
+    expect(screen.getByText("No environments")).toBeInTheDocument();
+
+    // The empty state's button, not the field's own X.
+    const empty = document.querySelector('[data-slot="empty-state"]');
+    fireEvent.click(
+      within(empty).getByRole("button", { name: "Clear search" }),
+    );
+    expect(search()).toHaveValue("");
+    expect(cardNames()).toHaveLength(3);
+  });
+
+  it("recovers from a status filter without matches with Clear filters", () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: "Stopped 1" }));
+    fireEvent.change(search(), { target: { value: "prod" } });
+    expect(screen.getByText("No environments found")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(search()).toHaveValue("");
+    expect(screen.getByRole("button", { name: "All 3" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(cardNames()).toHaveLength(3);
+  });
+
+  it("shows the first-run empty state with the setup tips", async () => {
+    server.use(
+      http.get("*/cloud-credentials", () =>
+        HttpResponse.json({ credentials: [] }),
+      ),
+    );
+    renderPage({ environments: [] });
+
+    expect(screen.getByText("No environments yet")).toBeInTheDocument();
+    const create = screen.getAllByRole("link", { name: "New environment" });
+    expect(create).toHaveLength(2);
+    create.forEach((link) =>
+      expect(link).toHaveAttribute("href", "/environments/create"),
+    );
+    expect(
+      await screen.findByRole("link", { name: "Add AWS credentials" }),
+    ).toHaveAttribute("href", "/settings/cloud-credentials");
+    // Nothing to search or count yet.
+    expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
+    expect(
+      document.querySelector('[data-slot="stat-card"]'),
+    ).not.toBeInTheDocument();
+  });
+
+  it("ticks off credentials once they exist", async () => {
+    renderPage({ environments: [] });
+    expect(
+      await screen.findByText("AWS credentials are added."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the error state with Try again", () => {
+    const onRetry = vi.fn();
+    renderPage({ environments: [], loadError: "boom", onRetry });
+
+    expect(screen.getByText("Couldn't load environments.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(onRetry).toHaveBeenCalled();
+    expect(screen.queryByText("No environments yet")).not.toBeInTheDocument();
+  });
+
+  it("shows a skeleton while loading", () => {
+    renderPage({ environments: [], loading: true });
+    expect(screen.getByRole("status", { name: "Loading" })).toHaveAttribute(
+      "aria-busy",
+      "true",
+    );
+    expect(screen.queryByText("No environments yet")).not.toBeInTheDocument();
+  });
+
+  it("opens the wizard from Edit", async () => {
+    renderPage();
+    openMenu("demo-prod");
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Edit" }));
+    expect(await screen.findByText("Wizard")).toBeInTheDocument();
+  });
+
+  it("copies the environment ID", async () => {
+    const writeText = vi.fn(() => Promise.resolve());
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    renderPage();
+
+    openMenu("demo-prod");
+    fireEvent.click(
+      await screen.findByRole("menuitem", { name: "Copy environment ID" }),
+    );
+    expect(writeText).toHaveBeenCalledWith("env-1");
+    expect(
+      await screen.findByText("Environment ID copied"),
+    ).toBeInTheDocument();
+  });
+
+  it("deletes after confirmation", async () => {
+    const onDelete = vi.fn(() => Promise.resolve());
+    renderPage({ onDelete });
+
+    openMenu("demo-prod");
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
+    const dialog = await screen.findByRole("alertdialog");
+    expect(within(dialog).getByText('Delete "demo-prod"?')).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByText("Deleted demo-prod.")).toBeInTheDocument();
+    expect(onDelete).toHaveBeenCalledWith("env-1");
+    await waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+    );
+  });
+
+  it("toasts a failed delete", async () => {
+    const onDelete = vi.fn(() => Promise.reject(new Error("Server said no")));
+    renderPage({ onDelete });
+
+    openMenu("demo-prod");
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
+    const dialog = await screen.findByRole("alertdialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    expect(
+      await screen.findByText("Couldn't delete demo-prod"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Server said no")).toBeInTheDocument();
+  });
+
+  it("has no Delete without a delete handler", async () => {
+    renderPage();
+    openMenu("demo-prod");
+    await screen.findByRole("menuitem", { name: "Edit" });
+    expect(
+      screen.queryByRole("menuitem", { name: "Delete" }),
+    ).not.toBeInTheDocument();
+  });
+});
