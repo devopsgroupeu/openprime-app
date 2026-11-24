@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import { Link } from "react-router";
+import { PanelLeft, Plus } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,66 +9,66 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import ThemeToggle from "./ThemeToggle";
+import { IconAction } from "./IconAction";
 
 /**
- * Slim top bar inside the sidebar inset (port of openprime-ai PageTopBar).
- * `breadcrumbs = [{ label, to? }]`; the last crumb is the current page. Below
- * md only the last crumb is shown.
+ * Top bar of the shell (port of openprime-ai TopBar): hairline once the
+ * content scrolls, Show sidebar and New environment while the sidebar is
+ * hidden, then `breadcrumbs = [{ label, to? }]` (the last one is the page).
  */
-export default function AppTopBar({ breadcrumbs = [], actions }) {
+export default function AppTopBar({ breadcrumbs = [], scrolled = false }) {
+  const { state, isMobile, toggleSidebar } = useSidebar();
+  const collapsed = isMobile || state === "collapsed";
+
   return (
-    <header className="flex h-10 shrink-0 items-center gap-2 border-b border-border px-4">
-      <SidebarTrigger className="-ml-1" />
-      <Separator orientation="vertical" className="h-4!" />
-
-      <div className="flex min-w-0 flex-1 items-center gap-1.5">
-        {breadcrumbs.length > 0 && (
-          <Breadcrumb className="min-w-0">
-            <BreadcrumbList className="flex-nowrap sm:gap-1.5">
-              {breadcrumbs.map((crumb, index) => {
-                const isLast = index === breadcrumbs.length - 1;
-                return (
-                  <Fragment key={index}>
-                    {index > 0 && (
-                      <BreadcrumbSeparator className="max-md:hidden">
-                        /
-                      </BreadcrumbSeparator>
-                    )}
-                    <BreadcrumbItem
-                      className={cn("min-w-0", !isLast && "max-md:hidden")}
-                    >
-                      {isLast || !crumb.to ? (
-                        <BreadcrumbPage
-                          className="truncate"
-                          title={
-                            typeof crumb.label === "string"
-                              ? crumb.label
-                              : undefined
-                          }
-                        >
-                          {crumb.label}
-                        </BreadcrumbPage>
-                      ) : (
-                        <BreadcrumbLink asChild className="whitespace-nowrap">
-                          <Link to={crumb.to}>{crumb.label}</Link>
-                        </BreadcrumbLink>
-                      )}
-                    </BreadcrumbItem>
-                  </Fragment>
-                );
-              })}
-            </BreadcrumbList>
-          </Breadcrumb>
-        )}
-      </div>
-
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
-
-      <ThemeToggle />
+    <header
+      data-scrolled={scrolled || undefined}
+      className={cn(
+        "flex h-13 shrink-0 items-center gap-1 border-b border-transparent px-2",
+        "transition-[border-color] duration-(--dur-fast) data-scrolled:border-border",
+      )}
+    >
+      {collapsed ? (
+        <>
+          <IconAction
+            label="Show sidebar"
+            icon={PanelLeft}
+            shortcutId="toggleSidebar"
+            onClick={toggleSidebar}
+          />
+          <IconAction
+            label="New environment"
+            icon={Plus}
+            to="/environments/create"
+          />
+        </>
+      ) : null}
+      {breadcrumbs.length > 0 ? (
+        <Breadcrumb aria-label="Breadcrumb" className="min-w-0 px-1">
+          <BreadcrumbList className="flex-nowrap">
+            {breadcrumbs.map((crumb, i) => (
+              <Fragment key={i}>
+                {i > 0 ? <BreadcrumbSeparator /> : null}
+                <BreadcrumbItem className="min-w-0">
+                  {i === breadcrumbs.length - 1 || !crumb.to ? (
+                    <BreadcrumbPage className="truncate">
+                      {crumb.label}
+                    </BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink asChild>
+                      <Link to={crumb.to} className="truncate">
+                        {crumb.label}
+                      </Link>
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+              </Fragment>
+            ))}
+          </BreadcrumbList>
+        </Breadcrumb>
+      ) : null}
     </header>
   );
 }

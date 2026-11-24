@@ -16,22 +16,23 @@ test("renders the shell and opens the command palette with Cmd+K", async () => {
   render(<App />);
   await screen.findByText(/demo-prod/i, {}, { timeout: 3000 });
 
-  // Shell: sidebar nav + top bar breadcrumb
+  // Shell: sidebar nav; a list page has no breadcrumb (crumbs start at
+  // depth 2, see AppLayout.test.jsx)
   const sidebar = document.querySelector('[data-slot="sidebar"]');
   expect(
     within(sidebar).getByRole("link", { name: "Environments" }),
   ).toHaveAttribute("aria-current", "page");
   expect(
-    within(screen.getByRole("navigation", { name: "breadcrumb" })).getByText(
-      "Environments",
-    ),
-  ).toBeInTheDocument();
+    screen.queryByRole("navigation", { name: "Breadcrumb" }),
+  ).not.toBeInTheDocument();
 
   fireEvent.keyDown(document, { key: "k", metaKey: true });
 
   const palette = await screen.findByRole("dialog");
   expect(
-    within(palette).getByPlaceholderText("Search environments or jump to..."),
+    within(palette).getByPlaceholderText(
+      "Search environments or jump to a page",
+    ),
   ).toBeInTheDocument();
   // Environments come from the already-loaded list
   expect(within(palette).getByText("demo-prod")).toBeInTheDocument();

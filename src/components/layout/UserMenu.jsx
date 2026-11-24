@@ -1,7 +1,9 @@
-import { useNavigate } from "react-router";
+import { Link } from "react-router";
 import {
+  BookOpen,
   ChevronsUpDown,
-  ExternalLink,
+  CircleQuestionMark,
+  Keyboard,
   LogOut,
   Moon,
   Settings,
@@ -11,15 +13,18 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -31,75 +36,109 @@ const initials = (name) =>
     .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0].toUpperCase())
-    .join("");
+    .join("") || "?";
 
-/** Sidebar-footer user row and its menu (item list mirrors openprime-ai). */
-export default function UserMenu() {
-  const navigate = useNavigate();
+/** User menu (port of openprime-ai UserMenu): the bottom row of the sidebar, opening upward. */
+export default function UserMenu({ onShortcuts = () => {} }) {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const name = user?.fullName || user?.username || "Account";
-  const email = user?.email;
+  const avatar = (size) => (
+    <Avatar className={cn(size, "shrink-0 rounded-full")} aria-hidden>
+      <AvatarFallback className="text-xs">{initials(name)}</AvatarFallback>
+    </Avatar>
+  );
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              tooltip={name}
-              aria-label="Account menu"
-              className="data-[state=open]:bg-sidebar-accent"
-            >
-              <Avatar className="size-8 rounded-lg">
-                <AvatarFallback className="rounded-lg bg-sidebar-primary/25 text-xs font-medium text-sidebar-foreground">
-                  {initials(name)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="grid min-w-0 flex-1 text-left leading-tight">
-                <span className="truncate text-sm font-medium">{name}</span>
-                {email && (
-                  <span className="truncate text-xs text-sidebar-foreground/70">
-                    {email}
-                  </span>
-                )}
-              </div>
-              <ChevronsUpDown className="ml-auto opacity-70" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start" className="w-64">
-            <div className="grid min-w-0 px-2 py-1.5 leading-tight">
-              <span className="truncate text-sm font-medium">{name}</span>
-              {email && (
-                <span className="truncate text-xs text-muted-foreground">
-                  {email}
-                </span>
-              )}
-            </div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => navigate("/settings/account")}>
-              <Settings />
+    // Non-modal: a modal menu with submenus leaves focusable controls under aria-hidden (axe).
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger
+        className={cn(
+          "flex h-8 w-full min-w-0 items-center gap-2 rounded-lg px-1.5 text-left text-sm font-medium outline-none",
+          "transition-[background-color] duration-(--dur-fast) hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent",
+          "focus-visible:ring-2 focus-visible:ring-sidebar-ring max-md:min-h-11",
+        )}
+      >
+        {avatar("size-5")}
+        {/* Accessible name = visible name + purpose (label in name). */}
+        <span className="min-w-0 flex-1 truncate">
+          {name}
+          <span className="sr-only">, Account menu</span>
+        </span>
+        <ChevronsUpDown
+          className="size-4 shrink-0 text-sidebar-foreground/70"
+          aria-hidden
+        />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="top" align="start" className="w-60">
+        <DropdownMenuLabel className="flex items-center gap-2 font-normal">
+          {avatar("size-6")}
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate text-sm font-medium">{name}</span>
+            {user?.email ? (
+              <span className="truncate text-xs text-muted-foreground">
+                {user.email}
+              </span>
+            ) : null}
+          </span>
+        </DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Sun aria-hidden />
+              Theme
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuRadioGroup
+                value={isDark ? "dark" : "light"}
+                onValueChange={(v) => {
+                  if ((v === "dark") !== isDark) toggleTheme();
+                }}
+              >
+                <DropdownMenuRadioItem value="light">
+                  <Sun aria-hidden />
+                  Light
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="dark">
+                  <Moon aria-hidden />
+                  Dark
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+          <DropdownMenuItem asChild>
+            <Link to="/settings/account">
+              <Settings aria-hidden />
               Settings
-            </DropdownMenuItem>
+            </Link>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <CircleQuestionMark aria-hidden />
+            Help
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="min-w-48">
             <DropdownMenuItem asChild>
               <a href={DOCS_URL} target="_blank" rel="noopener noreferrer">
-                <ExternalLink />
-                Documentation
+                <BookOpen aria-hidden />
+                Documentation{" "}
+                <span className="sr-only">(opens in a new tab)</span>
               </a>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={toggleTheme}>
-              {isDark ? <Sun /> : <Moon />}
-              {isDark ? "Light theme" : "Dark theme"}
+            <DropdownMenuItem onSelect={onShortcuts}>
+              <Keyboard aria-hidden />
+              Keyboard shortcuts
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={logout}>
-              <LogOut />
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={logout}>
+          <LogOut aria-hidden />
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
