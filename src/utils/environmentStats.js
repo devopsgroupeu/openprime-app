@@ -2,18 +2,37 @@
 // enabled services, the stat strip, the status filter tabs and the client-side
 // search, filter and sort.
 
-// The status badge reflects the most recent async job outcome (generate/push)
-// when one exists, falling back to the lifecycle status. When both jobs have
-// run, the more recent one (by last_*_at) wins.
-export const getEffectiveStatus = (environment) => {
+/**
+ * The most recent finished job `{ kind, status, error }` (generate or push, by
+ * last_*_at; a tie goes to generate), or null before the first one.
+ */
+export const lastJob = (environment) => {
   const genAt = environment.last_generate_at;
   const pushAt = environment.last_push_at;
-  const gen = environment.last_generate_status;
-  const push = environment.last_push_status;
-  if (genAt && pushAt) return pushAt > genAt ? push : gen;
-  if (genAt) return gen;
-  if (pushAt) return push;
-  return environment.status || "pending";
+  if (pushAt && !(genAt && genAt >= pushAt)) {
+    return {
+      kind: "push",
+      status: environment.last_push_status,
+      error: environment.last_push_error,
+    };
+  }
+  if (genAt) {
+    return {
+      kind: "generate",
+      status: environment.last_generate_status,
+      error: environment.last_generate_error,
+    };
+  }
+  return null;
+};
+
+// The status badge reflects the most recent async job outcome (generate/push)
+// when one exists, falling back to the lifecycle status. A job a worker has
+// claimed (`deploying`) wins over earlier outcomes until it finishes.
+export const getEffectiveStatus = (environment) => {
+  if (environment.status === "deploying") return "deploying";
+  const job = lastJob(environment);
+  return job ? job.status : environment.status || "pending";
 };
 
 // How an effective status reads. OpenPrime generates code and never deploys:
@@ -44,7 +63,6 @@ const STATUSES = {
     pill: "notGenerated",
     label: "Not generated",
   },
-  queued: PROCESSING,
   deploying: PROCESSING,
   stopped: {
     key: "stopped",

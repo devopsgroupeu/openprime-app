@@ -32,7 +32,8 @@ describe("StatusBadge", () => {
     ["succeeded", "Ready", "success", "ready"],
     ["failed", "Failed", "destructive", "failed"],
     ["pending", "Not generated", "neutral", "notGenerated"],
-    ["queued", "Processing", "warning", "processing"],
+    // `queued` is a job state, never written to an environment.
+    ["queued", "Queued", "neutral", "unknown"],
     ["deploying", "Processing", "warning", "processing"],
     ["running", "Ready", "success", "ready"],
     ["error", "Failed", "destructive", "failed"],

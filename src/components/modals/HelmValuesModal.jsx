@@ -1,83 +1,65 @@
-// src/components/modals/HelmValuesModal.js
+import { getHelmChartConfig } from "../../config/helmChartsConfig";
+import { Callout } from "@/components/shared/callout";
+import { CopyButton } from "@/components/shared/copy-button";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
-import { useEffect, useRef } from "react";
-
+// YAML values editor of one Helm chart (wizard). `chartName` is the chart key.
 const HelmValuesModal = ({ chartName, values, onChange, onClose, onSave }) => {
-  const textareaRef = useRef(null);
-
-  // Close on Escape key
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
-  // Initial focus on the values textarea
-  useEffect(() => {
-    textareaRef.current?.focus();
-  }, []);
-
+  const name = getHelmChartConfig(chartName)?.displayName ?? chartName;
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="helm-values-modal-title"
-        className="rounded-2xl p-8 max-w-4xl w-full bg-surface"
-      >
-        <h2
-          id="helm-values-modal-title"
-          className="text-2xl font-bold mb-6 text-primary"
-        >
-          Edit {chartName} Values
-        </h2>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent size="lg">
+        <DialogHeader>
+          <DialogTitle>Edit {name} values</DialogTitle>
+          <DialogDescription>Helm values in YAML.</DialogDescription>
+        </DialogHeader>
 
         {/* Generation reads only `services.eks.helmCharts.<chart>.enabled`; no
             template consumes these values yet (OP-200). Saying so beats letting
             the user believe their YAML reaches the generated output. */}
-        <div className="p-4 mb-4 rounded-lg border bg-warning-muted border-warning text-warning">
-          <p className="text-sm">
-            <span className="font-bold">Saved, but not applied yet.</span> These
-            values are stored with your environment and kept across edits, but
-            generation does not read them — charts are generated with their
-            defaults. To customise a chart today, edit its values file in the
-            generated repository after the push.
-          </p>
-        </div>
+        <Callout variant="warning" title="Saved, but not applied yet.">
+          These values are stored with your environment and kept across edits,
+          but generation does not read them: charts are generated with their
+          defaults. To customize a chart today, edit its values file in the
+          generated repository after the push.
+        </Callout>
 
-        <div className="rounded-lg p-4 bg-background border border-border">
-          <textarea
-            ref={textareaRef}
-            className="w-full h-64 bg-transparent font-mono text-sm resize-none focus:outline-hidden text-success"
-            value={values}
+        <div className="relative">
+          <Textarea
+            autoFocus
+            value={values ?? ""}
             onChange={(e) => onChange(e.target.value)}
             spellCheck="false"
-            aria-label={`Edit YAML values for ${chartName}`}
+            aria-label={`YAML values for ${name}`}
+            className="field-sizing-fixed h-64 resize-none pr-20 font-mono text-xs leading-relaxed md:text-xs"
+          />
+          {/* Labelled, not icon-only: the wizard has no TooltipProvider. */}
+          <CopyButton
+            text={values ?? ""}
+            label="Copy values"
+            visibleLabel="Copy"
+            size="sm"
+            className="absolute top-1.5 right-1.5"
           />
         </div>
 
-        <div className="flex justify-end space-x-3 mt-6">
-          <button
-            onClick={onClose}
-            className="btn-op-secondary"
-            aria-label="Cancel editing"
-          >
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            onClick={onSave}
-            className="btn-op-primary"
-            aria-label={`Save ${chartName} configuration`}
-          >
-            Save Values
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+          <Button onClick={onSave}>Save values</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

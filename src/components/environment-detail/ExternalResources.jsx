@@ -1,249 +1,269 @@
-import { useState } from "react";
-import {
-  GitBranch,
-  Database,
-  ExternalLink,
-  Key,
-  KeyRound,
-  X,
-} from "lucide-react";
+import { useId, useState } from "react";
+import { ExternalLink, KeyRound } from "lucide-react";
 import { useToast } from "../../contexts/ToastContext";
 import authService from "../../services/authService";
+import { DetailList, DetailRow, Mono, NotConfigured } from "./DetailList";
+import { CopyButton } from "@/components/shared/copy-button";
+import { SettingsSection } from "@/components/shared/settings";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-const cleanGitUrl = (url) =>
+export const gitRepositoryOf = (env) => env.git_repository || env.gitRepository;
+export const terraformBackendOf = (env) =>
+  env.terraform_backend || env.terraformBackend;
+
+export const cleanGitUrl = (url) =>
   (url || "")
     .replace("git@github.com:", "")
     .replace("git@gitlab.com:", "")
     .replace(/\.git$/, "");
 
-const gitWebUrl = (url) =>
-  (url || "")
+// https URL of a GitHub or GitLab repository, else null.
+export const gitWebUrl = (url) => {
+  const web = (url || "")
     .replace("git@github.com:", "https://github.com/")
     .replace("git@gitlab.com:", "https://gitlab.com/")
     .replace(/\.git$/, "");
+  return web.startsWith("https://") ? web : null;
+};
 
-const ExternalResources = ({ environment, onEnvironmentUpdate }) => {
+export const s3ConsoleUrl = (region, bucket) =>
+  `https://${region}.console.aws.amazon.com/s3/buckets/${bucket}`;
+
+/** Icon link that opens `href` in a new tab. */
+export function OpenLink({ href, label }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button variant="ghost" size="icon-sm" asChild>
+          <a href={href} target="_blank" rel="noopener noreferrer">
+            <ExternalLink aria-hidden />
+            <span className="sr-only">{label}</span>
+          </a>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function RotateSshKeyDialog({ environment, gitRepo, onClose, onUpdated }) {
   const { success, error: showError } = useToast();
-  const [showSshKeyEditor, setShowSshKeyEditor] = useState(false);
-  const [newSshKey, setNewSshKey] = useState("");
-  const [isSavingSshKey, setIsSavingSshKey] = useState(false);
+  const id = useId();
+  const [key, setKey] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const gitRepo = environment.git_repository || environment.gitRepository;
-  const tfBackend =
-    environment.terraform_backend || environment.terraformBackend;
-  const gitEnabled = gitRepo?.enabled;
-  const tfEnabled = tfBackend?.enabled;
-
-  if (!gitEnabled && !tfEnabled) return null;
-
-  const handleRotateSshKey = async () => {
-    if (!newSshKey.trim()) {
-      showError("Please enter an SSH private key");
-      return;
-    }
+  const save = async () => {
     try {
-      setIsSavingSshKey(true);
+      setSaving(true);
       const updated = await authService.put(`/environments/${environment.id}`, {
         ...environment,
-        gitRepository: { ...gitRepo, sshKey: newSshKey.trim() },
+        gitRepository: { ...gitRepo, sshKey: key.trim() },
       });
-      onEnvironmentUpdate?.(updated);
-      setShowSshKeyEditor(false);
-      setNewSshKey("");
-      success("SSH key updated successfully");
+      onUpdated?.(updated);
+      onClose();
+      success("SSH key updated.");
     } catch (err) {
       console.error("Failed to update SSH key:", err);
-      showError(err.message || "Failed to update SSH key");
+      showError(err.message || "Couldn't update the SSH key.");
     } finally {
-      setIsSavingSshKey(false);
+      setSaving(false);
     }
   };
 
-  const lockingLabel =
+  return (
+    <Dialog open onOpenChange={(open) => !open && !saving && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Rotate SSH key</DialogTitle>
+          <DialogDescription>
+            Paste the new private key for{" "}
+            <span className="font-mono">{cleanGitUrl(gitRepo.url)}</span>.
+          </DialogDescription>
+        </DialogHeader>
+        <Field>
+          <FieldLabel htmlFor={id}>SSH private key</FieldLabel>
+          <Textarea
+            id={id}
+            autoFocus
+            rows={8}
+            value={key}
+            onChange={(e) => setKey(e.target.value)}
+            placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
+            spellCheck="false"
+            className="field-sizing-fixed resize-none font-mono text-xs md:text-xs"
+          />
+        </Field>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose} disabled={saving}>
+            Cancel
+          </Button>
+          <Button onClick={save} disabled={saving || !key.trim()}>
+            {saving ? <Spinner aria-hidden /> : null}
+            Update key
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Configuration tab: where the code is pushed and the Terraform state kept. */
+const ExternalResources = ({ environment, onEnvironmentUpdate, editHref }) => {
+  const [rotating, setRotating] = useState(false);
+  const gitRepo = gitRepositoryOf(environment);
+  const tfBackend = terraformBackendOf(environment);
+  const web = gitWebUrl(gitRepo?.url);
+  const locking =
     tfBackend?.lockingMechanism === "s3"
-      ? "S3 Native"
-      : tfBackend?.lockingMechanism || "—";
+      ? "S3 native"
+      : tfBackend?.lockingMechanism;
 
   return (
-    <section>
-      <h2 className="text-2xl font-extrabold text-primary mb-4">
-        External Resources
-      </h2>
-      <div className="space-y-4">
-        {/* Git Repository */}
-        {gitEnabled && (
-          <div className="rounded-2xl border border-border bg-surface p-5 space-y-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="p-3 rounded-lg bg-primary-muted border border-primary shrink-0">
-                  <GitBranch className="w-6 h-6 text-accent" />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-lg font-bold text-primary truncate">
-                    Git Repository
-                  </h4>
-                  <p className="text-xs font-mono text-tertiary truncate">
-                    {cleanGitUrl(gitRepo.url)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-border pt-4">
-              <div className="flex items-baseline justify-between gap-4">
-                <span className="section-label">Repository</span>
-                {gitRepo.url && (
-                  <a
-                    href={gitWebUrl(gitRepo.url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={gitRepo.url}
-                    className="flex min-w-0 items-center gap-1 text-xs font-mono text-secondary transition-colors hover:text-primary"
-                  >
-                    <span className="truncate">{gitRepo.url}</span>
-                    <ExternalLink className="w-3 h-3 shrink-0" />
-                  </a>
-                )}
-              </div>
-            </div>
-
-            <div className="border-t border-border pt-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="section-label">SSH Key</p>
-                <button
-                  onClick={() => setShowSshKeyEditor(true)}
-                  className="flex items-center gap-1 text-xs font-bold text-secondary transition-colors hover:text-primary"
-                >
-                  <KeyRound className="w-3.5 h-3.5" />
-                  Rotate
-                </button>
-              </div>
-              {/* The key is write-only: the API returns a fingerprint instead
-                  of key material, so there is nothing left to reveal. The
-                  fingerprint is the same SHA256 your Git provider shows next to
-                  the deploy key, which is what makes it useful here. */}
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-surface-elevated border border-border">
-                <Key className="w-4 h-4 text-tertiary shrink-0" />
-                <p className="text-xs font-mono flex-1 min-w-0 truncate text-secondary">
-                  {gitRepo.sshKeyConfigured
-                    ? gitRepo.sshKeyFingerprint || "Configured"
-                    : "Not configured"}
-                </p>
-              </div>
-              {gitRepo.sshKeyConfigured && (
-                <p className="mt-2 text-xs text-tertiary">
-                  Compare this fingerprint with the deploy key in your Git
-                  provider to confirm it is the right one.
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Terraform Backend */}
-        {tfEnabled && (
-          <div className="rounded-2xl border border-border bg-surface p-5 space-y-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="p-3 rounded-lg bg-primary-muted border border-primary shrink-0">
-                  <Database className="w-6 h-6 text-accent" />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-lg font-bold text-primary truncate">
-                    Terraform Backend
-                  </h4>
-                  <p className="text-xs font-mono text-tertiary truncate">
-                    {tfBackend.bucketName || "—"}
-                  </p>
-                </div>
-              </div>
-              {tfBackend.bucketName && (
-                <a
-                  href={`https://${environment.region}.console.aws.amazon.com/s3/buckets/${tfBackend.bucketName}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Open in AWS Console"
-                  className="p-2 -mr-1 rounded-lg shrink-0 text-tertiary transition-colors hover:text-primary hover:bg-surface-elevated"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              )}
-            </div>
-            <div className="border-t border-border pt-4 flex items-center justify-between gap-4">
-              <span className="section-label">Locking Mechanism</span>
-              <span className="text-sm font-medium text-primary">
-                {lockingLabel}
-              </span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Rotate SSH Key modal */}
-      {showSshKeyEditor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-xs"
-            onClick={() => {
-              setShowSshKeyEditor(false);
-              setNewSshKey("");
-            }}
-          />
-          <div className="relative w-full max-w-lg mx-4 rounded-2xl border shadow-2xl bg-surface border-border">
-            <div className="flex items-center justify-between p-5 border-b border-border">
-              <div className="flex items-center space-x-3">
-                <KeyRound className="w-5 h-5 text-primary" />
-                <h3 className="text-2xl font-extrabold text-primary">
-                  Rotate SSH Key
-                </h3>
-              </div>
-              <button
-                onClick={() => {
-                  setShowSshKeyEditor(false);
-                  setNewSshKey("");
-                }}
-                className="p-1.5 rounded-lg transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated"
+    <>
+      <SettingsSection
+        title="Git repository"
+        description="Push to git commits the generated code here over SSH."
+      >
+        <DetailList>
+          {gitRepo?.enabled ? (
+            <>
+              <DetailRow
+                label="Repository"
+                actions={
+                  <>
+                    <CopyButton
+                      text={gitRepo.url}
+                      label="Copy repository URL"
+                    />
+                    {web ? (
+                      <OpenLink href={web} label="Open repository" />
+                    ) : null}
+                  </>
+                }
               >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-5 space-y-4">
-              <p className="text-sm text-secondary">
-                Paste the new SSH private key for{" "}
-                <span className="font-mono font-medium">
-                  {cleanGitUrl(gitRepo?.url)}
-                </span>
-              </p>
-              <textarea
-                value={newSshKey}
-                onChange={(e) => setNewSshKey(e.target.value)}
-                rows={8}
-                placeholder="Paste your SSH private key here..."
-                className="w-full px-4 py-3 rounded-lg border font-mono text-xs resize-none transition-colors bg-background border-border text-primary placeholder-tertiary focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary"
-              />
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => {
-                    setShowSshKeyEditor(false);
-                    setNewSshKey("");
-                  }}
-                  className="btn-op-secondary"
+                <Mono>{gitRepo.url}</Mono>
+              </DetailRow>
+              {gitRepo.branch ? (
+                <DetailRow
+                  label="Branch"
+                  actions={
+                    <CopyButton text={gitRepo.branch} label="Copy branch" />
+                  }
                 >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleRotateSshKey}
-                  disabled={isSavingSshKey || !newSshKey.trim()}
-                  className="btn-op-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSavingSshKey ? "Saving..." : "Update Key"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </section>
+                  <Mono>{gitRepo.branch}</Mono>
+                </DetailRow>
+              ) : null}
+              {/* The key is write-only: the API returns a fingerprint instead
+                  of key material. It is the same SHA256 your Git provider shows
+                  next to the deploy key, which is what makes it useful here. */}
+              <DetailRow
+                label="SSH key"
+                actions={
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setRotating(true)}
+                  >
+                    <KeyRound aria-hidden />
+                    Rotate
+                  </Button>
+                }
+              >
+                {gitRepo.sshKeyConfigured ? (
+                  <>
+                    <Mono>{gitRepo.sshKeyFingerprint || "Configured"}</Mono>
+                    <p className="text-xs text-muted-foreground">
+                      Compare it with the deploy key in your Git provider.
+                    </p>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">Not configured</span>
+                )}
+              </DetailRow>
+            </>
+          ) : (
+            <DetailRow label="Repository">
+              <NotConfigured editHref={editHref} />
+            </DetailRow>
+          )}
+        </DetailList>
+      </SettingsSection>
+
+      <SettingsSection
+        title="Terraform state"
+        description="The S3 bucket that keeps this environment's Terraform state."
+      >
+        <DetailList>
+          {tfBackend?.enabled ? (
+            <>
+              <DetailRow
+                label="Bucket"
+                actions={
+                  tfBackend.bucketName ? (
+                    <>
+                      <CopyButton
+                        text={tfBackend.bucketName}
+                        label="Copy bucket name"
+                      />
+                      <OpenLink
+                        href={s3ConsoleUrl(
+                          environment.region,
+                          tfBackend.bucketName,
+                        )}
+                        label="Open in the AWS console"
+                      />
+                    </>
+                  ) : null
+                }
+              >
+                {tfBackend.bucketName ? (
+                  <Mono>{tfBackend.bucketName}</Mono>
+                ) : (
+                  <span className="text-muted-foreground">Not set</span>
+                )}
+              </DetailRow>
+              {locking ? (
+                <DetailRow label="State locking">{locking}</DetailRow>
+              ) : null}
+              {tfBackend.tableName ? (
+                <DetailRow label="Lock table">
+                  <Mono>{tfBackend.tableName}</Mono>
+                </DetailRow>
+              ) : null}
+            </>
+          ) : (
+            <DetailRow label="Bucket">
+              <NotConfigured editHref={editHref} />
+            </DetailRow>
+          )}
+        </DetailList>
+      </SettingsSection>
+
+      {rotating ? (
+        <RotateSshKeyDialog
+          environment={environment}
+          gitRepo={gitRepo}
+          onClose={() => setRotating(false)}
+          onUpdated={onEnvironmentUpdate}
+        />
+      ) : null}
+    </>
   );
 };
 

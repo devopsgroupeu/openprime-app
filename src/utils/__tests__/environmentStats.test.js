@@ -2,6 +2,7 @@ import {
   enabledServices,
   filterAndSortEnvironments,
   getEffectiveStatus,
+  lastJob,
   statusDisplay,
   statusFilters,
   summarizeEnvironments,
@@ -100,6 +101,48 @@ describe("getEffectiveStatus", () => {
       }),
     ).toBe("failed");
     expect(getEffectiveStatus({})).toBe("pending");
+  });
+
+  // The backend writes `deploying` when a worker claims a job, before the
+  // outcome lands in last_*: a regeneration in flight reads Processing.
+  it("reads a job in flight as deploying even after earlier jobs", () => {
+    const inFlight = {
+      status: "deploying",
+      last_generate_at: "2026-07-01T10:00:00Z",
+      last_generate_status: "succeeded",
+    };
+    expect(getEffectiveStatus(inFlight)).toBe("deploying");
+    expect(statusDisplay(getEffectiveStatus(inFlight)).key).toBe("processing");
+  });
+});
+
+describe("lastJob", () => {
+  it("returns the most recent job with its error, or null before any", () => {
+    expect(
+      lastJob({
+        last_generate_at: "2026-07-01T10:00:00Z",
+        last_generate_status: "succeeded",
+        last_push_at: "2026-07-02T10:00:00Z",
+        last_push_status: "failed",
+        last_push_error: "Failed to push to Git: permission denied",
+      }),
+    ).toEqual({
+      kind: "push",
+      status: "failed",
+      error: "Failed to push to Git: permission denied",
+    });
+    expect(
+      lastJob({
+        last_generate_at: "2026-07-01T10:00:00Z",
+        last_generate_status: "failed",
+        last_generate_error: "Terraform fmt failed",
+      }),
+    ).toEqual({
+      kind: "generate",
+      status: "failed",
+      error: "Terraform fmt failed",
+    });
+    expect(lastJob({ status: "pending" })).toBeNull();
   });
 });
 

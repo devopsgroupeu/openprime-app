@@ -1,9 +1,9 @@
 import { Callout } from "@/components/shared/callout";
 import { ConfirmDestructiveDialog } from "@/components/shared/confirm-destructive-dialog";
 
-// Deletes an environment (EnvironmentDetailPage) or, with title, message and
-// warningData, a cloud credential (SettingsPage). Callers that mount it
-// conditionally leave isOpen out.
+// Deletes an environment (detail and list pages: type the name to confirm) or,
+// with title, message and warningData, a cloud credential (SettingsPage).
+// Callers that mount it conditionally leave isOpen out.
 const ConfirmDeleteModal = ({
   environment,
   isOpen = true,
@@ -30,9 +30,10 @@ const ConfirmDeleteModal = ({
       title={title || `Delete "${environment?.name}"?`}
       description={
         message ||
-        "All configuration for this environment is removed from OpenPrime. This can't be undone."
+        "This removes the environment from OpenPrime and can't be undone. AWS resources, the Terraform state bucket and code already pushed to git are not touched."
       }
       confirmLabel="Delete"
+      typeToConfirm={environment?.name}
       onConfirm={onConfirm}
     >
       {hasUsageWarning ? (

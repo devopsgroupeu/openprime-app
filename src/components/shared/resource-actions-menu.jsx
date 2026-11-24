@@ -17,7 +17,9 @@ import {
 
 /**
  * The one "..." menu of a resource (cards, rows, page headers). Callers build `actions` from the
- * DTO `access`, never from the role; destructive items come last, after a separator.
+ * DTO `access`, never from the role; destructive items come last, after a separator. An action's
+ * optional `className` (e.g. `lg:hidden`) lets a page move header buttons into the menu on small
+ * screens.
  */
 export function ResourceActionsMenu({ label, actions, triggerClassName }) {
   if (actions.length === 0) return null;
@@ -49,6 +51,7 @@ export function ResourceActionsMenu({ label, actions, triggerClassName }) {
                 key={a.label}
                 onSelect={a.onSelect}
                 disabled={a.disabled}
+                className={a.className}
               >
                 {a.icon ? <a.icon aria-hidden /> : null}
                 {a.label}
@@ -67,6 +70,7 @@ export function ResourceActionsMenu({ label, actions, triggerClassName }) {
                 variant="destructive"
                 onSelect={a.onSelect}
                 disabled={a.disabled}
+                className={a.className}
               >
                 {a.icon ? <a.icon aria-hidden /> : null}
                 {a.label}

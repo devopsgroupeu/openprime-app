@@ -14,7 +14,7 @@ describe("FE mock harness", () => {
 
   it("serves mocked environments via MSW (no real backend)", async () => {
     const envs = await authService.get("/environments");
-    expect(envs).toHaveLength(2);
+    expect(envs).toHaveLength(3);
     expect(envs.map((e) => e.name)).toContain("demo-prod");
   });
 

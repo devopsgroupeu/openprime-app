@@ -168,16 +168,39 @@ export function SettingToggleRow({
   );
 }
 
-/** KPI tile: label `text-xs`, value `text-lg font-semibold`, optional hint. */
-export function StatCard({ label, value, hint }) {
+/**
+ * KPI tile: label `text-xs`, value `text-lg font-semibold`, optional hint. `compact`: below sm
+ * one line, value (`text-md`) then label ("2 Environments"), smaller padding and no hint.
+ */
+export function StatCard({ label, value, hint, compact = false }) {
   return (
     <div
       data-slot="stat-card"
-      className="flex flex-col gap-0.5 rounded-lg bg-card p-2.5 shadow-(--shadow-ring-xs)"
+      className={cn(
+        "flex flex-col gap-0.5 rounded-lg bg-card p-2.5 shadow-(--shadow-ring-xs)",
+        compact &&
+          "max-sm:flex-row-reverse max-sm:items-baseline max-sm:justify-end max-sm:gap-1.5 max-sm:px-2.5 max-sm:py-1.5",
+      )}
     >
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-lg font-semibold tabular-nums">{value}</p>
-      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+      <p
+        className={cn(
+          "text-lg font-semibold tabular-nums",
+          compact && "max-sm:text-md",
+        )}
+      >
+        {value}
+      </p>
+      {hint ? (
+        <p
+          className={cn(
+            "text-xs text-muted-foreground",
+            compact && "max-sm:hidden",
+          )}
+        >
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }

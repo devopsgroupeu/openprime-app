@@ -1,82 +1,66 @@
-import { Package, CheckCircle, Clock } from "lucide-react";
+import { Package } from "lucide-react";
+import { getHelmChartConfig } from "../../config/helmChartsConfig";
+import { IconTile } from "@/components/shared/icon-tile";
+import { SettingsSection } from "@/components/shared/settings";
+import { Badge } from "@/components/ui/badge";
 
-const HelmChartsList = ({ environment }) => {
-  const helmCharts = environment.services?.eks?.helmCharts || {};
-  const enabledCharts = Object.entries(helmCharts).filter(
-    ([_, config]) => config?.enabled,
-  );
+/**
+ * Enabled charts `[key, config]` of the EKS cluster. Charts no longer in the
+ * catalog are left out: generation drops them and the wizard prunes them.
+ */
+export const enabledCharts = (environment) =>
+  environment.services?.eks?.enabled
+    ? Object.entries(environment.services.eks.helmCharts || {}).filter(
+        ([key, config]) => config?.enabled && getHelmChartConfig(key),
+      )
+    : [];
 
-  const getStatusIcon = (enabled) => {
-    if (enabled) {
-      return <CheckCircle className="w-4 h-4 text-success" />;
-    }
-    return <Clock className="w-4 h-4 text-tertiary" />;
-  };
-
-  const HelmChartItem = ({ chartName, chartConfig }) => {
-    return (
-      <div className="rounded-2xl border bg-surface border-border p-6 transition-all hover:shadow-lg">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center space-x-4 min-w-0">
-            <div className="p-3 rounded-lg bg-primary-muted border border-primary shrink-0">
-              <Package className="w-6 h-6 text-accent" />
-            </div>
-            <div className="min-w-0">
-              <h4 className="text-lg font-bold text-primary truncate">
-                {chartName}
-              </h4>
-              <p className="text-sm text-secondary truncate">
-                {chartConfig?.namespace
-                  ? `Namespace: ${chartConfig.namespace}`
-                  : chartConfig?.customValues
-                    ? "Custom values configured"
-                    : "Default configuration"}
+/** Helm charts tab: one divided card of the enabled charts. */
+const HelmChartsList = ({ environment }) => (
+  <SettingsSection
+    title="Helm charts"
+    description="Charts included in the generated Argo CD configuration."
+  >
+    <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card ring-1 ring-border ring-inset">
+      {enabledCharts(environment).map(([key, config]) => {
+        const chart = getHelmChartConfig(key);
+        const version = config.version || chart.version;
+        const namespace = config.namespace || chart.namespace;
+        // Charts that ship custom values by default are not "edited".
+        const edited = config.customValues && !chart.defaultCustomValues;
+        return (
+          <li key={key} className="flex items-center gap-3 px-3.5 py-3">
+            <IconTile icon={Package} size="lg" />
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
+                <span className="truncate text-sm font-medium">
+                  {chart.displayName}
+                </span>
+                {edited ? <Badge variant="tag">Custom values</Badge> : null}
+              </div>
+              <p className="truncate text-xs text-muted-foreground">
+                <span className="font-mono">{`${chart.repository}/${chart.chart}`}</span>
+                {namespace ? (
+                  <>
+                    <span
+                      aria-hidden
+                      className="mx-2 inline-block h-3 w-px translate-y-0.5 bg-border"
+                    />
+                    Namespace <span className="font-mono">{namespace}</span>
+                  </>
+                ) : null}
               </p>
             </div>
-          </div>
-          {chartConfig?.version ? (
-            <span className="shrink-0 rounded-md border border-border bg-surface-elevated px-2.5 py-1 font-mono text-xs text-tertiary">
-              v{chartConfig.version}
-            </span>
-          ) : (
-            getStatusIcon(chartConfig?.enabled)
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  if (!environment.services?.eks?.enabled) {
-    return (
-      <div className="text-center py-8 text-secondary">
-        <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-        <p>Helm charts are available when EKS is enabled</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {enabledCharts.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-          {enabledCharts.map(([chartName, chartConfig]) => (
-            <HelmChartItem
-              key={chartName}
-              chartName={chartName}
-              chartConfig={chartConfig}
-            />
-          ))}
-        </div>
-      )}
-
-      {enabledCharts.length === 0 && (
-        <div className="text-center py-8 text-secondary">
-          <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>No Helm charts configured for this environment</p>
-        </div>
-      )}
-    </div>
-  );
-};
+            {version ? (
+              <Badge variant="outline" className="font-mono">
+                {version}
+              </Badge>
+            ) : null}
+          </li>
+        );
+      })}
+    </ul>
+  </SettingsSection>
+);
 
 export default HelmChartsList;

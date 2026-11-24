@@ -5,9 +5,6 @@ import AwsIcon from "./AwsIcon";
 import AzureIcon from "./AzureIcon";
 import GcpIcon from "./GcpIcon";
 
-// Existing consumers use this flag to apply AWS orange styling.
-export const isBrandedProvider = (provider) => provider === "aws";
-
 const ProviderIcon = ({ provider, className }) => {
   if (provider === "aws") return <AwsIcon className={className} />;
   if (provider === "azure") return <AzureIcon className={className} />;

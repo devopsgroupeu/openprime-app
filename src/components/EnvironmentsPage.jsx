@@ -47,13 +47,6 @@ const readSort = () => {
   }
 };
 
-// Below sm the stats shrink to one line each ("2 Environments") so the first
-// card stays above the fold; from sm on they are regular StatCards.
-const STAT_STRIP = [
-  "grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-4",
-  "max-sm:[&>*]:flex-row-reverse max-sm:[&>*]:items-baseline max-sm:[&>*]:justify-end max-sm:[&>*]:gap-1.5 max-sm:[&>*]:px-2.5 max-sm:[&>*]:py-1.5",
-].join(" ");
-
 const NewEnvironmentButton = ({ size }) => (
   <Button size={size} asChild>
     <Link to="/environments/create">
@@ -176,11 +169,12 @@ const EnvironmentsPage = ({
         </>
       ) : (
         <>
-          <div className={STAT_STRIP}>
-            <StatCard label="Environments" value={stats.total} />
-            <StatCard label="Ready" value={stats.ready} />
-            <StatCard label="Services enabled" value={stats.services} />
-            <StatCard label="Regions" value={stats.regions} />
+          {/* Compact below sm so the first card stays above the fold. */}
+          <div className="grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-4">
+            <StatCard compact label="Environments" value={stats.total} />
+            <StatCard compact label="Ready" value={stats.ready} />
+            <StatCard compact label="Services enabled" value={stats.services} />
+            <StatCard compact label="Regions" value={stats.regions} />
           </div>
           <ListToolbar
             search={query}

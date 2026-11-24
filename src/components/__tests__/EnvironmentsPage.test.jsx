@@ -378,7 +378,16 @@ describe("EnvironmentsPage", () => {
     fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
     const dialog = await screen.findByRole("alertdialog");
     expect(within(dialog).getByText('Delete "demo-prod"?')).toBeInTheDocument();
-    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+    // Environments are confirmed by typing their name.
+    const confirm = within(dialog).getByRole("button", { name: "Delete" });
+    expect(confirm).toBeDisabled();
+    fireEvent.change(
+      within(dialog).getByLabelText("Type demo-prod to confirm"),
+      {
+        target: { value: "demo-prod" },
+      },
+    );
+    fireEvent.click(confirm);
 
     expect(await screen.findByText("Deleted demo-prod.")).toBeInTheDocument();
     expect(onDelete).toHaveBeenCalledWith("env-1");
@@ -394,6 +403,12 @@ describe("EnvironmentsPage", () => {
     openMenu("demo-prod");
     fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
     const dialog = await screen.findByRole("alertdialog");
+    fireEvent.change(
+      within(dialog).getByLabelText("Type demo-prod to confirm"),
+      {
+        target: { value: "demo-prod" },
+      },
+    );
     fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
 
     expect(

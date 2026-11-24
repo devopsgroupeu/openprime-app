@@ -47,11 +47,8 @@ export function useUnsavedGuard(dirty) {
         return;
       const url = new URL(anchor.href, window.location.href);
       if (url.origin !== window.location.origin) return;
-      if (
-        url.pathname === window.location.pathname &&
-        url.search === window.location.search
-      )
-        return;
+      // Same page, other ?tab= or filter: the page stays mounted.
+      if (url.pathname === window.location.pathname) return;
       e.preventDefault();
       e.stopPropagation();
       const href = `${url.pathname}${url.search}${url.hash}`;

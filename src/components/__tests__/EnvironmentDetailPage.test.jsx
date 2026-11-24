@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { http, HttpResponse } from "msw";
@@ -6,33 +12,46 @@ import { ThemeProvider } from "../../contexts/ThemeContext";
 import { ToastProvider } from "../../contexts/ToastContext";
 import { AuthProvider } from "../../contexts/AuthContext";
 import EnvironmentDetailPage from "../EnvironmentDetailPage";
-import {
-  StatusBadge,
-  getEffectiveStatus,
-} from "../environment-detail/EnvironmentHeader";
+import { getEffectiveStatus } from "../../utils/environmentStats";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import authService from "../../services/authService";
 import { server } from "../../mocks/server";
 
-// Full-page render: needs Theme (Toast), Toast, Auth, and a router
-// (useParams/useNavigate). In mock mode AuthProvider auto-authenticates.
-function renderDetailPage() {
+// Full-page render: needs Theme (Toast), Toast, Auth, tooltips (the app shell
+// provides them) and a router (useParams/useNavigate). In mock mode
+// AuthProvider auto-authenticates.
+function renderDetailPage({
+  path = "/environments/env-001",
+  onDelete = vi.fn(),
+} = {}) {
   return render(
     <ThemeProvider>
       <ToastProvider>
         <AuthProvider>
-          <MemoryRouter initialEntries={["/environments/env-001"]}>
-            <Routes>
-              <Route
-                path="/environments/:id"
-                element={<EnvironmentDetailPage />}
-              />
-            </Routes>
-          </MemoryRouter>
+          <TooltipProvider>
+            <MemoryRouter initialEntries={[path]}>
+              <Routes>
+                <Route
+                  path="/environments/:id"
+                  element={<EnvironmentDetailPage onDelete={onDelete} />}
+                />
+                <Route
+                  path="/environments"
+                  element={<p>Environments list</p>}
+                />
+              </Routes>
+            </MemoryRouter>
+          </TooltipProvider>
         </AuthProvider>
       </ToastProvider>
     </ThemeProvider>,
   );
 }
+
+// Toasts render in the "Notifications" region; the page may show the same
+// text inline (the job callout).
+const toasts = () => within(screen.getByLabelText("Notifications"));
 
 // jsdom doesn't implement blob URL helpers or anchor navigation; stub them so
 // triggerDownload() (createObjectURL -> a.click()) runs without throwing.
@@ -73,7 +92,7 @@ describe("EnvironmentDetailPage async jobs", () => {
 
     expect(
       await screen.findByText(
-        /Infrastructure repository generated and downloaded successfully/i,
+        /Repository generated and downloaded/i,
         {},
         { timeout: 10000 },
       ),
@@ -102,8 +121,13 @@ describe("EnvironmentDetailPage async jobs", () => {
     );
 
     expect(
-      await screen.findByText("Terraform apply failed"),
+      await toasts().findByText("Terraform apply failed"),
     ).toBeInTheDocument();
+    // The failure also stays on the page, with Try again.
+    expect(
+      screen.getByText("Couldn't generate the repository."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
   });
 
   it("pushes: 202 -> succeeded and shows the result message toast", async () => {
@@ -130,6 +154,146 @@ describe("EnvironmentDetailPage async jobs", () => {
     await waitFor(() =>
       expect(getBlobSpy).toHaveBeenCalledWith("/jobs/job-gen-1/download"),
     );
+  });
+
+  it("disables both job buttons while a job runs and shows its progress", async () => {
+    server.use(
+      http.get("*/jobs/:jobId", ({ params }) =>
+        HttpResponse.json({ id: params.jobId, status: "running" }),
+      ),
+    );
+
+    const { unmount } = renderDetailPage();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Generate repository" }),
+    );
+
+    expect(
+      await screen.findByRole("button", { name: /Generating/ }),
+    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Push to git" })).toBeDisabled();
+    expect(
+      screen.getByText("Generating repository. This can take a few minutes."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Processing")).toBeInTheDocument();
+    unmount();
+  });
+
+  it("shows the last stored failure with Try again", async () => {
+    renderDetailPage({ path: "/environments/env-003" });
+
+    expect(
+      await screen.findByText("Couldn't generate the repository."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/AccessDenied for s3:CreateBucket/),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Failed")).toBeInTheDocument();
+  });
+});
+
+describe("EnvironmentDetailPage tabs", () => {
+  it("renders the tab from ?tab= and marks its link as current", async () => {
+    renderDetailPage({ path: "/environments/env-001?tab=services" });
+
+    const nav = await screen.findByRole("navigation", {
+      name: "Environment sections",
+    });
+    expect(
+      within(nav).getByRole("link", { name: /^Services/ }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      within(nav).getByRole("link", { name: "Overview" }),
+    ).not.toHaveAttribute("aria-current");
+    expect(
+      within(nav).getByRole("link", { name: "Configuration" }),
+    ).toHaveAttribute("href", "/environments/env-001?tab=configuration");
+    expect(
+      screen.getByRole("button", { name: /Expand all/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("falls back to Overview for an unknown tab and hides Helm charts without charts", async () => {
+    renderDetailPage({ path: "/environments/env-003?tab=helm" });
+
+    const nav = await screen.findByRole("navigation", {
+      name: "Environment sections",
+    });
+    expect(within(nav).getByRole("link", { name: "Overview" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(
+      within(nav).queryByRole("link", { name: /Helm charts/ }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("EnvironmentDetailPage delete", () => {
+  it("confirms from the menu and deletes only after the name is typed", async () => {
+    const onDelete = vi.fn(() => Promise.resolve());
+    renderDetailPage({ onDelete });
+
+    fireEvent.pointerDown(
+      await screen.findByRole("button", { name: "More actions for demo-prod" }),
+      { button: 0, ctrlKey: false },
+    );
+    fireEvent.click(
+      await screen.findByRole("menuitem", { name: "Delete environment" }),
+    );
+
+    const dialog = await screen.findByRole("alertdialog");
+    expect(within(dialog).getByText('Delete "demo-prod"?')).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(
+        /Terraform state bucket and code already pushed/,
+      ),
+    ).toBeInTheDocument();
+    const confirm = within(dialog).getByRole("button", { name: "Delete" });
+    expect(confirm).toBeDisabled();
+    fireEvent.click(confirm);
+    expect(onDelete).not.toHaveBeenCalled();
+
+    fireEvent.change(
+      within(dialog).getByLabelText("Type demo-prod to confirm"),
+      {
+        target: { value: "demo-prod" },
+      },
+    );
+    fireEvent.click(confirm);
+
+    await waitFor(() => expect(onDelete).toHaveBeenCalledWith("env-001"));
+    expect(await screen.findByText("Environments list")).toBeInTheDocument();
+    expect(toasts().getByText("Deleted demo-prod.")).toBeInTheDocument();
+  });
+
+  it("toasts a failed delete and stays on the page", async () => {
+    const onDelete = vi.fn(() => Promise.reject(new Error("Server said no")));
+    renderDetailPage({ onDelete });
+
+    fireEvent.pointerDown(
+      await screen.findByRole("button", { name: "More actions for demo-prod" }),
+      { button: 0, ctrlKey: false },
+    );
+    fireEvent.click(
+      await screen.findByRole("menuitem", { name: "Delete environment" }),
+    );
+    const dialog = await screen.findByRole("alertdialog");
+    fireEvent.change(
+      within(dialog).getByLabelText("Type demo-prod to confirm"),
+      {
+        target: { value: "demo-prod" },
+      },
+    );
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    expect(
+      await toasts().findByText("Couldn't delete demo-prod"),
+    ).toBeInTheDocument();
+    expect(toasts().getByText("Server said no")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "demo-prod" }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -179,7 +343,7 @@ describe("StatusBadge", () => {
         })}
       />,
     );
-    expect(screen.getByText("succeeded")).toBeInTheDocument();
+    expect(screen.getByText("Ready")).toBeInTheDocument();
 
     rerender(
       <StatusBadge
@@ -189,13 +353,12 @@ describe("StatusBadge", () => {
         })}
       />,
     );
-    expect(screen.getByText("failed")).toBeInTheDocument();
+    expect(screen.getByText("Failed")).toBeInTheDocument();
 
     rerender(
-      // "stopped" is not in STATUS_STYLES — falls back to pending style,
-      // but the badge still renders the status text.
+      // A lifecycle status without a job outcome still renders its label.
       <StatusBadge status={getEffectiveStatus({ status: "stopped" })} />,
     );
-    expect(screen.getByText("stopped")).toBeInTheDocument();
+    expect(screen.getByText("Stopped")).toBeInTheDocument();
   });
 });
