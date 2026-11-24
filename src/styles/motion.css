@@ -1,0 +1,161 @@
+/* Motion tokens and overrides (openprime-ai-aws/apps/web/app/motion.css);
+   only transform and opacity animate. */
+
+:root {
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 240ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Page entrance: once per route mount, <= 240 ms. */
+.motion-enter {
+  animation: motion-enter var(--dur-slow) var(--ease-out)
+    var(--motion-enter-delay, 0s) both;
+}
+
+/* List stagger: 30 ms steps, capped at 150 ms total. */
+.motion-stagger > *:nth-child(1) {
+  --motion-enter-delay: 0s;
+}
+.motion-stagger > *:nth-child(2) {
+  --motion-enter-delay: 30ms;
+}
+.motion-stagger > *:nth-child(3) {
+  --motion-enter-delay: 60ms;
+}
+.motion-stagger > *:nth-child(4) {
+  --motion-enter-delay: 90ms;
+}
+.motion-stagger > *:nth-child(5) {
+  --motion-enter-delay: 120ms;
+}
+.motion-stagger > *:nth-child(6) {
+  --motion-enter-delay: 150ms;
+}
+.motion-stagger > *:nth-child(n + 7) {
+  --motion-enter-delay: 150ms;
+}
+
+/* Popover, menu, tooltip, hover card, select: fade + small translate. */
+:is(
+  [data-slot="popover-content"],
+  [data-slot="dropdown-menu-content"],
+  [data-slot="dropdown-menu-sub-content"],
+  [data-slot="tooltip-content"],
+  [data-slot="hover-card-content"],
+  [data-slot="select-content"]
+) {
+  --tw-enter-scale: 1;
+  --tw-exit-scale: 1;
+  animation-timing-function: var(--ease-out);
+}
+:is(
+  [data-slot="popover-content"],
+  [data-slot="dropdown-menu-content"],
+  [data-slot="dropdown-menu-sub-content"],
+  [data-slot="tooltip-content"],
+  [data-slot="hover-card-content"],
+  [data-slot="select-content"]
+)[data-state="open"] {
+  animation-duration: var(--dur-fast);
+}
+:is(
+  [data-slot="popover-content"],
+  [data-slot="dropdown-menu-content"],
+  [data-slot="dropdown-menu-sub-content"],
+  [data-slot="tooltip-content"],
+  [data-slot="hover-card-content"],
+  [data-slot="select-content"]
+)[data-state="closed"] {
+  animation-duration: 90ms;
+}
+
+/* Dialog and alert dialog: fade + scale 0.98 -> 1. */
+:is([data-slot="dialog-content"], [data-slot="alert-dialog-content"]) {
+  --tw-enter-scale: 0.98;
+  --tw-exit-scale: 0.98;
+  animation-timing-function: var(--ease-out);
+}
+:is(
+  [data-slot="dialog-content"],
+  [data-slot="alert-dialog-content"]
+)[data-state="open"],
+:is(
+  [data-slot="dialog-overlay"],
+  [data-slot="alert-dialog-overlay"]
+)[data-state="open"] {
+  animation-duration: var(--dur-base);
+}
+:is(
+  [data-slot="dialog-content"],
+  [data-slot="alert-dialog-content"]
+)[data-state="closed"],
+:is(
+  [data-slot="dialog-overlay"],
+  [data-slot="alert-dialog-overlay"]
+)[data-state="closed"] {
+  animation-duration: 135ms;
+}
+
+/* Sheet: slide, enter 240 ms, exit 180 ms. */
+[data-slot="sheet-content"] {
+  animation-timing-function: var(--ease-out);
+}
+[data-slot="sheet-content"][data-state="open"],
+[data-slot="sheet-overlay"][data-state="open"] {
+  animation-duration: var(--dur-slow);
+}
+[data-slot="sheet-content"][data-state="closed"],
+[data-slot="sheet-overlay"][data-state="closed"] {
+  animation-duration: 180ms;
+}
+
+/* eslint-disable css/no-important -- reduced motion must beat the
+   animation and transition utilities. */
+/* Reduced motion (OS setting or the Preferences override `data-motion="reduce"` on <html>):
+   entrance, slide and scale become a plain fade of --dur-fast; spinners stay. */
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion="full"])
+    :is([data-state="open"], [data-state="closed"]) {
+    --tw-enter-scale: 1;
+    --tw-exit-scale: 1;
+    --tw-enter-translate-x: 0;
+    --tw-enter-translate-y: 0;
+    --tw-exit-translate-x: 0;
+    --tw-exit-translate-y: 0;
+    animation-duration: var(--dur-fast) !important;
+  }
+  html:not([data-motion="full"]) .motion-enter {
+    animation: motion-fade var(--dur-fast) linear both;
+  }
+}
+html[data-motion="reduce"] :is([data-state="open"], [data-state="closed"]) {
+  --tw-enter-scale: 1;
+  --tw-exit-scale: 1;
+  --tw-enter-translate-x: 0;
+  --tw-enter-translate-y: 0;
+  --tw-exit-translate-x: 0;
+  --tw-exit-translate-y: 0;
+  animation-duration: var(--dur-fast) !important;
+}
+html[data-motion="reduce"] .motion-enter {
+  animation: motion-fade var(--dur-fast) linear both;
+}
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  transition-duration: var(--dur-fast) !important;
+}
+
+/* eslint-enable css/no-important */
+
+@keyframes motion-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

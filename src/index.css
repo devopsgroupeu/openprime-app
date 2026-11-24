@@ -1,7 +1,9 @@
 /* src/index.css */
-/* Design tokens from openprime-ai (apps/frontend/app/globals.css), minus the
-   Next-only lines (streamdown @source, typography plugin, next/font vars).
-   Inter and JetBrains Mono are self-hosted via @fontsource in src/index.jsx. */
+/* Design tokens from openprime-ai (openprime-ai-aws/apps/web/app/globals.css),
+   minus the Next-only and chat-only lines (streamdown @source and re-theme,
+   typography plugin, next/font vars, Shiki). Inter and JetBrains Mono are
+   self-hosted via @fontsource in src/index.jsx. motion.css and ui-tokens.css
+   are imported after this file, in R's order (src/index.jsx). */
 
 /* Utilities stay unlayered, as in v3: the unlayered legacy element rules
    (label, h1-h3, inputs) must keep losing to utility classes by specificity
@@ -23,59 +25,58 @@
   }
 }
 
+/* Color system: one cool neutral ramp; AA pairs are asserted by
+   src/styles/__tests__/tokens-contrast.test.js. */
 :root {
-  /* Neutral, "modern enterprise" surface. Neutrals are near-grey, warmed by a
-     whisper toward the brand teal-green hue (OKLCH H~175, chroma <=0.016) so
-     there is NO blue cast and no green text. Brand identity (Restrained) lives
-     only in: teal --primary / --ring, and the deep-green --sidebar. */
-  --background: oklch(0.985 0.004 175);
-  --foreground: oklch(0.255 0.011 175);
-  --card: oklch(0.998 0.002 175);
-  --card-foreground: oklch(0.255 0.011 175);
-  --popover: oklch(0.998 0.002 175);
-  --popover-foreground: oklch(0.255 0.011 175);
-  /* Brand teal. Light mode uses a darkened #0d7a6a so white text on the primary
-     button and teal-as-text links clear WCAG AA (4.5:1); dark mode and the
-     decorative accents keep the bright brand #35b0a0. */
-  --primary: #0d7a6a;
+  --background: oklch(0.982 0.002 264);
+  --foreground: oklch(0.215 0.006 264);
+  --card: #ffffff;
+  --card-foreground: oklch(0.215 0.006 264);
+  --popover: #ffffff;
+  --popover-foreground: oklch(0.215 0.006 264);
+  /* Brand scale shade #1e7366: white on it and teal link text both clear 4.5:1. The bright
+     brand #35b0a0 gives only 2.67:1 with white, so it is the dark-theme primary only. */
+  --primary: #1e7366;
   --primary-foreground: #ffffff;
-  --secondary: oklch(0.965 0.006 175);
-  --secondary-foreground: oklch(0.31 0.012 175);
-  --muted: oklch(0.97 0.005 175);
-  --muted-foreground: oklch(0.52 0.009 175);
-  --accent: oklch(0.955 0.007 175);
-  /* Neutral (was teal #35b0a0) - this is the hover/selected text colour across
-     menus, dropdowns and lists; keeping it neutral removes the "green text". */
-  --accent-foreground: oklch(0.31 0.012 175);
-  /* Red-600, not the raw red-500, so white-on-destructive and
-     destructive-as-text clear WCAG AA on --background. */
+  --secondary: oklch(0.962 0.003 264);
+  --secondary-foreground: oklch(0.275 0.006 264);
+  --muted: oklch(0.962 0.003 264);
+  --muted-foreground: oklch(0.51 0.008 264);
+  --accent: oklch(0.945 0.004 264);
+  --accent-foreground: oklch(0.215 0.006 264);
+  /* Red-600: white on it and destructive text both clear 4.5:1. */
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: oklch(0.922 0.006 175);
-  /* Decoupled from --border: --input is the only thing marking an input
-     boundary, so it needs 3:1 against --background (WCAG 1.4.11). */
-  --input: oklch(0.64 0.006 175);
-  /* Same darkened teal as --primary so the focus ring clears 3:1. */
-  --ring: #0d7a6a;
-  /* Categorical chart palette; used only in charts, not as UI surface colour. */
-  --chart-1: #35b0a0;
-  --chart-2: #00e081;
-  --chart-3: #60efff;
-  --chart-4: #9247ff;
-  --chart-5: #ffa02b;
-  /* Sidebar = the deep-green brand surface. Identical in light + dark. */
+  --border: oklch(0.912 0.005 264);
+  /* Field boundary, decoupled from the quiet --border hairline: --input is the only thing
+     marking an input, textarea, select or checkbox, so WCAG 1.4.11 wants 3:1 against the
+     page, card and popover. */
+  --input: oklch(0.64 0.008 264);
+  /* Focus ring = --primary (3:1 non-text floor, WCAG 1.4.11 / 2.4.13); the recipes paint it
+     at full opacity. Controls on the sidebar use --sidebar-ring. */
+  --ring: #1e7366;
+  /* Categorical data palette (charts, resource tiles `bg-chart-N/15 text-chart-N`).
+     chart-1 is a brand teal shade. Each is >= 3:1 on page, card and its own 15 % tile. */
+  --chart-1: #268a7d;
+  --chart-2: #047857;
+  --chart-3: #0369a1;
+  --chart-4: #6d28d9;
+  --chart-5: #c2410c;
+  /* Sidebar = the deep-green brand surface in both themes; teal primary takes green text. */
   --sidebar: #04312c;
   --sidebar-foreground: #f8fafa;
   --sidebar-primary: #35b0a0;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #0a3e38;
+  --sidebar-primary-foreground: #04312c;
+  --sidebar-accent: #13463f;
   --sidebar-accent-foreground: #f8fafa;
   --sidebar-border: #0a3e38;
   --sidebar-ring: #35b0a0;
+  /* Self-hosted via @fontsource in src/index.jsx (CSP font-src 'self'). */
   --font-sans: "Inter Variable", Inter, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono Variable", monospace;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", monospace;
   --radius: 0.5rem;
-  /* Elevation ramp: each tier is a distinct offset+blur step. */
+  /* Elevation ramp: each tier is a distinct offset+blur step, not the same
+     10px glow at a different alpha, so card < popover < dialog reads. */
   --shadow-2xs: 0px 1px 1px 0px hsl(0 0 0 / 0.03);
   --shadow-xs: 0px 1px 2px 0px hsl(0 0 0 / 0.04);
   --shadow-sm:
@@ -91,41 +92,49 @@
 }
 
 .dark {
-  /* Neutral enterprise dark - a charcoal ramp with only a whisper of the brand
-     teal-green hue. Cards/popovers sit one step lighter than the canvas. */
-  --background: oklch(0.178 0.005 175);
-  --foreground: oklch(0.955 0.004 175);
-  --card: oklch(0.215 0.006 175);
-  --card-foreground: oklch(0.955 0.004 175);
-  --popover: oklch(0.215 0.006 175);
-  --popover-foreground: oklch(0.955 0.004 175);
+  /* Cool charcoal ramp with visible elevation steps (page #18191c, card #232426, popover
+     #292a2d, hover #38393c), in line with the reference app's dark greys. */
+  --background: oklch(0.215 0.005 264);
+  --foreground: oklch(0.945 0.003 264);
+  --card: oklch(0.26 0.005 264);
+  --card-foreground: oklch(0.945 0.003 264);
+  --popover: oklch(0.285 0.005 264);
+  --popover-foreground: oklch(0.945 0.003 264);
+  /* The bright brand teal, with the deep brand green as its text. */
   --primary: #35b0a0;
   --primary-foreground: #04312c;
-  --secondary: oklch(0.265 0.006 175);
-  --secondary-foreground: oklch(0.955 0.004 175);
-  --muted: oklch(0.235 0.006 175);
-  --muted-foreground: oklch(0.705 0.008 175);
-  --accent: oklch(0.29 0.007 175);
-  --accent-foreground: oklch(0.97 0.004 175);
-  --destructive: #ef4444;
+  --secondary: oklch(0.305 0.005 264);
+  --secondary-foreground: oklch(0.945 0.003 264);
+  --muted: oklch(0.3 0.005 264);
+  --muted-foreground: oklch(0.73 0.006 264);
+  --accent: oklch(0.345 0.006 264);
+  --accent-foreground: oklch(0.965 0.003 264);
+  /* Red-400, so destructive text clears 4.5:1 on popover menus too. The dark destructive
+     button is a tint with light text (button variant), so --destructive-foreground stays
+     light; a solid bg-destructive with it is not an AA pair in dark. */
+  --destructive: #f87171;
   --destructive-foreground: #f8fafc;
-  --border: oklch(0.3 0.007 175);
-  --input: oklch(0.5 0.007 175);
+  --border: oklch(0.335 0.006 264);
+  --input: oklch(0.57 0.008 264);
   --ring: #35b0a0;
   --chart-1: #35b0a0;
-  --chart-2: #00e081;
-  --chart-3: #60efff;
-  --chart-4: #9247ff;
-  --chart-5: #ffa02b;
-  --sidebar: #04312c;
+  --chart-2: #34d399;
+  --chart-3: #38bdf8;
+  --chart-4: #a78bfa;
+  --chart-5: #fb923c;
+  /* Deep brand green adjusted for a dark page: a touch deeper than the light sidebar so it
+     does not glow next to the charcoal canvas, still clearly green, never grey. */
+  --sidebar: #052823;
   --sidebar-foreground: #f8fafa;
   --sidebar-primary: #35b0a0;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #0a3e38;
+  --sidebar-primary-foreground: #04312c;
+  --sidebar-accent: #133d37;
   --sidebar-accent-foreground: #f8fafa;
-  --sidebar-border: #0a3e38;
+  --sidebar-border: #0b332e;
   --sidebar-ring: #35b0a0;
-  /* Same geometry as light, hotter alphas for the charcoal ground. */
+  --radius: 0.5rem;
+  /* Same geometry as light, hotter alphas: on a charcoal ground a shadow needs
+     more opacity to be seen at all. No 25px halo on every card. */
   --shadow-2xs: 0px 1px 1px 0px hsl(0 0 0 / 0.16);
   --shadow-xs: 0px 1px 2px 0px hsl(0 0 0 / 0.2);
   --shadow-sm:
@@ -198,7 +207,8 @@
 }
 
 /* `html, body { h-full overflow-hidden }` from openprime-ai is left out: the
-   current layout scrolls the document, not an inner PageShell column. */
+   shell owns its scroller, but the wizard and the edge pages outside it still
+   scroll the document. */
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -245,3 +255,44 @@
     scrollbar-color: var(--sidebar-border) transparent;
   }
 }
+
+/* Entrance motion: the keyframes behind .motion-enter (motion.css sets its
+   timing and the list stagger). */
+@keyframes motion-enter {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+  to {
+    opacity: 1;
+    translate: none;
+  }
+}
+
+/* Reduced motion (WCAG 2.3.3): decorative animations and transitions become
+   near-instant; spinners keep turning; motion.css turns entrances into a
+   fade. */
+/* eslint-disable css/no-important -- reduced motion must beat every
+   animation and transition utility. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-spin {
+    animation-duration: 1.2s !important;
+    animation-iteration-count: infinite !important;
+  }
+
+  /* The global rule above clamps duration but not the stagger delay, which
+   * would leave items invisible; drop the entrance entirely instead. */
+  .motion-enter {
+    animation: none;
+  }
+}
+/* eslint-enable css/no-important */

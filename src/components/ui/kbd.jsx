@@ -7,7 +7,8 @@ function Kbd({ className, ...props }) {
       className={cn(
         "pointer-events-none inline-flex h-5 w-fit min-w-5 items-center justify-center gap-1 rounded-sm bg-muted px-1 font-sans text-xs font-medium text-muted-foreground select-none",
         "[&_svg:not([class*='size-'])]:size-3",
-        "[[data-slot=tooltip-content]_&]:bg-background/20 [[data-slot=tooltip-content]_&]:text-background dark:[[data-slot=tooltip-content]_&]:bg-background/10",
+        // Inside a tooltip (4.28): h-4.5 chip on bg-background/15.
+        "[[data-slot=tooltip-content]_&]:h-4.5 [[data-slot=tooltip-content]_&]:min-w-4.5 [[data-slot=tooltip-content]_&]:bg-background/15 [[data-slot=tooltip-content]_&]:font-semibold [[data-slot=tooltip-content]_&]:text-background",
         className,
       )}
       {...props}
