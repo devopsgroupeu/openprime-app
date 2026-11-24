@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, useLocation } from "react-router";
 import { ChevronLeft, Layers, Plus, Search } from "lucide-react";
 import {
@@ -12,6 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { version } from "../../../package.json";
 import logoInverse from "../../assets/openprime-logo-color-inverse.svg";
@@ -21,10 +23,17 @@ import { MOD_KEY } from "./CommandPalette";
 import UserMenu from "./UserMenu";
 
 function NavItem({ to, icon: Icon, label, active }) {
+  const { setOpenMobile } = useSidebar();
   return (
     <SidebarMenuItem>
       <SidebarMenuButton tooltip={label} isActive={active} asChild>
-        <Link to={to} aria-current={active ? "page" : undefined}>
+        <Link
+          to={to}
+          aria-current={active ? "page" : undefined}
+          // Also covers tapping the current page, where the route (and the
+          // effect in AppSidebar) does not change.
+          onClick={() => setOpenMobile(false)}
+        >
           <Icon />
           <span>{label}</span>
         </Link>
@@ -115,7 +124,19 @@ function SettingsNav({ pathname }) {
  */
 export default function AppSidebar({ onSearch }) {
   const { pathname } = useLocation();
+  const { setOpenMobile } = useSidebar();
   const inSettings = pathname.startsWith("/settings");
+
+  // The mobile Sheet must not keep covering the page after any navigation,
+  // including the ones started from the user menu.
+  useEffect(() => {
+    setOpenMobile(false);
+  }, [pathname, setOpenMobile]);
+
+  const openSearch = () => {
+    setOpenMobile(false);
+    onSearch();
+  };
 
   return (
     <Sidebar variant="inset" collapsible="icon" className="border-r-0">
@@ -141,7 +162,7 @@ export default function AppSidebar({ onSearch }) {
         {inSettings ? (
           <SettingsNav pathname={pathname} />
         ) : (
-          <MainNav pathname={pathname} onSearch={onSearch} />
+          <MainNav pathname={pathname} onSearch={openSearch} />
         )}
       </SidebarContent>
       <SidebarFooter className="p-3">
