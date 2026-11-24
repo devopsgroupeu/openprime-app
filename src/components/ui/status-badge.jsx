@@ -1,7 +1,7 @@
-import { Badge } from "@/components/ui/badge";
+import { StatusPill } from "@/components/shared/badges";
 
-// Status -> tone. Tones map onto the tokenized Badge variants, never raw
-// palette colours, so status pills stay on theme in light and dark mode.
+// Environment/job status -> tone -> the shared status pill that draws it
+// (success check, in-flight spinner, error alert, plain neutral).
 const STATUS_TONE = {
   running: "success",
   succeeded: "success",
@@ -13,28 +13,24 @@ const STATUS_TONE = {
   queued: "warning",
 };
 
-const TONE_VARIANT = {
-  success: "default",
-  warning: "secondary",
-  destructive: "destructive",
-  neutral: "outline",
+const TONE_PILL = {
+  success: "ready",
+  warning: "processing",
+  destructive: "couldntConnect",
+  neutral: "invited",
 };
 
 const label = (status) =>
   status ? status.charAt(0).toUpperCase() + status.slice(1) : "Unknown";
 
-/** StatusBadge - the one environment/job status pill. */
+/** StatusBadge - the one environment/job status pill (thin wrapper over StatusPill). */
 export function StatusBadge({ status }) {
   const tone = STATUS_TONE[status] ?? "neutral";
   return (
-    <Badge variant={TONE_VARIANT[tone]} data-tone={tone}>
-      {tone === "warning" && (
-        <span
-          aria-hidden="true"
-          className="size-1.5 animate-pulse rounded-full bg-current"
-        />
-      )}
-      {label(status)}
-    </Badge>
+    <StatusPill
+      status={TONE_PILL[tone]}
+      label={label(status)}
+      data-tone={tone}
+    />
   );
 }
