@@ -131,8 +131,7 @@ function TabNav({ tabs, active, basePath }) {
   );
 }
 
-const EnvironmentDetailPage = ({ onDelete }) => {
-  const { id } = useParams();
+function EnvironmentDetail({ id, onDelete }) {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const toast = useToast();
@@ -223,18 +222,23 @@ const EnvironmentDetailPage = ({ onDelete }) => {
     ? requested
     : "overview";
 
-  // Mirrors the backend (jobService.persistOutcome + the lifecycle status), so
-  // the badge and the failure callout follow the job without a refetch.
-  const recordOutcome = (kind, status, error = null) =>
-    setEnvironment((env) => ({
-      ...env,
-      status: status === "succeeded" ? "running" : "failed",
-      [`last_${kind}_at`]: new Date().toISOString(),
-      [`last_${kind}_status`]: status,
-      [`last_${kind}_error`]: error,
-    }));
-
   const runJob = async (kind) => {
+    const jobEnvironmentId = environment.id;
+    // Mirrors the backend (jobService.persistOutcome + the lifecycle status),
+    // so the badge and the failure callout follow the job without a refetch.
+    // Only onto the environment the job ran on.
+    const recordOutcome = (status, error = null) =>
+      setEnvironment((env) =>
+        env?.id === jobEnvironmentId
+          ? {
+              ...env,
+              status: status === "succeeded" ? "running" : "failed",
+              [`last_${kind}_at`]: new Date().toISOString(),
+              [`last_${kind}_status`]: status,
+              [`last_${kind}_error`]: error,
+            }
+          : env,
+      );
     setJob({ kind, startedAt: Date.now() });
     try {
       const { jobId } = await authService.post(
@@ -244,7 +248,7 @@ const EnvironmentDetailPage = ({ onDelete }) => {
       );
       const result = await pollJob(jobId, mountedRef);
       if (result === null) return;
-      recordOutcome(kind, "succeeded");
+      recordOutcome("succeeded");
       if (kind === "generate") {
         if (!result.result?.downloadUrl) {
           throw new Error("Generated artifact is not available");
@@ -265,7 +269,7 @@ const EnvironmentDetailPage = ({ onDelete }) => {
       toast.error(`${message || FAILED[kind]}${errorId}`);
       if (err.jobFailed) {
         // The callout reads the stored outcome, as after a reload.
-        recordOutcome(kind, "failed", message);
+        recordOutcome("failed", message);
         setJob(null);
       } else {
         setJob({ kind, error: { message, requestId: err.requestId } });
@@ -377,6 +381,13 @@ const EnvironmentDetailPage = ({ onDelete }) => {
       </AlertDialog>
     </PageShell>
   );
+}
+
+// One instance per environment: a job, its polling and its outcome end with
+// the page of the environment they ran on (the route element is reused).
+const EnvironmentDetailPage = ({ onDelete }) => {
+  const { id } = useParams();
+  return <EnvironmentDetail key={id} id={id} onDelete={onDelete} />;
 };
 
 export default EnvironmentDetailPage;

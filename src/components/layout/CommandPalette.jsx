@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { guardedNavigate } from "@/components/shared/save-bar";
 import { keyLabels, shortcut } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -67,18 +68,21 @@ export default function CommandPalette({
     setOpen(false);
     command();
   };
+  // Leaving goes through the page's leave guard (unsaved settings, a running
+  // generate job) like a link click does.
+  const go = (to, options) => guardedNavigate(() => navigate(to, options));
 
   const quickActions = [
     {
       label: "New environment",
       icon: Plus,
-      onSelect: () => navigate("/environments/create"),
+      onSelect: () => go("/environments/create"),
     },
     {
       label: "Add AWS credentials",
       icon: KeyRound,
       onSelect: () =>
-        navigate("/settings/cloud-credentials", {
+        go("/settings/cloud-credentials", {
           state: { addCredential: true },
         }),
     },
@@ -140,9 +144,7 @@ export default function CommandPalette({
                   <CommandItem
                     key={env.id}
                     value={`${env.name} ${env.globalPrefix || env.global_prefix || ""} ${env.region ?? ""} ${env.id}`}
-                    onSelect={() =>
-                      run(() => navigate(`/environments/${env.id}`))
-                    }
+                    onSelect={() => run(() => go(`/environments/${env.id}`))}
                   >
                     <span
                       aria-hidden="true"
@@ -169,7 +171,7 @@ export default function CommandPalette({
                 <CommandItem
                   key={to}
                   value={`Go to ${label}`}
-                  onSelect={() => run(() => navigate(to))}
+                  onSelect={() => run(() => go(to))}
                 >
                   <Icon aria-hidden />
                   {label}

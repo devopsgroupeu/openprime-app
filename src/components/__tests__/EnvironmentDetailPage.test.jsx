@@ -5,13 +5,21 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { MemoryRouter, Routes, Route } from "react-router";
+import { useState } from "react";
+import {
+  MemoryRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+} from "react-router";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { http, HttpResponse } from "msw";
 import { ThemeProvider } from "../../contexts/ThemeContext";
 import { ToastProvider } from "../../contexts/ToastContext";
 import { AuthProvider } from "../../contexts/AuthContext";
 import EnvironmentDetailPage from "../EnvironmentDetailPage";
+import CommandPalette from "../layout/CommandPalette";
 import { getEffectiveStatus } from "../../utils/environmentStats";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,9 +29,11 @@ import { server } from "../../mocks/server";
 // Full-page render: needs Theme (Toast), Toast, Auth, tooltips (the app shell
 // provides them) and a router (useParams/useNavigate). In mock mode
 // AuthProvider auto-authenticates.
+// `shell` renders next to the routes, inside the router (palette, probes).
 function renderDetailPage({
   path = "/environments/env-001",
   onDelete = vi.fn(),
+  shell = null,
 } = {}) {
   return render(
     <ThemeProvider>
@@ -31,6 +41,7 @@ function renderDetailPage({
         <AuthProvider>
           <TooltipProvider>
             <MemoryRouter initialEntries={[path]}>
+              {shell}
               <Routes>
                 <Route
                   path="/environments/:id"
@@ -190,6 +201,107 @@ describe("EnvironmentDetailPage async jobs", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Failed")).toBeInTheDocument();
   });
+});
+
+// The current path, and a plain (unguarded) navigation, as the shell would do.
+function Shell({ palette = false }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <output aria-label="Path">{location.pathname}</output>
+      <button type="button" onClick={() => navigate("/environments/env-002")}>
+        Open demo-staging
+      </button>
+      {palette ? (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Open palette
+          </button>
+          <CommandPalette
+            open={open}
+            onOpenChange={setOpen}
+            onShortcuts={() => {}}
+            environments={[]}
+          />
+        </>
+      ) : null}
+    </>
+  );
+}
+
+describe("EnvironmentDetailPage leaving during a job", () => {
+  it("asks before the command palette leaves a generating page", async () => {
+    server.use(
+      http.get("*/jobs/:jobId", ({ params }) =>
+        HttpResponse.json({ id: params.jobId, status: "running" }),
+      ),
+    );
+    const { unmount } = renderDetailPage({ shell: <Shell palette /> });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Generate repository" }),
+    );
+    await screen.findByRole("button", { name: /Generating/ });
+
+    fireEvent.click(screen.getByRole("button", { name: "Open palette" }));
+    fireEvent.click(
+      await screen.findByRole("option", { name: "Environments" }),
+    );
+
+    const prompt = await screen.findByRole("alertdialog");
+    expect(within(prompt).getByText("Leave this page?")).toBeInTheDocument();
+    expect(screen.getByLabelText("Path")).toHaveTextContent(
+      "/environments/env-001",
+    );
+    fireEvent.click(within(prompt).getByRole("button", { name: "Leave" }));
+    await waitFor(() =>
+      expect(screen.getByLabelText("Path")).toHaveTextContent(
+        /^\/environments$/,
+      ),
+    );
+    unmount();
+  });
+
+  it("keeps a job and its outcome on the environment it ran on", async () => {
+    let finished = false;
+    server.use(
+      http.get("*/jobs/:jobId", ({ params }) =>
+        HttpResponse.json(
+          finished
+            ? {
+                id: params.jobId,
+                status: "failed",
+                error: "Push of demo-prod failed",
+              }
+            : { id: params.jobId, status: "running" },
+        ),
+      ),
+    );
+    renderDetailPage({ shell: <Shell /> });
+    fireEvent.click(await screen.findByRole("button", { name: "Push to git" }));
+    await screen.findByRole("button", { name: /Pushing/ });
+
+    // Push has no leave guard: go straight to another environment.
+    fireEvent.click(screen.getByRole("button", { name: "Open demo-staging" }));
+    expect(
+      await screen.findByRole("heading", { name: "demo-staging" }),
+    ).toBeInTheDocument();
+    finished = true;
+    // Longer than the first poll interval (2 s): demo-prod's job would answer.
+    await new Promise((resolve) => setTimeout(resolve, 2600));
+
+    expect(screen.getByText("Not generated")).toBeInTheDocument();
+    expect(screen.queryByText("Processing")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Pushing/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Push of demo-prod failed/),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Couldn't push to git.")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Generate repository" }),
+    ).toBeEnabled();
+  }, 10000);
 });
 
 describe("EnvironmentDetailPage tabs", () => {
