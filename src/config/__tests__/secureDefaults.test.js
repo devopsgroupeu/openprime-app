@@ -63,3 +63,18 @@ describe("the fields exist at all", () => {
     expect(field(service, name)).toBeDefined();
   });
 });
+
+describe("generated infrastructure is secure by default", () => {
+  // Same reason as above: the gate's fixtures set these params by hand, so a
+  // regression in the wizard default would pass the templates gate clean.
+  it.each([
+    ["vpc", "enableFlowLogs", true],
+    ["sns", "enableEncryption", true],
+    ["sqs", "createDeadLetterQueue", true],
+    ["rds", "deleteAutomatedBackups", false],
+    ["eks", "enableClusterCreatorAdminPermissions", false],
+  ])("%s.%s defaults to %s", (service, name, expected) => {
+    expect(field(service, name)).toBeDefined();
+    expect(field(service, name)?.defaultValue).toBe(expected);
+  });
+});

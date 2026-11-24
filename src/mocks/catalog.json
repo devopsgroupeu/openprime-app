@@ -257,7 +257,7 @@
           "path": "services.vpc.enableFlowLogs",
           "tfVar": "enable_flow_logs",
           "valueType": "boolean",
-          "defaultValue": false,
+          "defaultValue": true,
           "file": "/Users/reibek/Code/DevOpsGroup/customers/[OP] OpenPrime/openprime-infra-templates/templates/terraform/aws/terraform.auto.tfvars",
           "line": 45,
           "displayName": "VPC Flow Logs",
@@ -339,7 +339,7 @@
           "path": "services.eks.enableClusterCreatorAdminPermissions",
           "tfVar": "enable_cluster_creator_admin_permissions",
           "valueType": "boolean",
-          "defaultValue": true,
+          "defaultValue": false,
           "file": "/Users/reibek/Code/DevOpsGroup/customers/[OP] OpenPrime/openprime-infra-templates/templates/terraform/aws/terraform.auto.tfvars",
           "line": 55,
           "displayName": "Cluster Creator Admin",
@@ -1165,7 +1165,7 @@
           "path": "services.rds.deleteAutomatedBackups",
           "tfVar": "rds_delete_automated_backups",
           "valueType": "boolean",
-          "defaultValue": true,
+          "defaultValue": false,
           "file": "/Users/reibek/Code/DevOpsGroup/customers/[OP] OpenPrime/openprime-infra-templates/templates/terraform/aws/terraform.auto.tfvars",
           "line": 171,
           "displayName": "Delete Automated Backups",
@@ -1746,28 +1746,6 @@
           "description": "Create domain access policy",
           "type": "toggle"
         },
-        "ipAddressType": {
-          "name": "ipAddressType",
-          "path": "services.opensearch.ipAddressType",
-          "tfVar": "opensearch_ip_address_type",
-          "valueType": "string",
-          "defaultValue": "dualstack",
-          "file": "/Users/reibek/Code/DevOpsGroup/customers/[OP] OpenPrime/openprime-infra-templates/templates/terraform/aws/terraform.auto.tfvars",
-          "line": 247,
-          "displayName": "IP Address Type",
-          "description": "IP address type for the domain",
-          "type": "dropdown",
-          "options": [
-            {
-              "value": "ipv4",
-              "label": "IPv4 only"
-            },
-            {
-              "value": "dualstack",
-              "label": "IPv4 and IPv6 (Dual Stack)"
-            }
-          ]
-        },
         "allowExplicitIndex": {
           "name": "allowExplicitIndex",
           "path": "services.opensearch.allowExplicitIndex",
@@ -1883,20 +1861,6 @@
               "label": "r7g.large - 13.07GB (Latest Graviton)"
             }
           ]
-        },
-        "numCacheNodes": {
-          "name": "numCacheNodes",
-          "path": "services.elasticache.numCacheNodes",
-          "tfVar": "elasticache_num_cache_nodes",
-          "valueType": "number",
-          "defaultValue": 1,
-          "file": "/Users/reibek/Code/DevOpsGroup/customers/[OP] OpenPrime/openprime-infra-templates/templates/terraform/aws/terraform.auto.tfvars",
-          "line": 263,
-          "displayName": "Number of Cache Nodes",
-          "description": "Number of cache nodes in the cluster",
-          "type": "number",
-          "min": "1",
-          "max": "20"
         },
         "parameterGroupFamily": {
           "name": "parameterGroupFamily",
@@ -2506,7 +2470,7 @@
           "path": "services.sqs.createDeadLetterQueue",
           "tfVar": "sqs_create_dlq",
           "valueType": "boolean",
-          "defaultValue": false,
+          "defaultValue": true,
           "file": "/Users/reibek/Code/DevOpsGroup/customers/[OP] OpenPrime/openprime-infra-templates/templates/terraform/aws/terraform.auto.tfvars",
           "line": 369,
           "displayName": "Dead Letter Queue",
@@ -2600,7 +2564,7 @@
           "path": "services.sns.enableEncryption",
           "tfVar": "sns_enable_encryption",
           "valueType": "boolean",
-          "defaultValue": false,
+          "defaultValue": true,
           "file": "/Users/reibek/Code/DevOpsGroup/customers/[OP] OpenPrime/openprime-infra-templates/templates/terraform/aws/terraform.auto.tfvars",
           "line": 387,
           "displayName": "Enable Encryption",
