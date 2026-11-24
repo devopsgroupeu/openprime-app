@@ -3,6 +3,7 @@ import {
   fireEvent,
   render as rtlRender,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -171,6 +172,27 @@ describe("SshKeyTabs", () => {
       automatic.getByRole("button", { name: "Show private key" }),
     ).toHaveAttribute("aria-expanded", "false");
   });
+  // Switching mode wipes a pasted key or starts a generation, so it waits for
+  // an explicit choice: arrow keys only move focus, Enter or a click selects.
+  it("moves focus with the arrow keys without switching the key mode", async () => {
+    const sshKeys = controller({ mode: "manual", pair: null });
+    render(<SshKeyTabs sshKeys={sshKeys} gitRepository={{}} />);
+    const manualTab = screen.getByRole("tab", { name: "Manual" });
+    const autoTab = screen.getByRole("tab", { name: "Auto" });
+
+    act(() => manualTab.focus());
+    fireEvent.keyDown(manualTab, { key: "ArrowRight" });
+
+    // Radix moves roving focus on the next tick.
+    await waitFor(() => expect(autoTab).toHaveFocus());
+    expect(manualTab).toHaveAttribute("aria-selected", "true");
+    expect(autoTab).toHaveAttribute("aria-selected", "false");
+    expect(sshKeys.setMode).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(autoTab, { key: "Enter" });
+    expect(sshKeys.setMode).toHaveBeenCalledWith("automatic");
+  });
+
   it("masks the generated private key until revealed and provides one download action in Auto", () => {
     render(
       <SshKeyTabs

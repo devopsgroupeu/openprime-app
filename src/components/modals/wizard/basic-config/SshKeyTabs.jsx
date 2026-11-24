@@ -68,8 +68,11 @@ export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
 
   return (
     // Both panels stay mounted (hidden when inactive) so a half-typed key and
-    // the generated pair survive a tab switch.
+    // the generated pair survive a tab switch. Manual activation: switching
+    // mode clears a pasted key or starts a generation, so arrow keys only move
+    // focus and Enter, Space or a click selects.
     <Tabs
+      activationMode="manual"
       value={keyState.mode}
       onValueChange={(mode) => {
         setPrivateKeyVisible(false);
