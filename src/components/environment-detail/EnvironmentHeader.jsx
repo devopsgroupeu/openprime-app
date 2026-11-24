@@ -111,6 +111,7 @@ const EnvironmentHeader = ({
             <button
               onClick={onPush}
               disabled={isPushing || !canPush}
+              data-guide="push-button"
               className="btn-op-secondary space-x-2"
             >
               <GitBranch
@@ -121,6 +122,7 @@ const EnvironmentHeader = ({
 
             <button
               onClick={() => onEdit(environment)}
+              data-guide="edit-button"
               className="btn-op-primary space-x-2"
             >
               <Edit2 className="w-4 h-4" />

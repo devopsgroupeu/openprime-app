@@ -13,6 +13,7 @@ import SettingsPage from "./components/SettingsPage";
 import WizardPage from "./components/WizardPage";
 import AppLayout from "./components/layout/AppLayout";
 import AuraChatButton from "./components/AuraChatButton";
+import GuideDock from "./components/onboarding/GuideDock";
 import ErrorBoundary from "./components/ErrorBoundary";
 import authService from "./services/authService";
 import { useAuth } from "./contexts/AuthContext";
@@ -20,6 +21,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./contexts/ToastContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CatalogProvider } from "./contexts/CatalogContext";
+import { OnboardingProvider } from "./contexts/OnboardingContext";
 
 // The wizard has its own inline Aura assistant, so hide the floating one there.
 function FloatingAura() {
@@ -56,8 +58,9 @@ function AppContent() {
   };
 
   // Re-read the list without the full-page loader. The environments page calls
-  // it on every visit, so a push made on the detail page shows up there (the
-  // onboarding guide ticks its push step from it). A failure keeps the list.
+  // it on every visit and the setup guide after a push, so a push made on the
+  // detail page shows up (the guide ticks its push step from it). A failure
+  // keeps the list.
   const refreshEnvironments = async () => {
     try {
       setEnvironments(await authService.get("/environments"));
@@ -187,51 +190,63 @@ function AppContent() {
           }
         >
           <BrowserRouter>
-            <Routes>
-              <Route element={<AppLayout />}>
+            {/* The setup guide follows the user across every page, the wizard
+                included, so it sits above the routes. With the environment
+                list failing to load it would read every step as undone. */}
+            <OnboardingProvider
+              environments={environments}
+              refreshEnvironments={refreshEnvironments}
+              available={!loadError}
+            >
+              <Routes>
+                <Route element={<AppLayout />}>
+                  <Route
+                    path="/"
+                    element={<Navigate to="/environments" replace />}
+                  />
+                  <Route
+                    path="/environments"
+                    element={
+                      <EnvironmentsPage
+                        environments={environments}
+                        loadError={loadError}
+                        onRetry={loadEnvironments}
+                        onRefresh={refreshEnvironments}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/environments/:id"
+                    element={
+                      <EnvironmentDetailPage
+                        onDelete={handleDeleteEnvironment}
+                      />
+                    }
+                  />
+                  <Route path="/settings" element={<SettingsPage />} />
+                </Route>
                 <Route
-                  path="/"
-                  element={<Navigate to="/environments" replace />}
-                />
-                <Route
-                  path="/environments"
+                  path="/environments/create"
                   element={
-                    <EnvironmentsPage
-                      environments={environments}
-                      loadError={loadError}
-                      onRetry={loadEnvironments}
-                      onRefresh={refreshEnvironments}
+                    <WizardPage
+                      onCreateEnvironment={handleCreateEnvironment}
+                      onUpdateEnvironment={handleUpdateEnvironment}
                     />
                   }
                 />
                 <Route
-                  path="/environments/:id"
+                  path="/environments/:id/edit"
                   element={
-                    <EnvironmentDetailPage onDelete={handleDeleteEnvironment} />
+                    <WizardPage
+                      onCreateEnvironment={handleCreateEnvironment}
+                      onUpdateEnvironment={handleUpdateEnvironment}
+                    />
                   }
                 />
-                <Route path="/settings" element={<SettingsPage />} />
-              </Route>
-              <Route
-                path="/environments/create"
-                element={
-                  <WizardPage
-                    onCreateEnvironment={handleCreateEnvironment}
-                    onUpdateEnvironment={handleUpdateEnvironment}
-                  />
-                }
-              />
-              <Route
-                path="/environments/:id/edit"
-                element={
-                  <WizardPage
-                    onCreateEnvironment={handleCreateEnvironment}
-                    onUpdateEnvironment={handleUpdateEnvironment}
-                  />
-                }
-              />
-            </Routes>
-            <FloatingAura />
+              </Routes>
+              <FloatingAura />
+              <GuideDock />
+            </OnboardingProvider>
           </BrowserRouter>
         </CatalogProvider>
       </ToastProvider>

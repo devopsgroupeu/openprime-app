@@ -1,17 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle, Copy, ExternalLink } from "lucide-react";
 import {
   AWS_CLOUDSHELL_URL,
   AWS_CONNECT_COMMAND,
   parseConnectLine,
 } from "../../utils/awsQuickConnect";
+import { useOnboarding } from "../../contexts/OnboardingContext";
 
 // Three steps a person without IAM knowledge can follow: open the AWS terminal,
 // paste one command, paste back the one line it prints (OP-284, v1).
 const AwsQuickConnect = ({ onSave, onUseKeys }) => {
+  const [opened, setOpened] = useState(false);
   const [copied, setCopied] = useState(false);
   const [pasted, setPasted] = useState("");
   const parsed = parseConnectLine(pasted);
+  const recognized = Boolean(parsed);
+
+  // The setup guide follows these three steps while the dialog is open.
+  const setGuideProgress = useOnboarding()?.setAwsProgress;
+  useEffect(() => {
+    setGuideProgress?.({ opened, copied, parsed: recognized });
+  }, [setGuideProgress, opened, copied, recognized]);
+  useEffect(() => () => setGuideProgress?.(null), [setGuideProgress]);
 
   const copyCommand = async () => {
     try {
@@ -51,6 +61,8 @@ const AwsQuickConnect = ({ onSave, onUseKeys }) => {
             href={AWS_CLOUDSHELL_URL}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => setOpened(true)}
+            data-guide="aws-open-cloudshell"
             className="btn-op-secondary mt-2"
           >
             Open AWS CloudShell
@@ -68,6 +80,7 @@ const AwsQuickConnect = ({ onSave, onUseKeys }) => {
           <button
             type="button"
             onClick={copyCommand}
+            data-guide="aws-copy-command"
             className="btn-op-primary mt-2"
           >
             {copied ? (
@@ -88,6 +101,7 @@ const AwsQuickConnect = ({ onSave, onUseKeys }) => {
           </label>
           <input
             id="aws-connect-line"
+            data-guide="aws-paste-line"
             type="password"
             autoComplete="off"
             value={pasted}
@@ -125,7 +139,12 @@ const AwsQuickConnect = ({ onSave, onUseKeys }) => {
         >
           I already have an access key
         </button>
-        <button type="submit" disabled={!parsed} className="btn-op-primary">
+        <button
+          type="submit"
+          disabled={!parsed}
+          data-guide="aws-connect"
+          className="btn-op-primary"
+        >
           Connect
         </button>
       </div>

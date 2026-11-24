@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Cloud, User, Save, Settings } from "lucide-react";
 import { useToast } from "../contexts/ToastContext";
+import { useOnboarding } from "../contexts/OnboardingContext";
 import authService from "../services/authService";
 import CloudCredentialModal from "./modals/CloudCredentialModal";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
@@ -11,6 +12,8 @@ import PreferencesTab from "./settings-page/PreferencesTab";
 import SettingsTabNav from "./settings-page/SettingsTabNav";
 
 const SettingsPage = () => {
+  // The setup guide's first step ticks from the saved AWS keys.
+  const refreshGuide = useOnboarding()?.refresh;
   const toast = useToast();
   const [userPreferences, setUserPreferences] = useState({
     theme: "light",
@@ -36,12 +39,7 @@ const SettingsPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [credentialToDelete, setCredentialToDelete] = useState(null);
   const [credentialUsage, setCredentialUsage] = useState(null);
-  // ?tab=credentials lets the onboarding guide open the right tab directly.
-  const [activeTab, setActiveTab] = useState(() =>
-    new URLSearchParams(window.location.search).get("tab") === "credentials"
-      ? "credentials"
-      : "account",
-  );
+  const [activeTab, setActiveTab] = useState("account");
 
   useEffect(() => {
     loadUserData();
@@ -155,6 +153,7 @@ const SettingsPage = () => {
     try {
       await authService.delete(`/cloud-credentials/${credentialToDelete.id}`);
       await loadCloudCredentials();
+      refreshGuide?.();
       setShowDeleteModal(false);
       toast.success("Credential deleted successfully");
       setCredentialToDelete(null);
@@ -181,6 +180,7 @@ const SettingsPage = () => {
         toast.success("Credential created successfully");
       }
       await loadCloudCredentials();
+      refreshGuide?.();
       setShowCredentialModal(false);
       setSelectedCredential(null);
     } catch (error) {

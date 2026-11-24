@@ -13,12 +13,13 @@ const walkthrough = (() => {
   if (typeof window === "undefined") return null;
   try {
     if (new URLSearchParams(window.location.search).get("mock") === "empty") {
-      const fresh = { environments: [], credentials: [], seq: 0 };
+      const fresh = {
+        environments: [],
+        credentials: [],
+        preferences: {},
+        seq: 0,
+      };
       sessionStorage.setItem(WALKTHROUGH_KEY, JSON.stringify(fresh));
-      // Start the onboarding guide over too (its ticks live in localStorage).
-      Object.keys(localStorage)
-        .filter((key) => key.startsWith("openprime-onboarding-"))
-        .forEach((key) => localStorage.removeItem(key));
       return fresh;
     }
     const saved = sessionStorage.getItem(WALKTHROUGH_KEY);
@@ -36,6 +37,12 @@ const saveWalkthrough = () => {
 };
 const envList = () => (walkthrough ? walkthrough.environments : environments);
 const credList = () => (walkthrough ? walkthrough.credentials : credentials);
+// Stored and merged one level deep like the backend, so the setup guide's
+// ticks survive a reload. Outside the walkthrough a copy, so tests in one file
+// cannot change the fixture for another.
+const fixturePreferences = { ...currentUser.preferences };
+const prefs = () =>
+  walkthrough ? (walkthrough.preferences ||= {}) : fixturePreferences;
 const now = () => new Date().toISOString();
 
 export const handlers = [
@@ -62,17 +69,19 @@ export const handlers = [
   // --- User ---
   http.get("*/users/me", () => HttpResponse.json(currentUser)),
   http.get("*/users/me/preferences", () =>
-    HttpResponse.json({ preferences: currentUser.preferences }),
+    HttpResponse.json({ preferences: prefs() }),
   ),
   http.put("*/users/me/profile", async ({ request }) =>
     HttpResponse.json({ ...currentUser, ...(await request.json()) }),
   ),
-  http.put("*/users/me/preferences", async ({ request }) =>
-    HttpResponse.json({
-      ...currentUser.preferences,
-      ...(await request.json()),
-    }),
-  ),
+  http.put("*/users/me/preferences", async ({ request }) => {
+    Object.assign(prefs(), await request.json());
+    if (walkthrough) saveWalkthrough();
+    return HttpResponse.json({
+      message: "Preferences updated successfully",
+      preferences: prefs(),
+    });
+  }),
 
   // --- Environments ---
   http.get("*/environments", () => HttpResponse.json(envList())),

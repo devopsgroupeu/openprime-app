@@ -188,6 +188,7 @@ const BasicConfigStep = ({
           }`}
           placeholder="e.g., production, staging, development"
           value={newEnv.name}
+          data-guide="wizard-name"
           readOnly={isEditMode}
           disabled={isEditMode}
           onChange={(e) => {

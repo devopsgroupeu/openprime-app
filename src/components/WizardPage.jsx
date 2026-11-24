@@ -1,7 +1,7 @@
 // src/components/WizardPage.jsx
 // Full-page environment wizard (replaces the former modal). InfraFlow 3-column layout:
 // WizardSidebar (steps + progress) | step form | live code-preview panel.
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router";
 import { CheckCircle } from "lucide-react";
 import AppHeader from "./layout/AppHeader";
@@ -31,6 +31,7 @@ import {
   clearDraft,
 } from "../utils/wizardDraft";
 import { useCatalog } from "../contexts/CatalogContext";
+import { useOnboarding } from "../contexts/OnboardingContext";
 import { useSshKeyGeneration } from "./wizard-page/useSshKeyGeneration.js";
 
 const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
@@ -155,6 +156,70 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     identity: `${userId || "anonymous"}:${id || "create"}`,
   });
 
+  // Setup guide (OP-283). Opened while the guide is at "Describe your
+  // environment", the wizard fills in what a new user cannot be expected to
+  // know: the repository section is switched on and the deploy key generated
+  // (Auto), so the user only pastes an address and copies one key. It also
+  // tells the guide how far the form is, so the guide can point at the next
+  // field.
+  const guide = useOnboarding();
+  // Any step before an environment exists: someone who skipped ahead to the
+  // wizard needs the same help.
+  const guided =
+    !isEditMode &&
+    Boolean(guide?.active) &&
+    ["aws", "repo", "environment"].includes(guide.current);
+  const setGuideWizard = guide?.setWizard;
+  const prefilled = useRef(false);
+  useEffect(() => {
+    if (!guided || !newEnv || prefilled.current) return;
+    prefilled.current = true;
+    if (!newEnv.gitRepository?.enabled) {
+      setNewEnv((prev) => ({
+        ...prev,
+        gitRepository: {
+          ...prev.gitRepository,
+          enabled: true,
+          url: prev.gitRepository?.url || "",
+          branch: prev.gitRepository?.branch || "main",
+          sshKey: prev.gitRepository?.sshKey || "",
+        },
+      }));
+    }
+    if (!newEnv.gitRepository?.sshKey) sshKeys.setMode("automatic");
+    // Once per wizard visit (the ref), so sshKeys, a new object every render,
+    // is deliberately not a dependency.
+  }, [guided, newEnv]);
+
+  const activeTitle = steps[currentStep - 1]?.title;
+  const repoUrl = newEnv?.gitRepository?.enabled
+    ? newEnv.gitRepository.url || ""
+    : "";
+  const keyEntered =
+    sshKeys.mode === "manual" && Boolean(newEnv?.gitRepository?.sshKey);
+  useEffect(() => {
+    if (isEditMode || !setGuideWizard || !newEnv) return;
+    setGuideWizard((prev) => ({
+      ...prev,
+      part: currentStep,
+      partCount: totalSteps,
+      partTitle: activeTitle,
+      name: newEnv.name,
+      repoUrl,
+      keyEntered,
+    }));
+  }, [
+    isEditMode,
+    setGuideWizard,
+    currentStep,
+    totalSteps,
+    activeTitle,
+    newEnv?.name,
+    repoUrl,
+    keyEntered,
+  ]);
+  useEffect(() => () => setGuideWizard?.(null), [setGuideWizard]);
+
   const validateCurrentStep = useCallback(() => {
     if (!newEnv) return false;
     try {
@@ -222,7 +287,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
           gitRepository: newEnv.gitRepository || null,
           cloudCredentialId: newEnv.cloudCredentialId || null,
         };
-        await onCreateEnvironment(config);
+        const created = await onCreateEnvironment(config);
         try {
           clearDraft(userId);
         } catch {
@@ -232,7 +297,13 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
           title: "Environment Created",
           duration: 4000,
         });
-        navigate("/environments");
+        // In the setup guide the next step (push) happens on the environment
+        // itself, so go there instead of back to the list.
+        navigate(
+          guided && created?.id
+            ? `/environments/${created.id}`
+            : "/environments",
+        );
       }
     } catch (err) {
       error(
@@ -330,6 +401,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
           completedSteps={completedSteps}
           progressPercent={progressPercent}
           onStepChange={handleStepChange}
+          hideProgress={Boolean(guide?.active)}
         />
 
         {/* Center: form + sticky footer */}

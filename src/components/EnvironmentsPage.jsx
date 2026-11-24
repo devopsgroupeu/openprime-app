@@ -1,49 +1,18 @@
 // src/components/EnvironmentsPage.jsx
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Plus, Server, AlertCircle, RefreshCw } from "lucide-react";
 import EnvironmentCard from "./EnvironmentCard";
-import OnboardingGuide from "./OnboardingGuide";
-import CloudCredentialModal from "./modals/CloudCredentialModal";
-import { useToast } from "../contexts/ToastContext";
-import authService from "../services/authService";
 
 const EnvironmentsPage = ({ environments, loadError, onRetry, onRefresh }) => {
   const navigate = useNavigate();
   const hasEnvironments = environments.length > 0;
-  const [hasCredentials, setHasCredentials] = useState(false);
-  const [connectingAws, setConnectingAws] = useState(false);
-  const toast = useToast();
-
-  const saveAwsCredential = async (credentialData) => {
-    try {
-      await authService.post("/cloud-credentials", credentialData);
-      setHasCredentials(true);
-      setConnectingAws(false);
-      toast.success("AWS account connected");
-    } catch (error) {
-      const message =
-        error.data?.error || error.message || "Could not connect AWS";
-      toast.error(message, { title: "AWS connection failed", duration: 7000 });
-    }
-  };
 
   useEffect(() => {
     onRefresh?.();
     // Once per visit: onRefresh is a new function on every App render, so it
     // is deliberately not a dependency.
   }, []);
-
-  useEffect(() => {
-    if (!loadError) {
-      authService
-        .get("/cloud-credentials")
-        .then((res) => {
-          setHasCredentials((res.credentials || []).length > 0);
-        })
-        .catch(() => setHasCredentials(false));
-    }
-  }, [loadError]);
 
   return (
     <div className="transition-colors duration-200 bg-transparent">
@@ -65,14 +34,6 @@ const EnvironmentsPage = ({ environments, loadError, onRetry, onRefresh }) => {
             New Environment
           </button>
         </div>
-
-        {!loadError && (
-          <OnboardingGuide
-            environments={environments}
-            hasCredentials={hasCredentials}
-            onConnectAws={() => setConnectingAws(true)}
-          />
-        )}
 
         {loadError ? (
           <div className="flex flex-col items-center justify-center text-center py-20">
@@ -124,12 +85,6 @@ const EnvironmentsPage = ({ environments, loadError, onRetry, onRefresh }) => {
           </div>
         )}
       </div>
-      <CloudCredentialModal
-        provider="aws"
-        isOpen={connectingAws}
-        onClose={() => setConnectingAws(false)}
-        onSave={saveAwsCredential}
-      />
     </div>
   );
 };

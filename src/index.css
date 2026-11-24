@@ -422,3 +422,30 @@ label {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-tertiary);
 }
+
+/* Setup guide highlight (GuideSpotlight): a ring that keeps pulsing outwards
+   from the element to click. */
+.guide-pulse::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 2px solid var(--color-primary);
+  animation: guide-pulse 1.6s ease-out infinite;
+}
+@keyframes guide-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide-pulse::after {
+    animation: none;
+    opacity: 0;
+  }
+}

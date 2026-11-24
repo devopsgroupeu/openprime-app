@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Check, Copy, Download, Eye, EyeOff, X } from "lucide-react";
 import { strToU8, zipSync } from "fflate";
+import { useOnboarding } from "../../../../contexts/OnboardingContext";
 
 function downloadKeys(pair) {
   const archive = zipSync(
@@ -29,6 +30,7 @@ function downloadKeys(pair) {
 // the tabs would render and silently do nothing.
 export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
   const id = useId();
+  const setGuideWizard = useOnboarding()?.setWizard;
   const tabs = useRef([]);
   const [privateKeyVisible, setPrivateKeyVisible] = useState(false);
   const [downloadError, setDownloadError] = useState("");
@@ -72,6 +74,10 @@ export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
     try {
       await navigator.clipboard.writeText(text);
       setCopyFeedback({ label, success: true });
+      // The setup guide's "Add the key on GitHub" counts a copied public key.
+      if (label === "Public") {
+        setGuideWizard?.((prev) => prev && { ...prev, keyCopied: true });
+      }
     } catch {
       setCopyFeedback({ label, success: false });
     } finally {
@@ -162,6 +168,9 @@ export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
               ].map(({ field, label, suffix }) => (
                 <div
                   key={field}
+                  data-guide={
+                    field === "publicKey" ? "wizard-public-key" : undefined
+                  }
                   className="min-w-0 overflow-hidden rounded-xl border border-border bg-background"
                 >
                   <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2">
