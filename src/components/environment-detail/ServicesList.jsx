@@ -1,6 +1,6 @@
 import { Box, ChevronDown, ChevronRight } from "lucide-react";
 import { getServiceConfig } from "../../config/servicesConfig";
-import { getServiceIcon } from "../../config/serviceIcons";
+import ServiceIcon from "../icons/ServiceIcon";
 
 const ServicesList = ({ environment, expandedServices, onToggleService }) => {
   // const getServiceStatus = (serviceConfig) => {
@@ -68,7 +68,6 @@ const ServicesList = ({ environment, expandedServices, onToggleService }) => {
 
   const ServiceItem = ({ serviceName, serviceConfig }) => {
     const serviceDefinition = getServiceConfig(serviceName);
-    const IconComponent = getServiceIcon(serviceName);
     const isExpanded = expandedServices[serviceName];
     const importantAttrs = getImportantAttributes(serviceConfig, serviceName);
     const allAttrs = Object.entries(serviceConfig).filter(
@@ -84,7 +83,10 @@ const ServicesList = ({ environment, expandedServices, onToggleService }) => {
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="p-3 rounded-lg bg-primary-muted border border-primary shrink-0">
-              <IconComponent className="w-6 h-6 text-accent" />
+              <ServiceIcon
+                service={serviceName}
+                className="size-6 text-accent"
+              />
             </div>
             <div className="min-w-0">
               <h4 className="text-lg font-bold text-primary truncate">

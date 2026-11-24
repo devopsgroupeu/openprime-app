@@ -1,8 +1,8 @@
 // src/components/DynamicServiceConfig.js
 import { ChevronDown, ChevronRight, MessageCircle } from "lucide-react";
 import { getServiceConfig } from "../config/servicesConfig";
-import { getServiceIcon } from "../config/serviceIcons";
 import DynamicFieldRenderer from "./DynamicFieldRenderer";
+import ServiceIcon from "./icons/ServiceIcon";
 
 const DynamicServiceConfig = ({
   serviceName,
@@ -13,7 +13,6 @@ const DynamicServiceConfig = ({
   onAskAI,
 }) => {
   const serviceDefinition = getServiceConfig(serviceName);
-  const ServiceIcon = getServiceIcon(serviceName);
 
   if (!serviceDefinition) {
     return null;
@@ -50,7 +49,7 @@ const DynamicServiceConfig = ({
             <ChevronRight className="w-5 h-5 text-tertiary" />
           )}
           <div className="w-10 h-10 rounded-xl bg-primary-muted flex items-center justify-center shrink-0">
-            <ServiceIcon className="w-5 h-5 text-accent" />
+            <ServiceIcon service={serviceName} className="size-5 text-accent" />
           </div>
           <div>
             <h3 className="font-bold text-primary">

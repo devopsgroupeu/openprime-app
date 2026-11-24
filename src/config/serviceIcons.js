@@ -1,5 +1,5 @@
-// Maps service keys to Lucide icon components (SVG — no emoji, per UI/UX conventions).
-// Shared by the wizard service list and the environment detail service cards.
+// Maps service keys to Lucide icon components (SVG, no emoji, per UI/UX conventions).
+// Fallback for ServiceIcon when a service has no official AWS icon.
 import {
   Network,
   Container,
