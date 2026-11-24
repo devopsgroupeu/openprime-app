@@ -323,6 +323,18 @@ export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
               </a>
             )}
           </p>
+          {/* Rotating: the new key only takes over on save, and the old one
+              stays valid on GitHub until it is removed there. */}
+          {configured && keyState.pair && (
+            <p className="rounded-md bg-warning-muted px-2 py-1.5 text-primary">
+              This key replaces the current one
+              {gitRepository.sshKeyFingerprint
+                ? ` (${gitRepository.sshKeyFingerprint})`
+                : ""}{" "}
+              once you save the environment. After saving, delete the old key on
+              the same GitHub page.
+            </p>
+          )}
           <p>
             Generated in your browser; the selected private key is sent to
             OpenPrime on save. Download a backup — private keys are not included

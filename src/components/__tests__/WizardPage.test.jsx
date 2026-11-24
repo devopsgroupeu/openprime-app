@@ -1,4 +1,10 @@
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router";
 import { vi } from "vitest";
 import { ThemeProvider } from "../../contexts/ThemeContext";
@@ -204,6 +210,51 @@ describe("WizardPage", () => {
 
     expect(screen.getByPlaceholderText(/e\.g\., production/)).toBeDisabled();
     expect(screen.getByPlaceholderText("e.g., example.com")).not.toBeDisabled();
+  });
+
+  // Rotating the deploy key: the environment has one, so the key opens on Auto,
+  // which says so and offers a replacement. On Manual the field is empty,
+  // which read as if the key had been lost (reported 2026-11-24).
+  it("offers a replacement deploy key when editing an environment that has one", async () => {
+    generateSshKeyPair.mockResolvedValue({
+      privateKey: "rotated-private-key",
+      publicKey: "ssh-ed25519 rotated-public-key",
+    });
+    renderWizardEdit(vi.fn());
+
+    await waitFor(() =>
+      expect(screen.getByText(/Step 2 of/)).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Previous/i }));
+
+    expect(await screen.findByRole("tab", { name: "Auto" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    // The Manual panel says it too, but it is hidden; this is the open one.
+    expect(
+      within(screen.getByRole("tabpanel")).getByText(
+        /A key is already configured \(SHA256:mockDemoInfraDeployKey\)/,
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Generate replacement key" }),
+    );
+
+    expect(
+      await screen.findByText(
+        /This key replaces the current one \(SHA256:mockDemoInfraDeployKey\)/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: /Open deploy keys for openprime\/demo-infra/,
+      }),
+    ).toHaveAttribute(
+      "href",
+      "https://github.com/openprime/demo-infra/settings/keys/new",
+    );
   });
 
   // A new environment starts with the default (or only) saved key; one being

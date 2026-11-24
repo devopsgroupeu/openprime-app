@@ -194,6 +194,18 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     // is deliberately not a dependency.
   }, [guided, newEnv]);
 
+  // Editing an environment that has a deploy key: open the key on Auto, which
+  // says a key is configured and offers a replacement. Manual would show an
+  // empty field, which reads as if the key were gone.
+  const keyTabChosen = useRef(false);
+  useEffect(() => {
+    if (!isEditMode || !newEnv || keyTabChosen.current) return;
+    keyTabChosen.current = true;
+    if (newEnv.gitRepository?.sshKeyConfigured) sshKeys.setMode("automatic");
+    // Once, when the environment has loaded (the ref); sshKeys is a new object
+    // every render, so it is deliberately not a dependency.
+  }, [isEditMode, newEnv]);
+
   const activeTitle = steps[currentStep - 1]?.title;
   const repoUrl = newEnv?.gitRepository?.enabled
     ? newEnv.gitRepository.url || ""
