@@ -158,10 +158,10 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
 
   // Setup guide (OP-283). Opened while the guide is at "Describe your
   // environment", the wizard fills in what a new user cannot be expected to
-  // know: the repository section is switched on and the deploy key generated
-  // (Auto), so the user only pastes an address and copies one key. It also
-  // tells the guide how far the form is, so the guide can point at the next
-  // field.
+  // know: the repository section is switched on with the address given in the
+  // guide's step 2, and the deploy key generated (Auto), so the user only
+  // copies one key. It also tells the guide how far the form is, so the guide
+  // can point at the next field.
   const guide = useOnboarding();
   // Any step before an environment exists: someone who skipped ahead to the
   // wizard needs the same help.
@@ -170,23 +170,26 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     Boolean(guide?.active) &&
     ["aws", "repo", "environment"].includes(guide.current);
   const setGuideWizard = guide?.setWizard;
+  const savedRepoUrl = guide?.repoUrl || "";
   const prefilled = useRef(false);
   useEffect(() => {
     if (!guided || !newEnv || prefilled.current) return;
     prefilled.current = true;
-    if (!newEnv.gitRepository?.enabled) {
+    const git = newEnv.gitRepository;
+    if (!git?.enabled || (!git.url && savedRepoUrl)) {
       setNewEnv((prev) => ({
         ...prev,
         gitRepository: {
           ...prev.gitRepository,
           enabled: true,
-          url: prev.gitRepository?.url || "",
+          // The address pasted into the guide in step 2.
+          url: prev.gitRepository?.url || savedRepoUrl,
           branch: prev.gitRepository?.branch || "main",
           sshKey: prev.gitRepository?.sshKey || "",
         },
       }));
     }
-    if (!newEnv.gitRepository?.sshKey) sshKeys.setMode("automatic");
+    if (!git?.sshKey) sshKeys.setMode("automatic");
     // Once per wizard visit (the ref), so sshKeys, a new object every render,
     // is deliberately not a dependency.
   }, [guided, newEnv]);

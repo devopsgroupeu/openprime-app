@@ -12,10 +12,10 @@ import { repoUrlOf } from "../components/onboarding/guideSteps";
 
 // State of the setup guide (OP-283) for the whole app, so the guide can follow
 // the user from page to page. Each step is worked out from real data where the
-// app can see it (a saved AWS key, environments, a successful push). The two
-// ticks it cannot see (an existing repository, a deployment run on GitHub) and
-// whether the guide is collapsed live in the user's preferences, so the guide
-// reads the same on every device.
+// app can see it (a saved AWS key, environments, a successful push). What it
+// cannot see (the repository the user created on GitHub, a deployment run
+// there) and whether the guide is collapsed live in the user's preferences, so
+// the guide reads the same on every device.
 //
 // Pages that host a step report their progress here: the AWS connect dialog
 // (setAwsProgress) and the wizard (setWizard). Both are null while closed.
@@ -103,7 +103,7 @@ export function OnboardingProvider({
       {
         id: "repo",
         done:
-          Boolean(prefs?.ownRepo) ||
+          Boolean(prefs?.repoUrl) ||
           environments.some((env) => Boolean(repoUrlOf(env))),
       },
       { id: "environment", done: environments.length > 0 },
@@ -139,7 +139,10 @@ export function OnboardingProvider({
       pushTarget,
       collapsed: Boolean(prefs?.collapsed),
       setCollapsed: (collapsed) => savePrefs({ collapsed }),
-      markOwnRepo: () => savePrefs({ ownRepo: true }),
+      // The repository the user created (or already had) in step 2. The wizard
+      // fills it in, so step 3 has one field less.
+      repoUrl: prefs?.repoUrl || "",
+      saveRepoUrl: (repoUrl) => savePrefs({ repoUrl }),
       markDeployed: () => savePrefs({ deployed: true }),
       connectingAws,
       connectAws: () => setConnectingAws(true),

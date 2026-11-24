@@ -19,7 +19,7 @@ export const STEPS = {
       "Your infrastructure code will live there. Create it empty and private.",
     // The push copies the generated tree over a clone of the branch, so files
     // with the same path are replaced (backend environmentService push).
-    note: "Using one you already have? OpenPrime adds its files next to yours and replaces files with the same name, such as README.md.",
+    note: "Already have one? Paste its address instead. Files with the same name, such as README.md, get replaced.",
     doneText: "Repository ready.",
   },
   environment: {
@@ -50,6 +50,34 @@ export const DEPLOY_HOW_TO = [
   "Open Actions → Terraform Deployment → Run workflow, and choose apply.",
   "The run opens an issue in your repository. Comment approve on it to let it continue.",
 ];
+
+// The push needs the SSH address (git@host:owner/repo.git). People paste what
+// they have, most often the web address from the browser's address bar, so a
+// web address is turned into the SSH one. Null when it is not a repository
+// address at all.
+export const normalizeRepoAddress = (input = "") => {
+  const value = String(input).trim();
+  if (/^git@[\w.-]+:[\w.-]+(\/[\w.-]+)+$/.test(value)) return value;
+  if (/^ssh:\/\/[\w.-]+@[\w.-]+(:\d+)?(\/[\w.-]+){2,}$/.test(value)) {
+    return value;
+  }
+  const web = value.match(
+    /^(?:https?:\/\/)?((?:[\w-]+\.)+[a-z]{2,})\/([\w.-]+(?:\/[\w.-]+)+?)(?:\.git)?\/?$/i,
+  );
+  if (!web) return null;
+  const [, host, path] = web;
+  // On GitHub a repository is always owner/name; anything after it is a page
+  // inside the repository (/tree/main, /settings). GitLab nests groups.
+  const repoPath =
+    host.toLowerCase() === "github.com"
+      ? path
+          .split("/")
+          .slice(0, 2)
+          .join("/")
+          .replace(/\.git$/, "")
+      : path;
+  return repoPath.includes("/") ? `git@${host}:${repoPath}.git` : null;
+};
 
 export const repoUrlOf = (env) =>
   (env?.git_repository || env?.gitRepository)?.url || "";
@@ -115,7 +143,7 @@ export const wizardPoints = (wizard) => [
     label: "Paste your repository address",
     part: 1,
     target: "wizard-repo-url",
-    text: "Paste your repository's address. On GitHub it is under the green Code button, on the SSH tab, and starts with git@github.com:",
+    text: "Paste your repository's SSH address. It starts with git@github.com:",
     done: Boolean(wizard.repoUrl?.trim()),
   },
   {

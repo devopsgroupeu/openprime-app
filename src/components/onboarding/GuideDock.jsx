@@ -12,6 +12,7 @@ import {
   STEPS,
   STEP_ORDER,
   awsPoints,
+  normalizeRepoAddress,
   pushPoint,
   whereHint,
   wizardPoints,
@@ -70,6 +71,73 @@ const ProgressRing = ({ done, size }) => {
         {done}/{STEP_ORDER.length}
       </text>
     </svg>
+  );
+};
+
+// Step 2's done state. OpenPrime cannot see a repository created on GitHub, so
+// the step asks for the one thing the user needs next anyway: its address.
+// Pasting it is "done", and the wizard fills it in later.
+const RepoAddressForm = ({ onSave }) => {
+  const [value, setValue] = useState("");
+  const [invalid, setInvalid] = useState(false);
+  const input = useRef(null);
+
+  // Back from GitHub in another tab: the cursor is already where the address
+  // goes.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && !input.current?.value) {
+        input.current?.focus();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
+
+  const submit = (event) => {
+    event.preventDefault();
+    const address = normalizeRepoAddress(value);
+    if (address) onSave(address);
+    else setInvalid(true);
+  };
+
+  return (
+    <form onSubmit={submit} className="w-full space-y-2">
+      <label
+        htmlFor="guide-repo-address"
+        className="block text-xs text-secondary"
+      >
+        Created it? Paste the address from your browser:
+      </label>
+      <input
+        id="guide-repo-address"
+        ref={input}
+        type="text"
+        autoComplete="off"
+        value={value}
+        onChange={(event) => {
+          setValue(event.target.value);
+          setInvalid(false);
+        }}
+        placeholder="https://github.com/you/infra"
+        aria-invalid={invalid}
+        aria-describedby={invalid ? "guide-repo-address-error" : undefined}
+        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-primary"
+      />
+      {invalid && (
+        <p
+          id="guide-repo-address-error"
+          role="alert"
+          className="text-xs text-danger"
+        >
+          That is not a repository address. Open the repository on GitHub and
+          copy the address from your browser&apos;s address bar.
+        </p>
+      )}
+      <button type="submit" disabled={!value.trim()} className="btn-op-primary">
+        Continue
+      </button>
+    </form>
   );
 };
 
@@ -172,13 +240,7 @@ const GuideDock = () => {
           Open GitHub
           <ExternalLink className="h-4 w-4" aria-hidden="true" />
         </a>
-        <button
-          type="button"
-          onClick={guide.markOwnRepo}
-          className="text-sm font-semibold text-accent hover:underline"
-        >
-          I have a repository
-        </button>
+        <RepoAddressForm onSave={guide.saveRepoUrl} />
       </>
     ),
     environment: !onWizard && (

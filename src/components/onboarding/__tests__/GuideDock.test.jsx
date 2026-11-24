@@ -154,14 +154,20 @@ describe("GuideDock", () => {
     ).toBeInTheDocument();
   });
 
-  it("takes an existing repository on the user's word and moves on", async () => {
+  // The dead end reported on 2026-11-24: the repository was created on
+  // GitHub and nothing in the guide said how to move on.
+  it("moves on once the new repository's address is pasted", async () => {
     serve({ credentials: KEY });
     renderDock();
 
     const dock = await findDock();
-    fireEvent.click(
-      within(dock).getByRole("button", { name: "I have a repository" }),
+    fireEvent.change(
+      within(dock).getByLabelText(
+        /Created it\? Paste the address from your browser/,
+      ),
+      { target: { value: "https://github.com/acme/infra" } },
     );
+    fireEvent.click(within(dock).getByRole("button", { name: "Continue" }));
 
     expect(
       await within(dock).findByRole("heading", {
@@ -171,11 +177,35 @@ describe("GuideDock", () => {
     expect(within(dock).getByRole("status")).toHaveTextContent(
       "Repository ready.",
     );
-    expect(saved).toEqual([{ onboarding: { ownRepo: true } }]);
+    expect(saved).toEqual([{ onboarding: { repoUrl: REPO } }]);
+  });
+
+  it("says what to copy when the pasted text is not an address", async () => {
+    serve({ credentials: KEY });
+    renderDock();
+
+    const dock = await findDock();
+    fireEvent.change(
+      within(dock).getByLabelText(
+        /Created it\? Paste the address from your browser/,
+      ),
+      { target: { value: "infra" } },
+    );
+    fireEvent.click(within(dock).getByRole("button", { name: "Continue" }));
+
+    expect(within(dock).getByRole("alert")).toHaveTextContent(
+      "That is not a repository address.",
+    );
+    expect(
+      within(dock).getByRole("heading", {
+        name: "Step 2: Create an empty repository on GitHub",
+      }),
+    ).toBeInTheDocument();
+    expect(saved).toEqual([]);
   });
 
   it("reads its ticks and its collapsed state from the account", async () => {
-    serve({ credentials: KEY, onboarding: { ownRepo: true, collapsed: true } });
+    serve({ credentials: KEY, onboarding: { repoUrl: REPO, collapsed: true } });
     renderDock();
 
     const pill = await screen.findByRole("button", {
@@ -185,12 +215,12 @@ describe("GuideDock", () => {
 
     expect(await findDock()).toBeInTheDocument();
     expect(saved).toEqual([
-      { onboarding: { ownRepo: true, collapsed: false } },
+      { onboarding: { repoUrl: REPO, collapsed: false } },
     ]);
   });
 
   it("in the wizard, says which part the user is in and what is next", async () => {
-    serve({ credentials: KEY, onboarding: { ownRepo: true } });
+    serve({ credentials: KEY, onboarding: { repoUrl: REPO } });
     renderDock({
       path: "/environments/create",
       page: (
@@ -221,7 +251,7 @@ describe("GuideDock", () => {
   });
 
   it("sends the user back when the next field is in an earlier part", async () => {
-    serve({ credentials: KEY, onboarding: { ownRepo: true } });
+    serve({ credentials: KEY, onboarding: { repoUrl: REPO } });
     renderDock({
       path: "/environments/create",
       page: (

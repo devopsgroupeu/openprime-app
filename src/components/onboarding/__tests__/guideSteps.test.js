@@ -1,6 +1,7 @@
 import {
   awsPoints,
   deployKeysLink,
+  normalizeRepoAddress,
   pushPoint,
   whereHint,
   wizardPoints,
@@ -34,6 +35,38 @@ describe("deployKeysLink", () => {
     "has no link for %j",
     (url) => {
       expect(deployKeysLink(url)).toBeNull();
+    },
+  );
+});
+
+describe("normalizeRepoAddress", () => {
+  it.each([
+    ["https://github.com/acme/infra", "git@github.com:acme/infra.git"],
+    ["https://github.com/acme/infra.git", "git@github.com:acme/infra.git"],
+    ["github.com/acme/infra/", "git@github.com:acme/infra.git"],
+    // Copied from a page inside the repository.
+    [
+      "https://github.com/acme/infra/tree/main",
+      "git@github.com:acme/infra.git",
+    ],
+    ["  git@github.com:acme/infra.git ", "git@github.com:acme/infra.git"],
+    [
+      "ssh://git@github.com/acme/infra.git",
+      "ssh://git@github.com/acme/infra.git",
+    ],
+    // GitLab nests groups.
+    [
+      "https://gitlab.com/acme/platform/infra",
+      "git@gitlab.com:acme/platform/infra.git",
+    ],
+  ])("turns %s into %s", (input, address) => {
+    expect(normalizeRepoAddress(input)).toBe(address);
+  });
+
+  it.each(["", "infra", "https://github.com/acme", "not an address at all"])(
+    "refuses %j",
+    (input) => {
+      expect(normalizeRepoAddress(input)).toBeNull();
     },
   );
 });

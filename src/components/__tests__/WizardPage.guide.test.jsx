@@ -7,6 +7,8 @@ import { AuthProvider } from "../../contexts/AuthContext";
 import { OnboardingProvider } from "../../contexts/OnboardingContext";
 import WizardPage from "../WizardPage";
 import { generateSshKeyPair } from "../../utils/sshKeyPair";
+import { http, HttpResponse } from "msw";
+import { server } from "../../mocks/server";
 
 vi.mock("../../utils/sshKeyPair", () => ({ generateSshKeyPair: vi.fn() }));
 
@@ -90,6 +92,23 @@ describe("WizardPage in the setup guide", () => {
     ).toBeInTheDocument();
     // The guide sits where the wizard's own progress box was.
     expect(screen.queryByText("Overall Progress")).not.toBeInTheDocument();
+  });
+
+  it("fills in the repository address pasted into the guide in step 2", async () => {
+    server.use(
+      http.get("*/users/me/preferences", () =>
+        HttpResponse.json({
+          preferences: {
+            onboarding: { repoUrl: "git@github.com:acme/infra.git" },
+          },
+        }),
+      ),
+    );
+    renderWizard({ onCreateEnvironment: vi.fn(), guided: true });
+
+    expect(
+      await screen.findByDisplayValue("git@github.com:acme/infra.git"),
+    ).toBeInTheDocument();
   });
 
   it("goes to the new environment after Create, where the push step is", async () => {
