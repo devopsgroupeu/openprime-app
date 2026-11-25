@@ -289,7 +289,14 @@ const EnvironmentConfiguration = ({
             title="Delete environment"
             description="Removes this environment from OpenPrime. AWS resources, the Terraform state bucket and code already pushed to git are not touched."
             control={
-              <Button variant="destructive" size="lg" onClick={onDelete}>
+              // Tinted destructive (DESIGN 3.2); the label stays foreground
+              // on the tint for AA, the icon carries the red.
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={onDelete}
+                className="bg-destructive/10 text-foreground hover:bg-destructive/15 hover:text-foreground focus-visible:ring-destructive dark:bg-destructive/15 dark:hover:bg-destructive/25 [&_svg]:text-destructive"
+              >
                 <Trash2 aria-hidden />
                 Delete environment
               </Button>

@@ -112,7 +112,7 @@ describe("Application Smoke Tests", () => {
     const allSelects = await ctx.page.locator("select").all();
     for (const select of allSelects) {
       const options = await select.locator("option").allTextContents();
-      if (options.some((opt) => opt.includes("EU (Ireland)") || opt.includes("US East"))) {
+      if (options.some((opt) => opt.includes("Europe (Ireland)") || opt.includes("US East"))) {
         await select.selectOption("eu-west-1");
         break;
       }

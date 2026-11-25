@@ -144,11 +144,13 @@ describe.each(Object.entries(themes))("%s theme tokens", (theme, t) => {
   );
 
   // Red text on a red tint is below AA in light (4.1:1), so the error pill
-  // (10 %), the focused destructive menu item (10 %, dark 20 %) and the Aura
-  // error marker (5 %) keep their label text-foreground; only the icon is red.
+  // (10 %), the focused destructive menu item (10 %, dark 20 %), the danger
+  // zone button (10 %, dark 15 %) and the Aura error marker (5 %) keep their
+  // label text-foreground; only the icon is red.
   it.each([
     ["background", 0.1],
     ["card", 0.1],
+    ["card", 0.15],
     ["popover", 0.1],
     ["popover", 0.2],
     ["background", 0.05],

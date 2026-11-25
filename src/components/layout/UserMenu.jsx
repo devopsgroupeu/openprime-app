@@ -63,7 +63,8 @@ export default function UserMenu({ onShortcuts = () => {} }) {
           "focus-visible:ring-2 focus-visible:ring-sidebar-ring max-md:min-h-11",
         )}
       >
-        {avatar("size-5")}
+        {/* 24 px: two 12 px initials fit inside the circle. */}
+        {avatar("size-6")}
         {/* Accessible name = visible name + purpose (label in name). */}
         <span className="min-w-0 flex-1 truncate">
           {name}
