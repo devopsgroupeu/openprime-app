@@ -20,6 +20,7 @@ import AppLayout from "../layout/AppLayout";
 import authService from "../../services/authService";
 import { generateSshKeyPair } from "../../utils/sshKeyPair";
 import { createEmptyEnvironment } from "../../config/environmentsConfig";
+import aiSymbol from "@/assets/openprime-ai-symbol-color.svg";
 
 vi.mock("../../utils/sshKeyPair", () => ({ generateSshKeyPair: vi.fn() }));
 
@@ -914,6 +915,21 @@ describe("WizardPage", () => {
 
     expect(screen.queryByRole("complementary", { name: "Aura" })).toBeNull();
     expect(localStorage.getItem("op-wizard-aura-open")).toBe("false");
+  });
+
+  // Spec 38: the column toggle and the sheet trigger show Aura's mark.
+  it("marks both Aura toggles with the OpenPrime AI symbol", async () => {
+    localStorage.clear();
+    renderWizard();
+    await stepHeading("Basics");
+    const toggles = screen.getAllByRole("button", { name: "Aura" });
+    expect(toggles).toHaveLength(2);
+    for (const toggle of toggles) {
+      const mark = toggle.querySelector('[data-slot="aura-mark"]');
+      expect(mark).toHaveAttribute("src", aiSymbol);
+      expect(mark).toHaveAttribute("aria-hidden");
+      expect(toggle.querySelector("svg")).toBeNull();
+    }
   });
 
   it("keeps the Aura conversation when the sheet closes and opens again", async () => {

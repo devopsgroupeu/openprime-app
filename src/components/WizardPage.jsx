@@ -4,7 +4,6 @@
 // and puts its controls in the shell's top bar.
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router";
-import { Sparkles } from "lucide-react";
 import WizardAssistant from "./WizardAssistant";
 import AIChatModal from "./modals/AIChatModal";
 import WizardActions from "./wizard-page/WizardActions";
@@ -15,6 +14,7 @@ import WizardFooter from "./wizard-page/WizardFooter";
 import WizardStepContent from "./wizard-page/WizardStepContent";
 import { STEP_DEFS } from "./wizard-page/stepDefs";
 import { TopBarActions } from "@/components/layout/AppTopBar";
+import { AuraMark } from "@/components/shared/aura-mark";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageShell } from "@/components/shared/page-shell";
 import { guardedNavigate, useUnsavedGuard } from "@/components/shared/save-bar";
@@ -482,7 +482,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="ghost" size="sm" className="2xl:hidden">
-              <Sparkles aria-hidden />
+              <AuraMark />
               <span className="max-sm:sr-only">Aura</span>
             </Button>
           </SheetTrigger>

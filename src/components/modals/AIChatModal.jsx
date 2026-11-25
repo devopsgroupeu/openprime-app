@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import symbol from "@/assets/openprime-symbol-color.svg";
+import { AuraMark } from "@/components/shared/aura-mark";
 import {
   Dialog,
   DialogContent,
@@ -360,7 +360,7 @@ const AIChatModal = ({
         }}
       >
         <DialogHeader className="flex-row items-start gap-2.5 border-b py-3 pr-12 pl-4">
-          <img src={symbol} alt="" className="mt-px size-5 shrink-0" />
+          <AuraMark className="mt-px size-5" />
           <div className="flex min-w-0 flex-col">
             <DialogTitle>Ask Aura about {serviceTitle}</DialogTitle>
             <DialogDescription className="text-xs">

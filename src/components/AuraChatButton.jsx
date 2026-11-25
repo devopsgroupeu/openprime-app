@@ -6,9 +6,9 @@
 // full screen instead. `hidden` (the wizard, which has its own Aura) closes
 // the window and takes both out of sight and reach; the conversation stays.
 import { useState, useSyncExternalStore } from "react";
-import { Sparkles } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 
+import { AuraMark } from "@/components/shared/aura-mark";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -55,9 +55,9 @@ const AuraChatButton = ({ hidden = false }) => {
                 variant="ghost"
                 size="icon"
                 aria-label="Ask Aura"
-                className="size-12 rounded-full border bg-popover text-primary shadow-lg hover:bg-accent hover:text-primary active:scale-95 [&_svg:not([class*='size-'])]:size-5"
+                className="size-12 rounded-full border bg-popover shadow-lg hover:bg-accent active:scale-95"
               >
-                <Sparkles aria-hidden />
+                <AuraMark className="size-6" />
               </Button>
             </DialogPrimitive.Trigger>
           </TooltipTrigger>

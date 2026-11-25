@@ -1,6 +1,6 @@
 import { useRef } from "react";
 
-import symbol from "@/assets/openprime-symbol-color.svg";
+import { AuraMark } from "@/components/shared/aura-mark";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ChatThread from "./ChatThread";
@@ -14,7 +14,7 @@ export const AURA_ERROR =
 export function AuraHeader({ titleAs: Title = "h2", action }) {
   return (
     <div className="flex h-13 shrink-0 items-center gap-2.5 border-b pr-2 pl-4">
-      <img src={symbol} alt="" className="size-5" />
+      <AuraMark className="size-5" />
       <div className="min-w-0 flex-1">
         <Title className="text-sm leading-4 font-medium">Aura</Title>
         <p className="truncate text-xs text-muted-foreground">

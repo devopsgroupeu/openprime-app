@@ -1,6 +1,6 @@
 import { Ban, Check, CircleAlert, RotateCcw } from "lucide-react";
 
-import symbol from "@/assets/openprime-symbol-color.svg";
+import { AuraMark } from "@/components/shared/aura-mark";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import MessageContent from "./MessageContent";
@@ -36,8 +36,9 @@ function Marker({ icon: Icon, tone = "muted", action, children }) {
 /**
  * One chat turn, the only message renderer of the Aura surfaces. User turns
  * are a right-aligned bubble; Aura's are plain text under its name. Aura
- * messages carry `message`, the AI modal's `content`; `pending` (no text yet)
- * shows "Thinking", `error`, `interrupted` and `tone: "status"` show a marker.
+ * messages carry `message`, the AI modal's `content`; `pending` plays Aura's
+ * animated mark (the one motion) and, with no text yet, shows "Thinking";
+ * `error`, `interrupted` and `tone: "status"` show a marker.
  * `onRetry` adds "Try again" to a failed answer.
  */
 const ChatMessage = ({ message, onRetry }) => {
@@ -72,7 +73,7 @@ const ChatMessage = ({ message, onRetry }) => {
     body = <Marker icon={Check}>{text}</Marker>;
   } else if (!text && message.pending) {
     body = (
-      <p role="status" className="animate-pulse text-sm text-muted-foreground">
+      <p role="status" className="text-sm text-muted-foreground">
         Thinking
       </p>
     );
@@ -100,7 +101,7 @@ const ChatMessage = ({ message, onRetry }) => {
   return (
     <article data-slot="message" className="flex flex-col items-start gap-1.5">
       <h3 className="flex items-center gap-2 text-sm font-medium">
-        <img src={symbol} alt="" className="size-4" />
+        <AuraMark thinking={Boolean(message.pending)} />
         Aura
       </h3>
       {body}

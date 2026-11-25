@@ -1,4 +1,5 @@
-import { Check, History, PanelRight } from "lucide-react";
+import { Check, History } from "lucide-react";
+import { AuraMark } from "@/components/shared/aura-mark";
 import { Button } from "@/components/ui/button";
 
 // The user's locale, on a 24 hour clock: "15:07".
@@ -53,7 +54,7 @@ export default function WizardActions({
         onClick={onToggleAura}
         className="hidden 2xl:inline-flex"
       >
-        <PanelRight aria-hidden />
+        <AuraMark />
         Aura
       </Button>
       {auraSheet}

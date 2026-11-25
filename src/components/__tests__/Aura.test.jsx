@@ -22,6 +22,8 @@ import { STALL_MS } from "../modals/ai-chat/streamChat";
 import { SERVICES_CONFIG } from "../../config/servicesConfig";
 import WizardAssistant from "../WizardAssistant";
 import { extractSuggestionsFromText } from "../modals/ai-chat/suggestions";
+import aiSymbol from "@/assets/openprime-ai-symbol-color.svg";
+import aiSymbolAnimated from "@/assets/openprime-ai-symbol-color-animated.svg";
 
 // The real suggestion reader; a test can make it fail once.
 vi.mock("../modals/ai-chat/suggestions", async (importOriginal) => {
@@ -510,5 +512,75 @@ describe("Aura service dialog", () => {
     expect(onClose).not.toHaveBeenCalled();
     fireEvent.keyDown(composer(), { key: "Escape" });
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+// Aura carries the OpenPrime AI symbol (spec 38): the static mark, and the
+// brand's animated one while it answers (the static one with reduced motion).
+const marks = (el = document.body) => [
+  ...el.querySelectorAll('[data-slot="aura-mark"]'),
+];
+const isStaticMark = (img) => img.getAttribute("src") === aiSymbol;
+const isThinkingMark = (img) => {
+  const source = img.parentElement.querySelector("source");
+  return (
+    img.getAttribute("src") === aiSymbolAnimated &&
+    img.parentElement.tagName === "PICTURE" &&
+    source.getAttribute("media") === "(prefers-reduced-motion: reduce)" &&
+    source.getAttribute("srcset") === aiSymbol
+  );
+};
+
+describe("Aura mark", () => {
+  it("is the launcher's icon and heads the window", () => {
+    render(<Shell />);
+    const [icon] = marks(launcher());
+    expect(isStaticMark(icon)).toBe(true);
+    expect(icon).toHaveAttribute("aria-hidden");
+    expect(icon).toHaveAttribute("alt", "");
+
+    fireEvent.click(launcher());
+    expect(marks(auraWindow()).filter(isStaticMark)).toHaveLength(1);
+  });
+
+  it("heads the wizard panel and the service dialog", () => {
+    const { unmount } = render(<WizardHarness />);
+    expect(marks().filter(isStaticMark)).toHaveLength(1);
+    unmount();
+
+    render(<ModalHarness />);
+    const header = screen
+      .getByRole("dialog", { name: "Ask Aura about EKS" })
+      .querySelector('[data-slot="dialog-header"]');
+    expect(marks(header).filter(isStaticMark)).toHaveLength(1);
+  });
+
+  it("plays while Aura answers and rests once the answer is in", async () => {
+    let finish;
+    reply = () =>
+      new HttpResponse(
+        new ReadableStream({
+          start(controller) {
+            finish = () => {
+              controller.enqueue(event({ chunk: "Use m6i." }));
+              controller.enqueue(event({ done: true }));
+              controller.close();
+            };
+          },
+        }),
+        { headers: { "Content-Type": "text/event-stream" } },
+      );
+    render(<WizardHarness />);
+    ask("Which node size?");
+
+    expect(await screen.findByText("Thinking")).toBeInTheDocument();
+    const turn = () => thread().getByText("Aura").closest("article");
+    const [playing] = marks(turn());
+    expect(isThinkingMark(playing)).toBe(true);
+
+    act(() => finish());
+    expect(await screen.findByText("Use m6i.")).toBeInTheDocument();
+    await waitFor(() => expect(isStaticMark(marks(turn())[0])).toBe(true));
+    expect(document.querySelector("picture")).toBeNull();
   });
 });

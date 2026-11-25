@@ -3,11 +3,12 @@
 // An enabled row opens to the service's catalog fields, in catalog order;
 // switching a service on opens it.
 import { useEffect, useRef } from "react";
-import { ChevronRight, Sparkles, TriangleAlert } from "lucide-react";
+import { ChevronRight, TriangleAlert } from "lucide-react";
 import { FIELD_TYPES, getServiceConfig } from "../config/servicesConfig";
 import DynamicFieldRenderer from "./DynamicFieldRenderer";
 import ServiceIcon from "./icons/ServiceIcon";
 import { summaryOf } from "./environment-detail/ServicesList";
+import { AuraMark } from "@/components/shared/aura-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -137,7 +138,7 @@ const DynamicServiceConfig = ({
                     "group-focus-within/service:opacity-100 group-hover/service:opacity-100 pointer-coarse:opacity-100",
                   )}
                 >
-                  <Sparkles aria-hidden />
+                  <AuraMark />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{askLabel}</TooltipContent>

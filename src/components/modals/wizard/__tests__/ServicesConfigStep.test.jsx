@@ -6,6 +6,7 @@ import { createEmptyEnvironment } from "../../../../config/environmentsConfig";
 import { hydrateServicesConfig } from "../../../../config/servicesConfig";
 import catalogFixture from "../../../../mocks/catalog.json";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import aiSymbol from "@/assets/openprime-ai-symbol-color.svg";
 
 // Controlled like the wizard: newEnv / setNewEnv and the expanded map.
 // `onEnv` sees every environment the step sets.
@@ -241,6 +242,18 @@ describe("ServicesConfigStep", () => {
       "group-focus-within/service:opacity-100",
       "pointer-coarse:opacity-100",
     );
+  });
+
+  // Spec 38: "Ask Aura" on a service shows Aura's mark.
+  it("marks Ask Aura on a service with the OpenPrime AI symbol", () => {
+    renderStep();
+    const ask = screen.getByRole("button", {
+      name: "Ask Aura about Virtual Private Cloud (VPC)",
+    });
+    const mark = ask.querySelector('[data-slot="aura-mark"]');
+    expect(mark).toHaveAttribute("src", aiSymbol);
+    expect(mark).toHaveAttribute("aria-hidden");
+    expect(ask.querySelector("svg")).toBeNull();
   });
 
   it("keeps services closed on Enable all", async () => {
