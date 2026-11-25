@@ -243,6 +243,46 @@ describe("SettingsPage", () => {
     });
   });
 
+  // A roadmap provider cannot be picked any more, but a stored one is kept.
+  it.each([
+    ["azure", "East US", "West Europe"],
+    ["gcp", "us-central1", "europe-west1"],
+  ])(
+    "keeps a stored %s provider when other preferences are saved",
+    async (stored, savedRegion, newRegion) => {
+      const puts = {};
+      server.use(
+        http.get("*/users/me/preferences", () =>
+          HttpResponse.json({
+            preferences: {
+              defaultProvider: stored,
+              defaultRegion: savedRegion,
+            },
+          }),
+        ),
+        http.put("*/users/me/preferences", async ({ request }) => {
+          puts.preferences = await request.json();
+          return HttpResponse.json(puts.preferences);
+        }),
+      );
+      renderSettingsPage("/settings/preferences");
+
+      expect(
+        await screen.findByLabelText(/Default Cloud Provider/i),
+      ).toHaveValue(stored);
+      fireEvent.change(screen.getByLabelText(/Default Region/i), {
+        target: { value: newRegion },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+      expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+      expect(puts.preferences).toMatchObject({
+        defaultProvider: stored,
+        defaultRegion: newRegion,
+      });
+    },
+  );
+
   it("discards unsaved changes", async () => {
     renderSettingsPage("/settings/account");
 

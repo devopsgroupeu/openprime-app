@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import PreferencesTab from "../PreferencesTab";
 
 // OP-271: the select sent "on-premise" while the rest of the app (and
@@ -67,4 +67,33 @@ describe("PreferencesTab default provider", () => {
     expect(provider.value).toBe("aws");
     expect(regionLabels()).not.toContain("Datacenter 1");
   });
+});
+
+// D-9: Azure and Google Cloud are on the roadmap. Unlike On-premises (OP-271
+// above) they cannot be picked, but a stored one still shows as the current
+// value instead of AWS.
+describe("PreferencesTab roadmap providers", () => {
+  it("offers Azure and Google Cloud only as disabled roadmap options", () => {
+    const { provider } = renderTab({ defaultProvider: "aws" });
+    const option = (name) => within(provider).getByRole("option", { name });
+
+    expect(option("Azure (Roadmap)")).toBeDisabled();
+    expect(option("Google Cloud (Roadmap)")).toBeDisabled();
+    expect(option("AWS")).toBeEnabled();
+    expect(option("On-premises")).toBeEnabled();
+  });
+
+  it.each([
+    ["azure", "Azure (Roadmap)", "East US"],
+    ["gcp", "Google Cloud (Roadmap)", "US Central (Iowa)"],
+  ])(
+    "still shows a stored %s as the current provider",
+    (stored, label, region) => {
+      const { provider, regionLabels } = renderTab({ defaultProvider: stored });
+
+      expect(provider).toHaveValue(stored);
+      expect(provider).toHaveDisplayValue(label);
+      expect(regionLabels()).toContain(region);
+    },
+  );
 });

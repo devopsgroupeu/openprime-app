@@ -12,10 +12,12 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select";
 
+// Azure and Google Cloud are on the roadmap (D-9): they cannot be picked, but
+// a stored one still shows as the current value. On-premises stays selectable.
 const PROVIDERS = [
   { value: "aws", label: "AWS" },
-  { value: "azure", label: "Azure" },
-  { value: "gcp", label: "Google Cloud" },
+  { value: "azure", label: "Azure (Roadmap)", disabled: true },
+  { value: "gcp", label: "Google Cloud (Roadmap)", disabled: true },
   { value: "onpremise", label: "On-premises" },
 ];
 
@@ -57,7 +59,11 @@ const PreferencesTab = ({ userPreferences, onPreferenceChange }) => {
               }}
             >
               {PROVIDERS.map((p) => (
-                <NativeSelectOption key={p.value} value={p.value}>
+                <NativeSelectOption
+                  key={p.value}
+                  value={p.value}
+                  disabled={p.disabled}
+                >
                   {p.label}
                 </NativeSelectOption>
               ))}

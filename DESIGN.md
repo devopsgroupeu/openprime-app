@@ -611,7 +611,9 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
 
 - Account: Profile rows First name, Last name, Email. Preferences: Default cloud provider and
   Default region (`NativeSelect`; the region pre-fills a new wizard; a provider change sets that
-  provider's default region unless it offers the current one). They are drafts with one
+  provider's default region unless it offers the current one). The provider list is AWS,
+  On-premises (selectable, OP-271) and the disabled "Azure (Roadmap)" and "Google Cloud (Roadmap)"
+  (D-9), which still show as the current value when stored. They are drafts with one
   `SaveBar` on every settings tab that saves both; off the edited tab it reads "Unsaved changes in
   Account" (or "in Account and Preferences"). Save checks an edited profile ("Enter your first
   name.", "Enter a valid email address."), opens Account and focuses the first error; then "Changes
@@ -700,11 +702,10 @@ tab in the path. Search is component state; sort, theme, the wizard Aura column 
 
 Follow the code unless your task is to close one of these; never "fix" them on the side.
 
-| Decision or rule                                                               | Code today                                                                                                                                                                               |
-| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| D-9 in Preferences: of the roadmap providers only On-premises stays selectable | `settings-page/PreferencesTab.jsx` lists Azure and Google Cloud as plain options without a Roadmap marker                                                                                |
-| Unused motion selectors are removed                                            | `src/styles/motion.css` still honours `data-motion="reduce"` and `"full"` on `<html>` (a "Preferences override") that nothing sets; only the OS setting applies                          |
-| Legacy `outline` variants are compatibility only                               | Badge `outline` on the Roadmap badges and the detail Helm tab version (`environment-detail/HelmChartsList.jsx`; the wizard and Review use `tag`); Button `outline` on Aura's "Try again" |
+| Decision or rule                                 | Code today                                                                                                                                                                               |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unused motion selectors are removed              | `src/styles/motion.css` still honours `data-motion="reduce"` and `"full"` on `<html>` (a "Preferences override") that nothing sets; only the OS setting applies                          |
+| Legacy `outline` variants are compatibility only | Badge `outline` on the Roadmap badges and the detail Helm tab version (`environment-detail/HelmChartsList.jsx`; the wizard and Review use `tag`); Button `outline` on Aura's "Try again" |
 
 ## 11. Definition of done and commands
 
