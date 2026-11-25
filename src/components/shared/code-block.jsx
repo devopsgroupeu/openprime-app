@@ -1,11 +1,18 @@
 import { CopyButton } from "@/components/shared/copy-button";
+import { cn } from "@/lib/utils";
 
-/** Mono code under a bar with its language and a copy button. */
-export function CodeBlock({ lang, code, copyLabel = "Copy code" }) {
+/**
+ * Mono code under a bar with its language and a copy button. Spaced for a
+ * chat answer; `className` adjusts that elsewhere.
+ */
+export function CodeBlock({ lang, code, copyLabel = "Copy code", className }) {
   return (
     <div
       data-slot="code-block"
-      className="my-3 overflow-hidden rounded-lg border bg-muted/40 first:mt-0 last:mb-0"
+      className={cn(
+        "my-3 overflow-hidden rounded-lg border bg-muted/40 first:mt-0 last:mb-0",
+        className,
+      )}
     >
       <div className="flex h-8 items-center justify-between border-b pr-1 pl-3 text-xs text-muted-foreground">
         <span className="font-mono">{lang || "code"}</span>

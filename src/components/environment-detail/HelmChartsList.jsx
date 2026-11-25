@@ -97,7 +97,12 @@ function ChartRow({ chartKey, config }) {
           />
         </CollapsibleTrigger>
         <CollapsibleContent className="flex flex-col gap-2 border-t border-border bg-muted/30 px-3.5 py-3 sm:pl-15.5">
-          <CodeBlock lang="yaml" code={values} copyLabel="Copy values" />
+          <CodeBlock
+            lang="yaml"
+            code={values}
+            copyLabel="Copy values"
+            className="my-0"
+          />
           <p className="text-xs text-muted-foreground">
             Saved with the environment. Generated repositories do not apply
             custom values yet.
