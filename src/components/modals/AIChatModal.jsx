@@ -334,9 +334,11 @@ const AIChatModal = ({
   };
 
   // The failed answer goes and its question is asked again, same history.
+  // Try again goes with it: the composer takes the focus.
   const retry = () => {
     setMessages(messages.slice(0, -1));
     ask(messages.slice(0, -2), messages.at(-2));
+    inputRef.current?.focus();
   };
 
   /**

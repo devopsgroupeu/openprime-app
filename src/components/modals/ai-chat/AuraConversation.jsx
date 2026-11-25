@@ -104,10 +104,12 @@ export default function AuraConversation({
   };
 
   // The failed answer goes and its question is asked again, same history.
+  // Try again goes with it: the composer takes the focus.
   const retry = () => {
     const history = messages.slice(0, -1);
     setMessages(history);
     ask(history);
+    inputRef.current?.focus();
   };
 
   const fillPrompt = (prompt) => {

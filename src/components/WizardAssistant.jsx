@@ -1,5 +1,5 @@
 // src/components/WizardAssistant.jsx
-// Aura in the wizard's right column (xl) or sheet (below xl). WizardPage owns
+// Aura in the wizard's right column (2xl) or sheet (below 2xl). WizardPage owns
 // the messages and the draft, so the conversation survives closing the sheet
 // and the switch between column and sheet. `context` goes to /ai/chat with
 // every question.

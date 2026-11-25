@@ -1011,6 +1011,53 @@ describe("WizardPage", () => {
     expect(await dialogInput()).toHaveValue("Do I need 3 AZs?");
   });
 
+  // Leaving drops the conversations; their answers must not run on (the
+  // backend stops the model only when the connection closes).
+  it("stops Aura's answers in flight when the wizard closes", async () => {
+    localStorage.clear();
+    const signals = [];
+    server.use(
+      http.post("*/ai/chat", ({ request }) => {
+        signals.push(request.signal);
+        return new Promise(() => {});
+      }),
+    );
+    renderWizardEdit(vi.fn());
+    await stepHeading("Services");
+    const ask = (input) => {
+      fireEvent.change(input, { target: { value: "Is this right?" } });
+      fireEvent.keyDown(input, { key: "Enter" });
+    };
+
+    ask(
+      within(screen.getByRole("complementary", { name: "Aura" })).getByRole(
+        "textbox",
+        { name: "Message Aura" },
+      ),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Ask Aura about Virtual Private Cloud (VPC)",
+      }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: /Ask Aura about/,
+    });
+    ask(within(dialog).getByRole("textbox", { name: "Message Aura" }));
+    await waitFor(() => expect(signals).toHaveLength(2));
+    fireEvent.keyDown(
+      within(dialog).getByRole("textbox", { name: "Message Aura" }),
+      { key: "Escape" },
+    );
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(await screen.findByText("Environment detail")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(signals.map((signal) => signal.aborted)).toEqual([true, true]),
+    );
+  });
+
   it("marks a step completed with a check once the user advances past it", async () => {
     localStorage.clear();
     renderWizardCreate(vi.fn());

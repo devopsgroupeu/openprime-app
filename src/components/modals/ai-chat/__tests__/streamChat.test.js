@@ -90,4 +90,34 @@ describe("streamChat", () => {
     await expect(finished).rejects.toThrow("handler failed");
     expect(cancel).toHaveBeenCalledTimes(1);
   });
+
+  // The backend sends a whole answer as one large event, which the network
+  // can deliver in pieces; the last event may lack its line break.
+  it("reads an event split across two reads, and a last line without a break", async () => {
+    const answer = "Use m5 for the caf\u00e9 staging";
+    const text = `data: ${JSON.stringify({ chunk: answer })}\n\n`;
+    const bytes = encoder.encode(text);
+    // Inside the two bytes of the accented letter.
+    const cut =
+      encoder.encode(text.slice(0, text.indexOf("\u00e9"))).length + 1;
+    reply = () =>
+      new HttpResponse(
+        new ReadableStream({
+          async start(controller) {
+            controller.enqueue(bytes.slice(0, cut));
+            await new Promise((resolve) => setTimeout(resolve, 10));
+            controller.enqueue(bytes.slice(cut));
+            controller.enqueue(encoder.encode('data: {"done":true}'));
+            controller.close();
+          },
+        }),
+        { headers: { "Content-Type": "text/event-stream" } },
+      );
+    const events = [];
+
+    await expect(
+      streamChat({}, (data) => events.push(data)).finished,
+    ).resolves.toBe("done");
+    expect(events).toEqual([{ chunk: answer }, { done: true }]);
+  });
 });

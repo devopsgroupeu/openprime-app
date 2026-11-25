@@ -138,6 +138,19 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   // One Aura conversation and draft for the column and the sheet.
   const [auraMessages, setAuraMessages] = useState([]);
   const [auraDraft, setAuraDraft] = useState("");
+  // Leaving drops the conversations: an answer still coming is stopped, which
+  // closes its connection (the backend then stops the model too).
+  const conversations = useRef(null);
+  useEffect(() => {
+    conversations.current = [auraMessages, ...Object.values(aiChatMessages)];
+  });
+  useEffect(
+    () => () =>
+      conversations.current
+        ?.flat()
+        .forEach((message) => message.pending && message.stop?.()),
+    [],
+  );
   // Where focus goes after the next render: the first match of `selector` in
   // the step (the first invalid field when Continue or Create found errors,
   // Name after Start over; no match leaves focus where it is), or without a

@@ -39,23 +39,33 @@ export function streamChat(body, onEvent) {
 
       reader = res.body.getReader();
       const decoder = new TextDecoder();
+      // A read can end inside a line (the backend sends a whole answer as
+      // one large event): the rest waits for the next read.
+      let buffer = "";
+      const handleLine = (line) => {
+        if (!line.startsWith("data: ")) return;
+        let data;
+        try {
+          data = JSON.parse(line.replace(/^data: /, ""));
+        } catch {
+          return; // a malformed line
+        }
+        // Outside the try: a failing handler fails the answer.
+        onEvent(data);
+      };
       while (!controller.signal.aborted) {
         const { done, value } = await reader.read();
-        if (done) break;
-        watch(STALL_MS);
-        for (const line of decoder
-          .decode(value, { stream: true })
-          .split("\n")) {
-          if (!line.startsWith("data: ")) continue;
-          let data;
-          try {
-            data = JSON.parse(line.replace(/^data: /, ""));
-          } catch {
-            continue; // a malformed line
-          }
-          // Outside the try: a failing handler fails the answer.
-          onEvent(data);
+        if (controller.signal.aborted) break;
+        if (done) {
+          handleLine(buffer + decoder.decode());
+          break;
         }
+        watch(STALL_MS);
+        const lines = (buffer + decoder.decode(value, { stream: true })).split(
+          "\n",
+        );
+        buffer = lines.pop();
+        lines.forEach((line) => handleLine(line));
       }
     } catch (err) {
       if (!controller.signal.aborted) {

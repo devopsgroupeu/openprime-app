@@ -25,12 +25,14 @@ const ChatThread = ({ messages, onRetry, children }) => {
   const last = messages.at(-1);
   const failed = last?.error || last?.interrupted ? last : null;
   const busy = messages.some((m) => m.pending);
-  const [wasBusy, setWasBusy] = useState(busy);
+  const [seen, setSeen] = useState({ busy, failed });
   const [said, setSaid] = useState("");
-  if (busy !== wasBusy) {
-    setWasBusy(busy);
+  if (busy !== seen.busy || failed !== seen.failed) {
+    setSeen({ busy, failed });
     // Cleared while Aura answers, so the same words are announced again.
-    setSaid(busy ? "" : announcement(last));
+    if (busy !== seen.busy) setSaid(busy ? "" : announcement(last));
+    // A question that failed before it was sent had no answer in flight.
+    else if (failed) setSaid(announcement(failed));
   }
 
   useEffect(() => {

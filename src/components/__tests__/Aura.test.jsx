@@ -167,6 +167,30 @@ describe("Aura composer", () => {
     // The second question stays in the composer for later.
     expect(composer()).toHaveValue("And for production?");
   });
+
+  // In a browser the click's default action runs after React re-rendered
+  // the stopped answer: Stop must cancel it and must not turn into the Send
+  // button, which would submit the follow-up.
+  it.each([
+    ["wizard panel", WizardHarness],
+    ["service dialog", ModalHarness],
+  ])("never sends the typed follow-up on Stop (%s)", async (_, Harness) => {
+    reply = () => hang(["Use m5"]);
+    render(<Harness />);
+    ask("Which node size?");
+    expect(await screen.findByText("Use m5")).toBeInTheDocument();
+    type("And for prod");
+    const stop = screen.getByRole("button", { name: "Stop" });
+
+    // fireEvent returns false when a listener cancelled the default action.
+    expect(fireEvent.click(stop)).toBe(false);
+    expect(
+      await thread().findByText("You stopped this answer."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send message" })).not.toBe(stop);
+    expect(requests).toHaveLength(1);
+    expect(composer()).toHaveValue("And for prod");
+  });
 });
 
 describe("Aura answers that do not finish", () => {
@@ -207,6 +231,34 @@ describe("Aura answers that do not finish", () => {
     expect(screen.queryByText("Thinking")).toBeNull();
     // Stopping is not a failure.
     expect(logged).not.toHaveBeenCalled();
+  });
+
+  // Stop goes when the answer ends; focus on it must not fall to the page.
+  it("moves focus to the composer when an answer ends while Stop has it", async () => {
+    let finish;
+    reply = () =>
+      new HttpResponse(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(event({ chunk: "Use m5" }));
+            finish = () => {
+              controller.enqueue(event({ done: true }));
+              controller.close();
+            };
+          },
+        }),
+        { headers: { "Content-Type": "text/event-stream" } },
+      );
+    render(<WizardHarness />);
+    ask("Which node size?");
+    expect(await screen.findByText("Use m5")).toBeInTheDocument();
+    act(() => screen.getByRole("button", { name: "Stop" }).focus());
+
+    act(() => finish());
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Stop" })).toBeNull(),
+    );
+    expect(composer()).toHaveFocus();
   });
 
   it("gives up on an answer that sends nothing for a minute", async () => {
@@ -258,7 +310,11 @@ describe("Aura answers that do not finish", () => {
     expect(
       await thread().findByText("You stopped this answer."),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    const retry = screen.getByRole("button", { name: "Try again" });
+    act(() => retry.focus());
+    fireEvent.click(retry);
+    // Try again goes with its turn: the composer keeps the focus.
+    expect(composer()).toHaveFocus();
     expect(await screen.findByText("Use m6i.")).toBeInTheDocument();
     expect(requests[1]).toEqual(requests[0]);
   });
@@ -420,6 +476,26 @@ describe("Aura window", () => {
     ).toBeInTheDocument();
   });
 
+  // Try again removes itself with its turn. Focus stays in the window, so
+  // Escape (which only closes from inside it) still closes it.
+  it("keeps focus in the composer after Try again, and Escape closes", async () => {
+    reply = (n) => (n === 1 ? hang(["Use m5"]) : answer("Use m6i."));
+    render(<Shell />);
+    fireEvent.click(launcher());
+    ask("Which node size?");
+    expect(await screen.findByText("Use m5")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+    const retry = await screen.findByRole("button", { name: "Try again" });
+
+    act(() => retry.focus());
+    fireEvent.click(retry);
+    expect(composer()).toHaveFocus();
+    expect(await screen.findByText("Use m6i.")).toBeInTheDocument();
+
+    fireEvent.keyDown(document.activeElement, { key: "Escape" });
+    await waitFor(() => expect(auraWindow()).toBeNull());
+  });
+
   it("has one close button while open", () => {
     render(<Shell />);
     fireEvent.click(launcher());
@@ -466,6 +542,10 @@ describe("Aura service dialog", () => {
       expect(await thread().findByText(AURA_ERROR)).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Try again" })).toBeVisible();
       expect(requests).toHaveLength(0);
+      // No answer was in flight, and the failure is still announced.
+      await waitFor(() =>
+        expect(screen.getByRole("status")).toHaveTextContent(AURA_ERROR),
+      );
     } finally {
       delete SERVICES_CONFIG.nofields;
     }

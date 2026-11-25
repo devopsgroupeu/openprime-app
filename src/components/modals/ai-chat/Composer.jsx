@@ -2,6 +2,14 @@ import { ArrowUp, Square } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
+const focusInput = (button) => button.form?.querySelector("textarea").focus();
+// Stop goes when the answer ends: focus on it moves to the composer instead
+// of falling to the page. (A ref cleanup runs while the button is still in
+// the page.)
+const keepFocus = (button) => () => {
+  if (document.activeElement === button) focusInput(button);
+};
+
 /**
  * Aura's composer (port of openprime-ai PromptInput): a rounded-2xl card with
  * an auto-growing textarea and a round Send button, the only saturated control
@@ -52,22 +60,29 @@ const Composer = ({
           className="field-sizing-content max-h-50 min-h-6 w-full resize-none bg-transparent text-base outline-none [scrollbar-width:thin] placeholder:text-muted-foreground md:text-md"
         />
         <div className="flex h-8 items-center justify-end">
+          {/* In a browser a click on Stop ends the answer and React
+              re-renders before the click's default action runs. So Stop
+              cancels it and is a button of its own (keys): turned into Send,
+              it would submit what is typed. */}
           {busy ? (
             <Button
+              key="stop"
+              ref={keepFocus}
               type="button"
               size="icon"
               aria-label="Stop"
               className="rounded-full"
               onClick={(e) => {
+                e.preventDefault();
                 onStop();
-                // The button turns into a disabled Send: keep focus usable.
-                e.currentTarget.form.querySelector("textarea").focus();
+                focusInput(e.currentTarget);
               }}
             >
               <Square aria-hidden className="fill-current" />
             </Button>
           ) : (
             <Button
+              key="send"
               type="submit"
               size="icon"
               aria-label="Send message"
