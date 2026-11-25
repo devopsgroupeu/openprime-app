@@ -103,3 +103,25 @@ describe("HelmChartsStep categories", () => {
     ).toHaveAttribute("aria-checked", "true");
   });
 });
+
+// Argo CD and Karpenter are always installed and have no switch here.
+describe("HelmChartsStep count", () => {
+  it("counts only the charts the step shows", () => {
+    const initial = envWith("eks");
+    initial.services.eks.helmCharts = {
+      argocd: { enabled: true, customValues: false },
+      karpenter: { enabled: true },
+    };
+    render(<Harness initial={initial} />);
+    expect(screen.getByText("0 selected")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Clear all" })).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Monitoring stack" }),
+    ).toBeInTheDocument();
+  });
+
+  it("offers no preset that only enables an always-installed chart", () => {
+    render(<Harness initial={envWith("eks")} />);
+    expect(screen.queryByRole("button", { name: "GitOps setup" })).toBeNull();
+  });
+});

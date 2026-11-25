@@ -32,10 +32,13 @@ const HelmChartsStep = ({ newEnv, setNewEnv, focusHeading }) => {
 
   const k8sService = getEnabledK8sService();
 
+  // Only the charts with a switch here: Argo CD and Karpenter are always
+  // installed and not listed.
   const getEnabledChartsCount = () => {
-    if (!k8sService || !newEnv.services[k8sService.name]?.helmCharts) return 0;
-    return Object.values(newEnv.services[k8sService.name].helmCharts).filter(
-      (chart) => chart?.enabled,
+    const charts = newEnv.services[k8sService.name]?.helmCharts;
+    if (!charts) return 0;
+    return getHelmChartsForK8sService(k8sService.name).filter(
+      (key) => charts[key]?.enabled,
     ).length;
   };
 
@@ -76,14 +79,6 @@ const HelmChartsStep = ({ newEnv, setNewEnv, focusHeading }) => {
           prometheusStack: { enabled: true, customValues: false },
           loki: { enabled: true, customValues: false },
           promtail: { enabled: true, customValues: false },
-        }),
-    },
-    {
-      label: "GitOps setup",
-      apply: () =>
-        handleHelmChartsChange({
-          ...currentCharts,
-          argocd: { enabled: true, customValues: false },
         }),
     },
     {
