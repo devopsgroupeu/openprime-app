@@ -1,18 +1,23 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { useState } from "react";
+import { vi } from "vitest";
 import ServicesConfigStep from "../ServicesConfigStep";
 import { createEmptyEnvironment } from "../../../../config/environmentsConfig";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Controlled like the wizard: newEnv / setNewEnv and the expanded map.
-function Harness({ initial }) {
+// `onEnv` sees every environment the step sets.
+function Harness({ initial, onEnv }) {
   const [newEnv, setNewEnv] = useState(initial);
   const [expanded, setExpanded] = useState({});
   return (
     <TooltipProvider>
       <ServicesConfigStep
         newEnv={newEnv}
-        setNewEnv={setNewEnv}
+        setNewEnv={(env) => {
+          onEnv?.(env);
+          setNewEnv(env);
+        }}
         expandedServices={expanded}
         setExpandedServices={setExpanded}
         onAskAI={() => {}}
@@ -21,8 +26,14 @@ function Harness({ initial }) {
   );
 }
 
-const renderStep = (env = createEmptyEnvironment("aws")) =>
-  render(<Harness initial={env} />);
+const renderStep = (env = createEmptyEnvironment("aws"), onEnv) =>
+  render(<Harness initial={env} onEnv={onEnv} />);
+
+const openActions = () =>
+  fireEvent.pointerDown(
+    screen.getByRole("button", { name: "Service actions" }),
+    { button: 0, ctrlKey: false },
+  );
 
 const vpcSwitch = () =>
   screen.getByRole("switch", { name: "Enable Virtual Private Cloud (VPC)" });
@@ -46,6 +57,42 @@ describe("ServicesConfigStep", () => {
       .textContent.match(/(\d+) of (\d+)/);
     expect(enabled).toBe(total);
     expect(vpcSwitch()).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("keeps the settings of configured services on Enable all", async () => {
+    const env = createEmptyEnvironment("aws");
+    env.services.vpc = {
+      ...env.services.vpc,
+      enabled: true,
+      cidr: "10.1.0.0/16",
+    };
+    const onEnv = vi.fn();
+    renderStep(env, onEnv);
+
+    openActions();
+    fireEvent.click(
+      await screen.findByRole("menuitem", { name: "Enable all" }),
+    );
+
+    const { services } = onEnv.mock.lastCall[0];
+    expect(services.vpc.cidr).toBe("10.1.0.0/16");
+    expect(services.eks.enabled).toBe(true);
+    // The cluster keeps its chart selection.
+    expect(services.eks.helmCharts).toEqual(env.services.eks.helmCharts);
+  });
+
+  it("starts a preset only with services the catalog offers", () => {
+    const env = createEmptyEnvironment("aws");
+    delete env.services.rds;
+    const onEnv = vi.fn();
+    renderStep(env, onEnv);
+
+    fireEvent.click(screen.getByRole("button", { name: "Basic stack" }));
+
+    const { services } = onEnv.mock.lastCall[0];
+    expect(services.vpc.enabled).toBe(true);
+    expect(services.s3.enabled).toBe(true);
+    expect(services).not.toHaveProperty("rds");
   });
 
   it("filters by search and category and recovers from no results", () => {

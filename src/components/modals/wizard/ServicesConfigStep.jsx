@@ -7,10 +7,7 @@ import { getProviderServices } from "../../../config/providersConfig";
 import DynamicServicesGrid, {
   groupByCategory,
 } from "../../DynamicServicesGrid";
-import {
-  createDefaultServiceConfig,
-  getServiceConfig,
-} from "../../../config/servicesConfig";
+import { getServiceConfig } from "../../../config/servicesConfig";
 import { FilterTabs, SearchField } from "@/components/shared/list-toolbar";
 import { ResourceActionsMenu } from "@/components/shared/resource-actions-menu";
 import { EmptyState } from "@/components/shared/states";
@@ -59,31 +56,28 @@ const ServicesConfigStep = ({
       matches(name, query),
   );
 
-  const setAllServices = (enabled) => {
-    if (!newEnv.services) return;
-    const updatedServices = {};
-    Object.keys(newEnv.services).forEach((serviceName) => {
-      updatedServices[serviceName] = enabled
-        ? // Enable all services with default config
-          { ...createDefaultServiceConfig(serviceName), enabled: true }
-        : { ...newEnv.services[serviceName], enabled: false };
-    });
-    setNewEnv({ ...newEnv, services: updatedServices });
-  };
-
-  const applyPreset = (services) =>
+  // Switches services on or off and keeps their settings. Enabling is limited
+  // to the services this step shows; disabling covers every service.
+  const setEnabled = (names, enabled) =>
     setNewEnv({
       ...newEnv,
       services: {
         ...newEnv.services,
         ...Object.fromEntries(
-          services.map((name) => [
-            name,
-            { ...newEnv.services[name], enabled: true },
-          ]),
+          names.map((name) => [name, { ...newEnv.services[name], enabled }]),
         ),
       },
     });
+  const setAllServices = (enabled) =>
+    setEnabled(
+      enabled ? serviceNames : Object.keys(newEnv.services || {}),
+      enabled,
+    );
+  const applyPreset = (services) =>
+    setEnabled(
+      services.filter((name) => serviceNames.includes(name)),
+      true,
+    );
 
   const clearFilters = () => {
     setQuery("");
