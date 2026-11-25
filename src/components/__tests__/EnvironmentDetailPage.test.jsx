@@ -199,6 +199,37 @@ describe("EnvironmentDetailPage async jobs", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("starts one job when Generate is clicked twice before the page updates", async () => {
+    let posted = 0;
+    server.use(
+      http.post("*/environments/env-001/generate", () => {
+        posted += 1;
+        return HttpResponse.json(
+          { jobId: "job-generate-env-001", status: "queued" },
+          { status: 202 },
+        );
+      }),
+      http.get("*/jobs/:jobId", ({ params }) =>
+        HttpResponse.json({ id: params.jobId, status: "running" }),
+      ),
+    );
+    const { unmount } = renderDetailPage();
+    const generate = await screen.findByRole("button", {
+      name: "Generate repository",
+    });
+
+    // Both clicks land before React re-renders the disabled button.
+    act(() => {
+      generate.click();
+      generate.click();
+    });
+    await screen.findByRole("button", { name: /Generating/ });
+    await waitFor(() => expect(posted).toBeGreaterThan(0));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(posted).toBe(1);
+    unmount();
+  });
+
   it("reads the environment back from the server after a job", async () => {
     const done = new Date().toISOString();
     let finished = false;
@@ -665,6 +696,59 @@ describe("EnvironmentDetailPage leaving during a job", () => {
       "/environments/env-001",
     );
     expect(screen.getByRole("button", { name: /Generating/ })).toBeDisabled();
+    unmount();
+  });
+
+  // Below lg Edit sits in More when Generate is the primary.
+  it("asks before More > Edit leaves a generating page", async () => {
+    server.use(
+      http.get("*/jobs/:jobId", ({ params }) =>
+        HttpResponse.json({ id: params.jobId, status: "running" }),
+      ),
+    );
+    const { unmount } = renderDetailPage({
+      path: "/environments/env-002",
+      shell: <Shell />,
+    });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Generate repository" }),
+    );
+    await screen.findByRole("button", { name: /Generating/ });
+
+    const menu = await openMore("demo-staging");
+    fireEvent.click(within(menu).getByRole("menuitem", { name: "Edit" }));
+
+    const prompt = await screen.findByRole("alertdialog");
+    expect(within(prompt).getByText("Leave this page?")).toBeInTheDocument();
+    expect(screen.getByLabelText("Path")).toHaveTextContent(
+      "/environments/env-002",
+    );
+    unmount();
+  });
+
+  it("says a download is in progress when leaving during Download again", async () => {
+    vi.spyOn(authService, "getBlob")
+      .mockRejectedValueOnce(new Error("Network error"))
+      .mockReturnValueOnce(new Promise(() => {}));
+    const { unmount } = renderDetailPage({ shell: <Shell /> });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Generate repository" }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Download again" }),
+    );
+    await screen.findByText("Downloading the repository.");
+
+    fireEvent.click(screen.getByRole("link", { name: "All environments" }));
+    const prompt = await screen.findByRole("alertdialog");
+    expect(
+      within(prompt).getByText(
+        "The ZIP download is still in progress. If you leave, the file will not be saved.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(prompt).queryByText(/still generating/),
+    ).not.toBeInTheDocument();
     unmount();
   });
 

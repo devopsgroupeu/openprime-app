@@ -17,6 +17,7 @@ import { IconTile } from "@/components/shared/icon-tile";
 import { PageHeader } from "@/components/shared/page-header";
 import { ResourceActionsMenu } from "@/components/shared/resource-actions-menu";
 import { usePaletteActions } from "@/components/layout/CommandPalette";
+import { guardedNavigate } from "@/components/shared/save-bar";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -122,7 +123,8 @@ const EnvironmentHeader = ({
           {
             label: "Edit",
             icon: Pencil,
-            onSelect: () => navigate(editHref),
+            // Through the leave guard, like a link: a generate may run.
+            onSelect: () => guardedNavigate(() => navigate(editHref)),
             className: "lg:hidden",
           },
         ]

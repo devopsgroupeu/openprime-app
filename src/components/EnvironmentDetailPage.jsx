@@ -146,6 +146,9 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
   // the ZIP of a generated repository again (`downloadUrl`).
   const [job, setJob] = useState(null);
   const mountedRef = useRef(true);
+  // One job at a time. A ref, not state: a second trigger that lands before
+  // the next render (the buttons not disabled yet) is ignored too.
+  const inFlight = useRef(false);
   const running = job && !job.error ? job.kind : null;
   // Leaving drops the download: polling is tied to this page being mounted.
   const leaveGuard = useUnsavedGuard(
@@ -271,12 +274,20 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
     }
   };
 
-  const downloadAgain = (downloadUrl) => {
+  const downloadAgain = async (downloadUrl) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setJob({ kind: "download", startedAt: Date.now() });
-    download(downloadUrl, "Repository downloaded.");
+    try {
+      await download(downloadUrl, "Repository downloaded.");
+    } finally {
+      inFlight.current = false;
+    }
   };
 
   const runJob = async (kind) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setJob({ kind, startedAt: Date.now() });
     try {
       const { jobId } = await authService.post(
@@ -316,6 +327,8 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
       if (!mountedRef.current) return;
       // Shown in the callout (with Try again), not in a toast as well.
       failed(kind, err);
+    } finally {
+      inFlight.current = false;
     }
   };
 
@@ -455,8 +468,9 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Leave this page?</AlertDialogTitle>
             <AlertDialogDescription>
-              The repository is still generating. If you leave, the ZIP download
-              will not start.
+              {running === "download"
+                ? "The ZIP download is still in progress. If you leave, the file will not be saved."
+                : "The repository is still generating. If you leave, the ZIP download will not start."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
