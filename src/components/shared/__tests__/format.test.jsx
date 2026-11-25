@@ -1,4 +1,11 @@
-import { formatDateTime, formatRelative } from "@/components/shared/format";
+import { render, screen } from "@testing-library/react";
+
+import {
+  RelativeTime,
+  formatDateTime,
+  formatRelative,
+} from "@/components/shared/format";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const NOW = Date.parse("2026-11-25T12:00:00Z");
 const ago = (seconds) => new Date(NOW - seconds * 1000).toISOString();
@@ -26,6 +33,21 @@ describe("formatDateTime", () => {
   it("prints the absolute time in UTC", () => {
     expect(formatDateTime("2026-11-25T08:05:00Z")).toBe(
       "Nov 25, 2026, 8:05 AM UTC",
+    );
+  });
+});
+
+describe("RelativeTime", () => {
+  // Tooltips are hidden on touch, so the absolute time is also in the name.
+  it("names the absolute UTC time next to the relative one", () => {
+    render(
+      <TooltipProvider>
+        <RelativeTime iso="2026-11-25T08:05:00Z" />
+      </TooltipProvider>,
+    );
+
+    expect(screen.getByRole("button")).toHaveAccessibleName(
+      expect.stringContaining("Nov 25, 2026, 8:05 AM UTC"),
     );
   });
 });

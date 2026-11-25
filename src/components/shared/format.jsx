@@ -44,6 +44,8 @@ export function RelativeTime({ iso }) {
           className="rounded-sm whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <time dateTime={iso}>{formatRelative(iso)}</time>
+          {/* The tooltip is hidden on touch; the name keeps the exact time. */}
+          <span className="sr-only">{`, ${formatDateTime(iso)}`}</span>
         </button>
       </TooltipTrigger>
       <TooltipContent>{formatDateTime(iso)}</TooltipContent>
