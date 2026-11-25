@@ -23,17 +23,21 @@ import WizardAssistant from "../WizardAssistant";
 // The wizard owns the messages, as WizardPage does.
 function WizardHarness() {
   const [messages, setMessages] = useState([]);
+  const [draft, setDraft] = useState("");
   return (
     <WizardAssistant
       context={{ name: "staging", provider: "aws" }}
       messages={messages}
       setMessages={setMessages}
+      draft={draft}
+      setDraft={setDraft}
     />
   );
 }
 
 function ModalHarness({ onClose = () => {} }) {
   const [messages, setMessages] = useState([]);
+  const [draft, setDraft] = useState("");
   return (
     <AIChatModal
       isOpen
@@ -42,6 +46,8 @@ function ModalHarness({ onClose = () => {} }) {
       wizardValues={{ name: "staging" }}
       messages={messages}
       setMessages={setMessages}
+      draft={draft}
+      setDraft={setDraft}
       setNewEnv={() => {}}
       onClose={onClose}
     />
@@ -297,6 +303,17 @@ describe("Aura window", () => {
     fireEvent.keyDown(page, { key: "Escape" });
     // The page stays usable and Aura stays open.
     expect(auraWindow()).toBeInTheDocument();
+  });
+
+  it("keeps what was typed when it closes", async () => {
+    render(<Shell />);
+    fireEvent.click(launcher());
+    type("Which region for EU customers?");
+
+    fireEvent.keyDown(composer(), { key: "Escape" });
+    await waitFor(() => expect(auraWindow()).toBeNull());
+    fireEvent.click(launcher());
+    expect(composer()).toHaveValue("Which region for EU customers?");
   });
 
   it("has one close button while open", () => {

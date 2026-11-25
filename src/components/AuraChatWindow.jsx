@@ -19,7 +19,7 @@ const PROMPTS = [
   "What does Karpenter do?",
 ];
 
-const AuraChatWindow = ({ messages, setMessages }) => {
+const AuraChatWindow = ({ messages, setMessages, draft, setDraft }) => {
   const ref = useRef(null);
   return (
     <DialogPrimitive.Content
@@ -52,6 +52,8 @@ const AuraChatWindow = ({ messages, setMessages }) => {
       <AuraConversation
         messages={messages}
         setMessages={setMessages}
+        draft={draft}
+        setDraft={setDraft}
         prompts={PROMPTS}
       />
     </DialogPrimitive.Content>

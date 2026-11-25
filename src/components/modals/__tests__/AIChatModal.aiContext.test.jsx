@@ -38,6 +38,7 @@ const wizardValues = {
 
 function Harness() {
   const [messages, setMessages] = useState([]);
+  const [draft, setDraft] = useState("");
   return (
     <AIChatModal
       isOpen
@@ -46,6 +47,8 @@ function Harness() {
       wizardValues={wizardValues}
       messages={messages}
       setMessages={setMessages}
+      draft={draft}
+      setDraft={setDraft}
       setNewEnv={() => {}}
       onClose={() => {}}
     />

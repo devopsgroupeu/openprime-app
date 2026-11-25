@@ -1,7 +1,7 @@
 // src/components/WizardAssistant.jsx
 // Aura in the wizard's right column (xl) or sheet (below xl). WizardPage owns
-// the messages, so the conversation survives closing the sheet and the switch
-// between column and sheet. `context` goes to /ai/chat with every question.
+// the messages and the draft, so the conversation survives closing the sheet
+// and the switch between column and sheet. `context` goes to /ai/chat with every question.
 import AuraConversation, {
   AuraHeader,
 } from "./modals/ai-chat/AuraConversation";
@@ -29,13 +29,22 @@ const STEP_PROMPTS = {
   ],
 };
 
-const WizardAssistant = ({ context, stepId, messages, setMessages }) => (
+const WizardAssistant = ({
+  context,
+  stepId,
+  messages,
+  setMessages,
+  draft,
+  setDraft,
+}) => (
   <div className="flex min-h-0 flex-1 flex-col">
     {/* The column or sheet around it already names it "Aura". */}
     <AuraHeader titleAs="p" />
     <AuraConversation
       messages={messages}
       setMessages={setMessages}
+      draft={draft}
+      setDraft={setDraft}
       context={context}
       prompts={STEP_PROMPTS[stepId] ?? STEP_PROMPTS.basic}
     />

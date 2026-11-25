@@ -6,6 +6,7 @@ import AIChatModal from "../AIChatModal";
 // welcome-message effect needs a real state owner to render into.
 function Harness(props) {
   const [messages, setMessages] = useState([]);
+  const [draft, setDraft] = useState("");
   return (
     <AIChatModal
       isOpen
@@ -14,6 +15,8 @@ function Harness(props) {
       wizardValues={{}}
       messages={messages}
       setMessages={setMessages}
+      draft={draft}
+      setDraft={setDraft}
       setNewEnv={() => {}}
       onClose={() => {}}
       {...props}

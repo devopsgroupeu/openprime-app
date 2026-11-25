@@ -44,9 +44,10 @@ const AIChatModal = ({
   wizardValues,
   messages,
   setMessages,
+  draft,
+  setDraft,
   setNewEnv,
 }) => {
-  const [inputText, setInputText] = useState("");
   const [suggestion, setSuggestion] = useState(null);
   const inputRef = useRef(null);
   // A pending answer survives closing and reopening the dialog, and can be
@@ -295,15 +296,15 @@ const AIChatModal = ({
    * Send the composer's text
    */
   const handleSubmit = () => {
-    if (!inputText.trim() || busy) return;
+    if (!draft.trim() || busy) return;
 
     const userMessage = {
       id: Date.now(),
       type: "user",
-      content: inputText.trim(),
+      content: draft.trim(),
     };
     setMessages((prev) => [...prev, userMessage]);
-    setInputText("");
+    setDraft("");
     ask(messages, userMessage);
   };
 
@@ -314,10 +315,9 @@ const AIChatModal = ({
   };
 
   /**
-   * Clean up and close modal
+   * Clean up and close modal; the caller keeps the draft for next time
    */
   const handleClose = () => {
-    setInputText("");
     setSuggestion(null);
     onClose();
   };
@@ -357,8 +357,8 @@ const AIChatModal = ({
         <div className="shrink-0 p-3">
           <Composer
             ref={inputRef}
-            value={inputText}
-            onChange={setInputText}
+            value={draft}
+            onChange={setDraft}
             onSend={handleSubmit}
             onStop={pending?.stop}
             busy={busy}

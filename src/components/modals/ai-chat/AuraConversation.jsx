@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
 import symbol from "@/assets/openprime-symbol-color.svg";
 import { Button } from "@/components/ui/button";
@@ -29,16 +29,18 @@ export function AuraHeader({ titleAs: Title = "h2", action }) {
 /**
  * The conversation of the floating Aura and the wizard panel: thread, an empty
  * state with suggested prompts (they fill the composer, never send) and the
- * composer. Messages are owned by the caller, so the conversation outlives
- * this component. Streams from POST /ai/chat; `context` rides along when set.
+ * composer. Messages and the composer's `draft` are owned by the caller, so
+ * the conversation outlives this component. Streams from POST /ai/chat;
+ * `context` rides along when set.
  */
 export default function AuraConversation({
   messages,
   setMessages,
+  draft,
+  setDraft,
   context,
   prompts = [],
 }) {
-  const [input, setInput] = useState("");
   const inputRef = useRef(null);
   // The pending answer lives in the messages, so a remount mid-answer still
   // knows Aura is busy and can stop it.
@@ -93,11 +95,11 @@ export default function AuraConversation({
     const userMessage = {
       id: Date.now(),
       type: "user",
-      message: input,
+      message: draft,
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+    setDraft("");
     ask([...messages, userMessage]);
   };
 
@@ -109,7 +111,7 @@ export default function AuraConversation({
   };
 
   const fillPrompt = (prompt) => {
-    setInput(prompt);
+    setDraft(prompt);
     inputRef.current?.focus();
   };
 
@@ -126,7 +128,7 @@ export default function AuraConversation({
             <ul
               aria-label="Suggested questions"
               // Hidden, not removed, once there is text: nothing jumps.
-              className={cn("flex flex-wrap gap-2", input && "invisible")}
+              className={cn("flex flex-wrap gap-2", draft && "invisible")}
             >
               {prompts.map((prompt) => (
                 <li key={prompt}>
@@ -148,8 +150,8 @@ export default function AuraConversation({
       <div className="shrink-0 p-3">
         <Composer
           ref={inputRef}
-          value={input}
-          onChange={setInput}
+          value={draft}
+          onChange={setDraft}
           onSend={send}
           onStop={pending?.stop}
           busy={Boolean(pending)}

@@ -15,6 +15,7 @@ import WizardAssistant from "../WizardAssistant";
 
 function ModalHarness() {
   const [messages, setMessages] = useState([]);
+  const [draft, setDraft] = useState("");
   return (
     <AIChatModal
       isOpen
@@ -23,6 +24,8 @@ function ModalHarness() {
       wizardValues={{}}
       messages={messages}
       setMessages={setMessages}
+      draft={draft}
+      setDraft={setDraft}
       setNewEnv={() => {}}
       onClose={() => {}}
     />
@@ -32,11 +35,14 @@ function ModalHarness() {
 // The wizard owns the Aura messages, as WizardPage does.
 function WizardHarness() {
   const [messages, setMessages] = useState([]);
+  const [draft, setDraft] = useState("");
   return (
     <WizardAssistant
       context={{ name: "staging", provider: "aws" }}
       messages={messages}
       setMessages={setMessages}
+      draft={draft}
+      setDraft={setDraft}
     />
   );
 }

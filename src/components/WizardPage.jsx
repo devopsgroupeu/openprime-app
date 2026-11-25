@@ -128,11 +128,14 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     serviceTitle: null,
   });
   const [aiChatMessages, setAiChatMessages] = useState({});
+  // What was typed to Aura about each service, kept when its dialog closes.
+  const [aiChatDrafts, setAiChatDrafts] = useState({});
   // Edit mode: the loaded environment, to tell whether the user changed it.
   const [baseline, setBaseline] = useState(null);
   const [auraOpen, setAuraOpen] = useState(readAuraOpen);
-  // One Aura conversation for the column and the sheet.
+  // One Aura conversation and draft for the column and the sheet.
   const [auraMessages, setAuraMessages] = useState([]);
+  const [auraDraft, setAuraDraft] = useState("");
   // Where focus goes after the next render: the first match of `selector` in
   // the step (the first invalid field when Continue or Create found errors,
   // Name after Start over), else the step's h1. The control that had focus is
@@ -467,6 +470,8 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       stepId={currentId}
       messages={auraMessages}
       setMessages={setAuraMessages}
+      draft={auraDraft}
+      setDraft={setAuraDraft}
     />
   ) : null;
 
@@ -668,6 +673,13 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                 typeof update === "function" ? update(current) : update;
               return { ...prev, [aiChatModal.service]: next };
             })
+          }
+          draft={aiChatDrafts[aiChatModal.service] ?? ""}
+          setDraft={(text) =>
+            setAiChatDrafts((prev) => ({
+              ...prev,
+              [aiChatModal.service]: text,
+            }))
           }
         />
       )}

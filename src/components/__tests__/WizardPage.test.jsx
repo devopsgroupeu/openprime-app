@@ -691,6 +691,7 @@ describe("WizardPage", () => {
     expect(
       await within(sheet).findByText("Use eu-west-1."),
     ).toBeInTheDocument();
+    fireEvent.change(input, { target: { value: "And for staging?" } });
 
     // The Escape that ends an IME composition leaves the sheet open.
     fireEvent.keyDown(input, { key: "Escape", isComposing: true });
@@ -704,6 +705,37 @@ describe("WizardPage", () => {
     const again = await screen.findByRole("dialog", { name: "Aura" });
     expect(within(again).getByText("Which region?")).toBeInTheDocument();
     expect(within(again).getByText("Use eu-west-1.")).toBeInTheDocument();
+    expect(
+      within(again).getByRole("textbox", { name: "Message Aura" }),
+    ).toHaveValue("And for staging?");
+  });
+
+  it("keeps a question to Aura about a service when its dialog closes", async () => {
+    renderWizardEdit(vi.fn());
+    await stepHeading("Services");
+    const askAboutVpc = () =>
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Ask Aura about Virtual Private Cloud (VPC)",
+        }),
+      );
+    const dialogInput = async () =>
+      within(
+        await screen.findByRole("dialog", { name: /Ask Aura about/ }),
+      ).getByRole("textbox", { name: "Message Aura" });
+
+    askAboutVpc();
+    const input = await dialogInput();
+    fireEvent.change(input, { target: { value: "Do I need 3 AZs?" } });
+    fireEvent.keyDown(input, { key: "Escape" });
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: /Ask Aura about/ }),
+      ).toBeNull(),
+    );
+
+    askAboutVpc();
+    expect(await dialogInput()).toHaveValue("Do I need 3 AZs?");
   });
 
   it("marks a step completed with a check once the user advances past it", async () => {

@@ -27,6 +27,8 @@ const floats = () => window.matchMedia(SM_UP).matches;
 const AuraChatButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [auraMessages, setAuraMessages] = useState(INITIAL_MESSAGES);
+  // What was typed survives closing the window, like the conversation.
+  const [draft, setDraft] = useState("");
   const floating = useSyncExternalStore(subscribe, floats);
 
   return (
@@ -54,7 +56,12 @@ const AuraChatButton = () => {
           <TooltipContent side="left">Ask Aura</TooltipContent>
         </Tooltip>
 
-        <AuraChatWindow messages={auraMessages} setMessages={setAuraMessages} />
+        <AuraChatWindow
+          messages={auraMessages}
+          setMessages={setAuraMessages}
+          draft={draft}
+          setDraft={setDraft}
+        />
       </div>
     </DialogPrimitive.Root>
   );
