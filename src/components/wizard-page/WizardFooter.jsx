@@ -28,7 +28,15 @@ const WizardFooter = ({
           Step {currentStep} of {totalSteps}
         </p>
         <div className="flex flex-1 justify-end">
-          <Button onClick={last ? onSubmit : onNext} disabled={isLoading}>
+          <Button
+            onClick={(e) => {
+              if (!last) return onNext();
+              // Continue becomes Create under the pointer: the second click
+              // of a double click is not a submit. Keys report detail 0.
+              if (e.detail <= 1) onSubmit();
+            }}
+            disabled={isLoading}
+          >
             {isLoading ? <Spinner aria-hidden /> : null}
             {last
               ? isEditMode

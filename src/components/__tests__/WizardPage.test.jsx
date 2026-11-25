@@ -812,6 +812,36 @@ describe("WizardPage", () => {
     await stepHeading("Basics");
   });
 
+  // Continue turns into Create under the pointer: the second click of a
+  // double click must not create the environment.
+  it("never creates on the second click of a double click on Continue", async () => {
+    localStorage.clear();
+    const onCreateEnvironment = vi.fn().mockResolvedValue({ id: "env-new" });
+    renderWizardCreate(onCreateEnvironment);
+    fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
+      target: { value: "prod" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+    await stepHeading("Services");
+
+    const primary = screen.getByRole("button", { name: /Continue/i });
+    fireEvent.click(primary, { detail: 1 });
+    await stepHeading("Review");
+    fireEvent.click(
+      screen.getByRole("button", { name: /Create environment/i }),
+      { detail: 2 },
+    );
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(onCreateEnvironment).not.toHaveBeenCalled();
+
+    // A single click, or Enter / Space (detail 0), creates it.
+    fireEvent.click(
+      screen.getByRole("button", { name: /Create environment/i }),
+      { detail: 0 },
+    );
+    await waitFor(() => expect(onCreateEnvironment).toHaveBeenCalledTimes(1));
+  });
+
   // The create payload is an explicit whitelist, so a new field renders,
   // validates and reviews correctly while being dropped on the way out.
   it("sends the domain in the create payload", async () => {
