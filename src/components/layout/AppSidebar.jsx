@@ -15,7 +15,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import logoInverse from "../../assets/openprime-logo-color-inverse.svg";
-import { SETTINGS_TABS } from "../../config/nav";
+import { SETTINGS_TABS, wizardRoute } from "../../config/nav";
 import { IconAction } from "./IconAction";
 import UserMenu from "./UserMenu";
 
@@ -85,7 +85,7 @@ function TopRow({ onSearch }) {
 
 /** App mode of the sidebar. The create wizard is New environment's page. */
 function AppNav({ pathname }) {
-  const creating = pathname === "/environments/create";
+  const creating = wizardRoute(pathname)?.mode === "create";
   return (
     <>
       <SidebarGroup className={GROUP}>

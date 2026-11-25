@@ -1,6 +1,18 @@
 // Settings sections: the settings page, the settings sidebar and the command
 // palette read them from here.
 import { KeyRound, SlidersHorizontal, User } from "lucide-react";
+import { matchPath } from "react-router";
+
+/**
+ * The environment wizard at `pathname` (the routes in App.jsx): `{ mode:
+ * "create" }`, `{ mode: "edit", id }` or null. The shell, its breadcrumbs and
+ * the sidebar read it from here.
+ */
+export function wizardRoute(pathname) {
+  if (pathname === "/environments/create") return { mode: "create" };
+  const edit = matchPath("/environments/:id/edit", pathname);
+  return edit ? { mode: "edit", id: edit.params.id } : null;
+}
 
 export const SETTINGS_TABS = [
   {

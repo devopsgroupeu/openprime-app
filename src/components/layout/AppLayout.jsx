@@ -5,6 +5,7 @@ import { SkipLink } from "@/components/shared/skip-link";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import { matches, shortcut } from "@/lib/shortcuts";
+import { wizardRoute } from "../../config/nav";
 import { CatalogProvider } from "../../contexts/CatalogContext";
 import AuraChatButton from "../AuraChatButton";
 import ErrorBoundary, { PageCrash } from "../ErrorBoundary";
@@ -12,11 +13,6 @@ import AppSidebar from "./AppSidebar";
 import AppTopBar, { TopBarSlot } from "./AppTopBar";
 import CommandPalette from "./CommandPalette";
 import KeyboardShortcutsDialog from "./KeyboardShortcutsDialog";
-
-/** The environment wizard: create, or edit environment `:id`. */
-const isWizardPath = (pathname) =>
-  pathname === "/environments/create" ||
-  Boolean(matchPath("/environments/:id/edit", pathname));
 
 /**
  * Crumbs only from depth 2 (openprime-ai): the last one is the page. The
@@ -26,17 +22,14 @@ export function breadcrumbsFor(pathname, environments) {
   const root = { label: "Environments", to: "/environments" };
   const nameOf = (id) =>
     environments.find((e) => e.id === id)?.name || "Environment";
-  if (pathname === "/environments/create")
-    return [root, { label: "New environment" }];
-  const edit = matchPath("/environments/:id/edit", pathname);
-  if (edit) {
-    const { id } = edit.params;
+  const wizard = wizardRoute(pathname);
+  if (wizard?.mode === "create") return [root, { label: "New environment" }];
+  if (wizard)
     return [
       root,
-      { label: nameOf(id), to: `/environments/${id}` },
+      { label: nameOf(wizard.id), to: `/environments/${wizard.id}` },
       { label: "Edit" },
     ];
-  }
   const env = matchPath("/environments/:id", pathname);
   return env ? [root, { label: nameOf(env.params.id) }] : [];
 }
@@ -51,7 +44,7 @@ export function breadcrumbsFor(pathname, environments) {
  */
 const AppLayout = ({ environments }) => {
   const { pathname } = useLocation();
-  const wizard = isWizardPath(pathname);
+  const wizard = Boolean(wizardRoute(pathname));
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   // The open page's own palette group (usePaletteActions).
