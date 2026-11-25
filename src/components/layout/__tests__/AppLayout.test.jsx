@@ -96,6 +96,21 @@ describe("AppLayout", () => {
     expect(scroller.scrollTop).toBe(0);
   });
 
+  // Layout is CSS (checked in screenshots): the room kept under the last card
+  // for the Aura launcher would lift a SaveBar off its resting place at the
+  // end of the page, so a page with one goes without it.
+  it("keeps no launcher room under a page with a save bar", () => {
+    renderLayout();
+    const scroller = screen
+      .getByRole("main")
+      .querySelector('[data-slot="page-scroller"]');
+
+    expect(scroller.firstElementChild).toHaveClass(
+      "pb-16",
+      "has-[[data-slot=save-bar]]:pb-0",
+    );
+  });
+
   it("skips the sidebar and top bar to the main landmark", () => {
     renderLayout();
 

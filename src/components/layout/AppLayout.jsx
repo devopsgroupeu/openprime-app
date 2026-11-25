@@ -74,8 +74,10 @@ const AppLayout = ({ environments }) => {
           className="min-h-0 flex-1 overflow-y-auto"
           onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 0)}
         >
-          {/* pb-16: the last card scrolls clear of the Aura launcher. */}
-          <div className="pb-16">
+          {/* pb-16: the last card scrolls clear of the Aura launcher. Not
+              under a SaveBar: it would lift the bar off its sticky place at
+              the end of the page, under the launcher. */}
+          <div className="pb-16 has-[[data-slot=save-bar]]:pb-0">
             <Outlet context={setPageActions} />
           </div>
         </div>
