@@ -1,4 +1,5 @@
 import { MoreHorizontal } from "lucide-react";
+import { useId } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,14 +15,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 /**
  * The one "..." menu of a resource (cards, rows, page headers). Callers build `actions` from the
  * DTO `access`, never from the role; destructive items come last, after a separator. An action's
  * optional `className` (e.g. `lg:hidden`) lets a page move header buttons into the menu on small
- * screens.
+ * screens; its optional `hint` is a line under the label that says why it is disabled.
  */
 export function ResourceActionsMenu({ label, actions, triggerClassName }) {
+  const id = useId();
   if (actions.length === 0) return null;
   const regular = actions.filter((a) => !a.destructive);
   const destructive = actions.filter((a) => a.destructive);
@@ -46,15 +49,31 @@ export function ResourceActionsMenu({ label, actions, triggerClassName }) {
       <DropdownMenuContent align="end">
         {regular.length > 0 ? (
           <DropdownMenuGroup>
-            {regular.map((a) => (
+            {regular.map((a, i) => (
               <DropdownMenuItem
                 key={a.label}
                 onSelect={a.onSelect}
                 disabled={a.disabled}
-                className={a.className}
+                // The hint stays readable on a disabled item; the label fades.
+                aria-label={a.hint ? a.label : undefined}
+                aria-describedby={a.hint ? `${id}-${i}` : undefined}
+                className={cn(
+                  a.hint &&
+                    "flex-wrap data-[disabled]:opacity-100 data-[disabled]:*:not-[[data-hint]]:opacity-50",
+                  a.className,
+                )}
               >
                 {a.icon ? <a.icon aria-hidden /> : null}
-                {a.label}
+                {a.hint ? <span>{a.label}</span> : a.label}
+                {a.hint ? (
+                  <span
+                    id={`${id}-${i}`}
+                    data-hint
+                    className="basis-full pl-6 text-xs text-muted-foreground"
+                  >
+                    {a.hint}
+                  </span>
+                ) : null}
               </DropdownMenuItem>
             ))}
           </DropdownMenuGroup>

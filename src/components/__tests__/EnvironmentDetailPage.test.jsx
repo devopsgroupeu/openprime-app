@@ -518,6 +518,72 @@ describe("EnvironmentDetailPage tabs", () => {
   });
 });
 
+const openMore = async (name) => {
+  fireEvent.pointerDown(
+    await screen.findByRole("button", { name: `More actions for ${name}` }),
+    { button: 0, ctrlKey: false },
+  );
+  return screen.findByRole("menu");
+};
+
+describe("EnvironmentDetailPage header actions", () => {
+  it("keeps Delete disabled while a job runs", async () => {
+    server.use(
+      http.get("*/jobs/:jobId", ({ params }) =>
+        HttpResponse.json({ id: params.jobId, status: "running" }),
+      ),
+    );
+    const { unmount } = renderDetailPage();
+    fireEvent.click(await screen.findByRole("button", { name: "Push to git" }));
+    await screen.findByRole("button", { name: /Pushing/ });
+
+    const menu = await openMore("demo-prod");
+    expect(
+      within(menu).getByRole("menuitem", { name: "Delete environment" }),
+    ).toHaveAttribute("data-disabled");
+    unmount();
+  });
+
+  it("says in the menu why Push to git is unavailable", async () => {
+    renderDetailPage({ path: "/environments/env-002" });
+
+    const menu = await openMore("demo-staging");
+    const push = within(menu).getByRole("menuitem", { name: "Push to git" });
+    expect(push).toHaveAttribute("data-disabled");
+    expect(push).toHaveAccessibleDescription(
+      "Add a git repository in Edit > Basics to push.",
+    );
+  });
+});
+
+// The filled button is the next step: Generate until the environment is
+// generated (or after a failure), Edit afterwards.
+describe("EnvironmentDetailPage primary action", () => {
+  const variant = (name) =>
+    screen.getByRole(name === "Edit" ? "link" : "button", { name }).dataset
+      .variant;
+
+  it.each([
+    ["env-002", "demo-staging", "Generate repository", "Edit"],
+    ["env-003", "analytics-dev", "Generate repository", "Edit"],
+    ["env-001", "demo-prod", "Edit", "Generate repository"],
+  ])("%s (%s): %s is primary", async (id, name, primary, other) => {
+    renderDetailPage({ path: `/environments/${id}` });
+    await screen.findByRole("heading", { level: 1, name });
+
+    expect(variant(primary)).toBe("default");
+    expect(variant(other)).toBe("secondary");
+    // Below lg only the primary stays a button; the menu holds the other.
+    const menu = await openMore(name);
+    expect(
+      within(menu).getByRole("menuitem", { name: other }),
+    ).toBeInTheDocument();
+    expect(
+      within(menu).queryByRole("menuitem", { name: primary }),
+    ).not.toBeInTheDocument();
+  });
+});
+
 describe("EnvironmentDetailPage delete", () => {
   it("confirms from the menu and deletes only after the name is typed", async () => {
     const onDelete = vi.fn(() => Promise.resolve());

@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Copy, Download, GitBranch, Link2, Pencil, Trash2 } from "lucide-react";
 import ProviderIcon from "../icons/ProviderIcon";
-import { modifiedAt, prefixOf, regionOf } from "../../utils/environmentStats";
+import {
+  getEffectiveStatus,
+  modifiedAt,
+  prefixOf,
+  regionOf,
+  statusDisplay,
+} from "../../utils/environmentStats";
 import { regionName } from "./EnvironmentConfiguration";
 import { Callout } from "@/components/shared/callout";
 import { CopyButton } from "@/components/shared/copy-button";
@@ -21,6 +27,9 @@ import {
 
 const NO_GIT = "Add a git repository in Edit > Basics to push.";
 
+// Statuses whose next step is generating (the primary button).
+const GENERATE_FIRST = new Set(["not-generated", "failed"]);
+
 // Facts divided by hairlines. Each fact draws the hairline before it; the row
 // is shifted left and clipped, so a fact that wraps to a new line starts clean.
 const Facts = ({ children }) => (
@@ -38,9 +47,11 @@ const Fact = ({ children }) => (
 
 /**
  * Name, status, region / prefix / modified, the two job actions, Edit and the
- * menu. `running` is the job in flight ("generate" | "push" | null). Below lg
- * (a tablet with the sidebar open, a phone) the job actions move into the menu
- * so the title keeps its room.
+ * menu. `running` is the job in flight ("generate" | "push" | "download" |
+ * null). The primary follows the stored status: Generate repository until the
+ * environment is generated or after a failure, Edit otherwise. Below lg (a
+ * tablet with the sidebar open, a phone) only the primary stays a button; the
+ * other actions move into the menu so the title keeps its room.
  */
 const EnvironmentHeader = ({
   environment,
@@ -57,6 +68,11 @@ const EnvironmentHeader = ({
   const prefix = prefixOf(environment);
   const modified = modifiedAt(environment);
   const busy = Boolean(running);
+  const navigate = useNavigate();
+  const editHref = `/environments/${environment.id}/edit`;
+  const generateFirst = GENERATE_FIRST.has(
+    statusDisplay(getEffectiveStatus(environment)).key,
+  );
 
   const pushButton = (
     <Button variant="secondary" onClick={onPush} disabled={busy || !canPush}>
@@ -66,20 +82,35 @@ const EnvironmentHeader = ({
   );
 
   const actions = [
-    {
-      label: "Generate repository",
-      icon: Download,
-      onSelect: onGenerate,
-      disabled: busy,
-      className: "lg:hidden",
-    },
+    ...(generateFirst
+      ? []
+      : [
+          {
+            label: "Generate repository",
+            icon: Download,
+            onSelect: onGenerate,
+            disabled: busy,
+            className: "lg:hidden",
+          },
+        ]),
     {
       label: "Push to git",
       icon: GitBranch,
       onSelect: onPush,
       disabled: busy || !canPush,
+      hint: canPush ? undefined : NO_GIT,
       className: "lg:hidden",
     },
+    ...(generateFirst
+      ? [
+          {
+            label: "Edit",
+            icon: Pencil,
+            onSelect: () => navigate(editHref),
+            className: "lg:hidden",
+          },
+        ]
+      : []),
     { label: "Copy environment ID", icon: Copy, onSelect: onCopyId },
     { label: "Copy link", icon: Link2, onSelect: onCopyLink },
     {
@@ -87,6 +118,7 @@ const EnvironmentHeader = ({
       icon: Trash2,
       destructive: true,
       onSelect: onDelete,
+      disabled: busy,
     },
   ];
 
@@ -122,15 +154,20 @@ const EnvironmentHeader = ({
       }
       actions={
         <>
-          <span className="flex items-center gap-2 max-lg:hidden">
-            <Button variant="secondary" onClick={onGenerate} disabled={busy}>
-              {running === "generate" ? (
-                <Spinner aria-hidden />
-              ) : (
-                <Download aria-hidden />
-              )}
-              {running === "generate" ? "Generating..." : "Generate repository"}
-            </Button>
+          <Button
+            variant={generateFirst ? "default" : "secondary"}
+            onClick={onGenerate}
+            disabled={busy}
+            className={generateFirst ? undefined : "max-lg:hidden"}
+          >
+            {running === "generate" ? (
+              <Spinner aria-hidden />
+            ) : (
+              <Download aria-hidden />
+            )}
+            {running === "generate" ? "Generating..." : "Generate repository"}
+          </Button>
+          <span className="flex max-lg:hidden">
             {canPush ? (
               pushButton
             ) : (
@@ -149,8 +186,12 @@ const EnvironmentHeader = ({
               </Tooltip>
             )}
           </span>
-          <Button asChild>
-            <Link to={`/environments/${environment.id}/edit`}>
+          <Button
+            variant={generateFirst ? "secondary" : "default"}
+            asChild
+            className={generateFirst ? "max-lg:hidden" : undefined}
+          >
+            <Link to={editHref}>
               <Pencil aria-hidden />
               Edit
             </Link>
