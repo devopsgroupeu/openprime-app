@@ -37,7 +37,7 @@ const AuraChatWindow = ({ messages, setMessages, draft, setDraft }) => {
           e.preventDefault();
         }
       }}
-      className="fixed inset-0 flex animate-in flex-col bg-popover text-popover-foreground duration-(--dur-base) outline-none fade-in-0 slide-in-from-bottom-2 sm:static sm:h-[min(35rem,calc(100dvh-7rem))] sm:w-100 sm:rounded-xl sm:border sm:shadow-lg"
+      className="fixed inset-0 flex animate-in flex-col bg-popover text-popover-foreground duration-(--dur-base) outline-none fade-in-0 slide-in-from-bottom-2 sm:static sm:h-[min(35rem,calc(100dvh-7rem))] sm:[body:has([data-slot=save-bar])_&]:h-[min(35rem,calc(100dvh-8rem))] sm:w-100 sm:rounded-xl sm:border sm:shadow-lg"
     >
       <AuraHeader
         titleAs={DialogPrimitive.Title}

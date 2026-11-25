@@ -284,7 +284,8 @@ const SettingsPage = () => {
 
   return (
     <>
-      <PageShell width="settings">
+      {/* Grows to the screen's height with the save bar, which rests at its end. */}
+      <PageShell width="settings" className="grow">
         {status === "loading" ? (
           <SettingsPageSkeleton />
         ) : (

@@ -111,8 +111,9 @@ export function SaveBar({
           role="region"
           aria-label="Unsaved changes"
           data-slot="save-bar"
-          // A floating bar at the bottom of the content column.
-          className="motion-enter sticky bottom-4 z-20 mx-auto mt-2 flex w-full max-w-xl items-center justify-between gap-3 rounded-xl border bg-card py-2 pr-2 pl-4 shadow-xl"
+          // A floating bar at the bottom of the content column (mt-auto: of
+          // a column that fills the screen, also on a short page).
+          className="motion-enter sticky bottom-4 z-20 mx-auto mt-auto flex w-full max-w-xl items-center justify-between gap-3 rounded-xl border bg-card py-2 pr-2 pl-4 shadow-xl"
         >
           <p className="text-sm text-muted-foreground">{label}</p>
           <div className="flex items-center gap-2">

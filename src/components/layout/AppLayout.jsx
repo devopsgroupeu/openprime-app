@@ -76,8 +76,10 @@ const AppLayout = ({ environments }) => {
         >
           {/* pb-16: the last card scrolls clear of the Aura launcher. Not
               under a SaveBar: it would lift the bar off its sticky place at
-              the end of the page, under the launcher. */}
-          <div className="pb-16 has-[[data-slot=save-bar]]:pb-0">
+              the end of the page, under the launcher. A page with a SaveBar
+              fills the screen, so a short one has its bar at the bottom too,
+              under the Aura launcher and window, never behind them. */}
+          <div className="pb-16 has-[[data-slot=save-bar]]:flex has-[[data-slot=save-bar]]:min-h-full has-[[data-slot=save-bar]]:flex-col has-[[data-slot=save-bar]]:pb-0">
             <Outlet context={setPageActions} />
           </div>
         </div>

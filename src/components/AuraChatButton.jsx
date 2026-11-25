@@ -1,7 +1,9 @@
 // src/components/AuraChatButton.jsx
 // The floating Aura launcher of the app shell and its window. Both sit under
-// every overlay (z-40 < z-50) and move up while a SaveBar is on screen, so
-// they never cover a dialog button or the Save button.
+// every overlay (z-40 < z-50), so they never cover a dialog button. While a
+// SaveBar is on screen (it rests at the bottom, see AppLayout) they move up
+// above it, clear of Discard and Save; on phones the open window is a modal
+// full screen instead.
 import { useState, useSyncExternalStore } from "react";
 import { Sparkles } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
@@ -37,7 +39,7 @@ const AuraChatButton = () => {
       onOpenChange={setIsOpen}
       modal={!floating}
     >
-      <div className="fixed right-4 bottom-4 z-40 flex flex-col items-end sm:right-6 sm:bottom-6 [body:has([data-slot=save-bar])_&]:bottom-20">
+      <div className="fixed right-4 bottom-4 z-40 flex flex-col items-end sm:right-6 sm:bottom-6 [body:has([data-slot=save-bar])_&]:bottom-24">
         <Tooltip>
           <TooltipTrigger asChild>
             <DialogPrimitive.Trigger asChild>

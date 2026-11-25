@@ -98,7 +98,9 @@ describe("AppLayout", () => {
 
   // Layout is CSS (checked in screenshots): the room kept under the last card
   // for the Aura launcher would lift a SaveBar off its resting place at the
-  // end of the page, so a page with one goes without it.
+  // end of the page, so a page with one goes without it. It also fills the
+  // screen, so the bar rests at the bottom (under the Aura window), not in
+  // the middle of a short page.
   it("keeps no launcher room under a page with a save bar", () => {
     renderLayout();
     const scroller = screen
@@ -108,6 +110,9 @@ describe("AppLayout", () => {
     expect(scroller.firstElementChild).toHaveClass(
       "pb-16",
       "has-[[data-slot=save-bar]]:pb-0",
+      "has-[[data-slot=save-bar]]:flex",
+      "has-[[data-slot=save-bar]]:min-h-full",
+      "has-[[data-slot=save-bar]]:flex-col",
     );
   });
 
