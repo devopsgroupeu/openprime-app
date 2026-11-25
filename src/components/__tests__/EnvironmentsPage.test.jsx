@@ -161,7 +161,7 @@ describe("EnvironmentsPage", () => {
 
   // The stretched card link covers the card: the time sits above it, so its
   // tooltip can open, and names the exact time to screen readers.
-  it("shows when a card was modified, exactly on hover", async () => {
+  it("shows when a card was modified and leaves its clicks to the card link", () => {
     renderPage();
     const card = screen
       .getByRole("link", { name: "demo-prod" })
@@ -169,10 +169,11 @@ describe("EnvironmentsPage", () => {
     const exact = formatDateTime(prod.updated_at);
     expect(within(card).getByText(`, ${exact}`)).toHaveClass("sr-only");
 
-    fireEvent.pointerMove(
-      within(card).getByText(formatRelative(prod.updated_at)),
-    );
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(exact);
+    // Not raised above the stretched link (z-10) by a hover-only tooltip
+    // trigger, so a click on the time opens the environment.
+    const time = within(card).getByText(formatRelative(prod.updated_at));
+    expect(time.closest(".z-10")).toBeNull();
+    expect(time.closest("[data-state]")).toBeNull();
   });
 
   const filterTabs = () =>

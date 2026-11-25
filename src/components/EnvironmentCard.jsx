@@ -129,18 +129,12 @@ const EnvironmentCard = ({ environment, onCopyId, onDelete }) => {
       }
       meta={
         modified ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              {/* Above the stretched link, like the service icons, so the
-                  exact time can show on hover. */}
-              <span className="relative z-10 whitespace-nowrap">
-                Modified{" "}
-                <time dateTime={modified}>{formatRelative(modified)}</time>
-                <span className="sr-only">{`, ${formatDateTime(modified)}`}</span>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>{formatDateTime(modified)}</TooltipContent>
-          </Tooltip>
+          // Under the stretched link, so a click on it opens the
+          // environment; screen readers also hear the exact time.
+          <span className="whitespace-nowrap">
+            Modified <time dateTime={modified}>{formatRelative(modified)}</time>
+            <span className="sr-only">{`, ${formatDateTime(modified)}`}</span>
+          </span>
         ) : null
       }
       actions={
