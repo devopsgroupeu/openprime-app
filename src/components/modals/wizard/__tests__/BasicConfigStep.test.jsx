@@ -102,16 +102,46 @@ describe("BasicConfigStep", () => {
   });
 
   // Guards OP-256: nothing reads the industry/standards presets yet, so they may
-  // be visible as roadmap but never clickable: plain chips, not controls.
+  // be visible as roadmap but never clickable: disabled tiles, no buttons.
   it("shows the industry and standards presets as roadmap, never clickable", () => {
     renderStep();
     const section = screen.getByRole("region", {
       name: "Industry and compliance presets",
     });
     const list = within(section).getByRole("list");
-    expect(within(list).getAllByRole("listitem")).toHaveLength(8);
+    const tiles = within(list).getAllByRole("listitem");
+    expect(tiles).toHaveLength(8);
     expect(within(section).queryAllByRole("button")).toHaveLength(0);
-    expect(within(section).getByText("Roadmap")).toBeInTheDocument();
+    // Each tile says it is on the roadmap, with its own icon.
+    for (const tile of tiles) {
+      expect(within(tile).getByText("Roadmap")).toBeInTheDocument();
+      expect(tile.querySelector("svg.lucide")).not.toBeNull();
+    }
+  });
+
+  // Announced as unavailable (a disabled control), and a click selects
+  // nothing.
+  it("cannot select a preset", () => {
+    renderStep();
+    const section = screen.getByRole("region", {
+      name: "Industry and compliance presets",
+    });
+    const presets = within(section).getAllByRole("checkbox");
+    expect(presets.map((p) => p.closest("label").textContent)).toEqual([
+      "HealthcareRoadmap",
+      "E-commerceRoadmap",
+      "FintechRoadmap",
+      "DefenceRoadmap",
+      "StartupRoadmap",
+      "ISO 27001Roadmap",
+      "DORARoadmap",
+      "NIS2Roadmap",
+    ]);
+    for (const preset of presets) {
+      expect(preset).toBeDisabled();
+      fireEvent.click(preset.closest("label"));
+      expect(preset).not.toBeChecked();
+    }
   });
 
   // The Review step summarises the configuration; Basics no longer repeats it.
