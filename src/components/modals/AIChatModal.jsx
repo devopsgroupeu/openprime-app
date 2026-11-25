@@ -238,7 +238,8 @@ const AIChatModal = ({
     ];
 
     let content = "";
-    // The whole answer came: a failure after it keeps its text.
+    // The whole answer came: a failure after it (reading its suggestions)
+    // is only logged, the answer shows as a normal one.
     let whole = false;
     const chat = streamChat(
       {
@@ -288,8 +289,7 @@ const AIChatModal = ({
         update({
           pending: false,
           stop: undefined,
-          ...(!whole && { content: AURA_ERROR }),
-          error: true,
+          ...(!whole && { content: AURA_ERROR, error: true }),
         });
       },
     );

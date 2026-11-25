@@ -469,19 +469,37 @@ describe("Aura service dialog", () => {
     }
   });
 
-  // Reading the suggestions of a whole answer can fail; the answer stays.
-  it("keeps a whole answer when reading its suggestions fails", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
+  // Reading the suggestions of a whole answer can fail: the answer shows as
+  // a normal, complete one and the failure is only logged.
+  it("shows a whole answer normally when reading its suggestions fails", async () => {
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const failure = new Error("bad suggestion");
     extractSuggestionsFromText.mockImplementationOnce(() => {
-      throw new Error("bad suggestion");
+      throw failure;
     });
-    render(<ModalHarness />);
+    reply = () => answer('Use this:\n```json\n{"nodeSize": "m5.large"}\n```');
+    // The code block's copy button needs the app's toasts and tooltips.
+    render(
+      <ToastProvider>
+        <TooltipProvider>
+          <ModalHarness />
+        </TooltipProvider>
+      </ToastProvider>,
+    );
     type("Which node size?");
     fireEvent.submit(composer().form);
 
-    expect(await thread().findByText("Answer 1.")).toBeInTheDocument();
+    const block = await waitFor(() => {
+      const found = document.querySelector("[data-slot=code-block]");
+      expect(found).not.toBeNull();
+      return found;
+    });
+    expect(block).toHaveTextContent("m5.large");
+    expect(thread().getByText(/Use this:/)).toBeInTheDocument();
+    expect(document.querySelector("[data-slot=marker]")).toBeNull();
     expect(thread().queryByText(AURA_ERROR)).toBeNull();
-    expect(screen.getByRole("button", { name: "Try again" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(logged).toHaveBeenCalledWith(failure);
   });
 
   it("lets Escape end an IME composition without closing", () => {
