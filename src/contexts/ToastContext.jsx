@@ -1,7 +1,13 @@
 // src/contexts/ToastContext.jsx
 // useToast() and the toasts, drawn like openprime-ai's Sonner toaster:
 // bottom-right, popover surface, one icon per tone.
-import { createContext, useContext, useState, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
 import { CircleAlert, CircleCheck, Info, TriangleAlert, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -68,14 +74,33 @@ const ToastItem = ({ toast, onRemove }) => {
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
+  // The shown toasts as of the last change (addToast reads them between
+  // renders) and each toast's auto-remove timer.
+  const shown = useRef([]);
+  const timers = useRef(new Map());
 
-  const removeToast = useCallback((id) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  const show = useCallback((next) => {
+    shown.current = next;
+    setToasts(next);
   }, []);
+
+  const removeToast = useCallback(
+    (id) => {
+      clearTimeout(timers.current.get(id));
+      timers.current.delete(id);
+      show(shown.current.filter((toast) => toast.id !== id));
+    },
+    [show],
+  );
 
   const addToast = useCallback(
     (message, type = "info", options = {}) => {
-      const id = Date.now() + Math.random();
+      // An identical toast already on screen is refreshed, not stacked.
+      const same = shown.current.find(
+        (t) =>
+          t.message === message && t.type === type && t.title === options.title,
+      );
+      const id = same ? same.id : Date.now() + Math.random();
       const toast = {
         id,
         message,
@@ -86,23 +111,33 @@ export const ToastProvider = ({ children }) => {
         duration: options.duration || 5000,
       };
 
-      setToasts((prev) => [...prev, toast]);
+      show(
+        same
+          ? shown.current.map((t) => (t.id === id ? toast : t))
+          : [...shown.current, toast],
+      );
 
-      // Auto remove after duration
+      // Auto remove after duration, counted from the latest show
+      clearTimeout(timers.current.get(id));
       if (toast.duration > 0) {
-        setTimeout(() => {
-          removeToast(id);
-        }, toast.duration);
+        timers.current.set(
+          id,
+          setTimeout(() => {
+            removeToast(id);
+          }, toast.duration),
+        );
       }
 
       return id;
     },
-    [removeToast],
+    [removeToast, show],
   );
 
   const clearAllToasts = useCallback(() => {
-    setToasts([]);
-  }, []);
+    timers.current.forEach(clearTimeout);
+    timers.current.clear();
+    show([]);
+  }, [show]);
 
   // Convenience methods
   const success = useCallback(
