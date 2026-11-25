@@ -260,7 +260,8 @@ const DynamicFieldRenderer = ({
 
     case FIELD_TYPES.OBJECT: {
       const errorId = `${id}-error`;
-      const hintId = `${id}-hint`;
+      // One helper line: the catalog description, else this generic one.
+      const hintId = fieldConfig.description ? undefined : `${id}-hint`;
       return field(
         <Textarea
           id={id}
@@ -298,14 +299,12 @@ const DynamicFieldRenderer = ({
           className="min-h-20 font-mono text-xs md:text-xs"
         />,
         jsonError ? (
-          <FieldError id={errorId} className="text-xs">
-            Invalid JSON: {jsonError}
-          </FieldError>
-        ) : (
+          <FieldError id={errorId}>Invalid JSON: {jsonError}</FieldError>
+        ) : hintId ? (
           <p id={hintId} className="text-xs text-muted-foreground">
             JSON format
           </p>
-        ),
+        ) : null,
       );
     }
 
