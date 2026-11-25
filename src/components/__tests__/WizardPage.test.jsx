@@ -1,4 +1,5 @@
 import {
+  act,
   render,
   screen,
   waitFor,
@@ -7,7 +8,7 @@ import {
 } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter, Routes, Route } from "react-router";
-import { vi } from "vitest";
+import { afterEach, vi } from "vitest";
 import { environments } from "../../mocks/fixtures";
 import { server } from "../../mocks/server";
 import { ThemeProvider } from "../../contexts/ThemeContext";
@@ -15,6 +16,7 @@ import { ToastProvider } from "../../contexts/ToastContext";
 import { AuthProvider } from "../../contexts/AuthContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import WizardPage from "../WizardPage";
+import authService from "../../services/authService";
 import { generateSshKeyPair } from "../../utils/sshKeyPair";
 
 vi.mock("../../utils/sshKeyPair", () => ({ generateSshKeyPair: vi.fn() }));
@@ -394,6 +396,18 @@ describe("WizardPage", () => {
   // Settings > Preferences: the mock user's default region is eu-west-1.
   describe("default region preference", () => {
     const region = () => screen.getByLabelText("Region");
+    let get;
+    afterEach(() => get?.mockRestore());
+    // Resolves once WizardPage has handled the preferences answer: its own
+    // .then was attached to the request first, so it has run by then.
+    const preferencesRead = async () => {
+      const isPreferences = ([path]) => path === "/users/me/preferences";
+      await waitFor(() =>
+        expect(get.mock.calls.some(isPreferences)).toBe(true),
+      );
+      const call = get.mock.calls.findIndex(isPreferences);
+      await act(() => get.mock.results[call].value);
+    };
 
     it("pre-fills a new wizard, which still keeps no draft", async () => {
       localStorage.clear();
@@ -416,11 +430,12 @@ describe("WizardPage", () => {
           });
         }),
       );
+      get = vi.spyOn(authService, "get");
       renderWizardCreate(vi.fn());
       await stepHeading("Basics");
       fireEvent.change(region(), { target: { value: "us-west-2" } });
       answer();
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await preferencesRead();
       expect(region()).toHaveValue("us-west-2");
     });
 
@@ -435,9 +450,10 @@ describe("WizardPage", () => {
           services: {},
         }),
       );
+      get = vi.spyOn(authService, "get");
       renderWizardCreate(vi.fn());
       await stepHeading("Basics");
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await preferencesRead();
       expect(region()).toHaveValue("us-east-1");
     });
   });
