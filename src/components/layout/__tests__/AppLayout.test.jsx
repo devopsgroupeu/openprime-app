@@ -5,11 +5,13 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
+import { http, HttpResponse } from "msw";
 import { Link, MemoryRouter, Route, Routes, useParams } from "react-router";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "../../../contexts/AuthContext";
 import { ThemeProvider } from "../../../contexts/ThemeContext";
+import { server } from "../../../mocks/server";
 import AppLayout, { breadcrumbsFor } from "../AppLayout";
 import AppTopBar from "../AppTopBar";
 
@@ -154,6 +156,43 @@ describe("AppLayout", () => {
     expect(
       screen.getByRole("button", { name: "Ask Aura" }),
     ).toBeInTheDocument();
+  });
+
+  // The wizard has its own Aura; the floating one is kept, closed and out of
+  // sight there, so its conversation comes back after a wizard visit.
+  it("keeps the floating Aura conversation across a wizard visit", async () => {
+    server.use(
+      http.post(
+        "*/ai/chat",
+        () =>
+          new HttpResponse(
+            'data: {"chunk":"Use eu-west-1."}\n\ndata: {"done":true}\n\n',
+            { headers: { "Content-Type": "text/event-stream" } },
+          ),
+      ),
+    );
+    renderLayout();
+    fireEvent.click(screen.getByRole("button", { name: "Ask Aura" }));
+    const input = screen.getByRole("textbox", { name: /Message Aura/ });
+    fireEvent.change(input, { target: { value: "Which region?" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(await screen.findByText("Use eu-west-1.")).toBeInTheDocument();
+
+    fireEvent.click(
+      within(sidebar()).getByRole("link", { name: "New environment" }),
+    );
+    expect(await screen.findByText("Wizard")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ask Aura" })).toBeNull();
+    expect(screen.queryByRole("dialog", { name: "Aura" })).toBeNull();
+    expect(screen.queryByText("Use eu-west-1.")).toBeNull();
+
+    fireEvent.click(
+      within(sidebar()).getByRole("link", { name: "Environments" }),
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Ask Aura" }));
+    const again = await screen.findByRole("dialog", { name: "Aura" });
+    expect(within(again).getByText("Which region?")).toBeInTheDocument();
+    expect(within(again).getByText("Use eu-west-1.")).toBeInTheDocument();
   });
 
   describe("a page that crashes", () => {

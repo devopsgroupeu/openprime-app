@@ -137,8 +137,9 @@ const AppLayout = ({ environments }) => {
         open={shortcutsOpen}
         onOpenChange={setShortcutsOpen}
       />
-      {/* One Aura per screen: the wizard has its own panel. */}
-      {wizard ? null : <AuraChatButton />}
+      {/* One Aura per screen: the wizard has its own panel. Kept mounted
+          there, so its conversation survives a wizard visit. */}
+      <AuraChatButton hidden={wizard} />
     </SidebarProvider>
   );
 };

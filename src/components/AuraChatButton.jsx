@@ -3,7 +3,8 @@
 // every overlay (z-40 < z-50), so they never cover a dialog button. While a
 // SaveBar is on screen (it rests at the bottom, see AppLayout) they move up
 // above it, clear of Discard and Save; on phones the open window is a modal
-// full screen instead.
+// full screen instead. `hidden` (the wizard, which has its own Aura) closes
+// the window and takes both out of sight and reach; the conversation stays.
 import { useState, useSyncExternalStore } from "react";
 import { Sparkles } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
@@ -26,12 +27,14 @@ const subscribe = (onChange) => {
 };
 const floats = () => window.matchMedia(SM_UP).matches;
 
-const AuraChatButton = () => {
+const AuraChatButton = ({ hidden = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [auraMessages, setAuraMessages] = useState(INITIAL_MESSAGES);
   // What was typed survives closing the window, like the conversation.
   const [draft, setDraft] = useState("");
   const floating = useSyncExternalStore(subscribe, floats);
+  // Out of sight means closed: no window, thread or composer left behind.
+  if (hidden && isOpen) setIsOpen(false);
 
   return (
     <DialogPrimitive.Root
@@ -39,7 +42,10 @@ const AuraChatButton = () => {
       onOpenChange={setIsOpen}
       modal={!floating}
     >
-      <div className="fixed right-4 bottom-4 z-40 flex flex-col items-end sm:right-6 sm:bottom-6 [body:has([data-slot=save-bar])_&]:bottom-24">
+      <div
+        hidden={hidden}
+        className="fixed right-4 bottom-4 z-40 flex flex-col items-end sm:right-6 sm:bottom-6 [body:has([data-slot=save-bar])_&]:bottom-24"
+      >
         <Tooltip>
           <TooltipTrigger asChild>
             <DialogPrimitive.Trigger asChild>
