@@ -1,8 +1,9 @@
 import { CopyButton } from "@/components/shared/copy-button";
 
 // Assistant text with its fenced code blocks drawn as mono blocks with a copy
-// button; a ```json block is pretty-printed when it parses.
-const FENCE = /```(\w*)\n([\s\S]*?)\n```/g;
+// button; a ```json block is pretty-printed when it parses. The language tag
+// is any run without spaces or backticks (c++, shell-session).
+const FENCE = /```([^\s`]*)\n([\s\S]*?)\n```/g;
 
 const pretty = (lang, code) => {
   if (lang !== "json") return code;
