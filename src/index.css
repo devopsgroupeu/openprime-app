@@ -25,6 +25,8 @@
 /* Color system: one cool neutral ramp; AA pairs are asserted by
    src/styles/__tests__/tokens-contrast.test.js. */
 :root {
+  /* Native controls (selects, spinners, autofill, scrollbars) follow the theme. */
+  color-scheme: light;
   --background: oklch(0.982 0.002 264);
   --foreground: oklch(0.215 0.006 264);
   --card: #ffffff;
@@ -89,6 +91,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   /* Cool charcoal ramp with visible elevation steps (page #18191c, card #232426, popover
      #292a2d, hover #38393c), in line with the reference app's dark greys. */
   --background: oklch(0.215 0.005 264);
