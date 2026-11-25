@@ -268,7 +268,12 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     () => ["basic", "services", ...(hasK8s ? ["helm"] : []), "review"],
     [hasK8s],
   );
-  const steps = activeIds.map((id, i) => ({ ...STEP_DEFS[id], number: i + 1 }));
+  const steps = activeIds.map((id, i) => ({
+    ...STEP_DEFS[id],
+    // Edit mode saves instead of creating.
+    ...(isEditMode && id === "review" && { description: "Check and save" }),
+    number: i + 1,
+  }));
   const totalSteps = steps.length;
   const currentId = activeIds[currentStep - 1] || "basic";
   const sshKeys = useSshKeyGeneration({

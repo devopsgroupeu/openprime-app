@@ -602,6 +602,14 @@ describe("WizardPage", () => {
     expect(screen.queryByRole("alertdialog")).toBeNull();
   });
 
+  it("says check and save on the edit stepper", async () => {
+    renderWizardEdit(vi.fn());
+    await stepHeading("Services");
+    const stepper = screen.getByRole("navigation", { name: "Steps" });
+    expect(within(stepper).getByText("Check and save")).toBeInTheDocument();
+    expect(within(stepper).queryByText("Check and create")).toBeNull();
+  });
+
   it("titles the tab after the task and the saved name", async () => {
     renderWizardEdit(vi.fn());
     await stepHeading("Services");
