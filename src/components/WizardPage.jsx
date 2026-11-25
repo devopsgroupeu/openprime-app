@@ -671,4 +671,15 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   );
 };
 
-export default WizardPage;
+/**
+ * The page of both wizard routes. The router keeps its element when only the
+ * wizard changes (an edit to create, one environment's edit to another's),
+ * so the key starts each one afresh: no state, draft or Aura conversation
+ * carries over.
+ */
+const KeyedWizardPage = (props) => {
+  const { id } = useParams();
+  return <WizardPage key={id ? `edit:${id}` : "create"} {...props} />;
+};
+
+export default KeyedWizardPage;

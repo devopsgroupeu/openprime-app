@@ -7,7 +7,7 @@ import {
   within,
 } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
-import { MemoryRouter, Routes, Route } from "react-router";
+import { Link, MemoryRouter, Routes, Route } from "react-router";
 import { afterEach, vi } from "vitest";
 import { environments } from "../../mocks/fixtures";
 import { server } from "../../mocks/server";
@@ -25,8 +25,12 @@ vi.mock("../../utils/sshKeyPair", () => ({ generateSshKeyPair: vi.fn() }));
 // WizardPage is a page of the app shell (AppLayout, as in App): it needs
 // Theme (toasts)/Auth, Toast, Tooltip and a router (useParams/useNavigate). In
 // mock mode AuthProvider auto-authenticates. The two plain routes show where
-// Cancel goes.
-function renderAt(path, { onCreateEnvironment, onUpdateEnvironment } = {}) {
+// Cancel goes. One wizard element on both wizard routes, as the router reuses
+// it; `outside` renders next to the routes (a test's own links).
+function renderAt(
+  path,
+  { onCreateEnvironment, onUpdateEnvironment, outside = null } = {},
+) {
   const wizard = (
     <WizardPage
       onCreateEnvironment={onCreateEnvironment ?? vi.fn()}
@@ -54,6 +58,7 @@ function renderAt(path, { onCreateEnvironment, onUpdateEnvironment } = {}) {
                   <Route path="/settings/:tab" element={<p>Settings</p>} />
                 </Route>
               </Routes>
+              {outside}
             </MemoryRouter>
           </TooltipProvider>
         </AuthProvider>
@@ -756,6 +761,107 @@ describe("WizardPage", () => {
     expect(await screen.findByText("Environment list")).toBeInTheDocument();
     expect(screen.queryByRole("alertdialog")).toBeNull();
     expect(localStorage.getItem("op-wizard-draft:mock-user-1")).not.toBeNull();
+  });
+
+  // Each wizard (create, or one environment's edit) starts afresh: the
+  // router keeps the page when only the wizard it shows changes.
+  describe("switching wizards", () => {
+    const DRAFT_KEY = "op-wizard-draft:mock-user-1";
+    const sidebarLink = (name) =>
+      within(
+        screen.getByRole("navigation", { name: "Main navigation" }),
+      ).getByRole("link", { name });
+
+    it("opens an empty create wizard from an edit and keeps no draft of it", async () => {
+      localStorage.clear();
+      renderWizardEdit(vi.fn());
+      await stepHeading("Services");
+
+      fireEvent.click(sidebarLink("New environment"));
+
+      expect(await stepHeading("Basics")).toBeInTheDocument();
+      expect(screen.getByLabelText("Name")).toHaveValue("");
+      expect(screen.getByLabelText("Name")).toBeEnabled();
+      expect(screen.queryByText(/Draft saved/)).toBeNull();
+      expect(localStorage.getItem(DRAFT_KEY)).toBeNull();
+    });
+
+    it("restores the user's own create draft from an edit", async () => {
+      localStorage.clear();
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({
+          name: "half",
+          globalPrefix: "half-",
+          provider: "aws",
+          region: "us-east-1",
+        }),
+      );
+      renderWizardEdit(vi.fn());
+      await stepHeading("Services");
+
+      fireEvent.click(sidebarLink("New environment"));
+
+      expect(await stepHeading("Basics")).toBeInTheDocument();
+      expect(screen.getByLabelText("Name")).toHaveValue("half");
+      expect(screen.getByText("Draft restored")).toBeInTheDocument();
+      const stored = JSON.parse(localStorage.getItem(DRAFT_KEY));
+      expect(stored.name).toBe("half");
+      expect(stored).not.toHaveProperty("id");
+    });
+
+    it("asks first with unsaved edits, then opens an empty create wizard", async () => {
+      localStorage.clear();
+      renderWizardEdit(vi.fn());
+      await stepHeading("Services");
+      fireEvent.click(screen.getByRole("button", { name: "Back" }));
+      fireEvent.change(await screen.findByPlaceholderText("e.g. example.com"), {
+        target: { value: "new.example.com" },
+      });
+
+      fireEvent.click(sidebarLink("New environment"));
+      fireEvent.click(
+        within(
+          await screen.findByRole("alertdialog", { name: "Discard changes?" }),
+        ).getByRole("button", { name: "Discard" }),
+      );
+
+      await waitFor(() =>
+        expect(screen.getByLabelText("Name")).toHaveValue(""),
+      );
+      expect(screen.getByPlaceholderText("e.g. example.com")).toHaveValue("");
+      expect(localStorage.getItem(DRAFT_KEY)).toBeNull();
+    });
+
+    it("loads another environment's edit afresh", async () => {
+      let answer;
+      server.use(
+        http.get(
+          "*/environments/env-002",
+          () => new Promise((resolve) => (answer = resolve)),
+        ),
+      );
+      renderAt("/environments/env-001/edit", {
+        outside: <Link to="/environments/env-002/edit">Edit staging</Link>,
+      });
+      await stepHeading("Services");
+
+      fireEvent.click(screen.getByRole("link", { name: "Edit staging" }));
+
+      // While it loads, nothing of demo-prod is left on screen.
+      await waitFor(() => expect(answer).toBeDefined());
+      expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+      expect(document.title).not.toBe("Edit demo-prod - OpenPrime");
+      answer(
+        HttpResponse.json(environments.find((env) => env.id === "env-002")),
+      );
+      await stepHeading("Services");
+      await waitFor(() =>
+        expect(document.title).toBe("Edit demo-staging - OpenPrime"),
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Back" }));
+      expect(await screen.findByLabelText("Name")).toHaveValue("demo-staging");
+    });
   });
 
   it("leaves edit mode without asking when nothing changed", async () => {
