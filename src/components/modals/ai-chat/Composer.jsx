@@ -42,7 +42,10 @@ const Composer = ({
           placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
+            // The Enter that ends an IME composition picks the text, never
+            // sends it (Safari flags it with keyCode 229 only).
+            const composing = e.nativeEvent.isComposing || e.keyCode === 229;
+            if (e.key === "Enter" && !e.shiftKey && !composing) {
               e.preventDefault();
               send();
             }
