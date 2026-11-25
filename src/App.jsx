@@ -12,7 +12,6 @@ import { useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./contexts/ToastContext";
 import { AuthProvider } from "./contexts/AuthContext";
-import { CatalogProvider } from "./contexts/CatalogContext";
 import { PageShell } from "@/components/shared/page-shell";
 import { FullScreenState, NotFound } from "@/components/shared/states";
 import { Button } from "@/components/ui/button";
@@ -108,6 +107,12 @@ function AppContent() {
       list.map((env) => (env.id === changed.id ? changed : env)),
     );
 
+  // The layout rule: every signed-in screen is a page of AppLayout (sidebar,
+  // top bar, content area), the wizard, the catalog wait, not found and a
+  // page crash included. Only the screens before sign-in, where there is no
+  // user to show a sidebar for, are full screen: these two and AuthProvider's
+  // "Signing you in...".
+  //
   // An unreachable Keycloak is not an expired session. Saying so, with a way
   // out, beats a spinner that will never resolve.
   if (authError) {
@@ -131,84 +136,71 @@ function AppContent() {
 
   return (
     <ToastProvider>
-      <CatalogProvider
-        fallback={
-          <FullScreenState
-            logo
-            loading
-            title="Loading the service catalog..."
-          />
-        }
-      >
-        <BrowserRouter>
-          <Routes>
-            <Route element={<AppLayout environments={environments} />}>
-              <Route
-                path="/"
-                element={<Navigate to="/environments" replace />}
-              />
-              <Route
-                path="/environments"
-                element={
-                  <EnvironmentsPage
-                    environments={environments}
-                    loading={environmentsLoading}
-                    loadError={loadError}
-                    onRetry={loadEnvironments}
-                    onRefresh={refreshEnvironments}
-                    onDelete={handleDeleteEnvironment}
-                  />
-                }
-              />
-              {/* The URL people guess for the wizard; before :id. */}
-              <Route
-                path="/environments/new"
-                element={<Navigate to="/environments/create" replace />}
-              />
-              <Route
-                path="/environments/create"
-                element={
-                  <WizardPage
-                    onCreateEnvironment={handleCreateEnvironment}
-                    onUpdateEnvironment={handleUpdateEnvironment}
-                  />
-                }
-              />
-              <Route
-                path="/environments/:id"
-                element={
-                  <EnvironmentDetailPage
-                    onDelete={handleDeleteEnvironment}
-                    onEnvironmentChange={handleEnvironmentChange}
-                  />
-                }
-              />
-              <Route
-                path="/environments/:id/edit"
-                element={
-                  <WizardPage
-                    onCreateEnvironment={handleCreateEnvironment}
-                    onUpdateEnvironment={handleUpdateEnvironment}
-                  />
-                }
-              />
-              <Route
-                path="/settings"
-                element={<Navigate to="/settings/account" replace />}
-              />
-              <Route path="/settings/:tab" element={<SettingsPage />} />
-              <Route
-                path="*"
-                element={
-                  <PageShell width="detail">
-                    <NotFound title="Page not found" />
-                  </PageShell>
-                }
-              />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </CatalogProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<AppLayout environments={environments} />}>
+            <Route path="/" element={<Navigate to="/environments" replace />} />
+            <Route
+              path="/environments"
+              element={
+                <EnvironmentsPage
+                  environments={environments}
+                  loading={environmentsLoading}
+                  loadError={loadError}
+                  onRetry={loadEnvironments}
+                  onRefresh={refreshEnvironments}
+                  onDelete={handleDeleteEnvironment}
+                />
+              }
+            />
+            {/* The URL people guess for the wizard; before :id. */}
+            <Route
+              path="/environments/new"
+              element={<Navigate to="/environments/create" replace />}
+            />
+            <Route
+              path="/environments/create"
+              element={
+                <WizardPage
+                  onCreateEnvironment={handleCreateEnvironment}
+                  onUpdateEnvironment={handleUpdateEnvironment}
+                />
+              }
+            />
+            <Route
+              path="/environments/:id"
+              element={
+                <EnvironmentDetailPage
+                  onDelete={handleDeleteEnvironment}
+                  onEnvironmentChange={handleEnvironmentChange}
+                />
+              }
+            />
+            <Route
+              path="/environments/:id/edit"
+              element={
+                <WizardPage
+                  onCreateEnvironment={handleCreateEnvironment}
+                  onUpdateEnvironment={handleUpdateEnvironment}
+                />
+              }
+            />
+            <Route
+              path="/settings"
+              element={<Navigate to="/settings/account" replace />}
+            />
+            <Route path="/settings/:tab" element={<SettingsPage />} />
+            <Route
+              path="*"
+              element={
+                <PageShell width="detail">
+                  <NotFound title="Page not found" />
+                </PageShell>
+              }
+            />
+          </Route>
+        </Routes>
+      </BrowserRouter>
     </ToastProvider>
   );
 }

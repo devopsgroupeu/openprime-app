@@ -71,6 +71,11 @@ describe("AppTopBar", () => {
   });
 });
 
+// A page that fails to render.
+function Crash() {
+  throw new Error("page bug");
+}
+
 // A settings tab with a field: a tab switch must keep what was typed.
 function SettingsTab() {
   const { tab } = useParams();
@@ -101,6 +106,7 @@ describe("AppLayout", () => {
                     path="/environments/:id/edit"
                     element={<p>Wizard</p>}
                   />
+                  <Route path="/environments/:id" element={<Crash />} />
                   <Route path="/settings/:tab" element={<SettingsTab />} />
                 </Route>
               </Routes>
@@ -110,6 +116,7 @@ describe("AppLayout", () => {
       </ThemeProvider>,
     );
   }
+  const sidebar = () => document.querySelector('[data-slot="sidebar"]');
   const togglePalette = () =>
     fireEvent.keyDown(document, { key: "k", metaKey: true });
   const paletteInput = () =>
@@ -147,6 +154,87 @@ describe("AppLayout", () => {
     expect(
       screen.getByRole("button", { name: "Ask Aura" }),
     ).toBeInTheDocument();
+  });
+
+  describe("a page that crashes", () => {
+    beforeEach(() => vi.spyOn(console, "error").mockImplementation(() => {}));
+    afterEach(() => vi.restoreAllMocks());
+
+    it("shows the crash in the content area, the shell intact", () => {
+      renderLayout("/environments/env-1");
+
+      const main = screen.getByRole("main");
+      expect(
+        within(main).getByRole("heading", {
+          level: 1,
+          name: "Something went wrong.",
+        }),
+      ).toBeInTheDocument();
+      expect(
+        within(main).getByRole("button", { name: "Reload" }),
+      ).toBeInTheDocument();
+      expect(
+        within(main).getByRole("link", { name: "Back to environments" }),
+      ).toHaveAttribute("href", "/environments");
+      expect(
+        within(sidebar()).getByRole("link", { name: "Environments" }),
+      ).toBeInTheDocument();
+      expect(
+        within(main).getByRole("navigation", { name: "Breadcrumb" }),
+      ).toBeInTheDocument();
+    });
+
+    it("clears the crash when the user navigates away", async () => {
+      renderLayout("/environments/env-1");
+      screen.getByRole("heading", { name: "Something went wrong." });
+
+      fireEvent.click(
+        within(sidebar()).getByRole("link", { name: "Environments" }),
+      );
+
+      expect(
+        await screen.findByRole("link", { name: "Go to settings" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", { name: "Something went wrong." }),
+      ).toBeNull();
+    });
+  });
+
+  // The crash boundary resets on a route change without remounting the page:
+  // settings tabs keep their unsaved edits.
+  it("keeps a page mounted when only its route parameter changes", async () => {
+    renderLayout("/settings/account");
+    fireEvent.change(screen.getByLabelText("Draft"), {
+      target: { value: "kept" },
+    });
+
+    fireEvent.click(screen.getByRole("link", { name: "Preferences tab" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "preferences" }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Draft")).toHaveValue("kept");
+  });
+
+  // Layout is CSS (checked in screenshots): the room kept under the last card
+  // for the Aura launcher would lift a SaveBar off its resting place at the
+  // end of the page, so a page with one goes without it. It also fills the
+  // screen, so the bar rests at the bottom (under the Aura window), not in
+  // the middle of a short page.
+  it("keeps no launcher room under a page with a save bar", () => {
+    renderLayout();
+    const scroller = screen
+      .getByRole("main")
+      .querySelector('[data-slot="page-scroller"]');
+
+    expect(scroller.firstElementChild).toHaveClass(
+      "pb-16",
+      "has-[[data-slot=save-bar]]:pb-0",
+      "has-[[data-slot=save-bar]]:flex",
+      "has-[[data-slot=save-bar]]:min-h-full",
+      "has-[[data-slot=save-bar]]:flex-col",
+    );
   });
 
   it("skips the sidebar and top bar to the main landmark", () => {

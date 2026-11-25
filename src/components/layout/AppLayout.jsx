@@ -1,9 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Outlet, matchPath, useLocation } from "react-router";
+import { PageShell } from "@/components/shared/page-shell";
 import { SkipLink } from "@/components/shared/skip-link";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Spinner } from "@/components/ui/spinner";
 import { matches, shortcut } from "@/lib/shortcuts";
+import { CatalogProvider } from "../../contexts/CatalogContext";
 import AuraChatButton from "../AuraChatButton";
+import ErrorBoundary, { PageCrash } from "../ErrorBoundary";
 import AppSidebar from "./AppSidebar";
 import AppTopBar, { TopBarSlot } from "./AppTopBar";
 import CommandPalette from "./CommandPalette";
@@ -42,7 +46,8 @@ export function breadcrumbsFor(pathname, environments) {
  * with a hairline once the content scrolls, the Cmd+K palette, the
  * shortcuts dialog and the floating Aura. The viewport never scrolls; the area
  * under the top bar does. Every signed-in page renders here, the wizard too
- * (it fills the area and scrolls its own columns).
+ * (it fills the area and scrolls its own columns). While the service catalog
+ * loads, and when a page crashes, the content area says so; the shell stays.
  */
 const AppLayout = ({ environments }) => {
   const { pathname } = useLocation();
@@ -109,9 +114,15 @@ const AppLayout = ({ environments }) => {
                 : "pb-16 has-[[data-slot=save-bar]]:flex has-[[data-slot=save-bar]]:min-h-full has-[[data-slot=save-bar]]:flex-col has-[[data-slot=save-bar]]:pb-0"
             }
           >
-            <TopBarSlot.Provider value={actionsSlot}>
-              <Outlet context={setPageActions} />
-            </TopBarSlot.Provider>
+            <CatalogProvider fallback={<CatalogLoading />}>
+              {/* Reset by a route change, never remounted by one: a settings
+                  tab switch keeps the form's edits. */}
+              <ErrorBoundary resetKey={pathname} fallback={PageCrash}>
+                <TopBarSlot.Provider value={actionsSlot}>
+                  <Outlet context={setPageActions} />
+                </TopBarSlot.Provider>
+              </ErrorBoundary>
+            </CatalogProvider>
           </div>
         </div>
       </SidebarInset>
@@ -131,5 +142,20 @@ const AppLayout = ({ environments }) => {
     </SidebarProvider>
   );
 };
+
+/** The content area while the pages wait for the service catalog. */
+function CatalogLoading() {
+  return (
+    <PageShell>
+      <p
+        role="status"
+        className="flex min-h-80 items-center justify-center gap-2 text-sm text-muted-foreground"
+      >
+        <Spinner aria-hidden />
+        Loading the service catalog...
+      </p>
+    </PageShell>
+  );
+}
 
 export default AppLayout;
