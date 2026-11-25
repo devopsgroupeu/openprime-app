@@ -159,8 +159,8 @@ describe("EnvironmentsPage", () => {
     expect(within(icons).getByText("+2")).toBeInTheDocument();
   });
 
-  // The stretched card link covers the card: the time sits above it, so its
-  // tooltip can open, and names the exact time to screen readers.
+  // The stretched card link covers the card, the modified time included, so a
+  // click on the time opens the card; screen readers hear the exact time.
   it("shows when a card was modified and leaves its clicks to the card link", () => {
     renderPage();
     const card = screen

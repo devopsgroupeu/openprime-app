@@ -78,4 +78,16 @@ describe("streamChat", () => {
 
     await expect(finished).rejects.toThrow("handler failed");
   });
+
+  // A failed handler ends the answer: the stream is closed, not left open.
+  it("closes the stream when its event handler fails", async () => {
+    const cancel = vi.spyOn(ReadableStreamDefaultReader.prototype, "cancel");
+    reply = () => stream([{ chunk: "Use m5" }]);
+    const { finished } = streamChat({}, () => {
+      throw new Error("handler failed");
+    });
+
+    await expect(finished).rejects.toThrow("handler failed");
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
 });

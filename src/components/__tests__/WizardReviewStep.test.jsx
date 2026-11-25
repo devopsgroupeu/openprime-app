@@ -23,7 +23,7 @@ const renderStep = (env) =>
   );
 
 const CONSEQUENCE_NO_REPO =
-  "Push to git and Helm charts stay unavailable until you add a repository.";
+  "Push to git and Helm charts stay unavailable until you switch git on and add a repository.";
 const CONSEQUENCE_NO_KEY =
   "Push to git stays unavailable until you add a deploy key.";
 

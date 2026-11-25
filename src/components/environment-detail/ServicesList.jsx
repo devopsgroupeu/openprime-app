@@ -69,6 +69,15 @@ const shortLabel = (label) =>
     .split(" - ")[0]
     .replace(/\s*\(.*\)$/, "");
 
+// The units said in the singular for 1; any other stays as it is ("1 ms").
+const SINGULAR = {
+  seconds: "second",
+  minutes: "minute",
+  hours: "hour",
+  days: "day",
+  bytes: "byte",
+};
+
 // "Storage (GB)" reads "100 GB", "Retention (seconds)" "1 second" or, in
 // whole hours or days, "4 days", "Instance Count" "2 instances", "Number of
 // Cache Nodes" "1 cache node".
@@ -79,8 +88,8 @@ const withUnit = (value, label) => {
       value % 86400 === 0 ? [value / 86400, "days"] : [value / 3600, "hours"];
   }
   if (unit) {
-    return value === 1 && /^[a-z]+s$/.test(unit)
-      ? `1 ${unit.slice(0, -1)}`
+    return value === 1 && SINGULAR[unit]
+      ? `1 ${SINGULAR[unit]}`
       : `${value} ${unit}`;
   }
   const noun = label

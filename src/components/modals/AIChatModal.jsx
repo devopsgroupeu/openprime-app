@@ -238,6 +238,8 @@ const AIChatModal = ({
     ];
 
     let content = "";
+    // The whole answer came: a failure after it keeps its text.
+    let whole = false;
     const chat = streamChat(
       {
         messages: payloadMessages,
@@ -251,6 +253,7 @@ const AIChatModal = ({
           update({ content });
         }
         if (data.done) {
+          whole = true;
           const newSuggestion = extractSuggestionsFromText(
             content,
             service || findServiceByDisplayName(serviceTitle),
@@ -285,7 +288,7 @@ const AIChatModal = ({
         update({
           pending: false,
           stop: undefined,
-          content: AURA_ERROR,
+          ...(!whole && { content: AURA_ERROR }),
           error: true,
         });
       },

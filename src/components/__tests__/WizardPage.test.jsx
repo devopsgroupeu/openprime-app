@@ -950,34 +950,37 @@ describe("WizardPage", () => {
   // double click must not create the environment.
   it("never creates on the second click of a double click on Continue", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    localStorage.clear();
-    const onCreateEnvironment = vi.fn().mockResolvedValue({ id: "env-new" });
-    renderWizardCreate(onCreateEnvironment);
-    fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
-      target: { value: "prod" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
-    await stepHeading("Services");
+    try {
+      localStorage.clear();
+      const onCreateEnvironment = vi.fn().mockResolvedValue({ id: "env-new" });
+      renderWizardCreate(onCreateEnvironment);
+      fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
+        target: { value: "prod" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+      await stepHeading("Services");
 
-    const primary = screen.getByRole("button", { name: /Continue/i });
-    fireEvent.click(primary, { detail: 1 });
-    await stepHeading("Review");
-    fireEvent.click(
-      screen.getByRole("button", { name: /Create environment/i }),
-      { detail: 2 },
-    );
-    await act(() => vi.advanceTimersByTimeAsync(20));
-    expect(onCreateEnvironment).not.toHaveBeenCalled();
+      const primary = screen.getByRole("button", { name: /Continue/i });
+      fireEvent.click(primary, { detail: 1 });
+      await stepHeading("Review");
+      fireEvent.click(
+        screen.getByRole("button", { name: /Create environment/i }),
+        { detail: 2 },
+      );
+      await act(() => vi.advanceTimersByTimeAsync(20));
+      expect(onCreateEnvironment).not.toHaveBeenCalled();
 
-    // Once Create has shown for a moment, a click creates it, even a quick
-    // deliberate second click (detail 2).
-    await act(() => vi.advanceTimersByTimeAsync(400));
-    fireEvent.click(
-      screen.getByRole("button", { name: /Create environment/i }),
-      { detail: 2 },
-    );
-    await waitFor(() => expect(onCreateEnvironment).toHaveBeenCalledTimes(1));
-    vi.useRealTimers();
+      // Once Create has shown for a moment, a click creates it, even a quick
+      // deliberate second click (detail 2).
+      await act(() => vi.advanceTimersByTimeAsync(400));
+      fireEvent.click(
+        screen.getByRole("button", { name: /Create environment/i }),
+        { detail: 2 },
+      );
+      await waitFor(() => expect(onCreateEnvironment).toHaveBeenCalledTimes(1));
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   // The control that had focus often goes away (stepper row, Back, Review's

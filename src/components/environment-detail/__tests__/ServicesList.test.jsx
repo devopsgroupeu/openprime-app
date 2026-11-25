@@ -73,6 +73,14 @@ describe("summaryOf", () => {
       summary("sqs", { visibilityTimeout: 3601, messageRetention: 86400 }),
     ).toBe("3601 seconds, 1 day");
   });
+
+  // Only a known unit has a singular; "1 ms" is not "1 m".
+  it("leaves a unit it does not know as it is", () => {
+    const definition = { fields: { timeout: { displayName: "Timeout (ms)" } } };
+    expect(summaryOf("x", { enabled: true, timeout: 1 }, definition)).toBe(
+      "1 ms",
+    );
+  });
 });
 
 describe("ServicesList", () => {

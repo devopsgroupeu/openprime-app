@@ -97,7 +97,7 @@ const WizardReviewStep = ({
   const warnings = [
     needsGitRepo &&
       !gitOn &&
-      "Push to git and Helm charts stay unavailable until you add a repository.",
+      "Push to git and Helm charts stay unavailable until you switch git on and add a repository.",
     gitOn &&
       gitUrlSet &&
       !sshKeySet &&

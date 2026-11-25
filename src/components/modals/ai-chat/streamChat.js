@@ -58,7 +58,11 @@ export function streamChat(body, onEvent) {
         }
       }
     } catch (err) {
-      if (!controller.signal.aborted) throw err;
+      if (!controller.signal.aborted) {
+        // A failed handler ends the answer: close the connection too.
+        reader?.cancel().catch(() => {});
+        throw err;
+      }
     } finally {
       clearTimeout(stall);
     }

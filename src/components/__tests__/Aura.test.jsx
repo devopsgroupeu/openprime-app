@@ -21,6 +21,16 @@ import { AURA_ERROR } from "../modals/ai-chat/AuraConversation";
 import { STALL_MS } from "../modals/ai-chat/streamChat";
 import { SERVICES_CONFIG } from "../../config/servicesConfig";
 import WizardAssistant from "../WizardAssistant";
+import { extractSuggestionsFromText } from "../modals/ai-chat/suggestions";
+
+// The real suggestion reader; a test can make it fail once.
+vi.mock("../modals/ai-chat/suggestions", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    extractSuggestionsFromText: vi.fn(actual.extractSuggestionsFromText),
+  };
+});
 
 // The wizard owns the messages, as WizardPage does.
 function WizardHarness() {
@@ -457,6 +467,21 @@ describe("Aura service dialog", () => {
     } finally {
       delete SERVICES_CONFIG.nofields;
     }
+  });
+
+  // Reading the suggestions of a whole answer can fail; the answer stays.
+  it("keeps a whole answer when reading its suggestions fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    extractSuggestionsFromText.mockImplementationOnce(() => {
+      throw new Error("bad suggestion");
+    });
+    render(<ModalHarness />);
+    type("Which node size?");
+    fireEvent.submit(composer().form);
+
+    expect(await thread().findByText("Answer 1.")).toBeInTheDocument();
+    expect(thread().queryByText(AURA_ERROR)).toBeNull();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeVisible();
   });
 
   it("lets Escape end an IME composition without closing", () => {
