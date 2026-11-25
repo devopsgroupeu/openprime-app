@@ -55,12 +55,13 @@ function NavRow({ to, active = false, icon: Icon, children }) {
 
 /** Top row: home (the OpenPrime mark), Search (palette) and Hide sidebar. */
 function TopRow({ onSearch }) {
-  const { toggleSidebar } = useSidebar();
+  const { setOpenMobile, toggleSidebar } = useSidebar();
   return (
     <div className="flex items-center gap-0.5">
       <Link
         to="/environments"
         aria-label="OpenPrime home"
+        onClick={() => setOpenMobile(false)}
         className="mr-auto flex h-7 min-w-0 items-center rounded-lg px-1.5 outline-none transition-[background-color] duration-(--dur-fast) hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring max-md:min-h-11"
       >
         <img src={logoInverse} alt="" className="h-4 w-auto" />

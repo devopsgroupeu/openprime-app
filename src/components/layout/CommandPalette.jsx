@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { BookOpen, KeyRound, Keyboard, Layers, Moon, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -60,12 +60,13 @@ export default function CommandPalette({
   const { toggleTheme } = useTheme();
   const [query, setQuery] = useState("");
 
-  const setOpen = (next) => {
-    if (!next) setQuery("");
-    onOpenChange(next);
-  };
+  // Every close forgets the query, also Cmd+K toggling it shut in AppLayout.
+  useEffect(() => {
+    if (!open) setQuery("");
+  }, [open]);
+
   const run = (command) => {
-    setOpen(false);
+    onOpenChange(false);
     command();
   };
   // Leaving goes through the page's leave guard (unsaved settings, a running
@@ -90,7 +91,7 @@ export default function CommandPalette({
   ];
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
         // max-h-120 for the whole palette, shrinking to its content; the list scrolls inside it.

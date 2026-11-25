@@ -1,11 +1,12 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
   waitFor,
   within,
 } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, RouterProvider, createMemoryRouter } from "react-router";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AuthProvider } from "../../../contexts/AuthContext";
 import { ThemeProvider } from "../../../contexts/ThemeContext";
@@ -85,14 +86,14 @@ describe("AppSidebar on mobile", () => {
     window.innerWidth = desktopWidth;
   });
 
-  function renderMobile(path, onSearch = () => {}) {
+  function renderMobile(path, onSearch = () => {}, onShortcuts = () => {}) {
     render(
       <ThemeProvider>
         <AuthProvider>
           <MemoryRouter initialEntries={[path]}>
             <SidebarProvider>
               <SidebarTrigger />
-              <AppSidebar onSearch={onSearch} />
+              <AppSidebar onSearch={onSearch} onShortcuts={onShortcuts} />
             </SidebarProvider>
           </MemoryRouter>
         </AuthProvider>
@@ -129,6 +130,83 @@ describe("AppSidebar on mobile", () => {
     fireEvent.click(within(sheet).getByRole("button", { name: "Search" }));
 
     expect(onSearch).toHaveBeenCalledTimes(1);
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+  });
+
+  it("closes the sheet when tapping the logo on the current page", async () => {
+    const sheet = renderMobile("/environments");
+
+    fireEvent.click(
+      within(sheet).getByRole("link", { name: "OpenPrime home" }),
+    );
+
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+  });
+
+  const openUserMenu = (sheet) =>
+    fireEvent.pointerDown(
+      within(sheet).getByRole("button", { name: /Account menu/ }),
+      { button: 0, ctrlKey: false },
+    );
+
+  it("closes the sheet when opening Settings on the current settings page", async () => {
+    const sheet = renderMobile("/settings/account");
+
+    openUserMenu(sheet);
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Settings" }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+  });
+
+  it("closes the sheet before opening the keyboard shortcuts", async () => {
+    const onShortcuts = vi.fn();
+    const sheet = renderMobile("/environments", () => {}, onShortcuts);
+
+    openUserMenu(sheet);
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Help" }));
+    fireEvent.click(
+      await screen.findByRole("menuitem", { name: "Keyboard shortcuts" }),
+    );
+
+    expect(onShortcuts).toHaveBeenCalledTimes(1);
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+  });
+
+  it("closes the sheet on any route change, not only sidebar taps", async () => {
+    const router = createMemoryRouter(
+      [
+        {
+          path: "*",
+          element: (
+            <SidebarProvider>
+              <SidebarTrigger />
+              <AppSidebar onSearch={() => {}} />
+            </SidebarProvider>
+          ),
+        },
+      ],
+      { initialEntries: ["/environments"] },
+    );
+    render(
+      <ThemeProvider>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      </ThemeProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Toggle sidebar" }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    await act(() => router.navigate("/environments/env-1"));
+
     await waitFor(() =>
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
     );

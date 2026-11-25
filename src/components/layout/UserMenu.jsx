@@ -24,6 +24,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -42,6 +43,9 @@ const initials = (name) =>
 export default function UserMenu({ onShortcuts = () => {} }) {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  // On mobile the menu sits in the sidebar Sheet; its items close the Sheet,
+  // also when Settings is the current page and the route does not change.
+  const { setOpenMobile } = useSidebar();
   const name = user?.fullName || user?.username || "Account";
   const avatar = (size) => (
     <Avatar className={cn(size, "shrink-0 rounded-full")} aria-hidden>
@@ -107,7 +111,7 @@ export default function UserMenu({ onShortcuts = () => {} }) {
             </DropdownMenuSubContent>
           </DropdownMenuSub>
           <DropdownMenuItem asChild>
-            <Link to="/settings/account">
+            <Link to="/settings/account" onClick={() => setOpenMobile(false)}>
               <Settings aria-hidden />
               Settings
             </Link>
@@ -127,7 +131,12 @@ export default function UserMenu({ onShortcuts = () => {} }) {
                 <span className="sr-only">(opens in a new tab)</span>
               </a>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={onShortcuts}>
+            <DropdownMenuItem
+              onSelect={() => {
+                setOpenMobile(false);
+                onShortcuts();
+              }}
+            >
               <Keyboard aria-hidden />
               Keyboard shortcuts
             </DropdownMenuItem>

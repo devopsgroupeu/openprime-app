@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Outlet, matchPath, useLocation } from "react-router";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { matches, shortcut } from "@/lib/shortcuts";
@@ -30,6 +30,12 @@ const AppLayout = ({ environments }) => {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const scrollerRef = useRef(null);
+
+  // A new page starts at the top; the scroller outlives the route.
+  useLayoutEffect(() => {
+    scrollerRef.current.scrollTop = 0;
+  }, [pathname]);
 
   // Cmd/Ctrl+B is handled by the shadcn sidebar.
   useEffect(() => {
@@ -65,6 +71,7 @@ const AppLayout = ({ environments }) => {
           scrolled={scrolled}
         />
         <div
+          ref={scrollerRef}
           className="min-h-0 flex-1 overflow-y-auto"
           onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 0)}
         >
