@@ -120,7 +120,7 @@ describe("EnvironmentDetailPage async jobs", () => {
     server.use(
       http.get("*/jobs/:jobId", () =>
         HttpResponse.json({
-          id: "job-gen-1",
+          id: "job-generate-env-001",
           status: "failed",
           error: "Terraform apply failed",
         }),
@@ -145,6 +145,44 @@ describe("EnvironmentDetailPage async jobs", () => {
     expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
   });
 
+  it("reads the environment back from the server after a job", async () => {
+    const done = new Date().toISOString();
+    let finished = false;
+    server.use(
+      http.get("*/environments/env-002", () =>
+        HttpResponse.json(
+          finished
+            ? {
+                ...environments[1],
+                status: "running",
+                last_generate_at: done,
+                last_generate_status: "succeeded",
+                updated_at: done,
+              }
+            : environments[1],
+        ),
+      ),
+      http.get("*/jobs/:jobId", ({ params }) => {
+        finished = true;
+        return HttpResponse.json({
+          id: params.jobId,
+          status: "succeeded",
+          result: { downloadUrl: `/jobs/${params.jobId}/download` },
+        });
+      }),
+    );
+    renderDetailPage({ path: "/environments/env-002" });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Generate repository" }),
+    );
+
+    await toasts().findByText("Repository generated and downloaded.");
+    const header = document.querySelector('[data-slot="page-header"]');
+    expect(within(header).getByText("Ready")).toBeInTheDocument();
+    // The server's time, not one the page made up.
+    expect(within(header).getByText("now")).toBeInTheDocument();
+  });
+
   it("pushes: 202 -> succeeded and shows the result message toast", async () => {
     renderDetailPage();
     fireEvent.click(
@@ -167,7 +205,9 @@ describe("EnvironmentDetailPage async jobs", () => {
     );
 
     await waitFor(() =>
-      expect(getBlobSpy).toHaveBeenCalledWith("/jobs/job-gen-1/download"),
+      expect(getBlobSpy).toHaveBeenCalledWith(
+        "/jobs/job-generate-env-001/download",
+      ),
     );
   });
 

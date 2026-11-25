@@ -87,6 +87,13 @@ function AppContent() {
     }
   };
 
+  // The detail page's copy of an environment (after a job, a key rotation)
+  // replaces the list's.
+  const handleEnvironmentChange = (changed) =>
+    setEnvironments((list) =>
+      list.map((env) => (env.id === changed.id ? changed : env)),
+    );
+
   // An unreachable Keycloak is not an expired session. Saying so, with a way
   // out, beats a spinner that will never resolve.
   if (authError) {
@@ -148,7 +155,10 @@ function AppContent() {
                 <Route
                   path="/environments/:id"
                   element={
-                    <EnvironmentDetailPage onDelete={handleDeleteEnvironment} />
+                    <EnvironmentDetailPage
+                      onDelete={handleDeleteEnvironment}
+                      onEnvironmentChange={handleEnvironmentChange}
+                    />
                   }
                 />
                 <Route

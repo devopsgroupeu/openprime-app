@@ -5,6 +5,7 @@
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 import { server } from "./mocks/server";
+import { resetOutcomes } from "./mocks/handlers";
 
 // Polyfill for TextEncoder/TextDecoder (required by react-router in Node.js environment)
 import { TextEncoder, TextDecoder } from "node:util";
@@ -73,7 +74,10 @@ Object.defineProperty(window, "localStorage", {
 // MSW intercepts network calls and serves fixtures (see src/mocks/handlers.js),
 // replacing the old hand-rolled global fetch stub.
 beforeAll(() => server.listen({ onUnhandledRequest: "bypass" }));
-afterEach(() => server.resetHandlers());
+afterEach(() => {
+  server.resetHandlers();
+  resetOutcomes();
+});
 afterAll(() => server.close());
 
 // Mock Keycloak globally to avoid constructor errors in ESM

@@ -45,6 +45,42 @@ test("renders the shell and opens the command palette with Cmd+K", async () => {
   expect(within(palette).getByText("Add AWS credentials")).toBeInTheDocument();
 });
 
+describe("environment jobs", () => {
+  beforeEach(() => {
+    // jsdom has no blob URLs or anchor downloads.
+    URL.createObjectURL = vi.fn(() => "blob:mock-url");
+    URL.revokeObjectURL = vi.fn();
+    HTMLAnchorElement.prototype.click = vi.fn();
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    window.history.pushState({}, "", "/");
+  });
+
+  test("the list shows the outcome of a job run on the detail page", async () => {
+    window.history.pushState({}, "", "/environments/env-002");
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole(
+        "button",
+        { name: "Generate repository" },
+        { timeout: 3000 },
+      ),
+    );
+    await screen.findByText("Repository generated and downloaded.");
+    const sidebar = document.querySelector('[data-slot="sidebar"]');
+    fireEvent.click(
+      within(sidebar).getByRole("link", { name: "Environments" }),
+    );
+
+    const card = (
+      await screen.findByRole("link", { name: "demo-staging" })
+    ).closest("article");
+    expect(within(card).getByText("Ready")).toBeInTheDocument();
+  });
+});
+
 describe("settings routes", () => {
   afterEach(() => window.history.pushState({}, "", "/"));
 

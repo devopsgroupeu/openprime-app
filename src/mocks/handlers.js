@@ -7,6 +7,20 @@ import catalog from "./catalog.json";
 const MOCK_ANSWER =
   '(mock answer) One NAT gateway per availability zone keeps private subnets online when a zone fails. A single shared gateway costs less, which is fine for development.\n\n```json\n{"natGateway": "ONE_PER_AZ"}\n```';
 
+// What finished jobs stored on their environment (jobService.persistOutcome
+// and the lifecycle status), by environment id, so reading an environment
+// after a job shows its outcome. Kept until a reload; tests reset it.
+const outcomes = new Map();
+export const resetOutcomes = () => outcomes.clear();
+const withOutcome = (env) => ({ ...env, ...outcomes.get(env.id) });
+
+// Job ids carry their kind and environment: job-<kind>-<environment id>.
+const jobOf = (jobId) => {
+  const [, kind, environmentId] =
+    /^job-(generate|push)-(.+)$/.exec(jobId) ?? [];
+  return { kind: kind ?? "generate", environmentId };
+};
+
 export const handlers = [
   // The real catalog, extracted from the templates repo. Mock mode is the only
   // place the runtime-catalog path can be exercised without a backend, and a
@@ -44,11 +58,13 @@ export const handlers = [
   ),
 
   // --- Environments ---
-  http.get("*/environments", () => HttpResponse.json(environments)),
+  http.get("*/environments", () =>
+    HttpResponse.json(environments.map(withOutcome)),
+  ),
   http.get("*/environments/:id", ({ params }) => {
     const env = environments.find((e) => e.id === params.id);
     return env
-      ? HttpResponse.json(env)
+      ? HttpResponse.json(withOutcome(env))
       : new HttpResponse(null, { status: 404 });
   }),
   http.post("*/environments", async ({ request }) =>
@@ -70,20 +86,36 @@ export const handlers = [
   ),
   // Async job model: enqueue returns 202 + jobId, UI polls /jobs/:jobId,
   // then downloads the artifact for generate jobs.
-  http.post("*/environments/:id/generate", () =>
+  http.post("*/environments/:id/generate", ({ params }) =>
     HttpResponse.json(
-      { jobId: "job-gen-1", type: "generate", status: "queued" },
+      {
+        jobId: `job-generate-${params.id}`,
+        type: "generate",
+        status: "queued",
+      },
       { status: 202 },
     ),
   ),
-  http.post("*/environments/:id/push", () =>
+  http.post("*/environments/:id/push", ({ params }) =>
     HttpResponse.json(
-      { jobId: "job-push-1", type: "push", status: "queued" },
+      { jobId: `job-push-${params.id}`, type: "push", status: "queued" },
       { status: 202 },
     ),
   ),
   http.get("*/jobs/:jobId", ({ params }) => {
-    const isPush = String(params.jobId).includes("push");
+    const { kind, environmentId } = jobOf(String(params.jobId));
+    const isPush = kind === "push";
+    if (environmentId) {
+      const now = new Date().toISOString();
+      outcomes.set(environmentId, {
+        ...outcomes.get(environmentId),
+        status: "running",
+        [`last_${kind}_at`]: now,
+        [`last_${kind}_status`]: "succeeded",
+        [`last_${kind}_error`]: null,
+        updated_at: now,
+      });
+    }
     return HttpResponse.json({
       id: params.jobId,
       type: isPush ? "push" : "generate",
