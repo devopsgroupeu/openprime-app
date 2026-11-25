@@ -328,6 +328,22 @@ describe("Aura window", () => {
     expect(composer()).toHaveValue("Which region for EU customers?");
   });
 
+  it("can stop an answer after closing and reopening the window", async () => {
+    reply = () => hang(["Use m5"]);
+    render(<Shell />);
+    fireEvent.click(launcher());
+    ask("Which node size?");
+    expect(await screen.findByText("Use m5")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close Aura" }));
+    await waitFor(() => expect(auraWindow()).toBeNull());
+    fireEvent.click(launcher());
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+    expect(
+      await thread().findByText("You stopped this answer."),
+    ).toBeInTheDocument();
+  });
+
   it("has one close button while open", () => {
     render(<Shell />);
     fireEvent.click(launcher());
