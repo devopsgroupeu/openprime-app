@@ -243,6 +243,19 @@ describe("SettingsPage", () => {
     });
   });
 
+  it("restores the saved region when the saved provider is picked again", async () => {
+    renderSettingsPage("/settings/preferences");
+
+    const provider = await screen.findByLabelText(/Default Cloud Provider/i);
+    fireEvent.change(provider, { target: { value: "onpremise" } });
+    fireEvent.change(provider, { target: { value: "aws" } });
+
+    expect(screen.getByLabelText(/Default Region/i)).toHaveValue("eu-west-1");
+    expect(
+      screen.queryByRole("button", { name: "Save" }),
+    ).not.toBeInTheDocument();
+  });
+
   // Rows saved by the old select ("on-premise", OP-271) or by the old
   // provider-change bug hold a region their provider does not list; the select
   // shows that provider's default region, and that is what Save sends.

@@ -611,15 +611,16 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
 ### 6.5 Settings, save models, destructive actions
 
 - Account: Profile rows First name, Last name, Email. Preferences: Default cloud provider and
-  Default region (`NativeSelect`; the region pre-fills a new wizard; a provider change sets that
-  provider's default region unless it offers the current one, and a stored region the provider does
-  not list loads as that default, so Save sends what is shown). The provider list is AWS,
-  On-premises (selectable, OP-271) and the disabled "Azure (Roadmap)" and "Google Cloud (Roadmap)"
-  (D-9), which still show as the current value when stored. They are drafts with one
-  `SaveBar` on every settings tab that saves both; off the edited tab it reads "Unsaved changes in
-  Account" (or "in Account and Preferences"). Save checks an edited profile ("Enter your first
-  name.", "Enter a valid email address."), opens Account and focuses the first error; then "Changes
-  saved". Never mix this with another save model on one surface.
+  Default region (`NativeSelect`; the region pre-fills a new wizard). The region select shows what
+  Save sends: a provider change keeps a region the provider lists, else takes the saved region on
+  the saved provider or the provider's default region, and a stored region its provider does not
+  list loads as that default. The provider list is AWS, On-premises (selectable, OP-271) and the
+  disabled "Azure (Roadmap)" and "Google Cloud (Roadmap)" (D-9), which still show as the current
+  value when stored. They are drafts with one `SaveBar` on every settings tab that saves both; off
+  the edited tab it reads "Unsaved changes in Account" (or "in Account and Preferences"). Save
+  checks an edited profile ("Enter your first name.", "Enter a valid email address."), opens
+  Account and focuses the first error; then "Changes saved". Never mix this with another save model
+  on one surface.
 - Cloud credentials: "AWS credentials" with primary "Add credentials" (in the empty state when there
   are none); rows with the AWS mark, name, "Default" tag, account ID with copy, "Checked 2 days ago"
   or "Not checked yet", secondary sm "Test" and a menu (Edit, Delete); then "Azure and Google Cloud

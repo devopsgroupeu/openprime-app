@@ -353,6 +353,7 @@ const SettingsPage = () => {
               {status === "ready" && activeTab === "preferences" ? (
                 <PreferencesTab
                   userPreferences={userPreferences}
+                  savedPreferences={saved.preferences}
                   onPreferenceChange={handlePreferenceChange}
                 />
               ) : null}
