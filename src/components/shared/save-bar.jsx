@@ -61,10 +61,18 @@ export function useUnsavedGuard(dirty, { within } = {}) {
         e.shiftKey
       )
         return;
+      // Only in-app navigation leaves the page. A new tab, a download (the
+      // ZIP's blob: URL has the page's own origin) and a data:, mailto: or
+      // tel: link do not.
       const anchor = e.target?.closest?.("a[href]");
-      if (!(anchor instanceof HTMLAnchorElement) || anchor.target === "_blank")
+      if (
+        !(anchor instanceof HTMLAnchorElement) ||
+        anchor.target === "_blank" ||
+        anchor.hasAttribute("download")
+      )
         return;
       const url = new URL(anchor.href, window.location.href);
+      if (!/^https?:$/.test(url.protocol)) return;
       if (url.origin !== window.location.origin) return;
       if (keeps(url.pathname)) return;
       e.preventDefault();

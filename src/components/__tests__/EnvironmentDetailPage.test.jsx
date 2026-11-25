@@ -79,6 +79,9 @@ const push = async () => {
   );
 };
 
+// The real anchor click, for a test that follows the download's click event.
+const nativeClick = HTMLAnchorElement.prototype.click;
+
 // jsdom doesn't implement blob URL helpers or anchor navigation; stub them so
 // triggerDownload() (createObjectURL -> a.click()) runs without throwing.
 beforeEach(() => {
@@ -198,6 +201,57 @@ describe("EnvironmentDetailPage async jobs", () => {
     expect(
       screen.queryByText("Couldn't download the repository."),
     ).not.toBeInTheDocument();
+  });
+
+  // A generate guards leaving the page; the ZIP's own link (a blob: URL of
+  // this origin) is not leaving and must reach the browser.
+  it("lets the ZIP download through the leave guard, also on Download again", async () => {
+    HTMLAnchorElement.prototype.click = nativeClick;
+    // A browser's blob: URL carries the page's origin.
+    URL.createObjectURL = vi.fn(() => `blob:${window.location.origin}/4f1c`);
+    const downloads = [];
+    const follow = (e) => {
+      if (!(e.target instanceof HTMLAnchorElement) || !e.target.download)
+        return;
+      downloads.push({
+        file: e.target.download,
+        prevented: e.defaultPrevented,
+      });
+      e.preventDefault(); // jsdom cannot download
+    };
+    window.addEventListener("click", follow);
+    vi.spyOn(authService, "getBlob")
+      .mockResolvedValueOnce(new Blob(["PK\x03\x04 mock-zip"]))
+      .mockRejectedValueOnce(new Error("Network error"))
+      .mockResolvedValueOnce(new Blob(["PK\x03\x04 mock-zip"]));
+    try {
+      renderDetailPage();
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Generate repository" }),
+      );
+      expect(
+        await toasts().findByText("Repository generated and downloaded."),
+      ).toBeInTheDocument();
+
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Generate repository" }),
+      );
+      const callout = (
+        await screen.findByText("Couldn't download the repository.")
+      ).closest('[data-slot="callout"]');
+      fireEvent.click(
+        within(callout).getByRole("button", { name: "Download again" }),
+      );
+      expect(
+        await toasts().findByText("Repository downloaded."),
+      ).toBeInTheDocument();
+
+      const zip = { file: "demo-prod-infrastructure.zip", prevented: false };
+      expect(downloads).toEqual([zip, zip]);
+      expect(screen.queryByText("Leave this page?")).toBeNull();
+    } finally {
+      window.removeEventListener("click", follow);
+    }
   });
 
   it("starts one job when Generate is clicked twice before the page updates", async () => {
