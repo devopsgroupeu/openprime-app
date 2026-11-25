@@ -134,6 +134,34 @@ describe("EnvironmentDetailPage async jobs", () => {
     expect(pollCount).toBe(3);
   }, 15000);
 
+  // A failure is a new alert, inserted, not the running callout turned into
+  // one; it shows no authService placeholder.
+  it("shows a failure as a new alert without placeholder text", async () => {
+    let answer;
+    server.use(
+      http.get(
+        "*/jobs/:jobId",
+        () => new Promise((resolve) => (answer = resolve)),
+      ),
+    );
+    renderDetailPage();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Generate repository" }),
+    );
+    const running = (await screen.findByText(/Generating repository/)).closest(
+      '[data-slot="callout"]',
+    );
+
+    await waitFor(() => expect(answer).toBeDefined());
+    answer(new HttpResponse(null, { status: 502 }));
+    const failure = (
+      await screen.findByText("Couldn't generate the repository.")
+    ).closest('[data-slot="callout"]');
+    expect(failure).not.toBe(running);
+    expect(failure).toHaveAttribute("role", "alert");
+    expect(failure).not.toHaveTextContent(/HTTP error/);
+  });
+
   it("shows a failed generation in its callout, not in a toast", async () => {
     server.use(
       http.get("*/jobs/:jobId", () =>
@@ -614,6 +642,28 @@ describe("EnvironmentDetailPage async jobs", () => {
     ).toBeInTheDocument();
   });
 
+  // authService's placeholder for a body without a message says nothing; the
+  // error ID still helps support.
+  it("shows no placeholder text when loading fails without a message", async () => {
+    server.use(
+      http.get(
+        "*/environments/env-001",
+        () =>
+          new HttpResponse(null, {
+            status: 502,
+            headers: { "X-Request-ID": "req-43" },
+          }),
+      ),
+    );
+    renderDetailPage();
+
+    expect(
+      await screen.findByText("Couldn't load environment."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/HTTP error/)).toBeNull();
+    expect(screen.getByText("req-43")).toBeInTheDocument();
+  });
+
   it("titles a missing environment Environment not found", async () => {
     renderDetailPage({ path: "/environments/env-missing" });
 
@@ -1040,7 +1090,40 @@ describe("EnvironmentDetailPage header actions", () => {
     expect(
       within(menu).getByRole("menuitem", { name: "Delete environment" }),
     ).toHaveAttribute("data-disabled");
+    fireEvent.keyDown(menu, { key: "Escape" });
+
+    // The Configuration tab's Danger zone is the same action.
+    fireEvent.click(screen.getByRole("link", { name: "Configuration" }));
+    const danger = await screen.findByRole("region", { name: "Danger zone" });
+    const button = within(danger).getByRole("button", {
+      name: "Delete environment",
+    });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAccessibleDescription("Wait for the job to finish.");
     unmount();
+  });
+
+  // A switched-on git section without a URL has nowhere to push to.
+  it("offers no push for git switched on without a repository URL", async () => {
+    server.use(
+      http.get("*/environments/env-001", () =>
+        HttpResponse.json({
+          ...environments[0],
+          git_repository: { enabled: true, url: "", branch: "main" },
+        }),
+      ),
+    );
+    renderDetailPage();
+
+    expect(
+      await screen.findByRole("button", { name: "Push to git" }),
+    ).toBeDisabled();
+    const menu = await openMore("demo-prod");
+    expect(
+      within(menu).getByRole("menuitem", { name: "Push to git" }),
+    ).toHaveAccessibleDescription(
+      "Add a git repository in Edit > Basics to push.",
+    );
   });
 
   it("says in the menu why Push to git is unavailable", async () => {
@@ -1096,6 +1179,29 @@ describe("EnvironmentDetailPage configuration", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Rotate key" }));
 
     expect(await toasts().findByText("SSH key rotated.")).toBeInTheDocument();
+  });
+
+  // The backend answers an update without the credential (no include): the
+  // page keeps the one it shows.
+  it("keeps the credentials after a key rotation", async () => {
+    server.use(
+      http.put("*/environments/env-001", async ({ request }) => {
+        const { cloudCredential: _credential, ...body } = await request.json();
+        return HttpResponse.json(body);
+      }),
+    );
+    renderDetailPage({ path: "/environments/env-001?tab=configuration" });
+    expect(await screen.findByText("aws-sandbox")).toBeInTheDocument();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Rotate key" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.change(within(dialog).getByLabelText("SSH private key"), {
+      target: { value: "-----BEGIN OPENSSH PRIVATE KEY-----" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Rotate key" }));
+
+    expect(await toasts().findByText("SSH key rotated.")).toBeInTheDocument();
+    expect(screen.getByText("aws-sandbox")).toBeInTheDocument();
   });
 });
 

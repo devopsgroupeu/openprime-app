@@ -15,7 +15,7 @@ import { SaveBar } from "@/components/shared/save-bar";
 import { SettingsPageSkeleton } from "@/components/shared/skeletons";
 import { ErrorState } from "@/components/shared/states";
 import { Separator } from "@/components/ui/separator";
-import { describeError } from "@/lib/describe-error";
+import { describeError, serverMessage } from "@/lib/describe-error";
 
 // True when any top-level value differs (drafts are edited one key at a time).
 const changed = (a, b) =>
@@ -46,6 +46,8 @@ const SettingsPage = () => {
   // "loading" | "error" | "ready", for the user data and the credentials.
   const [userStatus, setUserStatus] = useState("loading");
   const [credentialsStatus, setCredentialsStatus] = useState("loading");
+  // Why the user data or the credentials failed to load (`user`, `credentials`).
+  const [loadErrors, setLoadErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState({
     firstName: "",
@@ -116,6 +118,7 @@ const SettingsPage = () => {
       setUserStatus("ready");
     } catch (error) {
       console.error("Failed to load user data:", error);
+      setLoadErrors((errors) => ({ ...errors, user: error }));
       setUserStatus("error");
     }
   };
@@ -151,6 +154,7 @@ const SettingsPage = () => {
       setCredentialsStatus("ready");
     } catch (error) {
       console.error("Failed to load cloud credentials:", error);
+      setLoadErrors((errors) => ({ ...errors, credentials: error }));
       setCredentialsStatus("error");
     }
   };
@@ -265,6 +269,7 @@ const SettingsPage = () => {
 
   const onCredentials = activeTab === "cloud-credentials";
   const status = onCredentials ? credentialsStatus : userStatus;
+  const loadError = onCredentials ? loadErrors.credentials : loadErrors.user;
   // The account and preferences drafts live across the tabs; either one
   // shows the save bar, on every tab, and Save sends both. Off the tab with
   // the edits, the bar names the tabs that hold them.
@@ -298,6 +303,8 @@ const SettingsPage = () => {
                   thing={
                     onCredentials ? "your cloud credentials" : "your settings"
                   }
+                  message={serverMessage(loadError)}
+                  requestId={loadError?.requestId}
                   onRetry={() => {
                     if (onCredentials) {
                       setCredentialsStatus("loading");

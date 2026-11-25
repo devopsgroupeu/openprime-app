@@ -1,4 +1,4 @@
-import { describeError } from "../describe-error";
+import { describeError, serverMessage } from "../describe-error";
 
 describe("describeError", () => {
   it("asks to check the connection when no response arrived", () => {
@@ -57,5 +57,23 @@ describe("describeError", () => {
     expect(describeError(new Error(""), "delete demo")).toBe(
       "Couldn't delete demo. Try again.",
     );
+  });
+});
+
+// The load errors and the job callout show what the server said, and only that.
+describe("serverMessage", () => {
+  it("is the server's message, nothing for a placeholder or no response", () => {
+    expect(
+      serverMessage(
+        Object.assign(new Error("HTTP error! status: 409"), {
+          data: { error: "Credential is locked" },
+        }),
+      ),
+    ).toBe("Credential is locked");
+    expect(serverMessage(new Error("Terraform apply failed"))).toBe(
+      "Terraform apply failed",
+    );
+    expect(serverMessage(new Error("HTTP error! status: 502"))).toBe("");
+    expect(serverMessage(new TypeError("Failed to fetch"))).toBe("");
   });
 });

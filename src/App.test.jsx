@@ -70,6 +70,20 @@ test("a failed list load shows the server message and the error ID", async () =>
   expect(screen.getByText("req-7")).toBeInTheDocument();
 });
 
+test("a list load without a response shows no placeholder text", async () => {
+  server.use(http.get("*/environments", () => HttpResponse.error()));
+  render(<App />);
+
+  expect(
+    await screen.findByText(
+      "Couldn't load environments.",
+      {},
+      { timeout: 3000 },
+    ),
+  ).toBeInTheDocument();
+  expect(screen.queryByText("Failed to fetch")).toBeNull();
+});
+
 describe("environment jobs", () => {
   beforeEach(() => {
     // jsdom has no blob URLs or anchor downloads.

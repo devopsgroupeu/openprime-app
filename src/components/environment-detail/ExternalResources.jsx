@@ -88,7 +88,8 @@ function RotateSshKeyDialog({ environment, gitRepo, onClose, onUpdated }) {
         ...environment,
         gitRepository: { ...gitRepo, sshKey: key.trim() },
       });
-      onUpdated?.(updated);
+      // The update answers without the credential (no include): keep it.
+      onUpdated?.({ ...environment, ...updated });
       onClose();
       success("SSH key rotated.");
     } catch (err) {

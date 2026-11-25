@@ -1,3 +1,17 @@
+/**
+ * What the server said about a failed request, "" when it said nothing for
+ * the user: a TypeError (no response, or a bug) and authService's "HTTP
+ * error! status N" placeholder for a body without a message.
+ */
+export function serverMessage(error) {
+  return (
+    error?.data?.error ||
+    (error instanceof TypeError || /^HTTP error! status/.test(error?.message)
+      ? ""
+      : error?.message || "")
+  );
+}
+
 // The toast text of a failed request: what failed and what to do. `action`
 // completes "Couldn't ...", e.g. "save your changes" or "test aws-sandbox".
 export function describeError(error, action) {
@@ -10,13 +24,7 @@ export function describeError(error, action) {
   ) {
     return `Couldn't ${action}. Check your connection and try again.`;
   }
-  // Any other TypeError is a bug, and "HTTP error! status N" is authService's
-  // placeholder for a body without a message: neither tells the user more.
-  const message =
-    error?.data?.error ||
-    (error instanceof TypeError || /^HTTP error! status/.test(error?.message)
-      ? ""
-      : error?.message);
+  const message = serverMessage(error);
   const errorId = error?.requestId ? ` (Error ID: ${error.requestId})` : "";
   return message
     ? `Couldn't ${action}: ${message}${errorId}`

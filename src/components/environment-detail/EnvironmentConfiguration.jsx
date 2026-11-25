@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Download, Trash2 } from "lucide-react";
 import { useToast } from "../../contexts/ToastContext";
 import { getProviderConfig } from "../../config/providersConfig";
@@ -175,13 +175,18 @@ function ConfigurationFile({ environment }) {
   );
 }
 
-/** Configuration tab: every basic field, git and state, the file, danger zone. */
+/**
+ * Configuration tab: every basic field, git and state, the file, danger zone.
+ * `busy`: a job runs on the environment, so it cannot be deleted.
+ */
 const EnvironmentConfiguration = ({
   environment,
   onEnvironmentUpdate,
   editHref,
   onDelete,
+  busy = false,
 }) => {
+  const busyId = useId();
   const prefix = prefixOf(environment);
   const region = regionOf(environment);
   const credential = environment.cloudCredential;
@@ -284,7 +289,18 @@ const EnvironmentConfiguration = ({
         <SettingsRowGroup>
           <SettingsRow
             title="Delete environment"
-            description="Removes this environment from OpenPrime. AWS resources, the Terraform state bucket and code already pushed to git are not touched."
+            description={
+              <>
+                Removes this environment from OpenPrime. AWS resources, the
+                Terraform state bucket and code already pushed to git are not
+                touched.
+                {busy ? (
+                  <span id={busyId} className="mt-1 block text-foreground">
+                    Wait for the job to finish.
+                  </span>
+                ) : null}
+              </>
+            }
             control={
               // Tinted destructive (DESIGN 3.2); the label stays foreground
               // on the tint for AA, the icon carries the red.
@@ -292,6 +308,9 @@ const EnvironmentConfiguration = ({
                 variant="ghost"
                 size="lg"
                 onClick={onDelete}
+                // Like the header menu: not while a job runs on it.
+                disabled={busy}
+                aria-describedby={busy ? busyId : undefined}
                 className="bg-destructive/10 text-foreground hover:bg-destructive/15 hover:text-foreground focus-visible:ring-destructive dark:bg-destructive/15 dark:hover:bg-destructive/25 [&_svg]:text-destructive"
               >
                 <Trash2 aria-hidden />

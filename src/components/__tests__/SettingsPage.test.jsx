@@ -482,6 +482,33 @@ describe("SettingsPage", () => {
     ).toBeInTheDocument();
   });
 
+  // Like the list and the detail page: the server's message and the error ID.
+  it.each([
+    ["/settings/account", "*/users/me", "Couldn't load your settings."],
+    [
+      "/settings/cloud-credentials",
+      "*/cloud-credentials",
+      "Couldn't load your cloud credentials.",
+    ],
+  ])(
+    "shows the server message and the error ID when %s fails to load",
+    async (path, endpoint, title) => {
+      server.use(
+        http.get(endpoint, () =>
+          HttpResponse.json(
+            { error: "Database unavailable" },
+            { status: 503, headers: { "X-Request-ID": "req-9" } },
+          ),
+        ),
+      );
+      renderSettingsPage(path);
+
+      expect(await screen.findByText(title)).toBeInTheDocument();
+      expect(screen.getByText("Database unavailable")).toBeInTheDocument();
+      expect(screen.getByText("req-9")).toBeInTheDocument();
+    },
+  );
+
   it("shows the preferences tab at /settings/preferences", async () => {
     renderSettingsPage("/settings/preferences");
 

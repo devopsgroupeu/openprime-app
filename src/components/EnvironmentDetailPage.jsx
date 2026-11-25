@@ -35,7 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { describeError } from "@/lib/describe-error";
+import { describeError, serverMessage } from "@/lib/describe-error";
 import { cn } from "@/lib/utils";
 
 const TABS = [
@@ -176,7 +176,7 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
           setEnvironment(null);
           setFetchError({
             status: err.status,
-            message: err.message,
+            message: serverMessage(err),
             requestId: err.requestId,
           });
         } finally {
@@ -223,7 +223,8 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
   const services = enabledServiceEntries(environment);
   const charts = enabledCharts(environment);
   const gitRepo = gitRepositoryOf(environment);
-  const gitEnabled = Boolean(gitRepo?.enabled);
+  // Git switched on without a URL has nowhere to push to.
+  const gitEnabled = Boolean(gitRepo?.enabled && gitRepo.url?.trim());
   const repoName = cleanGitUrl(gitRepo?.url);
   const repoWeb = gitWebUrl(gitRepo?.url);
 
@@ -255,7 +256,7 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
       kind,
       ...extra,
       error: {
-        message: err.data?.error || err.message,
+        message: serverMessage(err),
         requestId: err.requestId,
       },
     });
@@ -354,10 +355,13 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
           ? () => setConfirmPush(true)
           : undefined
         : () => runJob(failedKind);
+  // Keyed by phase: a failure is a new alert, not the running callout's node
+  // given role="alert" (not every screen reader announces that).
   const callout = running ? (
-    <JobCallout kind={running} startedAt={job.startedAt} />
+    <JobCallout key="running" kind={running} startedAt={job.startedAt} />
   ) : failure ? (
     <JobCallout
+      key="failed"
       kind={failedKind}
       error={failure}
       onRetry={retry}
@@ -425,6 +429,7 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
           onEnvironmentUpdate={setEnvironment}
           editHref={`${basePath}/edit`}
           onDelete={() => setShowDeleteModal(true)}
+          busy={Boolean(running)}
         />
       )}
 

@@ -15,6 +15,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { PageShell } from "@/components/shared/page-shell";
 import { FullScreenState, NotFound } from "@/components/shared/states";
 import { Button } from "@/components/ui/button";
+import { serverMessage } from "@/lib/describe-error";
 
 function AppContent() {
   // AuthProvider renders its own loading screen, so auth has settled here.
@@ -38,7 +39,10 @@ function AppContent() {
       setEnvironments(userEnvironments);
     } catch (error) {
       console.error("Failed to load environments:", error);
-      setLoadError({ message: error.message, requestId: error.requestId });
+      setLoadError({
+        message: serverMessage(error),
+        requestId: error.requestId,
+      });
       setEnvironments([]);
     } finally {
       setEnvironmentsLoading(false);
@@ -55,7 +59,10 @@ function AppContent() {
     } catch (error) {
       console.error("Failed to reload environments:", error);
       if (environments.length === 0) {
-        setLoadError({ message: error.message, requestId: error.requestId });
+        setLoadError({
+          message: serverMessage(error),
+          requestId: error.requestId,
+        });
       }
     }
   };

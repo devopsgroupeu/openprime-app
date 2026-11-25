@@ -2,9 +2,9 @@
 // services.<k8s>.helmCharts.<chart>.values, with customValues: true. They are
 // saved with the environment; generation does not apply them yet.
 
-/** The custom values of a chart entry, "" when it has none. */
+/** The custom values of a chart entry, "" when it has none (or only blanks). */
 export const chartValues = (entry) =>
-  typeof entry?.values === "string" ? entry.values : "";
+  typeof entry?.values === "string" && entry.values.trim() ? entry.values : "";
 
 /** The entry with `values` saved, or without values (customValues off) for "". */
 export const withValues = (entry, values) => {

@@ -27,6 +27,27 @@ describe("HelmChartsList", () => {
     expect(screen.queryByText("Custom values")).toBeNull();
   });
 
+  // Text with nothing in it is no values (another client may store it).
+  it("lists a chart whose saved values are only whitespace like any other", () => {
+    render(
+      <HelmChartsList
+        environment={{
+          services: {
+            eks: {
+              enabled: true,
+              helmCharts: {
+                loki: { enabled: true, customValues: true, values: "  \n\t" },
+              },
+            },
+          },
+        }}
+      />,
+    );
+    expect(screen.getByText("Loki")).toBeInTheDocument();
+    expect(screen.queryByText("Custom values")).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
   // Like the wizard's Helm step and Review: Argo CD and Karpenter are always
   // installed, not chosen, so an old saved flag does not list them.
   it("leaves out the always installed charts", () => {
