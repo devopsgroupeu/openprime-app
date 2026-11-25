@@ -389,6 +389,57 @@ describe("WizardPage", () => {
     );
   });
 
+  // Settings > Preferences: the mock user's default region is eu-west-1.
+  describe("default region preference", () => {
+    const region = () => screen.getByLabelText("Region");
+
+    it("pre-fills a new wizard, which still keeps no draft", async () => {
+      localStorage.clear();
+      renderWizardCreate(vi.fn());
+      await stepHeading("Basics");
+      await waitFor(() => expect(region()).toHaveValue("eu-west-1"));
+      expect(screen.queryByText(/Draft saved/)).toBeNull();
+      expect(localStorage.getItem("op-wizard-draft:mock-user-1")).toBeNull();
+    });
+
+    it("never replaces a region the user already picked", async () => {
+      localStorage.clear();
+      let answer;
+      const answered = new Promise((resolve) => (answer = resolve));
+      server.use(
+        http.get("*/users/me/preferences", async () => {
+          await answered;
+          return HttpResponse.json({
+            preferences: { defaultRegion: "eu-west-1" },
+          });
+        }),
+      );
+      renderWizardCreate(vi.fn());
+      await stepHeading("Basics");
+      fireEvent.change(region(), { target: { value: "us-west-2" } });
+      answer();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(region()).toHaveValue("us-west-2");
+    });
+
+    it("leaves a restored draft as it was", async () => {
+      localStorage.clear();
+      localStorage.setItem(
+        "op-wizard-draft:mock-user-1",
+        JSON.stringify({
+          name: "half",
+          provider: "aws",
+          region: "us-east-1",
+          services: {},
+        }),
+      );
+      renderWizardCreate(vi.fn());
+      await stepHeading("Basics");
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(region()).toHaveValue("us-east-1");
+    });
+  });
+
   // An untouched wizard is not a draft: nothing is kept, nothing is said.
   it("keeps no draft of an untouched wizard", async () => {
     localStorage.clear();

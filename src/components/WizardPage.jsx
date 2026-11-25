@@ -39,6 +39,7 @@ import {
   backfillServices,
   createEmptyEnvironment,
 } from "../config/environmentsConfig";
+import { getProviderRegions } from "../config/providersConfig";
 import { validateEnvironmentConfig } from "../utils/configValidator";
 import { basicFieldErrors } from "./wizard-page/basicErrors";
 import authService from "../services/authService";
@@ -97,7 +98,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const [newEnv, setNewEnv] = useState(initial.env);
   // Create mode without a restored draft: the untouched wizard (comparable).
   // Until the environment differs from it there is no draft to keep.
-  const [blank] = useState(() =>
+  const [blank, setBlank] = useState(() =>
     isEditMode || initial.restored ? null : comparable(initial.env),
   );
   // Captured during render, not in an effect: the draft-saving effect below is
@@ -192,6 +193,30 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     )
       setSavedAt(Date.now());
   }, [newEnv, untouched, isEditMode, userId, catalogCommit, initial.env]);
+
+  // Settings > Preferences: the default region pre-fills a new wizard, never a
+  // restored draft and never a region the user already picked.
+  useEffect(() => {
+    if (isEditMode || initial.restored) return;
+    let active = true;
+    authService
+      .get("/users/me/preferences")
+      .then(({ preferences }) => {
+        const region = preferences?.defaultRegion;
+        const offered = getProviderRegions(initial.env.provider).some(
+          (r) => r.value === region,
+        );
+        if (!active || !offered) return;
+        setNewEnv((env) =>
+          env.region === initial.env.region ? { ...env, region } : env,
+        );
+        setBlank(comparable({ ...initial.env, region }));
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [isEditMode, initial]);
 
   // A draft restored from localStorage was filled in against one version of the
   // service catalog. Once the wizard builds itself from the templates, that set

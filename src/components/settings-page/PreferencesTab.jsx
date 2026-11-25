@@ -50,7 +50,7 @@ const PreferencesTab = ({ userPreferences, onPreferenceChange }) => {
         />
         <SettingsRow
           title="Default region"
-          description="The list follows the provider above."
+          description="Pre-filled in the wizard. You can change it per environment."
           controlId="settings-default-region"
           control={
             <NativeSelect
