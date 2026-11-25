@@ -131,7 +131,7 @@ describe("Application Smoke Tests", () => {
     await ctx.page.waitForTimeout(500);
 
     // Verify we advanced to the services step
-    const servicesHeading = ctx.page.getByText(/services configuration/i).first();
+    const servicesHeading = ctx.page.getByRole("heading", { level: 1, name: "Services" });
     expect(await servicesHeading.isVisible()).toBe(true);
   });
 });
