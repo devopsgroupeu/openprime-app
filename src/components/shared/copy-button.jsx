@@ -1,5 +1,5 @@
 import { Check, Copy } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,11 +17,14 @@ import { useToast } from "@/contexts/ToastContext";
 export function CopyButton({ text, label, visibleLabel, size, className }) {
   const toast = useToast();
   const [copied, setCopied] = useState(false);
+  const timer = useRef(null);
+  useEffect(() => () => clearTimeout(timer.current), []);
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied(false), 1500);
     } catch {
       toast.error("Couldn't copy to the clipboard.");
     }
