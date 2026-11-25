@@ -1,8 +1,11 @@
-import { http, HttpResponse } from "msw";
+import { delay, http, HttpResponse } from "msw";
 import { environments, credentials, currentUser } from "./fixtures";
 
 // Wildcard origins (`*/...`) so handlers match regardless of the configured API base URL.
 import catalog from "./catalog.json";
+
+const MOCK_ANSWER =
+  '(mock answer) One NAT gateway per availability zone keeps private subnets online when a zone fails. A single shared gateway costs less, which is fine for development.\n\n```json\n{"natGateway": "ONE_PER_AZ"}\n```';
 
 export const handlers = [
   // The real catalog, extracted from the templates repo. Mock mode is the only
@@ -132,10 +135,25 @@ export const handlers = [
     HttpResponse.json({ success: true }),
   ),
 
-  // --- AI assistant (non-streaming mock) ---
-  http.post("*/ai/chat", () =>
-    HttpResponse.json({
-      message: "(mock AI) This is a mocked assistant response.",
-    }),
-  ),
+  // --- AI assistant ---
+  // Streams like the backend: server-sent events with text chunks, then done.
+  http.post("*/ai/chat", async () => {
+    await delay(800);
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        for (const chunk of MOCK_ANSWER.match(/.{1,24}/gs)) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ chunk })}\n\n`),
+          );
+          await delay(40);
+        }
+        controller.enqueue(encoder.encode('data: {"done":true}\n\n'));
+        controller.close();
+      },
+    });
+    return new HttpResponse(stream, {
+      headers: { "Content-Type": "text/event-stream" },
+    });
+  }),
 ];

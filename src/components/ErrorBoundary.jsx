@@ -1,58 +1,41 @@
 import React from "react";
-import { AlertTriangle, RefreshCw, Home } from "lucide-react";
+import { FullScreenState } from "@/components/shared/states";
+import { Button } from "@/components/ui/button";
 
-// Error display component that can use hooks
+// The crash screen (openprime-ai global-error): what happened, Reload, and in
+// development the error itself.
 const ErrorDisplay = ({ error, errorInfo, onRefresh, onGoHome }) => {
+  const isDev =
+    (typeof import.meta !== "undefined" && import.meta.env?.DEV) ||
+    (typeof process !== "undefined" && process.env?.NODE_ENV === "development");
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-background">
-      <div className="max-w-md w-full text-center">
-        <div className="rounded-2xl p-8 shadow-xl border bg-surface border-border">
-          <AlertTriangle className="w-16 h-16 text-danger mx-auto mb-4" />
-
-          <h1 className="text-2xl font-bold mb-2 text-primary">
-            Something went wrong
-          </h1>
-
-          <p className="mb-6 text-secondary">
-            An unexpected error occurred. Please try refreshing the page or
-            return to the home page.
-          </p>
-
-          {((typeof import.meta !== "undefined" && import.meta.env?.DEV) ||
-            (typeof process !== "undefined" &&
-              process.env?.NODE_ENV === "development")) &&
-            error && (
-              <details className="text-left mb-6 rounded-lg p-3 text-sm bg-background-secondary text-secondary">
-                <summary className="cursor-pointer text-danger mb-2">
-                  Error Details (Development Mode)
-                </summary>
-                <pre className="whitespace-pre-wrap font-mono text-xs">
-                  {error.toString()}
-                  {errorInfo?.componentStack}
-                </pre>
-              </details>
-            )}
-
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={onRefresh}
-              className="btn-op-primary flex-1 justify-center space-x-2"
-            >
-              <RefreshCw className="w-4 h-4" />
-              <span>Refresh Page</span>
-            </button>
-
-            <button
-              onClick={onGoHome}
-              className="btn-op-secondary flex-1 justify-center space-x-2"
-            >
-              <Home className="w-4 h-4" />
-              <span>Go Home</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <FullScreenState
+      logo
+      title="Something went wrong."
+      description="Reload the page to try again."
+      primary={
+        <Button size="lg" onClick={onRefresh}>
+          Reload
+        </Button>
+      }
+      secondary={
+        <Button variant="ghost" size="lg" onClick={onGoHome}>
+          Go to environments
+        </Button>
+      }
+    >
+      {isDev && error ? (
+        <details className="rounded-lg border bg-muted/40 p-3 text-xs">
+          <summary className="cursor-pointer font-medium text-destructive">
+            Error details (development)
+          </summary>
+          <pre className="mt-2 max-h-60 overflow-auto font-mono whitespace-pre-wrap text-muted-foreground">
+            {error.toString()}
+            {errorInfo?.componentStack}
+          </pre>
+        </details>
+      ) : null}
+    </FullScreenState>
   );
 };
 

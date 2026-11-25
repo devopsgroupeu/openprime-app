@@ -1,0 +1,73 @@
+import { ArrowUp } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+
+/**
+ * Aura's composer (port of openprime-ai PromptInput): a rounded-2xl card with
+ * an auto-growing textarea and a round Send button, the only saturated control
+ * while there is something to send. Enter sends, Shift+Enter adds a line.
+ * `ref` reaches the textarea.
+ */
+const Composer = ({
+  ref,
+  value,
+  onChange,
+  onSend,
+  placeholder,
+  busy,
+  autoFocus,
+}) => {
+  const canSend = value.trim() !== "" && !busy;
+  const send = () => {
+    if (canSend) onSend();
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <form
+        data-slot="prompt-input"
+        onSubmit={(e) => {
+          e.preventDefault();
+          send();
+        }}
+        className="flex flex-col gap-2 rounded-2xl border border-input bg-card pt-3 pr-2.5 pb-2.5 pl-3.5 transition-[border-color] duration-(--dur-fast) focus-within:border-ring"
+      >
+        <textarea
+          ref={ref}
+          aria-label="Message Aura"
+          autoFocus={autoFocus}
+          rows={1}
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              send();
+            }
+          }}
+          // rounded-none border-0 p-0 focus:shadow-none: the card is the field
+          // (and they beat legacy.css's textarea rules until it goes).
+          className="field-sizing-content max-h-50 min-h-6 w-full resize-none rounded-none border-0 bg-transparent p-0 text-base outline-none [scrollbar-width:thin] placeholder:text-muted-foreground focus:shadow-none md:text-md"
+        />
+        <div className="flex h-8 items-center justify-end">
+          <Button
+            type="submit"
+            size="icon"
+            aria-label="Send message"
+            disabled={!canSend}
+            className="rounded-full disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 disabled:shadow-none"
+          >
+            {busy ? <Spinner aria-hidden /> : <ArrowUp aria-hidden />}
+          </Button>
+        </div>
+      </form>
+      <p className="text-center text-xs text-muted-foreground">
+        Aura can be wrong. Check its answers.
+      </p>
+    </div>
+  );
+};
+
+export default Composer;

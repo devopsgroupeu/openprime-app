@@ -1,6 +1,6 @@
 /* UI tokens (openprime-ai-aws/apps/web/app/ui-tokens.css): warning and info
    pairs and the non-color scales; imported after motion.css (src/index.jsx).
-   Left out: the chat-only and template-gradient parts. */
+   Left out: the chat home widths and the template-gradient parts. */
 
 /* This file is its own, isolated Tailwind root: it reads the default theme by
    reference, never scans the app (source(none)) and emits ONLY the utilities
@@ -92,6 +92,12 @@
   --shadow-button-secondary:
     inset 0 0 0 1px color-mix(in oklab, var(--foreground) 10%, transparent),
     inset 0 -1px 1px color-mix(in oklab, var(--background) 40%, transparent);
+}
+
+/* Chat messages (Aura) keep 14 px / 24 px. */
+[data-slot="chat-thread"] {
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.5rem;
 }
 
 /* Tooltips enter from 0.96; after motion.css, so this wins over its scale reset. */

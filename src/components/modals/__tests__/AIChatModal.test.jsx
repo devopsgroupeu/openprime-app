@@ -30,9 +30,9 @@ describe("AIChatModal", () => {
   it("renders the modal shell (header + input) when open", () => {
     render(<Harness />);
     expect(
-      screen.getByRole("dialog", { name: /AI assistant/i }),
+      screen.getByRole("dialog", { name: "Ask Aura about EKS" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Ask AI about EKS")).toBeInTheDocument();
+    expect(screen.getByText("Ask Aura about EKS")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Ask about EKS...")).toBeInTheDocument();
   });
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, matchPath, useLocation } from "react-router";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { matches, shortcut } from "@/lib/shortcuts";
+import AuraChatButton from "../AuraChatButton";
 import AppSidebar from "./AppSidebar";
 import AppTopBar from "./AppTopBar";
 import CommandPalette from "./CommandPalette";
@@ -20,9 +21,9 @@ export function breadcrumbsFor(pathname, environments) {
 
 /**
  * The app shell (port of openprime-ai AppShell): deep-green sidebar, top bar
- * with a hairline once the content scrolls, the Cmd+K palette and the
- * shortcuts dialog. The viewport never scrolls; the area under the top bar
- * does.
+ * with a hairline once the content scrolls, the Cmd+K palette, the
+ * shortcuts dialog and the floating Aura. The viewport never scrolls; the area
+ * under the top bar does.
  */
 const AppLayout = ({ environments }) => {
   const { pathname } = useLocation();
@@ -67,7 +68,10 @@ const AppLayout = ({ environments }) => {
           className="min-h-0 flex-1 overflow-y-auto"
           onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 0)}
         >
-          <Outlet />
+          {/* pb-16: the last card scrolls clear of the Aura launcher. */}
+          <div className="pb-16">
+            <Outlet />
+          </div>
         </div>
       </SidebarInset>
       <CommandPalette
@@ -80,6 +84,7 @@ const AppLayout = ({ environments }) => {
         open={shortcutsOpen}
         onOpenChange={setShortcutsOpen}
       />
+      <AuraChatButton />
     </SidebarProvider>
   );
 };

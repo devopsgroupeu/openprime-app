@@ -1,7 +1,8 @@
-// src/contexts/ToastContext.js
+// src/contexts/ToastContext.jsx
+// useToast() and the toasts, drawn like openprime-ai's Sonner toaster:
+// bottom-right, popover surface, one icon per tone.
 import { createContext, useContext, useState, useCallback } from "react";
-import { CheckCircle, XCircle, AlertCircle, Info, X } from "lucide-react";
-import { useTheme } from "./ThemeContext";
+import { CircleAlert, CircleCheck, Info, TriangleAlert, X } from "lucide-react";
 
 const ToastContext = createContext();
 
@@ -13,79 +14,40 @@ export const useToast = () => {
   return context;
 };
 
+const TONES = {
+  success: { Icon: CircleCheck, color: "text-primary" },
+  error: { Icon: CircleAlert, color: "text-destructive" },
+  warning: { Icon: TriangleAlert, color: "text-warning" },
+  info: { Icon: Info, color: "text-info" },
+};
+
 const ToastItem = ({ toast, onRemove }) => {
-  const { isDark } = useTheme();
-
-  const getIcon = () => {
-    switch (toast.type) {
-      case "success":
-        return <CheckCircle className="w-5 h-5 text-success" />;
-      case "error":
-        return <XCircle className="w-5 h-5 text-danger" />;
-      case "warning":
-        return <AlertCircle className="w-5 h-5 text-warning" />;
-      case "info":
-      default:
-        return <Info className="w-5 h-5 text-info" />;
-    }
-  };
-
-  const getBorderColor = () => {
-    switch (toast.type) {
-      case "success":
-        return "border-l-success";
-      case "error":
-        return "border-l-danger";
-      case "warning":
-        return "border-l-warning";
-      case "info":
-      default:
-        return "border-l-info";
-    }
-  };
-
+  const { Icon, color } = TONES[toast.type] ?? TONES.info;
   return (
     <div
-      className={`w-full border-l-4 rounded-lg shadow-lg pointer-events-auto transform transition-all duration-300 ease-in-out ${getBorderColor()} ${
-        isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-      }`}
-      role="alert"
-      aria-live="polite"
+      data-slot="toast"
+      data-type={toast.type}
+      className="motion-enter pointer-events-auto flex w-full items-start gap-2.5 rounded-lg border bg-popover p-4 text-sm text-popover-foreground shadow-lg"
     >
-      <div className="p-4">
-        <div className="flex items-start">
-          <div className="shrink-0">{getIcon()}</div>
-          <div className="ml-3 w-0 flex-1 pt-0.5">
-            {toast.title && (
-              <p
-                className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-900"}`}
-              >
-                {toast.title}
-              </p>
-            )}
-            <p
-              className={`text-sm ${
-                isDark ? "text-gray-300" : "text-gray-600"
-              } ${toast.title ? "mt-1" : ""}`}
-            >
-              {toast.message}
-            </p>
-          </div>
-          <div className="ml-4 shrink-0 flex">
-            <button
-              onClick={() => onRemove(toast.id)}
-              className={`inline-flex rounded-md transition-colors ${
-                isDark
-                  ? "text-gray-400 hover:text-gray-200"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-              aria-label="Close notification"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+      <Icon aria-hidden className={`mt-px size-4 shrink-0 ${color}`} />
+      <div className="min-w-0 flex-1 break-words">
+        {toast.title && <p className="font-medium">{toast.title}</p>}
+        <p
+          className={
+            toast.title ? "mt-0.5 text-muted-foreground" : "font-medium"
+          }
+        >
+          {toast.message}
+        </p>
       </div>
+      <button
+        type="button"
+        onClick={() => onRemove(toast.id)}
+        aria-label="Close notification"
+        className="-mt-1 -mr-1.5 inline-flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-(--dur-fast) outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <X aria-hidden className="size-3.5" />
+      </button>
     </div>
   );
 };
@@ -170,17 +132,16 @@ export const ToastProvider = ({ children }) => {
     >
       {children}
 
-      {/* Toast Container */}
-      <div
-        className="fixed top-4 right-4 z-70 space-y-3 pointer-events-none"
+      {/* Above dialogs; bottom-20 clears the Aura launcher and the wizard footer. */}
+      <section
         aria-live="polite"
         aria-label="Notifications"
-        style={{ width: "min(400px, calc(100vw - 2rem))" }}
+        className="pointer-events-none fixed right-4 bottom-20 z-70 flex w-[min(22.5rem,calc(100vw-2rem))] flex-col gap-2 sm:right-6"
       >
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
         ))}
-      </div>
+      </section>
     </ToastContext.Provider>
   );
 };

@@ -1,51 +1,79 @@
-import { Bot, User } from "lucide-react";
+import { Check, CircleAlert } from "lucide-react";
+
+import symbol from "@/assets/openprime-symbol-color.svg";
+import { cn } from "@/lib/utils";
 import MessageContent from "./MessageContent";
 
-// A single chat bubble (user or AI), extracted from AIChatModal's messages map.
-const ChatMessage = ({ message }) => {
-  // Check if this is a status message (success/dismiss notifications)
-  const isStatusMessage =
-    message.type === "ai" &&
-    (message.content.startsWith("✅ Configuration applied successfully!") ||
-      message.content.startsWith("👍 Suggestion dismissed."));
-
+/** A one-line notice in a turn: errors and "Configuration applied." */
+function Marker({ icon: Icon, tone = "muted", children }) {
   return (
     <div
-      className={`flex items-start space-x-3 ${message.type === "user" ? "justify-end" : "justify-start"}`}
+      data-slot="marker"
+      data-tone={tone}
+      className={cn(
+        "flex w-full items-start gap-2 rounded-lg border px-3 py-2 text-sm whitespace-pre-wrap",
+        tone === "destructive"
+          ? "border-destructive/40 bg-destructive/5 text-destructive"
+          : "bg-muted/40 text-muted-foreground",
+      )}
     >
-      {/* AI Avatar */}
-      {message.type === "ai" && (
-        <div
-          className={`p-2 rounded-lg shrink-0 ${isStatusMessage ? "bg-success-muted" : "bg-primary-muted"}`}
-        >
-          <Bot
-            className={`w-4 h-4 ${isStatusMessage ? "text-success" : "text-accent"}`}
-          />
-        </div>
-      )}
-
-      {/* Message Bubble */}
-      <div
-        className={`max-w-[80%] p-3 rounded-lg ${
-          message.type === "user"
-            ? "bg-primary text-white"
-            : isStatusMessage
-              ? "bg-success-muted text-success border border-success"
-              : "bg-surface text-primary border border-border"
-        }`}
-      >
-        <div className="prose prose-sm max-w-none whitespace-pre-wrap">
-          <MessageContent content={message.content} />
-        </div>
-      </div>
-
-      {/* User Avatar */}
-      {message.type === "user" && (
-        <div className="p-2 bg-background border border-border rounded-lg shrink-0">
-          <User className="w-4 h-4 text-tertiary" />
-        </div>
-      )}
+      <Icon aria-hidden className="mt-px size-4 shrink-0" />
+      <span className="min-w-0 flex-1">{children}</span>
     </div>
+  );
+}
+
+/**
+ * One chat turn, the only message renderer of the Aura surfaces. User turns
+ * are a right-aligned bubble; Aura's are plain text under its name. Aura
+ * messages carry `message`, the AI modal's `content`; `pending` (no text yet)
+ * shows "Thinking", `error` and `tone: "status"` show a marker.
+ */
+const ChatMessage = ({ message }) => {
+  const text = message.content ?? message.message ?? "";
+
+  if (message.type === "user") {
+    return (
+      <article data-slot="message" className="flex flex-col items-end">
+        <h3 className="sr-only">You said</h3>
+        <div className="max-w-[85%] rounded-xl bg-secondary px-3.5 py-2 text-sm break-words whitespace-pre-wrap text-secondary-foreground">
+          {text}
+        </div>
+      </article>
+    );
+  }
+
+  let body;
+  if (message.error) {
+    body = (
+      <Marker icon={CircleAlert} tone="destructive">
+        {text}
+      </Marker>
+    );
+  } else if (message.tone === "status") {
+    body = <Marker icon={Check}>{text}</Marker>;
+  } else if (!text && message.pending) {
+    body = (
+      <p role="status" className="animate-pulse text-sm text-muted-foreground">
+        Thinking
+      </p>
+    );
+  } else {
+    body = (
+      <div className="w-full min-w-0 text-sm break-words whitespace-pre-wrap">
+        <MessageContent content={text} />
+      </div>
+    );
+  }
+
+  return (
+    <article data-slot="message" className="flex flex-col items-start gap-1.5">
+      <h3 className="flex items-center gap-2 text-sm font-medium">
+        <img src={symbol} alt="" className="size-4" />
+        Aura
+      </h3>
+      {body}
+    </article>
   );
 };
 

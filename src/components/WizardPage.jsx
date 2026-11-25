@@ -122,6 +122,8 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   // Edit mode: the loaded environment, to tell whether the user changed it.
   const [baseline, setBaseline] = useState(null);
   const [auraOpen, setAuraOpen] = useState(readAuraOpen);
+  // One Aura conversation for the column and the sheet.
+  const [auraMessages, setAuraMessages] = useState([]);
   // Bumped when Continue or Create finds errors: focus the first invalid field.
   const [focusRequest, setFocusRequest] = useState(0);
   const scrollerRef = useRef(null);
@@ -397,6 +399,9 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
         region: newEnv.region,
         step: currentStep,
       }}
+      stepId={currentId}
+      messages={auraMessages}
+      setMessages={setAuraMessages}
     />
   ) : null;
 
@@ -417,7 +422,11 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
           </SheetTrigger>
           <SheetContent
             aria-describedby={undefined}
-            className="w-full gap-0 p-3 pt-12 sm:max-w-md"
+            className="w-full gap-0 p-0 sm:max-w-md"
+            onOpenAutoFocus={(e) => {
+              e.preventDefault();
+              e.currentTarget.querySelector("textarea")?.focus();
+            }}
           >
             <SheetTitle className="sr-only">Aura</SheetTitle>
             {assistant}
@@ -513,7 +522,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
         {auraOpen ? (
           <aside
             aria-label="Aura"
-            className="hidden w-80 shrink-0 flex-col border-l p-3 xl:flex"
+            className="hidden w-80 shrink-0 flex-col border-l bg-card xl:flex"
           >
             {assistant}
           </aside>

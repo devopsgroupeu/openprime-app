@@ -28,6 +28,18 @@ function ModalHarness() {
   );
 }
 
+// The wizard owns the Aura messages, as WizardPage does.
+function WizardHarness() {
+  const [messages, setMessages] = useState([]);
+  return (
+    <WizardAssistant
+      context={{ name: "staging", provider: "aws" }}
+      messages={messages}
+      setMessages={setMessages}
+    />
+  );
+}
+
 function AuraHarness() {
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   return (
@@ -64,10 +76,8 @@ const components = [
   [
     "WizardAssistant",
     () => {
-      render(
-        <WizardAssistant context={{ name: "staging", provider: "aws" }} />,
-      );
-      type(screen.getByPlaceholderText("Ask Aura…"));
+      render(<WizardHarness />);
+      type(screen.getByPlaceholderText("Ask Aura anything..."));
       fireEvent.click(screen.getByRole("button", { name: "Send message" }));
     },
   ],

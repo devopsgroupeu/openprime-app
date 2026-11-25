@@ -1,8 +1,17 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Send, MessageCircle, Bot } from "lucide-react";
+import symbol from "@/assets/openprime-symbol-color.svg";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import authService from "../../services/authService";
 import { SERVICES_CONFIG, FIELD_TYPES } from "../../config/servicesConfig";
-import ChatMessage from "./ai-chat/ChatMessage";
+import { AURA_ERROR } from "./ai-chat/AuraConversation";
+import ChatThread from "./ai-chat/ChatThread";
+import Composer from "./ai-chat/Composer";
 import SuggestionBox from "./ai-chat/SuggestionBox";
 import {
   findServiceByDisplayName,
@@ -24,8 +33,8 @@ const toAiContext = (wizardValues) =>
   );
 
 /**
- * AI Chat Modal Component
- * Provides an interactive chat interface for getting AI assistance with service configurations
+ * Aura for one service of the wizard ("Ask Aura about EKS"): the shared Aura
+ * thread and composer in a dialog, plus suggested config changes to apply.
  */
 const AIChatModal = ({
   isOpen,
@@ -40,13 +49,9 @@ const AIChatModal = ({
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [suggestion, setSuggestion] = useState(null);
-  const messagesEndRef = useRef(null);
-  const closeButtonRef = useRef(null);
-
-  // Auto-scroll to bottom of chat
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const inputRef = useRef(null);
+  // A pending answer survives closing and reopening the dialog.
+  const busy = isLoading || messages.some((m) => m.pending);
 
   // Initialize welcome message when modal opens
   useEffect(() => {
@@ -54,35 +59,11 @@ const AIChatModal = ({
       const welcomeMessage = {
         id: Date.now(),
         type: "ai",
-        content: `Hi! I'm here to help you with ${serviceTitle}. I can provide information about:\n\n• Configuration best practices\n• Common use cases and patterns\n• Security recommendations\n• Cost optimization tips\n• Integration with other services\n\nWhat would you like to know?`,
+        content: `I'm here to help you with ${serviceTitle}: configuration, security, cost and how it works with your other services. What would you like to know?`,
       };
       setMessages([welcomeMessage]);
     }
   }, [isOpen, service, serviceTitle, messages.length, setMessages]);
-
-  // Auto-scroll when messages or suggestions change
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, suggestion]);
-
-  // Close on Escape key
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
-  // Initial focus on the close button when the modal opens
-  useEffect(() => {
-    if (isOpen) {
-      closeButtonRef.current?.focus();
-    }
-  }, [isOpen]);
 
   /**
    * Handle dismissing a configuration suggestion
@@ -93,7 +74,8 @@ const AIChatModal = ({
     const dismissMessage = {
       id: Date.now(),
       type: "ai",
-      content: "👍 Suggestion dismissed.",
+      content: "Suggestion dismissed.",
+      tone: "status",
     };
     setMessages((prev) => [...prev, dismissMessage]);
   };
@@ -150,18 +132,16 @@ const AIChatModal = ({
     });
 
     setTimeout(() => {
-      let message = `✅ Configuration applied successfully!`;
+      let message = "Configuration applied.";
 
       // Add warnings and auto-fixes to the message
       if (warnings.length > 0) {
-        message += `\n\n⚠️ Compatibility issues detected and fixed:\n${warnings.map((w) => `• ${w}`).join("\n")}`;
+        message += `\n\nFixed compatibility issues:\n${warnings.map((w) => `- ${w}`).join("\n")}`;
       }
 
       if (Object.keys(fixes).length > 0) {
-        message += `\n\n🔧 Additional changes made for compatibility:\n${Object.entries(
-          fixes,
-        )
-          .map(([key, value]) => `• ${key}: ${JSON.stringify(value)}`)
+        message += `\n\nAlso changed for compatibility:\n${Object.entries(fixes)
+          .map(([key, value]) => `- ${key}: ${JSON.stringify(value)}`)
           .join("\n")}`;
       }
 
@@ -169,17 +149,17 @@ const AIChatModal = ({
         id: Date.now(),
         type: "ai",
         content: message,
+        tone: "status",
       };
       setMessages((prev) => [...prev, successMessage]);
     }, 100);
   };
 
   /**
-   * Handle form submission and communicate with AI backend
+   * Send the composer's text and stream the answer from the AI backend
    */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!inputText.trim() || isLoading) return;
+  const handleSubmit = async () => {
+    if (!inputText.trim() || busy) return;
 
     setSuggestion(null);
 
@@ -193,8 +173,14 @@ const AIChatModal = ({
     setIsLoading(true);
 
     const aiMessageId = Date.now() + 1;
-    let aiMessage = { id: aiMessageId, type: "ai", content: "" };
+    let aiMessage = { id: aiMessageId, type: "ai", content: "", pending: true };
     setMessages((prev) => [...prev, aiMessage]);
+    const settle = (patch) =>
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aiMessageId ? { ...msg, ...patch, pending: false } : msg,
+        ),
+      );
 
     try {
       let currentServiceName = service;
@@ -316,6 +302,7 @@ const AIChatModal = ({
                 if (Object.keys(newSuggestion).length > 0) {
                   setSuggestion(newSuggestion);
                 }
+                settle({});
                 setIsLoading(false);
               }
             } catch (err) {
@@ -325,21 +312,12 @@ const AIChatModal = ({
         });
       }
 
+      settle({});
       setIsLoading(false);
     } catch (err) {
       console.error("Error in handleSubmit:", err);
       // Show error message
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === aiMessageId
-            ? {
-                ...msg,
-                content:
-                  "⚠️ Sorry, I couldn't connect to AI service right now.",
-              }
-            : msg,
-        ),
-      );
+      settle({ content: AURA_ERROR, error: true });
       setIsLoading(false);
     }
   };
@@ -354,70 +332,27 @@ const AIChatModal = ({
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="AI assistant"
-        className="rounded-2xl w-full max-w-2xl h-[600px] flex flex-col overflow-hidden shadow-2xl bg-surface"
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent
+        size="lg"
+        className="flex h-[min(80dvh,44rem)] flex-col gap-0 p-0"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          inputRef.current?.focus();
+        }}
       >
-        {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border bg-surface">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-primary-muted rounded-lg">
-              <MessageCircle className="w-5 h-5 text-accent" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-primary">
-                Ask AI about {serviceTitle}
-              </h2>
-              <p className="text-sm text-tertiary">
-                Get help with configuration and best practices
-              </p>
-            </div>
+        <DialogHeader className="flex-row items-start gap-2.5 border-b py-3 pr-12 pl-4">
+          <img src={symbol} alt="" className="mt-px size-5 shrink-0" />
+          <div className="flex min-w-0 flex-col">
+            <DialogTitle>Ask Aura about {serviceTitle}</DialogTitle>
+            <DialogDescription className="text-xs">
+              Configuration, security and cost advice for this service.
+            </DialogDescription>
           </div>
-          <button
-            ref={closeButtonRef}
-            onClick={handleClose}
-            aria-label="Close"
-            className="p-2 rounded-lg transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+        </DialogHeader>
 
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-background-secondary">
-          {messages.map((message) => (
-            <ChatMessage key={message.id} message={message} />
-          ))}
-
-          {/* Loading Indicator */}
-          {isLoading && (
-            <div className="flex items-start space-x-3">
-              <div className="p-2 bg-primary-muted rounded-lg">
-                <Bot className="w-4 h-4 text-accent" />
-              </div>
-              <div className="p-3 rounded-lg bg-surface border border-border">
-                <div className="flex space-x-2">
-                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-                  <div
-                    className="w-2 h-2 bg-primary rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
-                  ></div>
-                  <div
-                    className="w-2 h-2 bg-primary rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  ></div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Configuration Suggestion Box */}
+        <ChatThread messages={messages}>
           {suggestion && (
             <SuggestionBox
               suggestion={suggestion}
@@ -425,33 +360,20 @@ const AIChatModal = ({
               onDismiss={denySuggestion}
             />
           )}
+        </ChatThread>
 
-          {/* Scroll target for auto-scroll */}
-          <div ref={messagesEndRef} />
+        <div className="shrink-0 p-3">
+          <Composer
+            ref={inputRef}
+            value={inputText}
+            onChange={setInputText}
+            onSend={handleSubmit}
+            busy={busy}
+            placeholder={`Ask about ${serviceTitle}...`}
+          />
         </div>
-
-        {/* Input Form */}
-        <div className="p-4 border-t border-border bg-surface">
-          <form onSubmit={handleSubmit} className="flex space-x-3">
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder={`Ask about ${serviceTitle}...`}
-              disabled={isLoading}
-              className="flex-1 px-3 py-2 rounded-lg border bg-background border-border text-primary placeholder-tertiary focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary-muted"
-            />
-            <button
-              type="submit"
-              disabled={!inputText.trim() || isLoading}
-              className={`px-4 py-2 rounded-lg transition-colors ${!inputText.trim() || isLoading ? "bg-background text-tertiary cursor-not-allowed" : "bg-primary text-white hover:bg-primary-muted"}`}
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

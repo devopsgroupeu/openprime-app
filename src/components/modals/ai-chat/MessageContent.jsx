@@ -1,76 +1,55 @@
-// Renders AI message text, pretty-printing any ```json code blocks it contains.
-// Extracted verbatim from AIChatModal's formatMessageContent helper.
-const MessageContent = ({ content }) => {
-  const jsonCodeBlockRegex = /```json\n([\s\S]*?)\n```/g;
+import { CopyButton } from "@/components/shared/copy-button";
 
-  if (!jsonCodeBlockRegex.test(content)) {
-    // No JSON code blocks, return as is
-    return <span>{content}</span>;
+// Assistant text with its fenced code blocks drawn as mono blocks with a copy
+// button; a ```json block is pretty-printed when it parses.
+const FENCE = /```(\w*)\n([\s\S]*?)\n```/g;
+
+const pretty = (lang, code) => {
+  if (lang !== "json") return code;
+  try {
+    return JSON.stringify(JSON.parse(code.trim()), null, 2);
+  } catch {
+    return code;
   }
+};
 
-  // Split content by JSON code blocks and format them
+function CodeBlock({ lang, code }) {
+  return (
+    <div
+      data-slot="code-block"
+      className="my-3 overflow-hidden rounded-lg border bg-muted/40 first:mt-0 last:mb-0"
+    >
+      <div className="flex h-8 items-center justify-between border-b pr-1 pl-3 text-xs text-muted-foreground">
+        <span className="font-mono">{lang || "code"}</span>
+        <CopyButton text={code} label="Copy code" size="icon-xs" />
+      </div>
+      <pre className="overflow-x-auto p-3 font-mono text-xs leading-5 whitespace-pre">
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+}
+
+const MessageContent = ({ content }) => {
   const parts = [];
   let lastIndex = 0;
-  let match;
-
-  // Reset regex
-  jsonCodeBlockRegex.lastIndex = 0;
-
-  while ((match = jsonCodeBlockRegex.exec(content)) !== null) {
-    // Add text before the JSON block
-    if (match.index > lastIndex) {
-      parts.push(
-        <span key={`text-${lastIndex}`}>
-          {content.substring(lastIndex, match.index)}
-        </span>,
-      );
-    }
-
-    // Add formatted JSON block
-    try {
-      const jsonText = match[1].trim();
-      const parsedJson = JSON.parse(jsonText);
-      const formattedJson = JSON.stringify(parsedJson, null, 2);
-
-      parts.push(
-        <div
-          key={`json-${match.index}`}
-          className="my-3 rounded-lg border bg-surface border-border"
-        >
-          <div className="section-label px-3 py-1 border-b bg-background border-border">
-            JSON Configuration
-          </div>
-          <pre className="p-3 text-sm overflow-x-auto text-secondary">
-            <code>{formattedJson}</code>
-          </pre>
-        </div>,
-      );
-    } catch {
-      // If JSON parsing fails, show as regular code block
-      parts.push(
-        <div
-          key={`code-${match.index}`}
-          className="my-3 rounded-lg border bg-surface border-border"
-        >
-          <div className="section-label px-3 py-1 border-b bg-background border-border">
-            Code
-          </div>
-          <pre className="p-3 text-sm overflow-x-auto text-secondary">
-            <code>{match[1]}</code>
-          </pre>
-        </div>,
-      );
-    }
-
+  for (const match of content.matchAll(FENCE)) {
+    // The block has its own margin: drop the blank lines around it.
+    const text = content.slice(lastIndex, match.index).trim();
+    if (text) parts.push(<span key={`text-${lastIndex}`}>{text}</span>);
+    parts.push(
+      <CodeBlock
+        key={`code-${match.index}`}
+        lang={match[1]}
+        code={pretty(match[1], match[2])}
+      />,
+    );
     lastIndex = match.index + match[0].length;
   }
-
-  // Add remaining text after the last JSON block
-  if (lastIndex < content.length) {
-    parts.push(<span key={`text-final`}>{content.substring(lastIndex)}</span>);
-  }
-
-  return <div>{parts}</div>;
+  if (lastIndex === 0) return content;
+  const rest = content.slice(lastIndex).trim();
+  if (rest) parts.push(<span key="text-final">{rest}</span>);
+  return parts;
 };
 
 export default MessageContent;

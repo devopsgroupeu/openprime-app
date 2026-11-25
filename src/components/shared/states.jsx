@@ -13,6 +13,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
 const DASHED = "border border-dashed border-input";
@@ -107,9 +108,13 @@ export function NotFound({ thing = "page", backHref = "/environments" }) {
   );
 }
 
-/** Frame of the auth and edge pages: centered 400 px column, mark, h1, text and actions. */
+/**
+ * Frame of the auth and edge pages: centered 400 px column, mark, h1, text and actions.
+ * `loading` turns the title into a quiet one-line wait with a spinner ("Signing you in...").
+ */
 export function FullScreenState({
   logo,
+  loading = false,
   title,
   description,
   primary,
@@ -120,6 +125,7 @@ export function FullScreenState({
   return (
     <main
       data-slot="full-screen-state"
+      aria-busy={loading || undefined}
       className={cn(
         "flex min-h-dvh items-center justify-center bg-background px-4 py-12",
         className,
@@ -128,7 +134,14 @@ export function FullScreenState({
       <div className="flex w-full max-w-100 flex-col items-center gap-6 text-center">
         {logo ? <img src={symbol} alt="OpenPrime" className="size-10" /> : null}
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-xl font-semibold text-balance">{title}</h1>
+          {loading ? (
+            <h1 className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Spinner aria-hidden />
+              {title}
+            </h1>
+          ) : (
+            <h1 className="text-xl font-semibold text-balance">{title}</h1>
+          )}
           {description ? (
             <p className="text-sm text-balance text-muted-foreground">
               {description}

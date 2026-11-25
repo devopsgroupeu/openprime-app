@@ -1,71 +1,58 @@
-// src/components/AuraChatButton.js
-import { useState } from "react";
-import { MessageCircle, X, Sparkles } from "lucide-react";
+// src/components/AuraChatButton.jsx
+// The floating Aura launcher of the app shell and its window. Both sit under
+// every overlay (z-40 < z-50) and move up while a SaveBar is on screen, so
+// they never cover a dialog button or the Save button.
+import { useRef, useState } from "react";
+import { Sparkles, X } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import AuraChatWindow, { INITIAL_MESSAGES } from "./AuraChatWindow";
 
 const AuraChatButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [auraMessages, setAuraMessages] = useState(INITIAL_MESSAGES);
+  const buttonRef = useRef(null);
+  const label = isOpen ? "Close Aura" : "Ask Aura";
 
-  const toggleChat = () => {
-    setIsOpen(!isOpen);
+  const close = () => {
+    setIsOpen(false);
+    buttonRef.current?.focus();
   };
 
   return (
-    <>
-      {/* Chat Window */}
+    <div className="fixed right-4 bottom-4 z-40 flex flex-col-reverse items-end gap-3 sm:right-6 sm:bottom-6 [body:has([data-slot=save-bar])_&]:bottom-20">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            ref={buttonRef}
+            variant="ghost"
+            size="icon"
+            aria-label={label}
+            aria-expanded={isOpen}
+            aria-controls={isOpen ? "aura-window" : undefined}
+            onClick={() => setIsOpen((open) => !open)}
+            className="size-12 rounded-full border bg-popover text-primary shadow-lg hover:bg-accent hover:text-primary active:scale-95 [&_svg:not([class*='size-'])]:size-5"
+          >
+            {isOpen ? <X aria-hidden /> : <Sparkles aria-hidden />}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="left">{label}</TooltipContent>
+      </Tooltip>
+
       {isOpen && (
         <AuraChatWindow
+          id="aura-window"
           messages={auraMessages}
           setMessages={setAuraMessages}
-          onClose={() => setIsOpen(false)}
+          onClose={close}
         />
       )}
-
-      {/* Floating Button */}
-      <div className="fixed bottom-6 right-6 z-60">
-        <button
-          onClick={toggleChat}
-          className={`aura-chat-button relative w-14 h-14 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110 focus:outline-hidden focus:ring-4 bg-primary hover:bg-openprime-gradient focus:ring-primary/50 ${isOpen ? "rotate-180" : ""}`}
-        >
-          {/* Animated background glow */}
-          <div className="absolute inset-0 rounded-full bg-primary opacity-20 animate-pulse"></div>
-
-          {/* Icon */}
-          <div className="relative flex items-center justify-center w-full h-full">
-            {isOpen ? (
-              <X className="w-6 h-6 text-inverse transition-transform duration-300" />
-            ) : (
-              <MessageCircle className="w-6 h-6 text-inverse transition-transform duration-300" />
-            )}
-          </div>
-
-          {/* Sparkle effect */}
-          <div className="absolute -top-1 -right-1">
-            <Sparkles className="w-4 h-4 text-warning animate-pulse" />
-          </div>
-
-          {/* Notification badge (optional - for unread messages) */}
-          {!isOpen && (
-            <div className="absolute -top-1 -left-1 w-3 h-3 bg-danger rounded-full animate-bounce"></div>
-          )}
-        </button>
-
-        {/* Tooltip */}
-        {!isOpen && (
-          <div className="absolute bottom-16 right-0 mb-2 px-3 py-2 rounded-lg shadow-lg transition-opacity duration-300 bg-surface text-primary border border-border">
-            <div className="text-sm font-medium font-poppins">
-              Hi! I&apos;m Aura 🤖
-            </div>
-            <div className="text-xs opacity-80 font-poppins">
-              Your AI assistant
-            </div>
-            {/* Tooltip arrow */}
-            <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-surface"></div>
-          </div>
-        )}
-      </div>
-    </>
+    </div>
   );
 };
 
