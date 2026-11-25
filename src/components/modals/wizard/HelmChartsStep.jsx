@@ -4,6 +4,7 @@
 import { Package } from "lucide-react";
 import HelmChartsSelector from "../../HelmChartsSelector";
 import { getHelmChartsForK8sService } from "../../../config/helmChartsConfig";
+import { rebuiltChart } from "../../../utils/helmValues";
 import { Callout } from "@/components/shared/callout";
 import { EmptyState } from "@/components/shared/states";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,11 @@ const HelmChartsStep = ({ newEnv, setNewEnv, focusHeading }) => {
 
   const currentCharts = newEnv.services[k8sService.name]?.helmCharts || {};
   const enabledCount = getEnabledChartsCount();
+  // Presets and Clear all rebuild entries; a chart's custom values stay.
+  const rebuilt = (keys, enabled) =>
+    Object.fromEntries(
+      keys.map((key) => [key, rebuiltChart(currentCharts[key], enabled)]),
+    );
 
   const presets = [
     {
@@ -76,9 +82,7 @@ const HelmChartsStep = ({ newEnv, setNewEnv, focusHeading }) => {
       apply: () =>
         handleHelmChartsChange({
           ...currentCharts,
-          prometheusStack: { enabled: true, customValues: false },
-          loki: { enabled: true, customValues: false },
-          promtail: { enabled: true, customValues: false },
+          ...rebuilt(["prometheusStack", "loki", "promtail"], true),
         }),
     },
     {
@@ -101,10 +105,9 @@ const HelmChartsStep = ({ newEnv, setNewEnv, focusHeading }) => {
         ];
         handleHelmChartsChange({
           ...currentCharts,
-          ...Object.fromEntries(
-            stack
-              .filter((chart) => available.has(chart))
-              .map((chart) => [chart, { enabled: true, customValues: false }]),
+          ...rebuilt(
+            stack.filter((chart) => available.has(chart)),
+            true,
           ),
         });
       },
@@ -112,14 +115,7 @@ const HelmChartsStep = ({ newEnv, setNewEnv, focusHeading }) => {
   ];
 
   const clearCharts = () => {
-    const clearedCharts = {};
-    Object.keys(currentCharts).forEach((key) => {
-      clearedCharts[key] = {
-        enabled: false,
-        customValues: false,
-      };
-    });
-    handleHelmChartsChange(clearedCharts);
+    handleHelmChartsChange(rebuilt(Object.keys(currentCharts), false));
     // Clear all goes away with the last chart.
     focusHeading?.();
   };
@@ -153,7 +149,8 @@ const HelmChartsStep = ({ newEnv, setNewEnv, focusHeading }) => {
           </div>
         </div>
         <Callout variant="info">
-          Charts are generated with their default values.
+          Charts are generated with their default values. Custom values are
+          saved with the environment but not applied yet.
         </Callout>
       </div>
 

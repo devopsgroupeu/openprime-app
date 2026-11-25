@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { vi } from "vitest";
 import WizardReviewStep from "../WizardReviewStep";
 import { basicFieldErrors } from "../wizard-page/basicErrors";
@@ -242,5 +242,30 @@ describe("WizardReviewStep Helm charts", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Loki")).toBeInTheDocument();
     expect(screen.queryByText("ArgoCD")).toBeNull();
+  });
+
+  // Saved values are not applied yet; Review says which charts carry some.
+  it("marks the charts that have custom values", () => {
+    renderStep({
+      ...baseEnv,
+      services: {
+        eks: {
+          enabled: true,
+          helmCharts: {
+            loki: { enabled: true, customValues: true },
+            prometheusStack: {
+              enabled: true,
+              customValues: true,
+              values: "grafana:\n  replicas: 2",
+            },
+          },
+        },
+      },
+    });
+    const row = (name) => screen.getByText(name).closest("li");
+    expect(
+      within(row("Prometheus Stack")).getByText("Custom values"),
+    ).toBeInTheDocument();
+    expect(within(row("Loki")).queryByText("Custom values")).toBeNull();
   });
 });

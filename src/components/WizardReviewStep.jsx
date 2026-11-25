@@ -1,11 +1,12 @@
 // src/components/WizardReviewStep.jsx
 // Read-only summary shown as the final wizard step: problems first, then one
 // section per step with an Edit that jumps back to it.
-import { Pencil } from "lucide-react";
+import { FileCode, Pencil } from "lucide-react";
 import { PROVIDERS } from "../config/environmentsConfig";
 import { getServiceConfig } from "../config/servicesConfig";
 import { getHelmChartConfig } from "../config/helmChartsConfig";
 import { chartLogo, gitLogo } from "../config/logos";
+import { chartValues } from "../utils/helmValues";
 import ServiceIcon from "./icons/ServiceIcon";
 import { summaryOf } from "./environment-detail/ServicesList";
 import { DetailList, DetailRow } from "./environment-detail/DetailList";
@@ -250,8 +251,17 @@ const WizardReviewStep = ({
                 return (
                   <li key={key} className="flex items-center gap-3 px-3.5 py-3">
                     <LogoTile {...chartLogo(key)} />
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                      {chart.displayName}
+                    {/* The mark wraps under a name it would cut short. */}
+                    <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="truncate text-sm font-medium">
+                        {chart.displayName}
+                      </span>
+                      {chartValues(k8s.helmCharts[key]) ? (
+                        <Badge variant="info">
+                          <FileCode aria-hidden />
+                          Custom values
+                        </Badge>
+                      ) : null}
                     </span>
                     <Badge variant="tag" className="font-mono">
                       {chart.version}

@@ -1,6 +1,13 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { useState } from "react";
 import HelmChartsStep from "../HelmChartsStep";
+import { generateDefaultHelmChartsConfig } from "../../../../config/helmChartsConfig";
 
 // Stateful harness: HelmChartsStep is controlled (newEnv / setNewEnv), so the
 // quick-start buttons need a real state owner to observe — mirrors the wizard.
@@ -123,5 +130,301 @@ describe("HelmChartsStep count", () => {
   it("offers no preset that only enables an always-installed chart", () => {
     render(<Harness initial={envWith("eks")} />);
     expect(screen.queryByRole("button", { name: "GitOps setup" })).toBeNull();
+  });
+});
+
+// Custom values: a YAML string kept under helmCharts.<chart>.values, with
+// customValues: true. Generation does not read it yet.
+describe("HelmChartsStep custom values", () => {
+  const withCharts = (helmCharts) => {
+    const initial = envWith("eks");
+    initial.services.eks.helmCharts = helmCharts;
+    return initial;
+  };
+  const renderCharts = (helmCharts) => {
+    const state = { latest: null };
+    render(
+      <Harness
+        initial={withCharts(helmCharts)}
+        onChange={(v) => (state.latest = v)}
+      />,
+    );
+    return () => state.latest?.services.eks.helmCharts;
+  };
+  const dialog = () => screen.getByRole("dialog");
+  const editor = () =>
+    within(dialog()).getByRole("textbox", { name: "Values" });
+  const type = (text) =>
+    fireEvent.change(editor(), { target: { value: text } });
+  const save = () =>
+    fireEvent.click(
+      within(dialog()).getByRole("button", { name: "Save values" }),
+    );
+
+  it("saves the values of an enabled chart and shows them when reopened", async () => {
+    const charts = renderCharts({
+      prometheusStack: { enabled: true, customValues: false },
+    });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add custom values for Prometheus Stack",
+      }),
+    );
+    expect(dialog()).toHaveAccessibleName("Prometheus Stack");
+    expect(dialog()).toHaveAccessibleDescription(
+      "These values are saved with the environment, but generated repositories do not apply them yet.",
+    );
+    expect(editor()).toHaveValue("");
+
+    type("\ngrafana:\n  replicas: 2\n\n");
+    save();
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(charts().prometheusStack).toEqual({
+      enabled: true,
+      customValues: true,
+      values: "grafana:\n  replicas: 2",
+    });
+    const row = screen.getByText("Prometheus Stack").closest("li");
+    expect(within(row).getByText("Custom values")).toBeInTheDocument();
+
+    fireEvent.click(
+      within(row).getByRole("button", {
+        name: "Edit values for Prometheus Stack",
+      }),
+    );
+    expect(editor()).toHaveValue("grafana:\n  replicas: 2");
+  });
+
+  it("offers custom values only on enabled charts", () => {
+    renderCharts({ loki: { enabled: false, customValues: true } });
+    expect(
+      screen.queryByRole("button", { name: /custom values for/i }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /edit values for/i }),
+    ).toBeNull();
+  });
+
+  it("blocks invalid YAML with its line and keeps the dialog open", async () => {
+    const charts = renderCharts({
+      prometheusStack: { enabled: true, customValues: false },
+    });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add custom values for Prometheus Stack",
+      }),
+    );
+    type("grafana:\n  replicas: 2\n bad: x");
+    save();
+
+    expect(
+      await within(dialog()).findByText(
+        "Line 3: All mapping items must start at the same column.",
+      ),
+    ).toBeInTheDocument();
+    expect(editor()).toHaveAttribute("aria-invalid", "true");
+    expect(editor()).toHaveAccessibleDescription(
+      "Line 3: All mapping items must start at the same column.",
+    );
+    expect(charts()).toBeUndefined();
+  });
+
+  it("blocks values that are not a mapping at the top level", async () => {
+    const charts = renderCharts({
+      prometheusStack: { enabled: true, customValues: false },
+    });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add custom values for Prometheus Stack",
+      }),
+    );
+    type("- grafana\n- alertmanager");
+    save();
+
+    expect(
+      await within(dialog()).findByText(
+        "Values must be a mapping of keys, such as replicaCount: 2.",
+      ),
+    ).toBeInTheDocument();
+    expect(editor()).toHaveAttribute("aria-invalid", "true");
+    expect(charts()).toBeUndefined();
+  });
+
+  it("blocks values over 64 KB", async () => {
+    const charts = renderCharts({
+      prometheusStack: { enabled: true, customValues: false },
+    });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add custom values for Prometheus Stack",
+      }),
+    );
+    type(`note: ${"x".repeat(70 * 1024)}`);
+    save();
+
+    expect(
+      await within(dialog()).findByText(
+        "Values can be up to 64 KB. These are 71 KB.",
+      ),
+    ).toBeInTheDocument();
+    expect(charts()).toBeUndefined();
+  });
+
+  it("clears values: no values key and customValues off", async () => {
+    const charts = renderCharts({
+      prometheusStack: {
+        enabled: true,
+        customValues: true,
+        values: "grafana:\n  replicas: 2",
+      },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Edit values for Prometheus Stack" }),
+    );
+    fireEvent.click(
+      within(dialog()).getByRole("button", { name: "Clear values" }),
+    );
+    expect(editor()).toHaveValue("");
+    save();
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(charts().prometheusStack).toEqual({
+      enabled: true,
+      customValues: false,
+    });
+    expect(
+      screen.getByRole("button", {
+        name: "Add custom values for Prometheus Stack",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  // Loki's default entry carries customValues: true without values; saving
+  // an untouched editor must not rewrite it (or dirty the wizard).
+  it("changes nothing when Save is pressed without a change", async () => {
+    const charts = renderCharts({
+      loki: { enabled: true, customValues: true },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add custom values for Loki" }),
+    );
+    save();
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(charts()).toBeUndefined();
+  });
+
+  it("offers Clear values only when the chart has values", () => {
+    renderCharts({ prometheusStack: { enabled: true, customValues: false } });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add custom values for Prometheus Stack",
+      }),
+    );
+    expect(
+      within(dialog()).queryByRole("button", { name: "Clear values" }),
+    ).toBeNull();
+  });
+
+  it("discards unsaved text on Cancel", async () => {
+    const charts = renderCharts({
+      prometheusStack: {
+        enabled: true,
+        customValues: true,
+        values: "grafana:\n  replicas: 2",
+      },
+    });
+    const edit = () =>
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Edit values for Prometheus Stack",
+        }),
+      );
+    edit();
+    type("grafana:\n  replicas: 5");
+    fireEvent.click(within(dialog()).getByRole("button", { name: "Cancel" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(charts()).toBeUndefined();
+    edit();
+    expect(editor()).toHaveValue("grafana:\n  replicas: 2");
+  });
+
+  it("keeps a chart's values through a preset", () => {
+    const charts = renderCharts({
+      prometheusStack: {
+        enabled: false,
+        customValues: true,
+        values: "grafana:\n  replicas: 2",
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Monitoring stack" }));
+    expect(charts().prometheusStack).toEqual({
+      enabled: true,
+      customValues: true,
+      values: "grafana:\n  replicas: 2",
+    });
+    expect(charts().loki).toEqual({ enabled: true, customValues: false });
+  });
+
+  it("keeps a chart's values through Clear all and a switch off and on", () => {
+    const values = "grafana:\n  replicas: 2";
+    const charts = renderCharts({
+      prometheusStack: { enabled: true, customValues: true, values },
+    });
+    const install = () =>
+      screen.getByRole("switch", { name: "Install Prometheus Stack" });
+
+    fireEvent.click(install());
+    expect(charts().prometheusStack).toEqual({
+      enabled: false,
+      customValues: true,
+      values,
+    });
+    expect(
+      screen.queryByRole("button", {
+        name: "Edit values for Prometheus Stack",
+      }),
+    ).toBeNull();
+    fireEvent.click(install());
+    expect(
+      screen.getByRole("button", { name: "Edit values for Prometheus Stack" }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear all" }));
+    expect(charts().prometheusStack).toEqual({
+      enabled: false,
+      customValues: true,
+      values,
+    });
+  });
+
+  // Charts without values: the preset and Clear all build exactly the entries
+  // they built before custom values were kept.
+  it("builds the same entries as before for charts without values", () => {
+    const defaults = generateDefaultHelmChartsConfig("eks");
+    const charts = renderCharts(defaults);
+    fireEvent.click(screen.getByRole("button", { name: "Monitoring stack" }));
+    expect(JSON.stringify(charts())).toBe(
+      JSON.stringify({
+        ...defaults,
+        prometheusStack: { enabled: true, customValues: false },
+        loki: { enabled: true, customValues: false },
+        promtail: { enabled: true, customValues: false },
+      }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear all" }));
+    expect(JSON.stringify(charts())).toBe(
+      JSON.stringify(
+        Object.fromEntries(
+          Object.keys(defaults).map((key) => [
+            key,
+            { enabled: false, customValues: false },
+          ]),
+        ),
+      ),
+    );
   });
 });

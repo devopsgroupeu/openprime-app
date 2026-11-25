@@ -72,6 +72,16 @@ export const environments = [
             enabled: true,
             version: "1.4.1",
             namespace: "ingress-system",
+            // Saved custom values (shown on the detail page and in the
+            // wizard); generation does not apply them yet.
+            customValues: true,
+            values: [
+              "controller:",
+              "  replicaCount: 2",
+              "  service:",
+              "    annotations:",
+              "      service.beta.kubernetes.io/aws-load-balancer-type: nlb",
+            ].join("\n"),
           },
           prometheusStack: {
             enabled: true,

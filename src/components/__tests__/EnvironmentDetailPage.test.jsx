@@ -910,6 +910,22 @@ describe("EnvironmentDetailPage identity", () => {
   });
 });
 
+describe("EnvironmentDetailPage Helm custom values", () => {
+  it("shows a chart's custom values read-only", async () => {
+    renderDetailPage({ path: "/environments/env-001?tab=helm" });
+    const row = await screen.findByRole("button", {
+      name: /Ingress NGINX Controller/,
+    });
+    expect(within(row).getByText("Custom values")).toBeInTheDocument();
+
+    fireEvent.click(row);
+    expect(row.closest("li").querySelector("pre").textContent).toBe(
+      environments.find((e) => e.id === "env-001").services.eks.helmCharts
+        .ingressNginx.values,
+    );
+  });
+});
+
 describe("EnvironmentDetailPage tabs", () => {
   it("renders the tab from ?tab= and marks its link as current", async () => {
     renderDetailPage({ path: "/environments/env-001?tab=services" });

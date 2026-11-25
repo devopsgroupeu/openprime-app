@@ -1,28 +1,35 @@
 // src/components/HelmChartsSelector.js
 // Helm charts by category: one collapsible card per category, open while it
-// holds a selected chart, chart rows with a switch.
+// holds a selected chart, chart rows with a switch and, once on, their custom
+// values.
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, FileCode, Pencil } from "lucide-react";
 import { getHelmChartsByCategory } from "../config/helmChartsConfig";
 import { chartLogo } from "../config/logos";
+import { chartValues, withValues } from "../utils/helmValues";
+import HelmValuesDialog from "./modals/wizard/HelmValuesDialog";
 import { LogoTile } from "@/components/shared/logo-tile";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
+import { cn, TOUCH_HIT } from "@/lib/utils";
 
 const HelmChartsSelector = ({ value = {}, onChange, k8sServiceName }) => {
   // A category the user opened or closed keeps that state; the others are
   // open exactly while they hold a selected chart.
   const [openCategories, setOpenCategories] = useState({});
+  // The chart whose values are open; the key stays while the dialog closes.
+  const [editing, setEditing] = useState({ key: null, open: false });
 
   const setCategoryOpen = (category, open) =>
     setOpenCategories((prev) => ({ ...prev, [category]: open }));
 
+  // Off keeps a chart's values: they are back when it is on again.
   const handleChartToggle = (chartKey, enabled, category) => {
     // Turning off the last chart must not fold the category away.
     setCategoryOpen(category, true);
@@ -75,6 +82,8 @@ const HelmChartsSelector = ({ value = {}, onChange, k8sServiceName }) => {
               <ul className="divide-y divide-border border-t border-border">
                 {charts.map((chart) => {
                   const isChartAvailable = chart.enabled !== false;
+                  const enabled = Boolean(value[chart.key]?.enabled);
+                  const hasValues = enabled && chartValues(value[chart.key]);
                   return (
                     <li
                       key={chart.key}
@@ -103,14 +112,43 @@ const HelmChartsSelector = ({ value = {}, onChange, k8sServiceName }) => {
                           {!isChartAvailable && (
                             <Badge variant="neutral">Unavailable</Badge>
                           )}
+                          {hasValues ? (
+                            <Badge variant="info">
+                              <FileCode aria-hidden />
+                              Custom values
+                            </Badge>
+                          ) : null}
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {chart.description}
                         </p>
+                        {enabled ? (
+                          // One button for both labels: focus comes back to
+                          // it after the dialog, whatever it says then.
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            aria-label={`${hasValues ? "Edit values" : "Add custom values"} for ${chart.displayName}`}
+                            onClick={() =>
+                              setEditing({ key: chart.key, open: true })
+                            }
+                            className={cn(
+                              "mt-1 -ml-1.5 self-start max-md:min-h-6",
+                              TOUCH_HIT,
+                            )}
+                          >
+                            {hasValues ? (
+                              <Pencil aria-hidden />
+                            ) : (
+                              <FileCode aria-hidden />
+                            )}
+                            {hasValues ? "Edit values" : "Add custom values"}
+                          </Button>
+                        ) : null}
                       </div>
 
                       <Switch
-                        checked={Boolean(value[chart.key]?.enabled)}
+                        checked={enabled}
                         disabled={!isChartAvailable}
                         onCheckedChange={(checked) =>
                           handleChartToggle(chart.key, checked, category)
@@ -125,6 +163,19 @@ const HelmChartsSelector = ({ value = {}, onChange, k8sServiceName }) => {
           </Collapsible>
         );
       })}
+
+      <HelmValuesDialog
+        chartKey={editing.key}
+        open={editing.open}
+        onOpenChange={(open) => setEditing((prev) => ({ ...prev, open }))}
+        values={chartValues(value[editing.key])}
+        onSave={(text) =>
+          onChange({
+            ...value,
+            [editing.key]: withValues(value[editing.key], text),
+          })
+        }
+      />
     </div>
   );
 };

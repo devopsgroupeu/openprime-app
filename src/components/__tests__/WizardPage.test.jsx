@@ -19,6 +19,7 @@ import WizardPage from "../WizardPage";
 import AppLayout from "../layout/AppLayout";
 import authService from "../../services/authService";
 import { generateSshKeyPair } from "../../utils/sshKeyPair";
+import { createEmptyEnvironment } from "../../config/environmentsConfig";
 
 vi.mock("../../utils/sshKeyPair", () => ({ generateSshKeyPair: vi.fn() }));
 
@@ -1385,8 +1386,9 @@ describe("WizardPage", () => {
     });
   });
 
-  // Chart values are never stored, so the step offers no editor for them.
-  it("offers no values editor on the Helm step and says charts keep their defaults", async () => {
+  // Saved values are kept but not applied: the step says so and offers them
+  // on enabled charts.
+  it("offers custom values on the Helm step and says charts keep their defaults", async () => {
     localStorage.clear();
     renderWizardCreate(vi.fn());
     fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
@@ -1399,13 +1401,196 @@ describe("WizardPage", () => {
     await stepHeading("Helm charts");
 
     expect(
-      screen.getByText("Charts are generated with their default values."),
+      screen.getByText(
+        "Charts are generated with their default values. Custom values are saved with the environment but not applied yet.",
+      ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Monitoring stack" }));
     expect(
       screen.getByRole("switch", { name: "Install Prometheus Stack" }),
     ).toHaveAttribute("aria-checked", "true");
-    expect(screen.queryByRole("button", { name: /Custom values/ })).toBeNull();
+    expect(
+      screen.getByRole("button", {
+        name: "Add custom values for Prometheus Stack",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  describe("Helm custom values", () => {
+    const VALUES = "grafana:\n  replicas: 2";
+    const stored = environments.find((e) => e.id === "env-001").services.eks
+      .helmCharts;
+    const valuesDialog = () => screen.getByRole("dialog");
+    const editor = () =>
+      within(valuesDialog()).getByRole("textbox", { name: "Values" });
+    const saveValues = async (text) => {
+      fireEvent.change(editor(), { target: { value: text } });
+      fireEvent.click(
+        within(valuesDialog()).getByRole("button", { name: "Save values" }),
+      );
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    };
+    const closeValues = async () => {
+      fireEvent.click(
+        within(valuesDialog()).getByRole("button", { name: "Cancel" }),
+      );
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    };
+    // Continue until the last step's submit button shows.
+    const continueTo = async (name) => {
+      let submit = screen.queryByRole("button", { name });
+      while (!submit) {
+        fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+        await waitFor(() =>
+          expect(
+            screen.queryByRole("button", { name: /Continue/i }) ||
+              screen.queryByRole("button", { name }),
+          ).toBeInTheDocument(),
+        );
+        submit = screen.queryByRole("button", { name });
+      }
+      return submit;
+    };
+
+    it("sends saved values in the create payload, keeps them in the draft and lists them on Review", async () => {
+      localStorage.clear();
+      const onCreateEnvironment = vi.fn().mockResolvedValue({ id: "env-new" });
+      renderWizardCreate(onCreateEnvironment);
+      fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
+        target: { value: "prod" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+      await stepHeading("Services");
+      fireEvent.click(screen.getByRole("button", { name: "VPC and EKS" }));
+      fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+      await stepHeading("Helm charts");
+      fireEvent.click(screen.getByRole("button", { name: "Monitoring stack" }));
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Add custom values for Prometheus Stack",
+        }),
+      );
+      await saveValues(VALUES);
+
+      const draft = JSON.parse(
+        localStorage.getItem("op-wizard-draft:mock-user-1"),
+      );
+      expect(draft.services.eks.helmCharts.prometheusStack.values).toBe(VALUES);
+
+      const create = await continueTo(/Create Environment/i);
+      expect(
+        within(screen.getByText("Prometheus Stack").closest("li")).getByText(
+          "Custom values",
+        ),
+      ).toBeInTheDocument();
+      fireEvent.click(create);
+      await waitFor(() => expect(onCreateEnvironment).toHaveBeenCalledTimes(1));
+      const charts =
+        onCreateEnvironment.mock.calls[0][0].services.eks.helmCharts;
+      expect(charts.prometheusStack).toEqual({
+        enabled: true,
+        customValues: true,
+        values: VALUES,
+      });
+      expect(charts.loki).toEqual({ enabled: true, customValues: false });
+    });
+
+    it("restores values from a draft", async () => {
+      localStorage.clear();
+      const env = createEmptyEnvironment("aws");
+      env.name = "half";
+      env.globalPrefix = "half-";
+      env.services.vpc.enabled = true;
+      env.services.eks.enabled = true;
+      env.services.eks.helmCharts.prometheusStack = {
+        enabled: true,
+        customValues: true,
+        values: VALUES,
+      };
+      localStorage.setItem("op-wizard-draft:mock-user-1", JSON.stringify(env));
+      const onCreateEnvironment = vi.fn().mockResolvedValue({ id: "env-new" });
+      renderWizardCreate(onCreateEnvironment);
+      await stepHeading("Basics");
+      fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+      await stepHeading("Services");
+      fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+      await stepHeading("Helm charts");
+
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Edit values for Prometheus Stack",
+        }),
+      );
+      expect(editor()).toHaveValue(VALUES);
+      await closeValues();
+
+      fireEvent.click(await continueTo(/Create Environment/i));
+      await waitFor(() => expect(onCreateEnvironment).toHaveBeenCalledTimes(1));
+      expect(
+        onCreateEnvironment.mock.calls[0][0].services.eks.helmCharts
+          .prometheusStack.values,
+      ).toBe(VALUES);
+    });
+
+    it("opens an environment's saved values and sends a change in the PUT", async () => {
+      const onUpdateEnvironment = vi.fn().mockResolvedValue({ id: "env-001" });
+      renderWizardEdit(onUpdateEnvironment);
+      await stepHeading("Services");
+      fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+      await stepHeading("Helm charts");
+
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Edit values for Ingress NGINX Controller",
+        }),
+      );
+      expect(editor()).toHaveValue(stored.ingressNginx.values);
+      await closeValues();
+
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Add custom values for Prometheus Stack",
+        }),
+      );
+      await saveValues(VALUES);
+
+      // A saved change is an edit like any other.
+      fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+      const guard = await screen.findByRole("alertdialog", {
+        name: "Discard changes?",
+      });
+      fireEvent.click(
+        within(guard).getByRole("button", { name: "Keep editing" }),
+      );
+      await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+
+      fireEvent.click(await continueTo(/Save Changes/i));
+      await waitFor(() => expect(onUpdateEnvironment).toHaveBeenCalledTimes(1));
+      const charts =
+        onUpdateEnvironment.mock.calls[0][0].services.eks.helmCharts;
+      expect(charts.prometheusStack).toEqual({
+        ...stored.prometheusStack,
+        customValues: true,
+        values: VALUES,
+      });
+      expect(charts.ingressNginx).toEqual(stored.ingressNginx);
+    });
+
+    it("sends the stored charts unchanged when nothing changed", async () => {
+      const onUpdateEnvironment = vi.fn().mockResolvedValue({ id: "env-001" });
+      renderWizardEdit(onUpdateEnvironment);
+      await stepHeading("Services");
+
+      fireEvent.click(await continueTo(/Save Changes/i));
+      await waitFor(() => expect(onUpdateEnvironment).toHaveBeenCalledTimes(1));
+      // Pruned on load: a chart the catalog no longer has.
+      const { thanos: _thanos, ...kept } = stored;
+      expect(
+        JSON.stringify(
+          onUpdateEnvironment.mock.calls[0][0].services.eks.helmCharts,
+        ),
+      ).toBe(JSON.stringify(kept));
+    });
   });
 
   // The create payload is an explicit whitelist, so a new field renders,
