@@ -14,7 +14,8 @@ export function RadioCardGroup({ className, ...props }) {
 
 /**
  * Radio card: optional `art` band on top, radio + `title`, then an optional
- * `badge` and a one-line `description`; selected = `border-ring ring-2 ring-ring`.
+ * `badge` and a one-line `description`; selected = `border-ring ring-2 ring-ring`,
+ * keyboard focus adds a ring offset so it differs from selection (DESIGN 3.8).
  */
 export function RadioCard({
   id,
@@ -33,7 +34,7 @@ export function RadioCard({
         "flex cursor-pointer flex-col items-stretch gap-0 overflow-hidden rounded-lg border bg-card p-0 text-sm leading-normal font-normal",
         "transition-[border-color,box-shadow] duration-(--dur-fast) hover:border-ring/60",
         "has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:ring-2 has-[[data-state=checked]]:ring-ring",
-        "has-[button:focus-visible]:ring-2 has-[button:focus-visible]:ring-ring",
+        "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-background",
         "has-[button:disabled]:cursor-not-allowed has-[button:disabled]:text-muted-foreground has-[button:disabled]:hover:border-border",
       )}
     >
