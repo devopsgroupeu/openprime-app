@@ -23,7 +23,7 @@ import { keyLabels, shortcut } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 import { useTheme } from "../../contexts/ThemeContext";
 import { getEffectiveStatus, statusDisplay } from "@/utils/environmentStats";
-import { SETTINGS_TABS } from "../SettingsPage";
+import { SETTINGS_TABS } from "../../config/nav";
 import { DOCS_URL } from "./UserMenu";
 
 const NAVIGATE = [

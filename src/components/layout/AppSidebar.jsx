@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link, useLocation } from "react-router";
-import { ChevronLeft, Layers, PanelLeft, Plus, Search, X } from "lucide-react";
+import { ChevronLeft, Layers, PanelLeft, Plus, Search } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -15,7 +15,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import logoInverse from "../../assets/openprime-logo-color-inverse.svg";
-import { SETTINGS_TABS } from "../SettingsPage";
+import { SETTINGS_TABS } from "../../config/nav";
 import { IconAction } from "./IconAction";
 import UserMenu from "./UserMenu";
 
@@ -109,42 +109,10 @@ function AppNav({ pathname }) {
   );
 }
 
-function SettingsSearch({ query, onChange }) {
-  return (
-    <div className="relative flex h-7 items-center gap-1.5 px-1.5 text-sidebar-foreground/70 max-md:min-h-11">
-      <Search className="size-4 shrink-0" aria-hidden />
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Search settings"
-        aria-label="Search settings"
-        className="h-full min-w-0 flex-1 bg-transparent text-sm text-sidebar-foreground outline-none placeholder:text-sidebar-foreground/70 [&::-webkit-search-cancel-button]:hidden"
-      />
-      {query ? (
-        <button
-          type="button"
-          aria-label="Clear search"
-          onClick={() => onChange("")}
-          className="flex size-5 items-center justify-center rounded-md outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring"
-        >
-          <X className="size-3.5" aria-hidden />
-        </button>
-      ) : null}
-    </div>
-  );
-}
-
-/** Settings mode of the sidebar: Back to app, settings search, the tabs. */
+/** Settings mode of the sidebar: Back to app and the tabs. */
 function SettingsNav({ pathname }) {
-  const [query, setQuery] = useState("");
-  const q = query.trim().toLowerCase();
-  const tabs = SETTINGS_TABS.filter((tab) =>
-    tab.label.toLowerCase().includes(q),
-  );
-
   return (
-    // Back to app and the search stay put; the group scrolls.
+    // Back to app stays put; the group scrolls.
     <nav
       aria-label="Settings sections"
       className="flex min-h-0 flex-1 flex-col"
@@ -155,35 +123,25 @@ function SettingsNav({ pathname }) {
             Back to app
           </NavRow>
         </SidebarMenu>
-        <SettingsSearch query={query} onChange={setQuery} />
       </SidebarHeader>
       <SidebarContent className="gap-0 px-2 pb-2">
-        {tabs.length === 0 ? (
-          <p
-            role="status"
-            className="px-1.5 py-2 text-xs text-sidebar-foreground/70"
-          >
-            No settings found.
-          </p>
-        ) : (
-          <SidebarGroup className={GROUP}>
-            <SidebarGroupLabel className={LABEL}>Personal</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="gap-px">
-                {tabs.map((tab) => (
-                  <NavRow
-                    key={tab.id}
-                    to={`/settings/${tab.id}`}
-                    icon={tab.icon}
-                    active={pathname === `/settings/${tab.id}`}
-                  >
-                    {tab.label}
-                  </NavRow>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+        <SidebarGroup className={GROUP}>
+          <SidebarGroupLabel className={LABEL}>Personal</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-px">
+              {SETTINGS_TABS.map((tab) => (
+                <NavRow
+                  key={tab.id}
+                  to={`/settings/${tab.id}`}
+                  icon={tab.icon}
+                  active={pathname === `/settings/${tab.id}`}
+                >
+                  {tab.label}
+                </NavRow>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
     </nav>
   );

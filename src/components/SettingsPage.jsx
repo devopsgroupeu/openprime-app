@@ -1,7 +1,7 @@
 // src/components/SettingsPage.jsx
 import { useState, useEffect } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router";
-import { KeyRound, SlidersHorizontal, User } from "lucide-react";
+import { SETTINGS_TABS } from "../config/nav";
 import { useToast } from "../contexts/ToastContext";
 import authService from "../services/authService";
 import CloudCredentialModal from "./modals/CloudCredentialModal";
@@ -15,28 +15,6 @@ import { SaveBar } from "@/components/shared/save-bar";
 import { SettingsPageSkeleton } from "@/components/shared/skeletons";
 import { ErrorState } from "@/components/shared/states";
 import { Separator } from "@/components/ui/separator";
-
-export const SETTINGS_TABS = [
-  {
-    id: "account",
-    label: "Account",
-    icon: User,
-    description: "Your name and email as shown in OpenPrime.",
-  },
-  {
-    id: "preferences",
-    label: "Preferences",
-    icon: SlidersHorizontal,
-    description: "Your default cloud provider and region.",
-  },
-  {
-    id: "cloud-credentials",
-    label: "Cloud credentials",
-    icon: KeyRound,
-    description:
-      "Access keys OpenPrime uses to create the Terraform state bucket in your AWS account.",
-  },
-];
 
 // True when any top-level value differs (drafts are edited one key at a time).
 const changed = (a, b) =>
