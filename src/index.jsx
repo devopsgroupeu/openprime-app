@@ -1,8 +1,7 @@
 // src/index.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
-import "@fontsource-variable/inter";
-import "@fontsource-variable/jetbrains-mono";
+import "./styles/fonts.css";
 import "./index.css";
 // Same order as openprime-ai (globals, motion, ui-tokens): each is its own
 // Tailwind root, and ui-tokens.css must come last.
