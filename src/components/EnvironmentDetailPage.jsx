@@ -77,12 +77,6 @@ const triggerDownload = (blob, filename) => {
   window.URL.revokeObjectURL(url);
 };
 
-// Toast text when an error carries no message.
-const FAILED = {
-  generate: "Couldn't generate the repository. Try again.",
-  push: "Couldn't push to git. Try again.",
-};
-
 /** Route tabs: links with the tab in `?tab=` (Overview is the bare URL). */
 function TabNav({ tabs, active, basePath }) {
   const activeLink = useRef(null);
@@ -265,13 +259,17 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
     } catch (err) {
       console.error(`Error running the ${kind} job:`, err);
       if (!mountedRef.current) return;
-      const message = err.data?.error || err.message;
-      const errorId = err.requestId ? ` (Error ID: ${err.requestId})` : "";
-      toast.error(`${message || FAILED[kind]}${errorId}`);
       // A failed job stored its outcome and status on the environment.
       if (err.jobFailed) await refresh();
       if (!mountedRef.current) return;
-      setJob({ kind, error: { message, requestId: err.requestId } });
+      // Shown in the callout (with Try again), not in a toast as well.
+      setJob({
+        kind,
+        error: {
+          message: err.data?.error || err.message,
+          requestId: err.requestId,
+        },
+      });
     }
   };
 

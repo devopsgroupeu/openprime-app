@@ -116,7 +116,7 @@ describe("EnvironmentDetailPage async jobs", () => {
     expect(pollCount).toBe(3);
   }, 15000);
 
-  it("shows the job error toast when generation fails", async () => {
+  it("shows a failed generation in its callout, not in a toast", async () => {
     server.use(
       http.get("*/jobs/:jobId", () =>
         HttpResponse.json({
@@ -132,17 +132,18 @@ describe("EnvironmentDetailPage async jobs", () => {
       await screen.findByRole("button", { name: /Generate Repository/i }),
     );
 
-    expect(
-      await toasts().findByText("Terraform apply failed"),
-    ).toBeInTheDocument();
-    // The failure also stays on the page, with Try again, announced because
-    // it happened during this visit.
-    const failure = screen.getByText("Couldn't generate the repository.");
-    expect(failure.closest('[data-slot="callout"]')).toHaveAttribute(
-      "role",
-      "alert",
+    // The failure stays on the page, with Try again, announced because it
+    // happened during this visit; a toast would only repeat it.
+    const failure = await screen.findByText(
+      "Couldn't generate the repository.",
     );
+    const callout = failure.closest('[data-slot="callout"]');
+    expect(callout).toHaveAttribute("role", "alert");
+    expect(within(callout).getByText("Terraform apply failed")).toBeVisible();
     expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
+    expect(
+      toasts().queryByText("Terraform apply failed"),
+    ).not.toBeInTheDocument();
   });
 
   it("reads the environment back from the server after a job", async () => {
