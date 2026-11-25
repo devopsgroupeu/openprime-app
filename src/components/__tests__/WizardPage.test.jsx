@@ -131,6 +131,21 @@ describe("WizardPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("skips the top bar to the step content, like the app shell", async () => {
+    renderWizard();
+    await stepHeading("Basics");
+
+    const skip = screen.getByRole("link", { name: "Skip to content" });
+    expect(skip).toHaveAttribute("href", "#main");
+    const main = screen.getByRole("main");
+    expect(main).toHaveAttribute("id", "main");
+    // Focusable, so the skip moves keyboard focus past the top bar.
+    expect(main).toHaveAttribute("tabindex", "-1");
+    expect(main).toContainElement(
+      screen.getByRole("heading", { level: 1, name: "Basics" }),
+    );
+  });
+
   it("keeps Continue enabled and points at the first invalid field instead of a toast", async () => {
     localStorage.clear();
     renderWizardCreate(vi.fn());

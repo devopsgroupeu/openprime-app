@@ -94,6 +94,16 @@ describe("AppLayout", () => {
     expect(scroller.scrollTop).toBe(0);
   });
 
+  it("skips the sidebar and top bar to the main landmark", () => {
+    renderLayout();
+
+    const skip = screen.getByRole("link", { name: "Skip to content" });
+    expect(skip).toHaveAttribute("href", "#main");
+    const main = screen.getByRole("main");
+    expect(main).toHaveAttribute("id", "main");
+    expect(main).toHaveAttribute("tabindex", "-1");
+  });
+
   it("opens the command palette from Search", async () => {
     renderLayout();
 

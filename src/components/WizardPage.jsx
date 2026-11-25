@@ -440,11 +440,15 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     return (
       <div className="flex h-dvh flex-col bg-background">
         {topBar}
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <main
+          id="main"
+          tabIndex={-1}
+          className="min-h-0 flex-1 overflow-y-auto outline-none"
+        >
           <PageShell width="settings">
             <SettingsPageSkeleton />
           </PageShell>
-        </div>
+        </main>
       </div>
     );
   }
@@ -467,7 +471,12 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
           onStepChange={handleStepChange}
         />
 
-        <main className="flex min-w-0 flex-1 flex-col">
+        {/* The skip link's target (WizardTopBar). */}
+        <main
+          id="main"
+          tabIndex={-1}
+          className="flex min-w-0 flex-1 flex-col outline-none"
+        >
           <div ref={scrollerRef} className="min-h-0 flex-1 overflow-y-auto">
             <PageShell key={currentId} width="settings">
               <div className="flex flex-col gap-3">

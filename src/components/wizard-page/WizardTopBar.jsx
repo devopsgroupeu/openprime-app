@@ -9,6 +9,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { SkipLink } from "@/components/shared/skip-link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import symbol from "../../assets/openprime-symbol-color.svg";
@@ -32,6 +33,7 @@ export default function WizardTopBar({
 }) {
   return (
     <header className="flex h-13 shrink-0 items-center gap-2 border-b px-2 sm:px-3">
+      <SkipLink />
       <Link
         to="/environments"
         aria-label="OpenPrime home"

@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Outlet, matchPath, useLocation } from "react-router";
+import { SkipLink } from "@/components/shared/skip-link";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { matches, shortcut } from "@/lib/shortcuts";
 import AuraChatButton from "../AuraChatButton";
@@ -54,12 +55,7 @@ const AppLayout = ({ environments }) => {
 
   return (
     <SidebarProvider className="h-dvh">
-      <a
-        href="#main"
-        className="sr-only z-50 rounded-md bg-background px-3 py-2 focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
-      >
-        Skip to content
-      </a>
+      <SkipLink />
       <AppSidebar
         onSearch={() => setPaletteOpen(true)}
         onShortcuts={() => setShortcutsOpen(true)}
