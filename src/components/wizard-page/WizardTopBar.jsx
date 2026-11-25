@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { Link } from "react-router";
-import { Check, PanelRight } from "lucide-react";
+import { Check, History, PanelRight } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -26,11 +26,14 @@ const time = (ms) =>
  * Top bar of the full-screen wizard: symbol, `breadcrumbs = [{ label, to? }]`
  * (the first one is dropped below sm), draft status, the Aura toggles and
  * Cancel. `auraOpen` drives the xl column toggle; below xl `auraSheet` (a
- * SheetTrigger) opens Aura as a sheet instead.
+ * SheetTrigger) opens Aura as a sheet instead. A `draftRestored` wizard says
+ * so until the first save and offers `onStartOver`.
  */
 export default function WizardTopBar({
   breadcrumbs,
   savedAt,
+  draftRestored = false,
+  onStartOver,
   auraOpen,
   onToggleAura,
   auraSheet,
@@ -83,6 +86,16 @@ export default function WizardTopBar({
               {time(savedAt)}
             </time>
           </p>
+        ) : draftRestored ? (
+          <p className="mr-2 hidden items-center gap-1.5 text-xs text-muted-foreground md:flex">
+            <History className="size-3.5" aria-hidden />
+            Draft restored
+          </p>
+        ) : null}
+        {draftRestored ? (
+          <Button variant="ghost" size="sm" onClick={onStartOver}>
+            Start over
+          </Button>
         ) : null}
         <Button
           variant="ghost"

@@ -440,6 +440,87 @@ describe("WizardPage", () => {
     });
   });
 
+  describe("restored draft", () => {
+    const restore = (draft) => {
+      localStorage.clear();
+      localStorage.setItem(
+        "op-wizard-draft:mock-user-1",
+        JSON.stringify({
+          name: "half",
+          globalPrefix: "half-",
+          provider: "aws",
+          region: "us-east-1",
+          ...draft,
+        }),
+      );
+      renderWizardCreate(vi.fn());
+    };
+    const startOver = () => screen.getByRole("button", { name: "Start over" });
+
+    it("says so and starts over at once when it has no services", async () => {
+      restore({ services: {} });
+      await stepHeading("Basics");
+      expect(screen.getByText("Draft restored")).toBeInTheDocument();
+      expect(screen.getByLabelText("Name")).toHaveValue("half");
+
+      fireEvent.click(startOver());
+
+      expect(screen.queryByRole("alertdialog")).toBeNull();
+      expect(screen.getByLabelText("Name")).toHaveValue("");
+      await waitFor(() => expect(screen.getByLabelText("Name")).toHaveFocus());
+      expect(screen.queryByRole("button", { name: "Start over" })).toBeNull();
+      expect(screen.queryByText("Draft restored")).toBeNull();
+      expect(localStorage.getItem("op-wizard-draft:mock-user-1")).toBeNull();
+    });
+
+    it("asks first when the draft has enabled services", async () => {
+      restore({
+        services: { vpc: { enabled: true }, s3: { enabled: true } },
+      });
+      await stepHeading("Basics");
+
+      fireEvent.click(startOver());
+      let dialog = await screen.findByRole("alertdialog", {
+        name: "Start over?",
+      });
+      expect(dialog).toHaveTextContent(
+        "The draft is cleared, including its 2 enabled services.",
+      );
+      fireEvent.click(
+        within(dialog).getByRole("button", { name: "Keep draft" }),
+      );
+      await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+      expect(screen.getByLabelText("Name")).toHaveValue("half");
+
+      fireEvent.click(startOver());
+      dialog = await screen.findByRole("alertdialog");
+      fireEvent.click(
+        within(dialog).getByRole("button", { name: "Start over" }),
+      );
+      await waitFor(() =>
+        expect(screen.getByLabelText("Name")).toHaveValue(""),
+      );
+      expect(localStorage.getItem("op-wizard-draft:mock-user-1")).toBeNull();
+    });
+
+    it("keeps Start over next to the save time once it changes", async () => {
+      restore({ services: {} });
+      await stepHeading("Basics");
+      fireEvent.change(screen.getByLabelText("Name"), {
+        target: { value: "halfway" },
+      });
+      expect(screen.getByText(/Draft saved/)).toBeInTheDocument();
+      expect(startOver()).toBeInTheDocument();
+    });
+
+    it("is not offered on a new wizard", async () => {
+      localStorage.clear();
+      renderWizardCreate(vi.fn());
+      await stepHeading("Basics");
+      expect(screen.queryByRole("button", { name: "Start over" })).toBeNull();
+    });
+  });
+
   // An untouched wizard is not a draft: nothing is kept, nothing is said.
   it("keeps no draft of an untouched wizard", async () => {
     localStorage.clear();

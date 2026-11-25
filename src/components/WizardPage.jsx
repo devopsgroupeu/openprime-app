@@ -109,6 +109,13 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     isEditMode ? null : loadDraftCommit(userId),
   );
   const [savedAt, setSavedAt] = useState(null);
+  // Create mode: the wizard opened on a stored draft, until Start over.
+  const [draftRestored, setDraftRestored] = useState(initial.restored);
+  const [confirmStartOver, setConfirmStartOver] = useState(false);
+  // The default region preference, for a wizard started over.
+  const [preferredRegion, setPreferredRegion] = useState(null);
+  // Bumped by Start over: the steps and the deploy key state start afresh.
+  const [resetCount, setResetCount] = useState(0);
   const [expandedServices, setExpandedServices] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState(new Set());
@@ -144,6 +151,11 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     field.scrollIntoView({ block: "center" });
     field.focus({ preventScroll: true });
   }, [focusRequest]);
+
+  // Start over removes its own button: the cursor goes to the empty Name.
+  useEffect(() => {
+    if (resetCount) scrollerRef.current?.querySelector("input")?.focus();
+  }, [resetCount]);
 
   // Load environment for edit mode. Editing opens on step 2 because that is
   // where most changes are, but step 1 stays reachable: it is no longer wholly
@@ -194,10 +206,11 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       setSavedAt(Date.now());
   }, [newEnv, untouched, isEditMode, userId, catalogCommit, initial.env]);
 
-  // Settings > Preferences: the default region pre-fills a new wizard, never a
-  // restored draft and never a region the user already picked.
+  // Settings > Preferences: the default region pre-fills a new wizard (also
+  // one started over), never a restored draft and never a region the user
+  // already picked.
   useEffect(() => {
-    if (isEditMode || initial.restored) return;
+    if (isEditMode) return;
     let active = true;
     authService
       .get("/users/me/preferences")
@@ -207,6 +220,8 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
           (r) => r.value === region,
         );
         if (!active || !offered) return;
+        setPreferredRegion(region);
+        if (initial.restored) return;
         setNewEnv((env) =>
           env.region === initial.env.region ? { ...env, region } : env,
         );
@@ -257,7 +272,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     newEnv,
     setNewEnv,
     active: currentId === "basic",
-    identity: `${userId || "anonymous"}:${id || "create"}`,
+    identity: `${userId || "anonymous"}:${id || "create"}:${resetCount}`,
   });
 
   const validationErrors = useMemo(() => {
@@ -406,7 +421,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     }
     // A draft exists once a change was saved, or when one was restored. It
     // never stores the deploy key.
-    if (savedAt || initial.restored)
+    if (savedAt || draftRestored)
       info(
         newEnv.gitRepository?.sshKey?.trim()
           ? "Draft saved without the deploy key."
@@ -414,6 +429,26 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       );
     navigate(leaveTo);
   };
+
+  // Drops the restored draft for an empty wizard. A draft with enabled
+  // services is asked about first.
+  const startOver = () => {
+    clearDraft(userId);
+    const empty = createEmptyEnvironment("aws");
+    const env = preferredRegion ? { ...empty, region: preferredRegion } : empty;
+    setNewEnv(env);
+    setBlank(comparable(env));
+    setDraftRestored(false);
+    setSavedAt(null);
+    setCurrentStep(1);
+    setCompletedSteps(new Set());
+    setShowErrors(false);
+    setExpandedServices({});
+    setResetCount((n) => n + 1);
+  };
+  const enabledServices = Object.values(newEnv?.services || {}).filter(
+    (service) => service?.enabled,
+  ).length;
 
   const toggleAura = () => {
     const next = !auraOpen;
@@ -454,6 +489,10 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     <WizardTopBar
       breadcrumbs={breadcrumbs}
       savedAt={isEditMode ? null : savedAt}
+      draftRestored={draftRestored}
+      onStartOver={() =>
+        enabledServices > 0 ? setConfirmStartOver(true) : startOver()
+      }
       auraOpen={auraOpen}
       onToggleAura={toggleAura}
       onCancel={handleCancel}
@@ -525,7 +564,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
           className="flex min-w-0 flex-1 flex-col outline-none"
         >
           <div ref={scrollerRef} className="min-h-0 flex-1 overflow-y-auto">
-            <PageShell key={currentId} width="settings">
+            <PageShell key={`${currentId}:${resetCount}`} width="settings">
               <div className="flex flex-col gap-3">
                 <WizardStepProgress steps={steps} currentStep={currentStep} />
                 <PageHeader
@@ -602,6 +641,25 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
             <AlertDialogCancel>Keep editing</AlertDialogCancel>
             <AlertDialogAction variant="destructive" onClick={leaveGuard.leave}>
               Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmStartOver} onOpenChange={setConfirmStartOver}>
+        {/* Start over moves focus itself; the trigger is gone by then. */}
+        <AlertDialogContent onCloseAutoFocus={(e) => e.preventDefault()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Start over?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The draft is cleared, including its {enabledServices} enabled
+              service{enabledServices === 1 ? "" : "s"}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep draft</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={startOver}>
+              Start over
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
