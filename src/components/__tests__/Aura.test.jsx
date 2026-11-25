@@ -89,7 +89,6 @@ beforeEach(() => {
   reply = (n) => answer(`Answer ${n}.`);
   keycloak.token = "test-token";
   keycloak.updateToken = vi.fn(async () => false);
-  vi.spyOn(console, "error").mockImplementation(() => {});
   server.use(
     http.post("*/ai/chat", async ({ request }) => {
       requests.push(await request.json());
@@ -182,6 +181,7 @@ describe("Aura answers that do not finish", () => {
   });
 
   it("stops a question the server has not answered at all", async () => {
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
     // No response, not even headers: only aborting the fetch ends it.
     reply = () => new Promise(() => {});
     render(<WizardHarness />);
@@ -193,6 +193,8 @@ describe("Aura answers that do not finish", () => {
       await thread().findByText("You stopped this answer."),
     ).toBeInTheDocument();
     expect(screen.queryByText("Thinking")).toBeNull();
+    // Stopping is not a failure.
+    expect(logged).not.toHaveBeenCalled();
   });
 
   it("gives up on an answer that sends nothing for a minute", async () => {
@@ -216,6 +218,7 @@ describe("Aura answers that do not finish", () => {
   });
 
   it("asks a failed question again with the same history", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
     reply = (n) =>
       n === 2
         ? HttpResponse.json({ error: "x" }, { status: 500 })
@@ -265,7 +268,54 @@ describe("Aura for screen readers", () => {
     expect(thread).not.toHaveAttribute("aria-live");
   });
 
+  // Read aloud, a fence and its code are noise; the prose around it is not.
+  it("leaves code blocks out of the announcement", async () => {
+    reply = () => answer("Run:\n```bash\nls -la\n```\nThen check the size.");
+    render(
+      // A code block has a Copy button (tooltip, toast).
+      <ToastProvider>
+        <TooltipProvider>
+          <WizardHarness />
+        </TooltipProvider>
+      </ToastProvider>,
+    );
+    ask("How do I list files?");
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Aura answered: Run: Then check the size.",
+      ),
+    );
+    expect(screen.getByRole("status")).not.toHaveTextContent(/```|ls -la/);
+  });
+
+  it("announces a stopped answer and one that took too long", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    reply = () => hang(["Use m5"]);
+    render(<WizardHarness />);
+    ask("Which node size?");
+    expect(await screen.findByText("Use m5")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "You stopped this answer.",
+      ),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("Use m5")).toBeInTheDocument();
+    await act(async () => {
+      vi.advanceTimersByTime(STALL_MS);
+    });
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Aura took too long to answer.",
+      ),
+    );
+  });
+
   it("announces why an answer failed", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
     reply = () => HttpResponse.json({ error: "x" }, { status: 500 });
     render(<WizardHarness />);
     ask("Which node size?");
@@ -304,6 +354,18 @@ describe("Aura window", () => {
       expect(screen.queryByRole("button", { name: "Page action" })).toBeNull(),
     );
     expect(composer()).toHaveFocus();
+  });
+
+  it("closes on Escape on a phone and gives focus back to the launcher", async () => {
+    window.innerWidth = 390;
+    render(<Shell />);
+    fireEvent.click(launcher());
+    expect(composer()).toHaveFocus();
+
+    fireEvent.keyDown(composer(), { key: "Escape" });
+    await waitFor(() => expect(auraWindow()).toBeNull());
+    await waitFor(() => expect(launcher()).toHaveFocus());
+    expect(screen.getByRole("button", { name: "Page action" })).toBeVisible();
   });
 
   it("floats beside the page from sm up", () => {

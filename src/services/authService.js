@@ -92,7 +92,8 @@ export class AuthService {
       }
       return response;
     } catch (error) {
-      console.error("API request failed:", error);
+      // A caller that aborted (Aura's Stop or its own time limit) knows why.
+      if (!signal?.aborted) console.error("API request failed:", error);
       throw error;
     } finally {
       clearTimeout(timer);

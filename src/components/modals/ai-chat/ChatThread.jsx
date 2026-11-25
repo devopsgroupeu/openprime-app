@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 
 import ChatMessage, { INTERRUPTED } from "./ChatMessage";
 
-// What a screen reader hears once an answer settles.
+// What a screen reader hears once an answer settles. Code blocks are left
+// out: read aloud, a fence and its code are noise.
 const announcement = (message) => {
   const text = message.content ?? message.message ?? "";
   if (message.error) return text;
   if (message.interrupted) return INTERRUPTED[message.interrupted];
-  return `Aura answered: ${text.slice(0, 150)}`;
+  const prose = text.replace(/```[\s\S]*?(?:```|$)/g, "").trim();
+  return prose ? `Aura answered: ${prose.slice(0, 150)}` : "Aura answered.";
 };
 
 /**
