@@ -33,9 +33,9 @@ const generateConfiguration = (environment) => {
     provider: environment.provider,
     region: environment.region,
     location: environment.location || environment.region,
-    // `status` deliberately omitted: nothing transitions it after creation, so
-    // it is always "pending" and exporting it implies a live state we do not
-    // track (OP-187).
+    // `status` deliberately omitted: it is live job state (deploying while a
+    // worker runs a job, then running or failed), which a downloaded file
+    // would freeze at one moment (OP-187).
     backend: environment.terraform_backend?.enabled || false,
     services: environment.services || {},
     createdAt:
