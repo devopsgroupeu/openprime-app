@@ -57,24 +57,23 @@ const CloudCredentialModal = ({
     const newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
+      newErrors.name = "Enter a name.";
     }
 
-    if (!formData.identifier.trim()) {
-      newErrors.identifier = "Account ID is required";
-    } else if (
-      shouldValidateIdentifierFormat &&
-      !ACCOUNT_ID_REGEX.test(formData.identifier.trim())
+    if (
+      !formData.identifier.trim() ||
+      (shouldValidateIdentifierFormat &&
+        !ACCOUNT_ID_REGEX.test(formData.identifier.trim()))
     ) {
-      newErrors.identifier = "Account ID must be exactly 12 digits";
+      newErrors.identifier = "Enter the 12-digit account ID.";
     }
 
     if (!credential && !formData.accessKey.trim()) {
-      newErrors.accessKey = "Access key ID is required";
+      newErrors.accessKey = "Enter the access key ID.";
     }
 
     if (!credential && !formData.secretKey.trim()) {
-      newErrors.secretKey = "Secret access key is required";
+      newErrors.secretKey = "Enter the secret access key.";
     }
 
     setErrors(newErrors);
@@ -120,28 +119,27 @@ const CloudCredentialModal = ({
     }
   };
 
-  // Label, control, help and error of one text field, linked for screen readers.
+  // Label, control and help or error of one text field, linked for screen
+  // readers. The error takes the help line's place; the label keeps its
+  // colour (border and message mark the field, like the wizard).
   const field = (key, label, input, help) => {
     const id = `credential-${key}`;
-    const describedBy =
-      [help && `${id}-help`, errors[key] && `${id}-error`]
-        .filter(Boolean)
-        .join(" ") || undefined;
+    const error = errors[key];
+    const describedBy = error ? `${id}-error` : help ? `${id}-help` : undefined;
     return (
-      <Field data-invalid={errors[key] ? true : undefined}>
+      <Field>
         <FieldLabel htmlFor={id}>{label}</FieldLabel>
         {input({
           id,
           value: formData[key],
           onChange: (e) => handleChange(key, e.target.value),
-          "aria-invalid": errors[key] ? true : undefined,
+          "aria-invalid": error ? true : undefined,
           "aria-describedby": describedBy,
         })}
-        {help ? (
+        {error ? (
+          <FieldError id={`${id}-error`}>{error}</FieldError>
+        ) : help ? (
           <FieldDescription id={`${id}-help`}>{help}</FieldDescription>
-        ) : null}
-        {errors[key] ? (
-          <FieldError id={`${id}-error`}>{errors[key]}</FieldError>
         ) : null}
       </Field>
     );

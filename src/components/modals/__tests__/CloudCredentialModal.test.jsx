@@ -31,7 +31,7 @@ describe("CloudCredentialModal", () => {
     fireEvent.click(screen.getByRole("button", { name: /Add credentials/i }));
 
     expect(
-      screen.getByText("Account ID must be exactly 12 digits"),
+      screen.getByText("Enter the 12-digit account ID."),
     ).toBeInTheDocument();
   });
 
@@ -58,7 +58,7 @@ describe("CloudCredentialModal", () => {
     fireEvent.click(screen.getByRole("button", { name: /Add credentials/i }));
 
     expect(
-      screen.queryByText("Account ID must be exactly 12 digits"),
+      screen.queryByText("Enter the 12-digit account ID."),
     ).not.toBeInTheDocument();
     expect(onSave).toHaveBeenCalled();
   });
@@ -88,7 +88,7 @@ describe("CloudCredentialModal", () => {
     fireEvent.click(screen.getByRole("button", { name: /Save changes/i }));
 
     expect(
-      screen.queryByText("Account ID must be exactly 12 digits"),
+      screen.queryByText("Enter the 12-digit account ID."),
     ).not.toBeInTheDocument();
     expect(onSave).toHaveBeenCalled();
   });
@@ -111,8 +111,36 @@ describe("CloudCredentialModal", () => {
     fireEvent.click(screen.getByRole("button", { name: /Save changes/i }));
 
     expect(
-      screen.getByText("Account ID must be exactly 12 digits"),
+      screen.getByText("Enter the 12-digit account ID."),
     ).toBeInTheDocument();
+  });
+
+  it("says what to enter in place of the help line on an empty submit", () => {
+    render(<CloudCredentialModal {...baseProps} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Add credentials/i }));
+
+    expect(screen.getByLabelText("Name")).toHaveAccessibleDescription(
+      "Enter a name.",
+    );
+    const accountId = screen.getByLabelText("AWS account ID");
+    expect(accountId).toHaveAttribute("aria-invalid", "true");
+    expect(accountId).toHaveAccessibleDescription(
+      "Enter the 12-digit account ID.",
+    );
+    expect(
+      screen.queryByText("The 12-digit ID of your AWS account."),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Access key ID")).toHaveAccessibleDescription(
+      "Enter the access key ID.",
+    );
+    expect(
+      screen.getByLabelText("Secret access key"),
+    ).toHaveAccessibleDescription("Enter the secret access key.");
+    // Border and message mark the field; the label keeps its colour.
+    expect(
+      screen.getByText("AWS account ID").closest('[data-slot="field"]'),
+    ).not.toHaveAttribute("data-invalid");
   });
 
   it("closes on Escape through onClose", () => {
