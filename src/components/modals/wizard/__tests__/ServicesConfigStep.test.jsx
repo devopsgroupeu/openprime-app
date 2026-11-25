@@ -9,7 +9,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Controlled like the wizard: newEnv / setNewEnv and the expanded map.
 // `onEnv` sees every environment the step sets.
-function Harness({ initial, onEnv }) {
+function Harness({ initial, onEnv, focusHeading }) {
   const [newEnv, setNewEnv] = useState(initial);
   const [expanded, setExpanded] = useState({});
   return (
@@ -23,6 +23,7 @@ function Harness({ initial, onEnv }) {
         expandedServices={expanded}
         setExpandedServices={setExpanded}
         onAskAI={() => {}}
+        focusHeading={focusHeading}
       />
     </TooltipProvider>
   );
@@ -95,6 +96,23 @@ describe("ServicesConfigStep", () => {
     expect(services.vpc.enabled).toBe(true);
     expect(services.s3.enabled).toBe(true);
     expect(services).not.toHaveProperty("rds");
+  });
+
+  // The presets stay when one enables nothing, so focus stays on it.
+  it("keeps focus on a preset that enables nothing", () => {
+    const env = createEmptyEnvironment("aws");
+    delete env.services.vpc;
+    delete env.services.eks;
+    const focusHeading = vi.fn();
+    render(<Harness initial={env} focusHeading={focusHeading} />);
+
+    const preset = screen.getByRole("button", { name: "VPC and EKS" });
+    preset.focus();
+    fireEvent.click(preset);
+
+    expect(screen.getByText(/^0 of \d+ enabled$/)).toBeInTheDocument();
+    expect(focusHeading).not.toHaveBeenCalled();
+    expect(preset).toHaveFocus();
   });
 
   it("filters by search and category and recovers from no results", () => {
