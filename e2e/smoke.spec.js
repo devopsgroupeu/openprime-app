@@ -75,15 +75,12 @@ describe("Application Smoke Tests", () => {
     const wizardHeading = ctx.page.getByRole("heading", { level: 1, name: "Basics" });
     expect(await wizardHeading.isVisible()).toBe(true);
 
-    // Close the wizard
-    const closeButton = ctx.page
-      .locator('button[aria-label="Close"]')
-      .or(ctx.page.getByRole("button").filter({ hasText: /×|close/i }));
-    if ((await closeButton.count()) > 0) {
-      await closeButton.first().click();
-    }
-
-    await ctx.page.waitForTimeout(500);
+    // Close it with Cancel: an untouched wizard goes straight back to the list.
+    await ctx.page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await ctx.page.waitForURL((url) => url.pathname === "/environments");
+    const listHeading = ctx.page.getByRole("heading", { level: 1, name: "Environments" });
+    await listHeading.waitFor({ state: "visible" });
+    expect(await listHeading.isVisible()).toBe(true);
   });
 
   test("should navigate through wizard steps", async (ctx) => {
