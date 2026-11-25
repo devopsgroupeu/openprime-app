@@ -1069,6 +1069,38 @@ describe("WizardPage", () => {
       );
     });
 
+    // A problem no field shows (a draft without a provider): nothing to
+    // point at, so focus stays where it was instead of jumping to the h1.
+    it("keeps focus on Continue when no field shows the Basics problem", async () => {
+      localStorage.clear();
+      localStorage.setItem(
+        "op-wizard-draft:mock-user-1",
+        JSON.stringify({
+          name: "half",
+          globalPrefix: "half-",
+          provider: "",
+          region: "us-east-1",
+          services: {},
+        }),
+      );
+      renderWizardCreate(vi.fn());
+      const basics = await stepHeading("Basics");
+
+      const next = screen.getByRole("button", { name: /Continue/i });
+      press(next);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(basics).toBeInTheDocument();
+      expect(next).toHaveFocus();
+    });
+
+    it("moves no focus when edit mode opens on Services", async () => {
+      renderWizardEdit(vi.fn());
+      const services = await stepHeading("Services");
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(services).not.toHaveFocus();
+      expect(document.body).toHaveFocus();
+    });
+
     // Create with a Basics problem: the field wins over the heading.
     it("still goes to the first invalid field when Create sends the user back", async () => {
       await toServices();

@@ -138,9 +138,10 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const [auraDraft, setAuraDraft] = useState("");
   // Where focus goes after the next render: the first match of `selector` in
   // the step (the first invalid field when Continue or Create found errors,
-  // Name after Start over), else the step's h1. The control that had focus is
-  // often gone: a step change unmounts the stepper row, Back or Review's Edit,
-  // and the presets and Clear all remove themselves.
+  // Name after Start over; no match leaves focus where it is), or without a
+  // selector the step's h1. The control that had focus is often gone: a step
+  // change unmounts the stepper row, Back or Review's Edit, and the presets
+  // and Clear all remove themselves.
   const [focusTarget, setFocusTarget] = useState(null);
   const focusStep = (selector = null) => setFocusTarget({ selector });
   const scrollerRef = useRef(null);
@@ -159,7 +160,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     if (field) {
       field.scrollIntoView({ block: "center" });
       field.focus({ preventScroll: true });
-    } else {
+    } else if (!focusTarget.selector) {
       headingRef.current?.focus({ preventScroll: true });
     }
   }, [focusTarget]);
