@@ -556,6 +556,8 @@ describe("WizardPage", () => {
       });
       await stepHeading("Basics");
 
+      // A real click focuses the button (jsdom's does not).
+      act(() => startOver().focus());
       fireEvent.click(startOver());
       let dialog = await screen.findByRole("alertdialog", {
         name: "Start over?",
@@ -568,6 +570,8 @@ describe("WizardPage", () => {
       );
       await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
       expect(screen.getByLabelText("Name")).toHaveValue("half");
+      // Kept: focus goes back to Start over, not to the page.
+      await waitFor(() => expect(startOver()).toHaveFocus());
 
       fireEvent.click(startOver());
       dialog = await screen.findByRole("alertdialog");
@@ -577,6 +581,7 @@ describe("WizardPage", () => {
       await waitFor(() =>
         expect(screen.getByLabelText("Name")).toHaveValue(""),
       );
+      await waitFor(() => expect(screen.getByLabelText("Name")).toHaveFocus());
       expect(localStorage.getItem("op-wizard-draft:mock-user-1")).toBeNull();
     });
 
@@ -932,6 +937,20 @@ describe("WizardPage", () => {
     }
   });
 
+  // Aura has nothing to offer before the edited environment is there.
+  it("shows no Aura sheet trigger while the environment loads", async () => {
+    server.use(http.get("*/environments/env-001", () => new Promise(() => {})));
+    renderWizardEdit(vi.fn());
+    expect(
+      await screen.findByRole("button", { name: "Cancel" }),
+    ).toBeInTheDocument();
+    expect(
+      screen
+        .queryAllByRole("button", { name: "Aura" })
+        .filter((b) => b.getAttribute("aria-haspopup") === "dialog"),
+    ).toEqual([]);
+  });
+
   it("keeps the Aura conversation when the sheet closes and opens again", async () => {
     localStorage.clear();
     // Column closed: the sheet is the only Aura.
@@ -1146,10 +1165,15 @@ describe("WizardPage", () => {
     ).toBeNull();
     expect(within(section).queryByRole("radio")).toBeNull();
 
-    fireEvent.click(within(section).getByRole("button", { name: "Change" }));
+    fireEvent.click(
+      within(section).getByRole("button", { name: "Change state bucket" }),
+    );
+    // Its Terraform state is in that bucket: another existing bucket, never
+    // a new one (that would leave the state behind).
+    expect(within(section).queryByRole("radio")).toBeNull();
     expect(
-      within(section).getByRole("radio", { name: /existing bucket/ }),
-    ).toBeChecked();
+      within(section).queryByRole("button", { name: "Create backend" }),
+    ).toBeNull();
     expect(within(section).getByLabelText("Bucket name")).toHaveValue(
       "op-demo-tf-state",
     );
@@ -1252,6 +1276,47 @@ describe("WizardPage", () => {
     );
     expect(callout).not.toHaveTextContent(/Availability Zones/);
     expect(within(callout).getAllByRole("listitem")).toHaveLength(1);
+  });
+
+  // From Review's list to the field: the rows with a problem are marked and
+  // the first one opens.
+  it("marks and opens the service with a problem from Review", async () => {
+    server.use(
+      http.get("*/environments/env-001", () =>
+        HttpResponse.json({
+          ...environments[0],
+          services: {
+            ...environments[0].services,
+            vpc: { ...environments[0].services.vpc, cidr: "10.0.0" },
+          },
+        }),
+      ),
+    );
+    renderWizardEdit(vi.fn());
+    await stepHeading("Services");
+    // Opened on it; closed here, so Review's link has to open it again.
+    fireEvent.click(
+      screen.getByRole("button", { name: "Virtual Private Cloud (VPC)" }),
+    );
+    expect(screen.queryByLabelText("CIDR Block")).toBeNull();
+    while (screen.queryByRole("button", { name: /Continue/i })) {
+      fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+    }
+    await stepHeading("Review");
+
+    fireEvent.click(screen.getByRole("button", { name: "Go to Services" }));
+    await stepHeading("Services");
+    const row = (name) =>
+      screen.getByRole("switch", { name: `Enable ${name}` }).closest("li");
+    expect(
+      within(row("Virtual Private Cloud (VPC)")).getByText("Needs attention"),
+    ).toBeInTheDocument();
+    expect(
+      within(row("Elastic Kubernetes Service (EKS)")).queryByText(
+        "Needs attention",
+      ),
+    ).toBeNull();
+    expect(screen.getByLabelText("CIDR Block")).toHaveValue("10.0.0");
   });
 
   it("lets Review's Edit open Basics in edit mode", async () => {

@@ -32,9 +32,11 @@ const bucketArt = (badge) => (
 // Presentational: all state and the create-backend action live in the parent
 // BasicConfigStep and are passed down as props. `bucketReadOnly`: the bucket
 // the environment already has is shown as it is, and `onChangeBucket` offers
-// the choice again. `error`: the Basics error of a
-// switched-on backend without a bucket. It sits on the bucket name field, or,
-// while the bucket is still to be created, on the switch.
+// the choice again (`onCancelChange` goes back to it). `existingOnly`: only
+// another existing bucket can be named, never one created. `error`: the
+// Basics error of a switched-on backend without a bucket. It sits on the
+// bucket name field, or, while the bucket is still to be created, on the
+// switch.
 const TerraformBackendSection = ({
   newEnv,
   setNewEnv,
@@ -47,14 +49,18 @@ const TerraformBackendSection = ({
   onCreateBackend,
   bucketReadOnly,
   onChangeBucket,
+  onCancelChange,
+  existingOnly = false,
   error,
 }) => {
   const id = useId();
-  // Change replaces itself with the bucket name field, Create backend with
-  // its outcome: focus moves there.
+  // Change replaces itself with the bucket name field, Cancel with Change,
+  // Create backend with its outcome: focus moves there.
   const focusBucketField = useRef(false);
+  const focusChange = useRef(false);
   const focusOutcome = useRef(false);
-  const switchError = !useExistingBucket && !backendCreated ? error : null;
+  const existing = existingOnly || useExistingBucket;
+  const switchError = !existing && !backendCreated ? error : null;
   const backend = newEnv.terraformBackend;
   const credential = credentials.find((c) => c.id === newEnv.cloudCredentialId);
   const locked = backendCreated || creatingBackend;
@@ -114,8 +120,15 @@ const TerraformBackendSection = ({
             }
             control={
               <Button
+                ref={(el) => {
+                  if (el && focusChange.current) {
+                    focusChange.current = false;
+                    el.focus();
+                  }
+                }}
                 variant="ghost"
                 size="sm"
+                aria-label="Change state bucket"
                 // Stacked below sm: the label lines up with the row text.
                 className="max-sm:-ml-2"
                 onClick={() => {
@@ -130,61 +143,76 @@ const TerraformBackendSection = ({
         </SettingsRowGroup>
       ) : backend?.enabled ? (
         <>
-          <RadioCardGroup
-            aria-label="State bucket"
-            value={useExistingBucket ? "existing" : "create"}
-            onValueChange={(value) =>
-              setUseExistingBucket(value === "existing")
-            }
-            disabled={locked}
-            className="sm:grid-cols-2"
-          >
-            <RadioCard
-              id={`${id}-create`}
-              value="create"
-              title="Create a new bucket"
-              description="OpenPrime creates it in your account now."
-              art={bucketArt(<Plus />)}
-            />
-            <RadioCard
-              id={`${id}-existing`}
-              value="existing"
-              title="Use an existing bucket"
-              description="Point Terraform at a bucket you already have."
-              art={bucketArt(<Link />)}
-            />
-          </RadioCardGroup>
-          {useExistingBucket ? (
+          {existingOnly ? null : (
+            <RadioCardGroup
+              aria-label="State bucket"
+              value={useExistingBucket ? "existing" : "create"}
+              onValueChange={(value) =>
+                setUseExistingBucket(value === "existing")
+              }
+              disabled={locked}
+              className="sm:grid-cols-2"
+            >
+              <RadioCard
+                id={`${id}-create`}
+                value="create"
+                title="Create a new bucket"
+                description="OpenPrime creates it in your account now."
+                art={bucketArt(<Plus />)}
+              />
+              <RadioCard
+                id={`${id}-existing`}
+                value="existing"
+                title="Use an existing bucket"
+                description="Point Terraform at a bucket you already have."
+                art={bucketArt(<Link />)}
+              />
+            </RadioCardGroup>
+          )}
+          {existing ? (
             <SettingsRowGroup>
               <SettingsRow
                 title="Bucket name"
                 controlId={`${id}-bucket`}
                 description="The S3 bucket that keeps the Terraform state."
                 control={
-                  <FieldControl id={`${id}-bucket`} error={error}>
-                    <Input
-                      ref={(el) => {
-                        if (el && focusBucketField.current) {
-                          focusBucketField.current = false;
-                          el.focus();
+                  <div className="flex w-full items-start gap-2 sm:w-auto">
+                    <FieldControl id={`${id}-bucket`} error={error}>
+                      <Input
+                        ref={(el) => {
+                          if (el && focusBucketField.current) {
+                            focusBucketField.current = false;
+                            el.focus();
+                          }
+                        }}
+                        id={`${id}-bucket`}
+                        className="font-mono"
+                        placeholder="e.g. my-terraform-state"
+                        value={backend?.bucketName || ""}
+                        {...invalidProps(`${id}-bucket`, error)}
+                        onChange={(e) =>
+                          setNewEnv({
+                            ...newEnv,
+                            terraformBackend: {
+                              ...backend,
+                              bucketName: e.target.value,
+                            },
+                          })
                         }
-                      }}
-                      id={`${id}-bucket`}
-                      className="font-mono"
-                      placeholder="e.g. my-terraform-state"
-                      value={backend?.bucketName || ""}
-                      {...invalidProps(`${id}-bucket`, error)}
-                      onChange={(e) =>
-                        setNewEnv({
-                          ...newEnv,
-                          terraformBackend: {
-                            ...backend,
-                            bucketName: e.target.value,
-                          },
-                        })
-                      }
-                    />
-                  </FieldControl>
+                      />
+                    </FieldControl>
+                    {onCancelChange ? (
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          focusChange.current = true;
+                          onCancelChange();
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    ) : null}
+                  </div>
                 }
               />
             </SettingsRowGroup>

@@ -43,6 +43,7 @@ const DynamicServiceConfig = ({
   onExpandedChange,
   onAskAI,
   missingPrerequisite,
+  needsAttention = false,
 }) => {
   const serviceDefinition = getServiceConfig(serviceName);
   const enabled = Boolean(serviceConfig.enabled);
@@ -106,10 +107,17 @@ const DynamicServiceConfig = ({
                   name
                 )}
               </h3>
+              {/* A missing prerequisite says what it needs; other problems
+                  (Review lists them) are in the settings. */}
               {missingPrerequisite ? (
                 <Badge variant="attention">
                   <TriangleAlert aria-hidden />
                   Needs {missingPrerequisite}
+                </Badge>
+              ) : needsAttention ? (
+                <Badge variant="attention">
+                  <TriangleAlert aria-hidden />
+                  Needs attention
                 </Badge>
               ) : null}
             </div>

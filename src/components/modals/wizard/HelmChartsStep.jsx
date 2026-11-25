@@ -159,7 +159,7 @@ const HelmChartsStep = ({ newEnv, setNewEnv, focusHeading }) => {
                   ...rebuilt(charts, true),
                 });
                 // The presets go away once a chart is selected.
-                focusHeading?.();
+                if (charts.length > 0) focusHeading?.();
               },
             };
           })}

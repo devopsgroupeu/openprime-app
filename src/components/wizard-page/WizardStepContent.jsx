@@ -18,6 +18,7 @@ const WizardStepContent = ({
   onEditStep,
   focusHeading,
   isEditMode,
+  savedBucket,
   sshKeys,
 }) => {
   switch (currentId) {
@@ -27,6 +28,7 @@ const WizardStepContent = ({
           newEnv={newEnv}
           setNewEnv={setNewEnv}
           isEditMode={isEditMode}
+          savedBucket={savedBucket}
           validationErrors={showErrors ? basicErrors : []}
           sshKeys={sshKeys}
         />
@@ -40,6 +42,7 @@ const WizardStepContent = ({
           setExpandedServices={setExpandedServices}
           onAskAI={onAskAI}
           focusHeading={focusHeading}
+          problems={validationErrors.filter((e) => e.service)}
         />
       );
     case "helm":

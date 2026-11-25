@@ -27,6 +27,7 @@ const DynamicServicesGrid = ({
   expandedServices,
   setExpandedServices,
   onAskAI,
+  withProblems,
 }) => {
   const handleServiceChange = (serviceName, newServiceConfig) => {
     setNewEnv({
@@ -66,6 +67,7 @@ const DynamicServicesGrid = ({
                 onExpandedChange={(open) => setExpanded(serviceName, open)}
                 onAskAI={onAskAI}
                 missingPrerequisite={missingPrerequisite(serviceName)}
+                needsAttention={Boolean(withProblems?.has(serviceName))}
               />
             ))}
           </ul>

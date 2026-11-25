@@ -1,7 +1,7 @@
 // src/components/modals/wizard/ServicesConfigStep.js
 // Wizard step 2: search and category filter, the enabled count with the bulk
 // actions, and the services grouped by catalog category.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ToggleLeft, ToggleRight } from "lucide-react";
 import { getProviderServices } from "../../../config/providersConfig";
 import DynamicServicesGrid, {
@@ -60,9 +60,13 @@ const ServicesConfigStep = ({
   setExpandedServices,
   onAskAI,
   focusHeading,
+  problems = [],
 }) => {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
+  // Services with a validator error (Review lists them): their rows are
+  // marked, and the first one opens when the step opens.
+  const withProblems = new Set(problems.map((p) => p.service));
 
   // The services this step renders: the provider's, present in the environment.
   const serviceNames = getProviderServices(newEnv.provider).filter(
@@ -71,6 +75,13 @@ const ServicesConfigStep = ({
   const enabledCount = serviceNames.filter(
     (name) => newEnv.services[name].enabled,
   ).length;
+
+  useEffect(() => {
+    const first = groupByCategory(serviceNames)
+      .flatMap(([, names]) => names)
+      .find((name) => withProblems.has(name));
+    if (first) setExpandedServices({ ...expandedServices, [first]: true });
+  }, []);
   const categories = groupByCategory(serviceNames).map(([c]) => c);
   const visible = serviceNames.filter(
     (name) =>
@@ -182,6 +193,7 @@ const ServicesConfigStep = ({
           expandedServices={expandedServices}
           setExpandedServices={setExpandedServices}
           onAskAI={onAskAI}
+          withProblems={withProblems}
         />
       ) : (
         <EmptyState

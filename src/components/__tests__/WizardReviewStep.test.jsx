@@ -77,6 +77,12 @@ describe("WizardReviewStep readiness gates", () => {
 
     expect(screen.queryByText(CONSEQUENCE_NO_KEY)).not.toBeInTheDocument();
     expect(screen.getByText(CONSEQUENCE_NO_REPO)).toBeInTheDocument();
+    // Switched off, the repository is not used: Delivery does not list it.
+    expect(
+      screen.queryByText("git@github.com:openprime/demo-infra.git"),
+    ).toBeNull();
+    expect(screen.queryByText("Branch or revision")).toBeNull();
+    expect(screen.queryByText("Deploy key")).toBeNull();
   });
 
   // A switched-on section states intent: its empty required field is a

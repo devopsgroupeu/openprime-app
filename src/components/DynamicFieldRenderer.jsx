@@ -83,8 +83,9 @@ const DynamicFieldRenderer = ({
           </div>
           <Switch
             id={id}
-            checked={Boolean(value)}
-            onCheckedChange={() => !disabled && handleChange(!value)}
+            // A string toggle stores "true" or "false"; "false" is off.
+            checked={value === true || value === "true"}
+            onCheckedChange={(checked) => !disabled && handleChange(checked)}
             disabled={disabled}
             aria-describedby={descId}
           />

@@ -7,7 +7,10 @@ import {
 } from "@testing-library/react";
 import { useState } from "react";
 import HelmChartsStep from "../HelmChartsStep";
-import { generateDefaultHelmChartsConfig } from "../../../../config/helmChartsConfig";
+import {
+  HELM_CHARTS_CONFIG,
+  generateDefaultHelmChartsConfig,
+} from "../../../../config/helmChartsConfig";
 
 // Stateful harness: HelmChartsStep is controlled (newEnv / setNewEnv), so the
 // quick-start buttons need a real state owner to observe — mirrors the wizard.
@@ -274,6 +277,20 @@ describe("HelmChartsStep custom values", () => {
     expect(editor()).toHaveValue("grafana:\n  replicas: 2");
   });
 
+  // An unavailable chart has a disabled switch; stored on, it still gets no
+  // values button.
+  it("offers no custom values on an unavailable chart", () => {
+    HELM_CHARTS_CONFIG.loki.enabled = false;
+    try {
+      renderCharts({ loki: { enabled: true, customValues: false } });
+      expect(
+        screen.queryByRole("button", { name: /custom values for Loki/i }),
+      ).toBeNull();
+    } finally {
+      HELM_CHARTS_CONFIG.loki.enabled = true;
+    }
+  });
+
   it("offers custom values only on enabled charts", () => {
     renderCharts({ loki: { enabled: false, customValues: true } });
     expect(
@@ -518,5 +535,36 @@ describe("HelmChartsStep custom values", () => {
         ),
       ),
     );
+  });
+});
+
+// Like Services: a template moves focus only when it turned something on.
+describe("HelmChartsStep templates and focus", () => {
+  it("leaves focus where it is when a template turns nothing on", () => {
+    const focusHeading = vi.fn();
+    const monitoring = ["prometheusStack", "loki", "promtail"];
+    const clusters = monitoring.map(
+      (key) => HELM_CHARTS_CONFIG[key].k8sServices,
+    );
+    monitoring.forEach(
+      (key) => (HELM_CHARTS_CONFIG[key].k8sServices = ["aks"]),
+    );
+    try {
+      render(
+        <HelmChartsStep
+          newEnv={envWith("eks")}
+          setNewEnv={() => {}}
+          focusHeading={focusHeading}
+        />,
+      );
+      fireEvent.click(screen.getByText("Monitoring stack"));
+      expect(focusHeading).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByText("Ingress stack"));
+      expect(focusHeading).toHaveBeenCalledTimes(1);
+    } finally {
+      monitoring.forEach(
+        (key, i) => (HELM_CHARTS_CONFIG[key].k8sServices = clusters[i]),
+      );
+    }
   });
 });

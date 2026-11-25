@@ -114,6 +114,9 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   // Create mode: the wizard opened on a stored draft, until Start over.
   const [draftRestored, setDraftRestored] = useState(initial.restored);
   const [confirmStartOver, setConfirmStartOver] = useState(false);
+  // Start over ran from its dialog: it moves focus itself (its trigger is
+  // gone); Keep draft and Escape give it back to the trigger.
+  const startedOver = useRef(false);
   // The default region preference, for a wizard started over.
   const [preferredRegion, setPreferredRegion] = useState(null);
   // Bumped by Start over: the steps and the deploy key state start afresh.
@@ -322,9 +325,10 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     [isEditMode, baseline, newEnv],
   );
   const leaveGuard = useUnsavedGuard(dirty && !isLoading);
-  // The tab names the environment as saved, not the draft being edited.
-  const savedName = useMemo(
-    () => (baseline ? JSON.parse(baseline).name : null),
+  // The environment as saved: the tab names it (not the draft being edited),
+  // and Basics never offers a new state bucket for the one it has.
+  const saved = useMemo(
+    () => (baseline ? JSON.parse(baseline) : null),
     [baseline],
   );
 
@@ -491,28 +495,31 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       auraOpen={auraOpen}
       onToggleAura={toggleAura}
       onCancel={handleCancel}
+      // Not before an edited environment has loaded: Aura has nothing yet.
       auraSheet={
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="sm" className="2xl:hidden">
-              <AuraMark />
-              <span className="max-sm:sr-only">Aura</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent
-            aria-describedby={undefined}
-            className="w-full gap-0 p-0 sm:max-w-md"
-            // The Escape that ends an IME composition is not for the sheet.
-            onEscapeKeyDown={(e) => e.isComposing && e.preventDefault()}
-            onOpenAutoFocus={(e) => {
-              e.preventDefault();
-              e.currentTarget.querySelector("textarea")?.focus();
-            }}
-          >
-            <SheetTitle className="sr-only">Aura</SheetTitle>
-            {assistant}
-          </SheetContent>
-        </Sheet>
+        newEnv ? (
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="sm" className="2xl:hidden">
+                <AuraMark />
+                <span className="max-sm:sr-only">Aura</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              aria-describedby={undefined}
+              className="w-full gap-0 p-0 sm:max-w-md"
+              // The Escape that ends an IME composition is not for the sheet.
+              onEscapeKeyDown={(e) => e.isComposing && e.preventDefault()}
+              onOpenAutoFocus={(e) => {
+                e.preventDefault();
+                e.currentTarget.querySelector("textarea")?.focus();
+              }}
+            >
+              <SheetTitle className="sr-only">Aura</SheetTitle>
+              {assistant}
+            </SheetContent>
+          </Sheet>
+        ) : null
       }
     />
   );
@@ -562,7 +569,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                   description={activeStep?.summary}
                   documentTitle={
                     isEditMode
-                      ? `Edit ${savedName || "environment"}`
+                      ? `Edit ${saved?.name || "environment"}`
                       : "New environment"
                   }
                 />
@@ -578,6 +585,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                 validationErrors={validationErrors}
                 basicErrors={basicErrors}
                 isEditMode={isEditMode}
+                savedBucket={saved?.terraformBackend?.bucketName}
                 onEditStep={(stepId) => {
                   // Review's Edit and problem links. Basics is reachable in
                   // edit mode too (its domain is editable); with problems it
@@ -634,8 +642,12 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       </AlertDialog>
 
       <AlertDialog open={confirmStartOver} onOpenChange={setConfirmStartOver}>
-        {/* Start over moves focus itself; the trigger is gone by then. */}
-        <AlertDialogContent onCloseAutoFocus={(e) => e.preventDefault()}>
+        <AlertDialogContent
+          onCloseAutoFocus={(e) => {
+            if (startedOver.current) e.preventDefault();
+            startedOver.current = false;
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>Start over?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -645,7 +657,13 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep draft</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={startOver}>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                startedOver.current = true;
+                startOver();
+              }}
+            >
               Start over
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -8,7 +8,7 @@ import { useSshKeyGeneration } from "../../../wizard-page/useSshKeyGeneration";
 
 // Stateful harness: BasicConfigStep is controlled (newEnv / setNewEnv), so the
 // toggles need a real state owner to re-render on change — mirrors the wizard.
-function Harness({ initial }) {
+function Harness({ initial, ...props }) {
   const [newEnv, setNewEnv] = useState(initial);
   const sshKeys = useSshKeyGeneration({
     newEnv,
@@ -24,6 +24,7 @@ function Harness({ initial }) {
             newEnv={newEnv}
             setNewEnv={setNewEnv}
             sshKeys={sshKeys}
+            {...props}
           />
         </ToastProvider>
       </TooltipProvider>
@@ -41,7 +42,8 @@ const awsEnv = {
   gitRepository: { enabled: false },
 };
 
-const renderStep = (initial = awsEnv) => render(<Harness initial={initial} />);
+const renderStep = (initial = awsEnv, props = {}) =>
+  render(<Harness initial={initial} {...props} />);
 
 describe("BasicConfigStep", () => {
   it("renders all config sections for an AWS environment", () => {
@@ -96,6 +98,58 @@ describe("BasicConfigStep", () => {
       expect(art(name).querySelector("img")).not.toBeNull();
       expect(art(name).querySelector("svg")).toHaveClass(badge);
     }
+  });
+
+  // A name typed for an existing bucket is not the bucket to create.
+  it("drops a typed bucket name when the user goes back to a new bucket", () => {
+    renderStep();
+    fireEvent.click(screen.getByRole("switch", { name: /state backend/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Use an existing bucket/ }),
+    );
+    fireEvent.change(screen.getByLabelText("Bucket name"), {
+      target: { value: "my-state" },
+    });
+
+    fireEvent.click(screen.getByRole("radio", { name: /Create a new bucket/ }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Use an existing bucket/ }),
+    );
+    expect(screen.getByLabelText("Bucket name")).toHaveValue("");
+  });
+
+  // The bucket the environment has: Change offers another one, Cancel goes
+  // back to it as it was.
+  it("goes back to the bucket it had from Change", () => {
+    renderStep({
+      ...awsEnv,
+      terraformBackend: { enabled: true, bucketName: "op-demo-tf-state" },
+    });
+    const change = screen.getByRole("button", { name: "Change state bucket" });
+    fireEvent.click(change);
+    fireEvent.change(screen.getByLabelText("Bucket name"), {
+      target: { value: "other-state" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByLabelText("Bucket name")).toBeNull();
+    expect(screen.getByText("op-demo-tf-state")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Change state bucket" }),
+    ).toHaveFocus();
+  });
+
+  // Edit mode: the environment's Terraform state is in the bucket it was
+  // saved with. Basics opened again after the name was emptied still offers
+  // only another existing bucket.
+  it("never offers a new bucket for an environment saved with one", () => {
+    renderStep(
+      { ...awsEnv, terraformBackend: { enabled: true, bucketName: "" } },
+      { isEditMode: true, savedBucket: "op-demo-tf-state" },
+    );
+    expect(screen.queryByRole("radio", { name: /bucket/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Create backend" })).toBeNull();
+    expect(screen.getByLabelText("Bucket name")).toHaveValue("");
   });
 
   it("reveals the Git Repository config when its toggle is enabled", () => {

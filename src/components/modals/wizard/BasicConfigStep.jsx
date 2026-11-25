@@ -72,13 +72,17 @@ export const GLOBAL_PREFIX_RE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*-$/;
 
 // isEditMode locks Environment Name and Global Prefix: both are baked into every
 // generated Terraform resource name, so changing them on an existing environment
-// makes the next apply a full destroy/recreate.
+// makes the next apply a full destroy/recreate. `savedBucket`: the state bucket
+// the edited environment was saved with. Its Terraform state is there, so the
+// bucket can only change to another existing one; a new bucket would leave the
+// state behind.
 const BasicConfigStep = ({
   newEnv,
   setNewEnv,
   sshKeys,
   validationErrors = [],
   isEditMode = false,
+  savedBucket,
 }) => {
   const toast = useToast();
   const id = useId();
@@ -95,6 +99,8 @@ const BasicConfigStep = ({
   const hasBucket = Boolean(newEnv.terraformBackend?.bucketName?.trim());
   const [bucketReadOnly, setBucketReadOnly] = useState(hasBucket);
   const [useExistingBucket, setUseExistingBucket] = useState(hasBucket);
+  // The bucket shown before Change, which Cancel goes back to.
+  const [bucketBeforeChange, setBucketBeforeChange] = useState(null);
   // Global Prefix auto-suggests from the name until the user hand-edits it.
   // Initialized from the current values so a resumed draft (or an
   // already-customized prefix) isn't clobbered on mount.
@@ -124,6 +130,30 @@ const BasicConfigStep = ({
     } finally {
       setLoadingCredentials(false);
     }
+  };
+
+  const setBucketName = (bucketName) =>
+    setNewEnv({
+      ...newEnv,
+      terraformBackend: { ...newEnv.terraformBackend, bucketName },
+    });
+
+  // A name typed for an existing bucket is not the bucket to create.
+  const chooseExistingBucket = (existing) => {
+    setUseExistingBucket(existing);
+    if (!existing && !backendCreated) setBucketName("");
+  };
+
+  const changeBucket = () => {
+    setBucketBeforeChange(newEnv.terraformBackend.bucketName);
+    setBucketReadOnly(false);
+  };
+
+  const cancelBucketChange = () => {
+    setBucketName(bucketBeforeChange);
+    setUseExistingBucket(true);
+    setBucketReadOnly(true);
+    setBucketBeforeChange(null);
   };
 
   const errorFor = (fieldName) =>
@@ -540,13 +570,17 @@ const BasicConfigStep = ({
           setNewEnv={setNewEnv}
           credentials={credentials}
           useExistingBucket={useExistingBucket}
-          setUseExistingBucket={setUseExistingBucket}
+          setUseExistingBucket={chooseExistingBucket}
+          existingOnly={isEditMode && Boolean(savedBucket)}
           backendCreated={backendCreated}
           creatingBackend={creatingBackend}
           createdBucketName={createdBucketName}
           onCreateBackend={handleCreateBackend}
           bucketReadOnly={bucketReadOnly}
-          onChangeBucket={() => setBucketReadOnly(false)}
+          onChangeBucket={changeBucket}
+          onCancelChange={
+            bucketBeforeChange === null ? undefined : cancelBucketChange
+          }
           error={errorFor("bucketName")}
         />
       )}

@@ -88,6 +88,8 @@ const WizardReviewStep = ({
   const needsGitRepo = hasKubernetesService || hasHelmCharts;
   const gitOn = Boolean(newEnv.gitRepository?.enabled);
   const gitUrlSet = Boolean(newEnv.gitRepository?.url?.trim());
+  // Switched off, git keeps its fields but is not used: Delivery leaves it out.
+  const gitUsed = gitOn && gitUrlSet;
   const sshKeySet = Boolean(
     newEnv.gitRepository?.sshKey?.trim() ||
     newEnv.gitRepository?.sshKeyConfigured,
@@ -286,7 +288,7 @@ const WizardReviewStep = ({
       >
         <DetailList>
           <DetailRow label="Git repository">
-            {gitUrlSet ? (
+            {gitUsed ? (
               <span className="flex items-center gap-2">
                 <LogoTile {...gitLogo(git.url)} size="sm" />
                 <Value mono>{git.url.trim()}</Value>
@@ -295,7 +297,7 @@ const WizardReviewStep = ({
               <Value />
             )}
           </DetailRow>
-          {gitUrlSet ? (
+          {gitUsed ? (
             <>
               <DetailRow label="Branch or revision">
                 <Value mono>{git.branch}</Value>

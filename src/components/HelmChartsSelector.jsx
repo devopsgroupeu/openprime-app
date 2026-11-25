@@ -133,7 +133,7 @@ const HelmChartsSelector = ({ value = {}, onChange, k8sServiceName }) => {
                         <p className="text-xs text-muted-foreground">
                           {chart.description}
                         </p>
-                        {enabled ? (
+                        {enabled && isChartAvailable ? (
                           // One button for both labels: focus comes back to
                           // it after the dialog, whatever it says then.
                           <Button

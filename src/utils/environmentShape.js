@@ -23,8 +23,9 @@ const FIELD_ALIASES = {
 
 // Charts the wizard can no longer render or generate. Keeping them in a loaded
 // environment inflates the "N charts selected" counters while generation
-// silently drops them, so they are removed on load. The stored JSONB is left
-// alone — these charts never deployed anything, so there is nothing to migrate.
+// silently drops them, so they are removed on load, and the next save stores
+// the environment without them (custom values included). These charts never
+// deployed anything, so nothing else is lost.
 const pruneRemovedCharts = (helmCharts) => {
   if (!helmCharts || typeof helmCharts !== "object") return helmCharts;
   const kept = Object.entries(helmCharts).filter(([key]) =>
