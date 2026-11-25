@@ -69,6 +69,24 @@ describe("PreferencesTab default provider", () => {
   });
 });
 
+// No two providers list the same region, so the branch that keeps the region
+// on a provider change is pinned here, at the handler.
+describe("PreferencesTab provider change", () => {
+  it("keeps a region the new provider lists", () => {
+    const onPreferenceChange = vi.fn();
+    const { provider } = renderTab(
+      { defaultProvider: "aws", defaultRegion: "datacenter-1" },
+      onPreferenceChange,
+    );
+
+    fireEvent.change(provider, { target: { value: "onpremise" } });
+
+    expect(onPreferenceChange.mock.calls).toEqual([
+      ["defaultProvider", "onpremise"],
+    ]);
+  });
+});
+
 // D-9: Azure and Google Cloud are on the roadmap. Unlike On-premises (OP-271
 // above) they cannot be picked, but a stored one still shows as the current
 // value instead of AWS.
