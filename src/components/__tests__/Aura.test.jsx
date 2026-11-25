@@ -17,7 +17,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ToastProvider } from "@/contexts/ToastContext";
 import AuraChatButton from "../AuraChatButton";
 import AIChatModal from "../modals/AIChatModal";
+import { AURA_ERROR } from "../modals/ai-chat/AuraConversation";
 import { STALL_MS } from "../modals/ai-chat/streamChat";
+import { SERVICES_CONFIG } from "../../config/servicesConfig";
 import WizardAssistant from "../WizardAssistant";
 
 // The wizard owns the messages, as WizardPage does.
@@ -35,13 +37,13 @@ function WizardHarness() {
   );
 }
 
-function ModalHarness({ onClose = () => {} }) {
+function ModalHarness({ onClose = () => {}, service = "eks" }) {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState("");
   return (
     <AIChatModal
       isOpen
-      service="eks"
+      service={service}
       serviceTitle="EKS"
       wizardValues={{ name: "staging" }}
       messages={messages}
@@ -378,6 +380,23 @@ describe("Aura window", () => {
 });
 
 describe("Aura service dialog", () => {
+  // A catalog entry the request cannot be built from fails like a request.
+  it("shows a failed answer when the question cannot be sent", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    SERVICES_CONFIG.nofields = { displayName: "No fields" };
+    try {
+      render(<ModalHarness service="nofields" />);
+      type("Which node size?");
+      fireEvent.submit(composer().form);
+
+      expect(await thread().findByText(AURA_ERROR)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Try again" })).toBeVisible();
+      expect(requests).toHaveLength(0);
+    } finally {
+      delete SERVICES_CONFIG.nofields;
+    }
+  });
+
   it("lets Escape end an IME composition without closing", () => {
     const onClose = vi.fn();
     render(<ModalHarness onClose={onClose} />);

@@ -160,7 +160,7 @@ const AIChatModal = ({
   /**
    * Stream the answer to `userMessage`, asked after the `previous` messages
    */
-  const ask = (previous, userMessage) => {
+  const stream = (previous, userMessage) => {
     setSuggestion(null);
 
     const aiMessageId = Date.now() + 1;
@@ -290,6 +290,20 @@ const AIChatModal = ({
         });
       },
     );
+  };
+
+  // A question the request cannot be built for (a catalog entry without
+  // fields) fails like a request: an error marker with Try again.
+  const ask = (previous, userMessage) => {
+    try {
+      stream(previous, userMessage);
+    } catch (err) {
+      console.error(err);
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now() + 1, type: "ai", content: AURA_ERROR, error: true },
+      ]);
+    }
   };
 
   /**
