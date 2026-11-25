@@ -87,7 +87,7 @@ export default function CommandPalette({
   };
   // Leaving goes through the page's leave guard (unsaved settings, a running
   // generate job) like a link click does.
-  const go = (to, options) => guardedNavigate(() => navigate(to, options));
+  const go = (to, options) => guardedNavigate(() => navigate(to, options), to);
 
   const quickActions = [
     {

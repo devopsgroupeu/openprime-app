@@ -17,14 +17,20 @@ import { Spinner } from "@/components/ui/spinner";
 /** The dirty form's confirm; shell navigation (palette, shortcuts) asks it. */
 const registered = { confirm: null };
 
-/** Runs `go` now, or after the user confirmed leaving the dirty form (non-link navigation). */
-export function guardedNavigate(go) {
-  if (registered.confirm) registered.confirm(go);
+/**
+ * Runs `go` now, or after the user confirmed leaving the dirty form (non-link navigation).
+ * `to`, the target path, skips the question when the form stays on screen there.
+ */
+export function guardedNavigate(go, to) {
+  if (registered.confirm) registered.confirm(go, to);
   else go();
 }
 
-/** Dirty-form guard: `beforeunload`, in-app link clicks and every `guardedNavigate` call. */
-export function useUnsavedGuard(dirty) {
+/**
+ * Dirty-form guard: `beforeunload`, in-app link clicks and every `guardedNavigate` call.
+ * `within`: a path prefix the form stays mounted under (the settings tabs); moves there keep it.
+ */
+export function useUnsavedGuard(dirty, { within } = {}) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [pending, setPending] = useState(null);
@@ -35,7 +41,15 @@ export function useUnsavedGuard(dirty) {
       setPending(null);
       return;
     }
-    const confirm = (go) => setPending({ go });
+    // Paths that keep the form and its edits: this page (another ?tab= or
+    // filter; the router's path, so it holds under any router) or, with
+    // `within`, every path under it.
+    const keeps = (path) =>
+      within ? path.startsWith(within) : path === pathname;
+    const confirm = (go, to) => {
+      if (to && keeps(new URL(to, window.location.href).pathname)) go();
+      else setPending({ go });
+    };
     registered.confirm = confirm;
     const onBeforeUnload = (e) => e.preventDefault();
     const onClick = (e) => {
@@ -52,9 +66,7 @@ export function useUnsavedGuard(dirty) {
         return;
       const url = new URL(anchor.href, window.location.href);
       if (url.origin !== window.location.origin) return;
-      // Same page, other ?tab= or filter: the page stays mounted (the
-      // router's path, so it holds under any router).
-      if (url.pathname === pathname) return;
+      if (keeps(url.pathname)) return;
       e.preventDefault();
       e.stopPropagation();
       const href = `${url.pathname}${url.search}${url.hash}`;
@@ -67,7 +79,7 @@ export function useUnsavedGuard(dirty) {
       window.removeEventListener("beforeunload", onBeforeUnload);
       document.removeEventListener("click", onClick, true);
     };
-  }, [dirty, navigate, pathname]);
+  }, [dirty, navigate, pathname, within]);
 
   return {
     pending: pending !== null,
@@ -80,8 +92,8 @@ export function useUnsavedGuard(dirty) {
 }
 
 /** Sticky save bar of multi-field forms: Discard and Save when dirty; guards navigation. */
-export function SaveBar({ dirty, saving, onSave, onDiscard }) {
-  const guard = useUnsavedGuard(dirty);
+export function SaveBar({ dirty, saving, onSave, onDiscard, within }) {
+  const guard = useUnsavedGuard(dirty, { within });
   return (
     <>
       {dirty ? (

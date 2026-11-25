@@ -69,11 +69,6 @@ const SettingsPage = () => {
     }
   }, [location.state]);
 
-  // Leaving a page drops its unsaved edits (the save bar asked first).
-  useEffect(() => {
-    if (saved) discardChanges();
-  }, [activeTab]);
-
   const loadUserData = async () => {
     try {
       setUserStatus("loading");
@@ -143,13 +138,8 @@ const SettingsPage = () => {
           gitIntegration,
         }),
       ]);
+      // What was sent; edits typed during the PUT stay dirty against it.
       setSaved({ profile, preferences: userPreferences });
-      // A tab change during the PUT reset the drafts to the old saved
-      // objects; put the saved values back there only, keep later edits.
-      setProfile((cur) => (cur === saved.profile ? profile : cur));
-      setUserPreferences((cur) =>
-        cur === saved.preferences ? userPreferences : cur,
-      );
       toast.success("Changes saved");
     } catch (error) {
       console.error("Failed to save settings:", error);
@@ -239,11 +229,12 @@ const SettingsPage = () => {
 
   const onCredentials = activeTab === "cloud-credentials";
   const status = onCredentials ? credentialsStatus : userStatus;
+  // The account and preferences drafts live across the tabs; either one
+  // shows the save bar, on every tab, and Save sends both.
   const dirty =
     userStatus === "ready" &&
-    (activeTab === "account"
-      ? changed(profile, saved.profile)
-      : changed(userPreferences, saved.preferences));
+    (changed(profile, saved.profile) ||
+      changed(userPreferences, saved.preferences));
 
   return (
     <>
@@ -291,16 +282,15 @@ const SettingsPage = () => {
                 />
               ) : null}
             </div>
-            {!onCredentials ? (
-              <SaveBar
-                dirty={dirty}
-                saving={saving}
-                onSave={saveSettings}
-                onDiscard={discardChanges}
-              />
-            ) : null}
           </>
         )}
+        <SaveBar
+          dirty={dirty}
+          saving={saving}
+          onSave={saveSettings}
+          onDiscard={discardChanges}
+          within="/settings/"
+        />
       </PageShell>
 
       {showCredentialModal && (

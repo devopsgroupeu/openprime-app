@@ -6,11 +6,12 @@ import {
   within,
 } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
-import { Link, MemoryRouter, Route, Routes } from "react-router";
+import { Link, MemoryRouter, Route, Routes, useNavigate } from "react-router";
 import { server } from "../../mocks/server";
 import { ThemeProvider } from "../../contexts/ThemeContext";
 import { ToastProvider } from "../../contexts/ToastContext";
 import { AuthProvider } from "../../contexts/AuthContext";
+import { guardedNavigate } from "@/components/shared/save-bar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import SettingsPage from "../SettingsPage";
 
@@ -26,6 +27,7 @@ function renderSettingsPage(path = "/settings/account", state, nav = null) {
               {nav}
               <Routes>
                 <Route path="/settings/:tab" element={<SettingsPage />} />
+                <Route path="/environments" element={<p>Environments</p>} />
               </Routes>
             </MemoryRouter>
           </TooltipProvider>
@@ -135,7 +137,7 @@ describe("SettingsPage", () => {
       "/settings/account",
       undefined,
       <nav>
-        <Link to="/settings/preferences">To preferences</Link>
+        <Link to="/environments">To environments</Link>
         <Link to="/settings/account">To account</Link>
       </nav>,
     );
@@ -143,19 +145,131 @@ describe("SettingsPage", () => {
     fireEvent.change(await screen.findByLabelText(/First Name/i), {
       target: { value: "Mocka" },
     });
-    fireEvent.click(screen.getByRole("link", { name: "To preferences" }));
+    fireEvent.click(screen.getByRole("link", { name: "To environments" }));
     fireEvent.click(
       await screen.findByRole("button", { name: "Discard changes" }),
     );
 
-    expect(
-      await screen.findByLabelText(/Default Cloud Provider/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Environments")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("link", { name: "To account" }));
     expect(await screen.findByLabelText(/First Name/i)).toHaveValue("Mock");
     expect(
       screen.queryByRole("button", { name: "Save" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps both drafts across the settings tabs and saves them together", async () => {
+    const puts = {};
+    server.use(
+      http.put("*/users/me/profile", async ({ request }) => {
+        puts.profile = await request.json();
+        return HttpResponse.json(puts.profile);
+      }),
+      http.put("*/users/me/preferences", async ({ request }) => {
+        puts.preferences = await request.json();
+        return HttpResponse.json(puts.preferences);
+      }),
+    );
+    renderSettingsPage(
+      "/settings/account",
+      undefined,
+      <nav>
+        <Link to="/settings/preferences">To preferences</Link>
+        <Link to="/settings/account">To account</Link>
+      </nav>,
+    );
+
+    fireEvent.change(await screen.findByLabelText(/Last Name/i), {
+      target: { value: "Person" },
+    });
+    // No prompt between settings tabs: the account edit stays.
+    fireEvent.click(screen.getByRole("link", { name: "To preferences" }));
+    fireEvent.change(await screen.findByLabelText(/Default Region/i), {
+      target: { value: "eu-central-1" },
+    });
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+    expect(puts.profile).toEqual({
+      firstName: "Mock",
+      lastName: "Person",
+      email: "mock@openprime.dev",
+    });
+    expect(puts.preferences).toMatchObject({ defaultRegion: "eu-central-1" });
+    expect(
+      screen.queryByRole("region", { name: "Unsaved changes" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("link", { name: "To account" }));
+    expect(await screen.findByLabelText(/Last Name/i)).toHaveValue("Person");
+    expect(
+      screen.queryByRole("region", { name: "Unsaved changes" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the save bar and the leave guard on the credentials tab", async () => {
+    renderSettingsPage(
+      "/settings/account",
+      undefined,
+      <nav>
+        <Link to="/settings/cloud-credentials">To credentials</Link>
+        <Link to="/environments">To environments</Link>
+      </nav>,
+    );
+
+    fireEvent.change(await screen.findByLabelText(/First Name/i), {
+      target: { value: "Mocka" },
+    });
+    fireEvent.click(screen.getByRole("link", { name: "To credentials" }));
+
+    expect(await screen.findByText("aws-sandbox")).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Unsaved changes" }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("link", { name: "To environments" }));
+    expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+  });
+
+  it("does not ask when the palette moves between settings tabs", async () => {
+    function PaletteJump({ to }) {
+      const navigate = useNavigate();
+      return (
+        <button
+          type="button"
+          onClick={() => guardedNavigate(() => navigate(to), to)}
+        >
+          {`Jump to ${to}`}
+        </button>
+      );
+    }
+    renderSettingsPage(
+      "/settings/account",
+      undefined,
+      <nav>
+        <PaletteJump to="/settings/preferences" />
+        <PaletteJump to="/environments" />
+      </nav>,
+    );
+
+    fireEvent.change(await screen.findByLabelText(/First Name/i), {
+      target: { value: "Mocka" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Jump to /settings/preferences" }),
+    );
+
+    expect(
+      await screen.findByLabelText(/Default Cloud Provider/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Unsaved changes" }),
+    ).toBeInTheDocument();
+    // Leaving settings still asks.
+    fireEvent.click(
+      screen.getByRole("button", { name: "Jump to /environments" }),
+    );
+    expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
   });
 
   it("shows the saved values after a tab change while saving", async () => {
@@ -185,9 +299,6 @@ describe("SettingsPage", () => {
     await waitFor(() => expect(release).toBeDefined());
     // Away and back while the PUT is still in flight.
     fireEvent.click(screen.getByRole("link", { name: "To preferences" }));
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Discard changes" }),
-    );
     await screen.findByLabelText(/Default Cloud Provider/i);
     fireEvent.click(screen.getByRole("link", { name: "To account" }));
     await screen.findByLabelText(/First Name/i);
