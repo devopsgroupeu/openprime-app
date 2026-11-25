@@ -105,9 +105,13 @@ const WizardReviewStep = ({
   const services = Object.entries(newEnv.services || {}).filter(
     ([, config]) => config?.enabled,
   );
-  // Only the charts the Helm step shows: on the enabled cluster, still known.
+  // Only the charts the Helm step shows: on the enabled cluster, still known,
+  // not always installed (Argo CD, Karpenter).
   const shownCharts = hasKubernetesService
-    ? charts.filter((key) => getHelmChartConfig(key))
+    ? charts.filter((key) => {
+        const chart = getHelmChartConfig(key);
+        return chart && !chart.implicit;
+      })
     : [];
   const provider = PROVIDERS[newEnv.provider];
   const regionCode = newEnv.region || newEnv.location;

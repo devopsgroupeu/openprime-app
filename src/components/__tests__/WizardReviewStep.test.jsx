@@ -203,3 +203,27 @@ describe("WizardReviewStep summary", () => {
     expect(onEditStep).toHaveBeenCalledWith("helm");
   });
 });
+
+// Like the Helm step: Argo CD and Karpenter are always installed, a stored
+// selection of them is not a chart the user picked.
+describe("WizardReviewStep Helm charts", () => {
+  it("lists only the charts the Helm step lists", () => {
+    renderStep({
+      ...baseEnv,
+      services: {
+        eks: {
+          enabled: true,
+          helmCharts: {
+            argocd: { enabled: true, customValues: false },
+            loki: { enabled: true },
+          },
+        },
+      },
+    });
+    expect(
+      screen.getByRole("heading", { name: "Helm charts (1)" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Loki")).toBeInTheDocument();
+    expect(screen.queryByText("ArgoCD")).toBeNull();
+  });
+});
