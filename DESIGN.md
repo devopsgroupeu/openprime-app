@@ -704,7 +704,6 @@ Follow the code unless your task is to close one of these; never "fix" them on t
 
 | Decision or rule                                 | Code today                                                                                                                                                                               |
 | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unused motion selectors are removed              | `src/styles/motion.css` still honours `data-motion="reduce"` and `"full"` on `<html>` (a "Preferences override") that nothing sets; only the OS setting applies                          |
 | Legacy `outline` variants are compatibility only | Badge `outline` on the Roadmap badges and the detail Helm tab version (`environment-detail/HelmChartsList.jsx`; the wizard and Review use `tag`); Button `outline` on Aura's "Try again" |
 
 ## 11. Definition of done and commands

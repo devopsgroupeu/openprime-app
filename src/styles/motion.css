@@ -107,12 +107,11 @@
 }
 
 /* eslint-disable css/no-important -- reduced motion must beat the
-   animation and transition utilities. */
-/* Reduced motion (OS setting or the Preferences override `data-motion="reduce"` on <html>):
-   entrance, slide and scale become a plain fade of --dur-fast; spinners stay. */
+   animation utilities. */
+/* Reduced motion (OS setting): entrance, slide and scale become a plain fade
+   of --dur-fast; spinners stay. */
 @media (prefers-reduced-motion: reduce) {
-  html:not([data-motion="full"])
-    :is([data-state="open"], [data-state="closed"]) {
+  :is([data-state="open"], [data-state="closed"]) {
     --tw-enter-scale: 1;
     --tw-exit-scale: 1;
     --tw-enter-translate-x: 0;
@@ -121,26 +120,9 @@
     --tw-exit-translate-y: 0;
     animation-duration: var(--dur-fast) !important;
   }
-  html:not([data-motion="full"]) .motion-enter {
+  .motion-enter {
     animation: motion-fade var(--dur-fast) linear both;
   }
-}
-html[data-motion="reduce"] :is([data-state="open"], [data-state="closed"]) {
-  --tw-enter-scale: 1;
-  --tw-exit-scale: 1;
-  --tw-enter-translate-x: 0;
-  --tw-enter-translate-y: 0;
-  --tw-exit-translate-x: 0;
-  --tw-exit-translate-y: 0;
-  animation-duration: var(--dur-fast) !important;
-}
-html[data-motion="reduce"] .motion-enter {
-  animation: motion-fade var(--dur-fast) linear both;
-}
-html[data-motion="reduce"] *,
-html[data-motion="reduce"] *::before,
-html[data-motion="reduce"] *::after {
-  transition-duration: var(--dur-fast) !important;
 }
 
 /* eslint-enable css/no-important */
