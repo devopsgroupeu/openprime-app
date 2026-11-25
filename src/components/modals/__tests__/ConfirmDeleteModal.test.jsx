@@ -151,4 +151,27 @@ describe("ConfirmDeleteModal", () => {
     expect(screen.getByRole("alertdialog")).toBeInTheDocument();
     expect(screen.getByText('Delete "demo-prod"?')).toBeInTheDocument();
   });
+
+  // Enter in the name field submits, like any one-field form.
+  it("deletes on Enter once the typed name matches, not before", async () => {
+    const onConfirm = vi.fn();
+    render(
+      <ConfirmDeleteModal
+        environment={{ id: "env-001", name: "demo-prod" }}
+        onClose={() => {}}
+        onConfirm={onConfirm}
+      />,
+    );
+    const input = screen.getByLabelText("Type demo-prod to confirm");
+    const form = input.closest("form");
+    expect(form).not.toBeNull();
+
+    fireEvent.change(input, { target: { value: "demo-pro" } });
+    fireEvent.submit(form);
+    expect(onConfirm).not.toHaveBeenCalled();
+
+    fireEvent.change(input, { target: { value: "demo-prod" } });
+    fireEvent.submit(form);
+    await waitFor(() => expect(onConfirm).toHaveBeenCalledTimes(1));
+  });
 });

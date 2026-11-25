@@ -61,30 +61,43 @@ export function ConfirmDestructiveDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         {children}
-        {typeToConfirm !== undefined ? (
-          <Field>
-            <FieldLabel htmlFor={inputId}>
-              Type {typeToConfirm} to confirm
-            </FieldLabel>
-            <Input
-              id={inputId}
-              autoComplete="off"
-              value={typed}
-              onChange={(e) => setTyped(e.target.value)}
-            />
-          </Field>
-        ) : null}
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-          <Button
-            variant="destructive"
-            onClick={confirm}
-            disabled={blocked || pending}
-          >
-            {pending ? <Spinner aria-hidden /> : null}
-            {confirmLabel}
-          </Button>
-        </AlertDialogFooter>
+        {/* A form, so Enter in the name field confirms; `contents` keeps the
+            dialog's spacing. */}
+        <form
+          className="contents"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!blocked && !pending) confirm();
+          }}
+        >
+          {typeToConfirm !== undefined ? (
+            <Field>
+              <FieldLabel htmlFor={inputId}>
+                <span>
+                  Type <span className="font-mono">{typeToConfirm}</span> to
+                  confirm
+                </span>
+              </FieldLabel>
+              <Input
+                id={inputId}
+                autoComplete="off"
+                value={typed}
+                onChange={(e) => setTyped(e.target.value)}
+              />
+            </Field>
+          ) : null}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+            <Button
+              type="submit"
+              variant="destructive"
+              disabled={blocked || pending}
+            >
+              {pending ? <Spinner aria-hidden /> : null}
+              {confirmLabel}
+            </Button>
+          </AlertDialogFooter>
+        </form>
       </AlertDialogContent>
     </AlertDialog>
   );
