@@ -7,6 +7,10 @@ import { PROVIDERS_CONFIG } from "../config/providersConfig";
 const DOMAIN_PATTERN =
   /^(?=.{1,253}$)([A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
 
+// Services that need another service enabled: EKS and RDS run inside the VPC.
+// The wizard's "Needs VPC" badge reads the same map.
+export const SERVICE_PREREQUISITES = { eks: "vpc", rds: "vpc" };
+
 export class ConfigValidationError extends Error {
   constructor(message, field = null, value = null) {
     super(message);
@@ -329,18 +333,18 @@ export const validateEnvironmentConfig = (environment) => {
       (serviceName) => environment.services[serviceName]?.enabled,
     );
 
-    // EKS requires VPC
-    if (enabledServices.includes("eks") && !enabledServices.includes("vpc")) {
-      errors.push(
-        new ConfigValidationError("EKS requires VPC to be enabled", "eks"),
-      );
-    }
-
-    // RDS requires VPC
-    if (enabledServices.includes("rds") && !enabledServices.includes("vpc")) {
-      errors.push(
-        new ConfigValidationError("RDS requires VPC to be enabled", "rds"),
-      );
+    for (const [service, required] of Object.entries(SERVICE_PREREQUISITES)) {
+      if (
+        enabledServices.includes(service) &&
+        !enabledServices.includes(required)
+      ) {
+        errors.push(
+          new ConfigValidationError(
+            `${service.toUpperCase()} requires ${required.toUpperCase()} to be enabled`,
+            service,
+          ),
+        );
+      }
     }
   }
 

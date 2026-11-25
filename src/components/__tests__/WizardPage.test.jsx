@@ -338,6 +338,18 @@ describe("WizardPage", () => {
     expect(screen.getByPlaceholderText("e.g. example.com")).not.toBeDisabled();
   });
 
+  it("lets Review's Edit open Basics in edit mode", async () => {
+    renderWizardEdit(vi.fn());
+    await stepHeading("Services");
+    while (screen.queryByRole("button", { name: /Continue/i })) {
+      fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+    }
+    await stepHeading("Review");
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit basics" }));
+    await stepHeading("Basics");
+  });
+
   // The create payload is an explicit whitelist, so a new field renders,
   // validates and reviews correctly while being dropped on the way out.
   it("sends the domain in the create payload", async () => {

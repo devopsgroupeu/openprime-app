@@ -58,7 +58,13 @@ const WizardStepContent = ({
         />
       );
     case "review":
-      return <WizardReviewStep newEnv={newEnv} onEditStep={onEditStep} />;
+      return (
+        <WizardReviewStep
+          newEnv={newEnv}
+          onEditStep={onEditStep}
+          problems={basicErrors}
+        />
+      );
     default:
       return null;
   }

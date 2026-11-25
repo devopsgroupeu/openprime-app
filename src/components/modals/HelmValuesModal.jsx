@@ -23,12 +23,12 @@ const HelmValuesModal = ({ chartName, values, onChange, onClose, onSave }) => {
           <DialogDescription>Helm values in YAML.</DialogDescription>
         </DialogHeader>
 
-        {/* Generation reads only `services.eks.helmCharts.<chart>.enabled`; no
-            template consumes these values yet (OP-200). Saying so beats letting
-            the user believe their YAML reaches the generated output. */}
-        <Callout variant="warning" title="Saved, but not applied yet.">
-          These values are stored with your environment and kept across edits,
-          but generation does not read them: charts are generated with their
+        {/* The wizard keeps no chart values (environments store none) and
+            generation reads only `services.eks.helmCharts.<chart>.enabled`
+            (OP-200). Saying so beats letting the user believe their YAML is
+            kept or reaches the generated output. */}
+        <Callout variant="warning" title="Preview only.">
+          Custom values are not saved yet: charts are generated with their
           defaults. To customize a chart today, edit its values file in the
           generated repository after the push.
         </Callout>
@@ -55,7 +55,7 @@ const HelmValuesModal = ({ chartName, values, onChange, onClose, onSave }) => {
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={onSave}>Save values</Button>
+          <Button onClick={onSave}>Done</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

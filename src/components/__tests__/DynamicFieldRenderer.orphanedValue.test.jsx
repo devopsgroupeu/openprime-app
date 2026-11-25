@@ -43,7 +43,7 @@ describe("DynamicFieldRenderer — dropdown with an orphaned stored value", () =
 
   it("labels it so the user knows why it is there", () => {
     renderField("1.32");
-    expect(screen.getByText("1.32 — no longer supported")).toBeInTheDocument();
+    expect(screen.getByText("1.32 (no longer supported)")).toBeInTheDocument();
     expect(
       screen.getByText(/no longer offered\. Pick a supported one/i),
     ).toBeInTheDocument();

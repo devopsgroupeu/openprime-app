@@ -1,8 +1,34 @@
 // src/components/DynamicServiceConfig.js
-import { ChevronDown, ChevronRight, MessageCircle } from "lucide-react";
-import { getServiceConfig } from "../config/servicesConfig";
+// One service row of the wizard: icon, name, one line, Aura and the switch.
+// An enabled row opens to the service's catalog fields, in catalog order.
+import { ChevronRight, Sparkles, TriangleAlert } from "lucide-react";
+import { FIELD_TYPES, getServiceConfig } from "../config/servicesConfig";
 import DynamicFieldRenderer from "./DynamicFieldRenderer";
 import ServiceIcon from "./icons/ServiceIcon";
+import { summaryOf } from "./environment-detail/ServicesList";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+
+// Controls that need the full width of the two-column field grid.
+const WIDE_FIELDS = new Set([
+  FIELD_TYPES.ARRAY,
+  FIELD_TYPES.OBJECT,
+  FIELD_TYPES.TEXTAREA,
+  FIELD_TYPES.MULTISELECT,
+  FIELD_TYPES.DYNAMIC_LIST,
+]);
 
 const DynamicServiceConfig = ({
   serviceName,
@@ -11,6 +37,7 @@ const DynamicServiceConfig = ({
   expanded,
   onToggleExpanded,
   onAskAI,
+  missingPrerequisite,
 }) => {
   const serviceDefinition = getServiceConfig(serviceName);
 
@@ -25,93 +52,114 @@ const DynamicServiceConfig = ({
     });
   };
 
+  const name = serviceDefinition.displayName;
+  const enabled = Boolean(serviceConfig.enabled);
+  const open = enabled && Boolean(expanded);
   const enabledField = serviceDefinition.fields.enabled;
   const otherFields = Object.entries(serviceDefinition.fields).filter(
     ([fieldName]) => fieldName !== "enabled",
   );
+  const line =
+    (enabled &&
+      !open &&
+      summaryOf(serviceName, serviceConfig, serviceDefinition)) ||
+    serviceDefinition.description;
+  const askLabel = `Ask Aura about ${name}`;
 
   return (
-    <div
-      className={`rounded-lg transition-colors bg-surface ${
-        serviceConfig.enabled
-          ? "border-2 border-primary"
-          : "border border-border"
-      }`}
-    >
-      <div
-        className="flex items-center justify-between p-4 cursor-pointer"
-        onClick={onToggleExpanded}
-      >
-        <div className="flex items-center space-x-3">
-          {expanded ? (
-            <ChevronDown className="w-5 h-5 text-tertiary" />
-          ) : (
-            <ChevronRight className="w-5 h-5 text-tertiary" />
-          )}
-          <div className="w-10 h-10 rounded-xl bg-primary-muted flex items-center justify-center shrink-0">
-            <ServiceIcon service={serviceName} className="size-5 text-accent" />
-          </div>
-          <div>
-            <h3 className="font-bold text-primary">
-              {serviceDefinition.displayName}
-            </h3>
-            <p className="text-sm text-secondary">
-              {serviceDefinition.description}
-            </p>
-            <span className="mt-1 inline-block rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-tertiary">
-              {serviceDefinition.category}
-            </span>
-          </div>
-        </div>
-
+    <li>
+      <Collapsible open={open} onOpenChange={() => onToggleExpanded()}>
         <div
-          className="flex items-center space-x-2"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Ask AI Button */}
-          <button
-            type="button"
-            onClick={() =>
-              onAskAI?.(serviceName, serviceDefinition.displayName)
-            }
-            className="p-1.5 text-accent hover:bg-primary-muted transition-colors rounded-md"
-            title="Ask AI about this service"
-          >
-            <MessageCircle className="w-4 h-4" />
-          </button>
-
-          {enabledField && (
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={serviceConfig.enabled}
-                onChange={() =>
-                  handleFieldChange("enabled", !serviceConfig.enabled)
-                }
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow-sm after:rounded-full after:h-5 after:w-5 after:transition-all bg-border"></div>
-            </label>
+          className={cn(
+            "relative flex items-center gap-3 px-3.5 py-3 transition-[background-color] duration-(--dur-fast)",
+            // The name is a stretched trigger: the whole row opens it, the
+            // controls sit above it.
+            "has-[[data-stretched]:hover]:bg-muted/40 has-[[data-stretched]:focus-visible]:ring-2 has-[[data-stretched]:focus-visible]:ring-ring has-[[data-stretched]:focus-visible]:ring-inset",
           )}
-        </div>
-      </div>
+        >
+          <ServiceIcon service={serviceName} className="size-8" />
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+              <h3 className="text-sm font-medium">
+                {enabled ? (
+                  <CollapsibleTrigger
+                    data-stretched
+                    className="text-left outline-none after:absolute after:inset-0"
+                  >
+                    {name}
+                  </CollapsibleTrigger>
+                ) : (
+                  name
+                )}
+              </h3>
+              {missingPrerequisite ? (
+                <Badge variant="attention">
+                  <TriangleAlert aria-hidden />
+                  Needs {missingPrerequisite}
+                </Badge>
+              ) : null}
+            </div>
+            {line ? (
+              <p className="truncate text-xs text-muted-foreground">{line}</p>
+            ) : null}
+          </div>
 
-      {expanded && serviceConfig.enabled && (
-        <div className="border-t p-4 space-y-4 border-border">
-          {otherFields.map(([fieldName, fieldConfig]) => {
-            return (
-              <DynamicFieldRenderer
-                key={fieldName}
-                fieldConfig={fieldConfig}
-                value={serviceConfig[fieldName]}
-                onChange={handleFieldChange}
-                fieldName={fieldName}
+          <div className="relative z-10 flex shrink-0 items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={askLabel}
+                  onClick={() => onAskAI?.(serviceName, name)}
+                  className="text-muted-foreground"
+                >
+                  <Sparkles aria-hidden />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{askLabel}</TooltipContent>
+            </Tooltip>
+            {enabledField && (
+              <Switch
+                checked={enabled}
+                onCheckedChange={() => handleFieldChange("enabled", !enabled)}
+                aria-label={`Enable ${name}`}
               />
-            );
-          })}
+            )}
+          </div>
+          <ChevronRight
+            aria-hidden
+            className={cn(
+              "size-4 shrink-0 text-muted-foreground transition-transform duration-(--dur-fast)",
+              open && "rotate-90",
+              !enabled && "invisible",
+            )}
+          />
         </div>
-      )}
-    </div>
+
+        <CollapsibleContent className="border-t border-border bg-muted/30 px-3.5 py-4 sm:pl-14.5">
+          <div className="grid gap-x-8 gap-y-5 lg:grid-cols-2">
+            {otherFields.map(([fieldName, fieldConfig]) => (
+              <div
+                key={fieldName}
+                className={cn(
+                  "min-w-0",
+                  WIDE_FIELDS.has(fieldConfig.type) && "lg:col-span-2",
+                )}
+              >
+                <DynamicFieldRenderer
+                  fieldConfig={fieldConfig}
+                  value={serviceConfig[fieldName]}
+                  onChange={handleFieldChange}
+                  fieldName={fieldName}
+                />
+              </div>
+            ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </li>
   );
 };
 

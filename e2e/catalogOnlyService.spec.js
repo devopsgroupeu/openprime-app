@@ -89,7 +89,7 @@ async function gotoWizardWithCatalog(ctx, catalog) {
 async function advanceToServicesStep(ctx) {
   await ctx.page.getByPlaceholder("e.g. production").fill("catalogonlytest");
   await ctx.page.getByRole("button", { name: /Continue/i }).click();
-  await ctx.page.getByText(/\/ \d+ services/).waitFor({ timeout: 10000 });
+  await ctx.page.getByText(/\d+ of \d+ enabled/).waitFor({ timeout: 10000 });
 }
 
 describe("OP-208 runtime catalog drives the wizard", () => {
@@ -122,15 +122,10 @@ describe("OP-208 runtime catalog drives the wizard", () => {
     const heading = ctx.page.getByRole("heading", { name: SERVICE_LABEL });
     await heading.waitFor({ timeout: 10000 });
 
-    // The nearest ancestor that actually holds the toggle. `filter({has})` picks
-    // the *innermost* matching div, which here is a text-only wrapper with no
-    // controls in it — measured, not assumed.
-    const card = ctx.page.locator(
-      `xpath=//h3[normalize-space()="${SERVICE_LABEL}"]/ancestor::div[.//input[@type="checkbox"]][1]`,
-    );
-
-    // The input is `sr-only`, so Playwright will not act on it. Click the label.
-    await card.locator("label").first().click();
+    // The row's switch is named after the service.
+    await ctx.page
+      .getByRole("switch", { name: `Enable ${SERVICE_LABEL}` })
+      .click();
 
     // Two separate conditions gate the fields: `enabled` AND `expanded`. The
     // toggle only sets the first, so the card still has to be opened.

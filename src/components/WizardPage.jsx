@@ -484,10 +484,15 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                 }}
                 isEditMode={isEditMode}
                 onEditStep={(stepId) => {
-                  // Step 1 stays unreachable in edit mode - the sidebar and the
-                  // Previous button already refuse it; this was the last way in.
-                  if (isEditMode && stepId === "basic") return;
+                  // Review's Edit and problem links. Basics is reachable in
+                  // edit mode too (its domain is editable); with problems it
+                  // opens on the first invalid field.
                   setCurrentStep(activeIds.indexOf(stepId) + 1);
+                  if (
+                    stepId === "basic" &&
+                    basicFieldErrors(newEnv, validationErrors).length > 0
+                  )
+                    showFieldErrors();
                 }}
                 sshKeys={sshKeys}
               />

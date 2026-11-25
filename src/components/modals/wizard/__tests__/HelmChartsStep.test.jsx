@@ -30,7 +30,7 @@ const chartsAfterIngressStack = (k8sServiceName) => {
       onChange={(v) => (latest = v)}
     />,
   );
-  fireEvent.click(screen.getByText("Ingress Stack"));
+  fireEvent.click(screen.getByText("Ingress stack"));
   return latest?.services?.[k8sServiceName]?.helmCharts || {};
 };
 
@@ -80,10 +80,26 @@ describe("HelmChartsStep — Ingress Stack quick template (OP-234)", () => {
       prometheusStack: { enabled: false, customValues: true },
     };
     render(<Harness initial={initial} onChange={(v) => (latest = v)} />);
-    fireEvent.click(screen.getByText("Ingress Stack"));
+    fireEvent.click(screen.getByText("Ingress stack"));
     expect(latest.services.eks.helmCharts.prometheusStack).toEqual({
       enabled: false,
       customValues: true,
     });
+  });
+});
+
+describe("HelmChartsStep categories", () => {
+  it("opens the categories that hold a selected chart", () => {
+    render(<Harness initial={envWith("eks")} />);
+    const category = (name) =>
+      screen.getByRole("button", { name: new RegExp(`^${name}`) });
+    expect(category("Networking")).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(screen.getByText("Ingress stack"));
+    expect(category("Networking")).toHaveAttribute("aria-expanded", "true");
+    expect(category("Monitoring")).toHaveAttribute("aria-expanded", "false");
+    expect(
+      screen.getByRole("switch", { name: "Install Ingress NGINX Controller" }),
+    ).toHaveAttribute("aria-checked", "true");
   });
 });

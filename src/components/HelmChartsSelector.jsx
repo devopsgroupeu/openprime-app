@@ -1,7 +1,19 @@
 // src/components/HelmChartsSelector.js
+// Helm charts by category: one collapsible card per category, open while it
+// holds a selected chart, chart rows with a switch and "Custom values".
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Settings, Package } from "lucide-react";
+import { ChevronRight, Package } from "lucide-react";
 import { getHelmChartsByCategory } from "../config/helmChartsConfig";
+import { IconTile } from "@/components/shared/icon-tile";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 
 const HelmChartsSelector = ({
   value = {},
@@ -9,16 +21,16 @@ const HelmChartsSelector = ({
   onEditHelmValues,
   k8sServiceName,
 }) => {
-  const [expandedCategories, setExpandedCategories] = useState({});
+  // A category the user opened or closed keeps that state; the others are
+  // open exactly while they hold a selected chart.
+  const [openCategories, setOpenCategories] = useState({});
 
-  const toggleCategory = (category) => {
-    setExpandedCategories((prev) => ({
-      ...prev,
-      [category]: !prev[category],
-    }));
-  };
+  const setCategoryOpen = (category, open) =>
+    setOpenCategories((prev) => ({ ...prev, [category]: open }));
 
-  const handleChartToggle = (chartKey, enabled) => {
+  const handleChartToggle = (chartKey, enabled, category) => {
+    // Turning off the last chart must not fold the category away.
+    setCategoryOpen(category, true);
     const newValue = {
       ...value,
       [chartKey]: {
@@ -35,116 +47,109 @@ const HelmChartsSelector = ({
     : {};
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between p-3 rounded-lg border bg-background border-border">
-        <div className="flex items-center">
-          <Package className="w-5 h-5 mr-2 text-accent" />
-          <span className="font-semibold text-primary">
-            Helm Charts Configuration
-          </span>
-        </div>
-        <div className="section-label">
-          {Object.values(value).filter((chart) => chart?.enabled).length}{" "}
-          selected
-        </div>
-      </div>
-
-      {Object.entries(chartsByCategory).map(([category, charts]) => (
-        <div
-          key={category}
-          className="border rounded-lg border-border bg-surface"
-        >
-          <div
-            className="flex items-center justify-between p-3 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => toggleCategory(category)}
+    <div className="flex flex-col gap-3">
+      {Object.entries(chartsByCategory).map(([category, charts]) => {
+        const selected = charts.filter(
+          (chart) => value[chart.key]?.enabled,
+        ).length;
+        const open = openCategories[category] ?? selected > 0;
+        return (
+          <Collapsible
+            key={category}
+            open={open}
+            onOpenChange={(next) => setCategoryOpen(category, next)}
+            className="overflow-hidden rounded-xl bg-card ring-1 ring-border ring-inset"
           >
-            <div className="flex items-center">
-              {expandedCategories[category] ? (
-                <ChevronDown className="w-4 h-4 mr-2 text-tertiary" />
-              ) : (
-                <ChevronRight className="w-4 h-4 mr-2 text-tertiary" />
-              )}
-              <span className="section-label">{category}</span>
-            </div>
-            <span className="text-sm px-2 py-1 rounded-full bg-background border border-border text-secondary">
-              {charts.filter((chart) => value[chart.key]?.enabled).length} /{" "}
-              {charts.length}
-            </span>
-          </div>
+            <h2>
+              <CollapsibleTrigger className="group flex w-full items-center gap-2 px-3.5 py-3 text-left outline-none transition-[background-color] duration-(--dur-fast) hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
+                <span className="flex-1 text-md font-medium">{category}</span>
+                <Badge
+                  variant={selected > 0 ? "success" : "neutral"}
+                  className="tabular-nums"
+                >
+                  {selected} of {charts.length}
+                </Badge>
+                <ChevronRight
+                  aria-hidden
+                  className="size-4 text-muted-foreground transition-transform duration-(--dur-fast) group-data-[state=open]:rotate-90"
+                />
+              </CollapsibleTrigger>
+            </h2>
 
-          {expandedCategories[category] && (
-            <div className="border-t p-3 space-y-3 border-border">
-              {charts.map((chart) => {
-                const chartConfig = value[chart.key] || {
-                  enabled: false,
-                  customValues: false,
-                };
-                const isChartAvailable = chart.enabled !== false;
-                return (
-                  <div
-                    key={chart.key}
-                    className={`flex items-center justify-between p-3 rounded-lg border border-border bg-background ${
-                      isChartAvailable ? "" : "opacity-50"
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <label
-                        className={`relative inline-flex items-center ${isChartAvailable ? "cursor-pointer" : "cursor-not-allowed"}`}
+            <CollapsibleContent>
+              <ul className="divide-y divide-border border-t border-border">
+                {charts.map((chart) => {
+                  const chartConfig = value[chart.key] || {
+                    enabled: false,
+                    customValues: false,
+                  };
+                  const isChartAvailable = chart.enabled !== false;
+                  return (
+                    // Below sm "Custom values" drops under the text.
+                    <li
+                      key={chart.key}
+                      className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-2 px-3.5 py-3 sm:grid-cols-[auto_1fr_auto_auto]"
+                    >
+                      <IconTile
+                        icon={Package}
+                        size="lg"
+                        className={cn(!isChartAvailable && "opacity-50")}
+                      />
+                      <div
+                        className={cn(
+                          "flex min-w-0 flex-1 flex-col gap-0.5",
+                          !isChartAvailable && "opacity-50",
+                        )}
                       >
-                        <input
-                          type="checkbox"
-                          className="sr-only peer"
-                          checked={chartConfig.enabled}
-                          disabled={!isChartAvailable}
-                          onChange={(e) =>
-                            handleChartToggle(chart.key, e.target.checked)
-                          }
-                        />
-                        <div className="w-11 h-6 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:shadow-sm after:rounded-full after:h-5 after:w-5 after:transition-all bg-border-strong"></div>
-                      </label>
-                      <div>
-                        <div
-                          className={`font-medium ${
-                            isChartAvailable ? "text-primary" : "text-tertiary"
-                          }`}
-                        >
-                          {chart.displayName}
+                        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                          <h3 className="text-sm font-medium">
+                            {chart.displayName}
+                          </h3>
+                          <span className="hidden font-mono text-xs text-muted-foreground sm:inline">
+                            {chart.chart}
+                          </span>
+                          <Badge variant="tag" className="font-mono">
+                            {chart.version}
+                          </Badge>
                           {!isChartAvailable && (
-                            <span className="ml-2 text-xs font-medium text-warning">
-                              Unavailable
-                            </span>
+                            <Badge variant="neutral">Unavailable</Badge>
                           )}
                         </div>
-                        <div
-                          className={`text-sm ${
-                            isChartAvailable
-                              ? "text-secondary"
-                              : "text-tertiary"
-                          }`}
-                        >
+                        <p className="text-xs text-muted-foreground">
                           {chart.description}
-                        </div>
+                        </p>
                       </div>
-                    </div>
 
-                    {chartConfig.enabled &&
-                      onEditHelmValues &&
-                      isChartAvailable && (
-                        <button
-                          onClick={() => onEditHelmValues(chart.key)}
-                          className="p-2 rounded-lg transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated"
-                          title="Configure chart values"
-                        >
-                          <Settings className="w-4 h-4" />
-                        </button>
-                      )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      ))}
+                      {chartConfig.enabled &&
+                        onEditHelmValues &&
+                        isChartAvailable && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => onEditHelmValues(chart.key)}
+                            aria-label={`Custom values for ${chart.displayName}`}
+                            className="col-start-2 row-start-2 justify-self-start sm:col-start-3 sm:row-start-1"
+                          >
+                            Custom values
+                          </Button>
+                        )}
+                      <Switch
+                        checked={Boolean(chartConfig.enabled)}
+                        disabled={!isChartAvailable}
+                        onCheckedChange={(checked) =>
+                          handleChartToggle(chart.key, checked, category)
+                        }
+                        aria-label={`Install ${chart.displayName}`}
+                        className="col-start-3 row-start-1 sm:col-start-4"
+                      />
+                    </li>
+                  );
+                })}
+              </ul>
+            </CollapsibleContent>
+          </Collapsible>
+        );
+      })}
     </div>
   );
 };

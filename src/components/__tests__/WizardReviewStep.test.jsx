@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { vi } from "vitest";
 import WizardReviewStep from "../WizardReviewStep";
 
 const baseEnv = {
@@ -101,5 +102,47 @@ describe("WizardReviewStep readiness gates", () => {
     expect(
       screen.queryByText(/S3 bucket name is required/i),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("WizardReviewStep summary", () => {
+  it("lists Basics problems first and links to the step", () => {
+    const onEditStep = vi.fn();
+    render(
+      <WizardReviewStep
+        newEnv={{ ...baseEnv, name: "" }}
+        onEditStep={onEditStep}
+        problems={[
+          { field: "name", message: "Enter a name for this environment." },
+        ]}
+      />,
+    );
+    const callout = screen.getByText("Basics needs attention.").parentElement;
+    expect(callout).toHaveTextContent("Enter a name for this environment.");
+    fireEvent.click(screen.getAllByRole("button", { name: "Go to Basics" })[0]);
+    expect(onEditStep).toHaveBeenCalledWith("basic");
+  });
+
+  it("shows each step with an Edit that jumps back to it", () => {
+    const onEditStep = vi.fn();
+    render(
+      <WizardReviewStep
+        newEnv={{
+          ...baseEnv,
+          services: {
+            vpc: { enabled: true },
+            eks: { enabled: true, helmCharts: { loki: { enabled: true } } },
+          },
+        }}
+        onEditStep={onEditStep}
+      />,
+    );
+    expect(screen.getByText("Resource prefix")).toBeInTheDocument();
+    expect(screen.getByText("Loki")).toBeInTheDocument();
+    // Empty values read "-", never an em dash.
+    expect(screen.getAllByText("-").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit helm charts" }));
+    expect(onEditStep).toHaveBeenCalledWith("helm");
   });
 });

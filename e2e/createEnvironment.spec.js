@@ -159,44 +159,42 @@ describe("Create Environment with All Helm Charts", () => {
       await continueButton.click();
       await ctx.page.waitForTimeout(500);
 
-      const servicesHeading = ctx.page.getByText(/services configuration/i).first();
+      const servicesHeading = ctx.page.getByRole("heading", { level: 1, name: "Services" });
       expect(await servicesHeading.isVisible()).toBe(true);
       console.log("✓ Navigated to Services Configuration");
     });
 
     // Step 6: Enable all services
     await test.step("Enable all services", async () => {
-      await ctx.page.waitForTimeout(1000);
+      const enabledCount = ctx.page.getByText(/\d+ of \d+ enabled/);
+      await enabledCount.waitFor({ state: "visible", timeout: 10000 });
 
-      const enableAllButton = ctx.page.getByTestId("toggle-all-services");
-      await enableAllButton.waitFor({ state: "visible", timeout: 10000 });
-
-      const buttonText = await enableAllButton.textContent();
-      if (buttonText && buttonText.toLowerCase().includes("enable all")) {
-        await enableAllButton.click();
-        await ctx.page.waitForTimeout(1500);
-        console.log("✓ All 15 AWS services enabled");
-      } else {
+      // Bulk actions live in the "Service actions" menu next to the count.
+      await ctx.page.getByRole("button", { name: "Service actions" }).click();
+      const enableAll = ctx.page.getByRole("menuitem", { name: "Enable all" });
+      if (await enableAll.isDisabled()) {
+        await ctx.page.keyboard.press("Escape");
         console.log("✓ All services already enabled");
+      } else {
+        await enableAll.click();
+        await ctx.page.waitForTimeout(1500);
+        console.log("✓ All AWS services enabled");
       }
 
-      // Verify button text changed
-      const updatedButtonText = await enableAllButton.textContent();
-      expect(updatedButtonText && updatedButtonText.toLowerCase()).toContain("disable all");
+      // Verify every service is now enabled
+      const [, enabled, total] = (await enabledCount.textContent()).match(/(\d+) of (\d+) enabled/);
+      expect(enabled).toBe(total);
     });
 
     // Step 7: Configure VPC CIDR
     await test.step("Configure VPC CIDR", async () => {
-      // Click on the VPC service card to expand configuration
-      const vpcCard = ctx.page
-        .locator("text=Virtual Private Cloud (VPC)")
-        .locator("..")
-        .locator("..");
-      await vpcCard.click();
+      // The service name opens its configuration
+      await ctx.page
+        .getByRole("button", { name: "Virtual Private Cloud (VPC)", exact: true })
+        .click();
       await ctx.page.waitForTimeout(500);
 
-      // Find the CIDR Block input field
-      const cidrInput = ctx.page.locator('input[type="text"]').first();
+      const cidrInput = ctx.page.getByLabel("CIDR Block");
       await cidrInput.fill(vpcCidr);
       await ctx.page.waitForTimeout(300);
       console.log(`✓ VPC CIDR set to: ${vpcCidr}`);
@@ -208,7 +206,7 @@ describe("Create Environment with All Helm Charts", () => {
       await continueButton.click();
       await ctx.page.waitForTimeout(1000);
 
-      const helmChartsHeading = ctx.page.getByText(/helm charts configuration/i).first();
+      const helmChartsHeading = ctx.page.getByRole("heading", { level: 1, name: "Helm charts" });
       expect(await helmChartsHeading.isVisible()).toBe(true);
       console.log("✓ Navigated to Helm Charts step");
     });
@@ -236,47 +234,35 @@ describe("Create Environment with All Helm Charts", () => {
         console.log("No charts selected by default, enabling charts manually...");
         await ctx.page.waitForTimeout(500);
 
-        // Step 1: Find and expand all category dropdowns
-        // Categories have ChevronDown/ChevronRight icons and are clickable
-        const categoryHeaders = ctx.page.locator('div[class*="cursor-pointer"]').filter({
-          has: ctx.page
-            .locator("span")
-            .filter({ hasText: /Monitoring|Networking|Security|Infrastructure|CI\/CD/i }),
-        });
-
-        const categoryCount = await categoryHeaders.count();
+        // Step 1: Open every closed category (its heading is the toggle)
+        const categoryToggles = ctx.page.getByRole("heading", { level: 2 }).getByRole("button");
+        const categoryCount = await categoryToggles.count();
         console.log(`Found ${categoryCount} helm chart categories`);
 
-        // Expand each category
         for (let i = 0; i < categoryCount; i++) {
-          const category = categoryHeaders.nth(i);
-          const categoryName = await category.locator("span").first().textContent();
-          console.log(`  Expanding category: ${categoryName}`);
-          await category.click();
-          await ctx.page.waitForTimeout(300);
+          const category = categoryToggles.nth(i);
+          if ((await category.getAttribute("aria-expanded")) === "false") {
+            console.log(`  Expanding category: ${await category.textContent()}`);
+            await category.click();
+            await ctx.page.waitForTimeout(300);
+          }
         }
 
-        // Step 2: Find all chart checkboxes (now visible after expanding categories)
+        // Step 2: Turn on every chart switch that is off and available
         await ctx.page.waitForTimeout(500);
-
-        // Find all checkboxes within the helm charts section
-        // Each checkbox is within a label that has a peer-checked class structure
-        const chartToggles = ctx.page.locator('input[type="checkbox"].sr-only');
+        const chartToggles = ctx.page.getByRole("switch", { name: /^Install / });
 
         const toggleCount = await chartToggles.count();
         console.log(`Found ${toggleCount} chart toggles`);
 
-        // Enable each chart that is not already enabled
         let enabledCount = 0;
         for (let i = 0; i < toggleCount; i++) {
           const toggle = chartToggles.nth(i);
-          const isChecked = await toggle.isChecked().catch(() => false);
+          const isChecked = (await toggle.getAttribute("aria-checked")) === "true";
           const isDisabled = await toggle.isDisabled().catch(() => false);
 
           if (!isChecked && !isDisabled) {
-            // Click the parent label to toggle the checkbox
-            const label = toggle.locator("..");
-            await label.click({ force: true });
+            await toggle.click();
             enabledCount++;
             await ctx.page.waitForTimeout(150);
           }

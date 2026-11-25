@@ -61,8 +61,8 @@ const configEntries = (config) =>
   );
 
 // "v1.31, Node Groups 2, vpc-cni": the important keys that are set, else the
-// first three parameters.
-const summaryOf = (name, config, definition) => {
+// first three parameters. The wizard's collapsed service rows show it too.
+export const summaryOf = (name, config, definition) => {
   const entries = configEntries(config);
   const keys = IMPORTANT_KEYS[name]?.filter((k) => k in config);
   const picked = keys?.length
