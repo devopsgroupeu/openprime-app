@@ -7,7 +7,7 @@ import {
   ChevronsUpDown,
   Pencil,
 } from "lucide-react";
-import { getServiceConfig } from "../../config/servicesConfig";
+import { FIELD_TYPES, getServiceConfig } from "../../config/servicesConfig";
 import ServiceIcon from "../icons/ServiceIcon";
 import { SettingsSection } from "@/components/shared/settings";
 import { EmptyState } from "@/components/shared/states";
@@ -18,18 +18,20 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-// The key parameters of a service, shown on its row.
-const IMPORTANT_KEYS = {
-  vpc: ["cidrBlock", "region", "enableDnsSupport"],
-  eks: ["version", "nodeGroups", "addons"],
-  rds: ["engine", "instanceType", "allocatedStorage"],
-  s3: ["bucketName", "versioning", "encryption"],
-  ecr: ["repositoryName", "imageScanningConfiguration"],
+// The parameters (catalog keys) a service's one-line summary names; other
+// services name their first set parameters.
+const SUMMARY_KEYS = {
+  vpc: ["cidr", "azCount"],
+  eks: [
+    "kubernetesVersion",
+    "defaultNodeGroupInstanceTypes",
+    "defaultNodeGroupDesiredSize",
+  ],
+  rds: ["engine", "instanceClass", "allocatedStorage"],
+  aurora: ["engine", "engineVersion", "serverlessv2MaxCapacity"],
   opensearch: ["version", "instanceType", "instanceCount"],
-  lambda: ["runtime", "memorySize", "timeout"],
-  elasticache: ["engine", "nodeType", "numNodes"],
-  secretsmanager: ["secretName", "description"],
-  iam: ["roleName", "policies"],
+  elasticache: ["engine", "nodeType", "numCacheNodes"],
+  msk: ["kafkaVersion", "brokerNodeInstanceType", "numberOfBrokerNodes"],
 };
 
 const humanizeKey = (key) =>
@@ -42,6 +44,7 @@ const fieldLabel = (definition, key) =>
   definition?.fields?.[key]?.displayName || humanizeKey(key);
 
 const formatValue = (value) => {
+  if (typeof value === "boolean") return value ? "Yes" : "No";
   if (Array.isArray(value)) return value.join(", ");
   if (typeof value === "object" && value !== null) {
     return JSON.stringify(value, null, 2);
@@ -60,29 +63,54 @@ const configEntries = (config) =>
     ([key]) => key !== "enabled" && key !== "helmCharts",
   );
 
-// "v1.31, Node Groups 2, vpc-cni": the important keys that are set, else the
-// first three parameters. The wizard's collapsed service rows show it too.
-export const summaryOf = (name, config, definition) => {
-  const entries = configEntries(config);
-  const keys = IMPORTANT_KEYS[name]?.filter((k) => k in config);
-  const picked = keys?.length
-    ? entries.filter(([k]) => keys.includes(k))
-    : entries.slice(0, 3);
-  return picked
-    .map(([key, value]) => {
-      if (value === false || value === null || value === undefined) return null;
-      if (/version$/i.test(key)) return `v${value}`;
-      if (value === true)
-        return fieldLabel(definition, key).replace(/^Enable\s+/, "");
-      if (typeof value === "number")
-        return `${fieldLabel(definition, key)} ${value}`;
-      if (typeof value === "object")
-        return Array.isArray(value) ? value.join(", ") : null;
-      return String(value);
-    })
-    .filter(Boolean)
-    .join(", ");
+// "PostgreSQL - Open-source" and "3 AZs (Recommended)" read as their start.
+const shortLabel = (label) =>
+  String(label)
+    .split(" - ")[0]
+    .replace(/\s*\(.*\)$/, "");
+
+// "Storage (GB)" reads "100 GB", "Instance Count" "2 instances", "Number of
+// Cache Nodes" "1 cache node".
+const withUnit = (value, label) => {
+  const unit = /\(([^)]+)\)$/.exec(label)?.[1];
+  if (unit) return `${value} ${unit}`;
+  const noun = label
+    .replace(/^Number of /i, "")
+    .replace(/ Count$/i, "")
+    .toLowerCase();
+  if (value === 1) return `1 ${noun.replace(/s$/, "")}`;
+  return `${value} ${noun.endsWith("s") ? noun : `${noun}s`}`;
 };
+
+const versioned = (key, text) =>
+  /version$/i.test(key) && /^\d/.test(text) ? `v${text}` : text;
+
+// One value as the summary says it; switches, objects and empty values say
+// nothing.
+const summaryPart = (key, value, definition) => {
+  const field = definition?.fields?.[key];
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "boolean" || field?.type === FIELD_TYPES.TOGGLE)
+    return null;
+  if (Array.isArray(value)) return value.length ? value.join(", ") : null;
+  if (typeof value === "object") return null;
+  const option = field?.options?.find((o) => String(o.value) === String(value));
+  if (option) return versioned(key, shortLabel(option.label));
+  if (typeof value === "number")
+    return withUnit(value, fieldLabel(definition, key));
+  return versioned(key, String(value));
+};
+
+// "PostgreSQL, t3.medium, 100 GB": at most three parameters, the service's
+// summary keys or else the first set ones in catalog order. The wizard's
+// collapsed service rows and Review show it too.
+export const summaryOf = (name, config, definition) =>
+  (SUMMARY_KEYS[name] ?? Object.keys(definition?.fields ?? config))
+    .filter((key) => key !== "enabled" && key !== "helmCharts")
+    .map((key) => summaryPart(key, config[key], definition))
+    .filter(Boolean)
+    .slice(0, 3)
+    .join(", ");
 
 // Icon, official name and the one-line summary of a service.
 function ServiceSummary({ name, config }) {
