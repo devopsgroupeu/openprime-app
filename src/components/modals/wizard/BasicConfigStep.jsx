@@ -88,7 +88,11 @@ const BasicConfigStep = ({
   const [creatingBackend, setCreatingBackend] = useState(false);
   const [backendCreated, setBackendCreated] = useState(false);
   const [createdBucketName, setCreatedBucketName] = useState(null);
-  const [useExistingBucket, setUseExistingBucket] = useState(false);
+  // A bucket the environment already has (edit mode, a restored draft, back
+  // from a later step) is shown as it is, never offered for creation again.
+  const hasBucket = Boolean(newEnv.terraformBackend?.bucketName?.trim());
+  const [bucketReadOnly, setBucketReadOnly] = useState(hasBucket);
+  const [useExistingBucket, setUseExistingBucket] = useState(hasBucket);
   // Global Prefix auto-suggests from the name until the user hand-edits it.
   // Initialized from the current values so a resumed draft (or an
   // already-customized prefix) isn't clobbered on mount.
@@ -132,6 +136,7 @@ const BasicConfigStep = ({
     setBackendCreated(false);
     setCreatedBucketName(null);
     setUseExistingBucket(false);
+    setBucketReadOnly(false);
   };
 
   const handleCreateBackend = async () => {
@@ -518,6 +523,8 @@ const BasicConfigStep = ({
           creatingBackend={creatingBackend}
           createdBucketName={createdBucketName}
           onCreateBackend={handleCreateBackend}
+          bucketReadOnly={bucketReadOnly}
+          onChangeBucket={() => setBucketReadOnly(false)}
           error={errorFor("bucketName")}
         />
       )}

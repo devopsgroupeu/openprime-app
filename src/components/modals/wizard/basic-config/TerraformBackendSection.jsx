@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, useRef } from "react";
 import { CircleCheck } from "lucide-react";
 import { Callout } from "@/components/shared/callout";
 import { CopyButton } from "@/components/shared/copy-button";
@@ -18,7 +18,9 @@ import { RadioCard, RadioCardGroup } from "./RadioCard";
 
 // Terraform state backend section of the wizard's Basics step (AWS only).
 // Presentational: all state and the create-backend action live in the parent
-// BasicConfigStep and are passed down as props. `error`: the Basics error of a
+// BasicConfigStep and are passed down as props. `bucketReadOnly`: the bucket
+// the environment already has is shown as it is, and `onChangeBucket` offers
+// the choice again. `error`: the Basics error of a
 // switched-on backend without a bucket. It sits on the bucket name field, or,
 // while the bucket is still to be created, on the switch.
 const TerraformBackendSection = ({
@@ -31,9 +33,13 @@ const TerraformBackendSection = ({
   creatingBackend,
   createdBucketName,
   onCreateBackend,
+  bucketReadOnly,
+  onChangeBucket,
   error,
 }) => {
   const id = useId();
+  // Change replaces itself with the bucket name field: focus moves there.
+  const focusBucketField = useRef(false);
   const switchError = !useExistingBucket && !backendCreated ? error : null;
   const backend = newEnv.terraformBackend;
   const credential = credentials.find((c) => c.id === newEnv.cloudCredentialId);
@@ -76,7 +82,34 @@ const TerraformBackendSection = ({
         />
       }
     >
-      {backend?.enabled && (
+      {backend?.enabled && bucketReadOnly ? (
+        <SettingsRowGroup>
+          <SettingsRow
+            title="State bucket"
+            description={
+              <code className="font-mono break-all">{backend.bucketName}</code>
+            }
+            control={
+              <div className="flex items-center gap-1">
+                <CopyButton
+                  text={backend.bucketName}
+                  label="Copy bucket name"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    focusBucketField.current = true;
+                    onChangeBucket();
+                  }}
+                >
+                  Change
+                </Button>
+              </div>
+            }
+          />
+        </SettingsRowGroup>
+      ) : backend?.enabled ? (
         <>
           <RadioCardGroup
             aria-label="State bucket"
@@ -109,6 +142,12 @@ const TerraformBackendSection = ({
                 control={
                   <FieldControl id={`${id}-bucket`} error={error}>
                     <Input
+                      ref={(el) => {
+                        if (el && focusBucketField.current) {
+                          focusBucketField.current = false;
+                          el.focus();
+                        }
+                      }}
                       id={`${id}-bucket`}
                       className="font-mono"
                       placeholder="e.g. my-terraform-state"
@@ -186,7 +225,7 @@ const TerraformBackendSection = ({
             </>
           )}
         </>
-      )}
+      ) : null}
     </SettingsSection>
   );
 };

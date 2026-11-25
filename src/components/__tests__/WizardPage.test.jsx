@@ -502,6 +502,36 @@ describe("WizardPage", () => {
     expect(screen.getByPlaceholderText("e.g. example.com")).not.toBeDisabled();
   });
 
+  // env-001 keeps its state in op-demo-tf-state: show it, never offer to
+  // create a second bucket.
+  it("shows the existing state bucket in edit mode, with Change for another", async () => {
+    renderWizardEdit(vi.fn());
+    await stepHeading("Services");
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    await stepHeading("Basics");
+
+    const section = screen.getByRole("region", {
+      name: "Terraform state backend",
+    });
+    expect(within(section).getByText("op-demo-tf-state")).toBeInTheDocument();
+    expect(
+      within(section).getByRole("button", { name: "Copy bucket name" }),
+    ).toBeInTheDocument();
+    expect(
+      within(section).queryByRole("button", { name: "Create backend" }),
+    ).toBeNull();
+    expect(within(section).queryByRole("radio")).toBeNull();
+
+    fireEvent.click(within(section).getByRole("button", { name: "Change" }));
+    expect(
+      within(section).getByRole("radio", { name: /existing bucket/ }),
+    ).toBeChecked();
+    expect(within(section).getByLabelText("Bucket name")).toHaveValue(
+      "op-demo-tf-state",
+    );
+    expect(within(section).getByLabelText("Bucket name")).toHaveFocus();
+  });
+
   it("lists a missing service prerequisite on Review and links to Services", async () => {
     localStorage.clear();
     const onCreateEnvironment = vi.fn();
