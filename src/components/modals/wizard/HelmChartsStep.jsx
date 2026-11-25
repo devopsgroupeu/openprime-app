@@ -5,6 +5,7 @@ import { Package } from "lucide-react";
 import HelmChartsSelector from "../../HelmChartsSelector";
 import { getHelmChartsForK8sService } from "../../../config/helmChartsConfig";
 import { rebuiltChart } from "../../../utils/helmValues";
+import StarterTemplates from "./StarterTemplates";
 import { Callout } from "@/components/shared/callout";
 import { EmptyState } from "@/components/shared/states";
 import { Button } from "@/components/ui/button";
@@ -76,41 +77,29 @@ const HelmChartsStep = ({ newEnv, setNewEnv, focusHeading }) => {
       keys.map((key) => [key, rebuiltChart(currentCharts[key], enabled)]),
     );
 
+  // A preset turns on only the charts this Kubernetes service has.
+  const available = new Set(getHelmChartsForK8sService(k8sService.name));
   const presets = [
     {
       label: "Monitoring stack",
-      apply: () =>
-        handleHelmChartsChange({
-          ...currentCharts,
-          ...rebuilt(["prometheusStack", "loki", "promtail"], true),
-        }),
+      description: "Metrics in Prometheus, logs in Loki through Promtail.",
+      charts: ["prometheusStack", "loki", "promtail"],
     },
     {
       label: "Ingress stack",
-      apply: () => {
-        // ingress-nginx exposes a Service of type LoadBalancer. On EKS
-        // nothing provisions one unless the AWS Load Balancer
-        // Controller is running, so ArgoCD blocks on that Service's
-        // health and never applies the Deployment - the customer gets
-        // an app stuck with no pods and nothing explaining why
-        // (OP-234). Ship the controller with the stack, filtered to
-        // the charts this Kubernetes service actually has: it is
-        // EKS-only, and the stack is offered for AKS/GKE too.
-        const available = new Set(getHelmChartsForK8sService(k8sService.name));
-        const stack = [
-          "ingressNginx",
-          "certManager",
-          "externalDns",
-          "awsLoadBalancerController",
-        ];
-        handleHelmChartsChange({
-          ...currentCharts,
-          ...rebuilt(
-            stack.filter((chart) => available.has(chart)),
-            true,
-          ),
-        });
-      },
+      description: "NGINX ingress with TLS certificates and DNS records.",
+      // ingress-nginx exposes a Service of type LoadBalancer. On EKS
+      // nothing provisions one unless the AWS Load Balancer Controller is
+      // running, so ArgoCD blocks on that Service's health and never
+      // applies the Deployment - the customer gets an app stuck with no
+      // pods and nothing explaining why (OP-234). Ship the controller with
+      // the stack; it is EKS-only, and the stack is offered for AKS/GKE too.
+      charts: [
+        "ingressNginx",
+        "certManager",
+        "externalDns",
+        "awsLoadBalancerController",
+      ],
     },
   ];
 
@@ -155,23 +144,26 @@ const HelmChartsStep = ({ newEnv, setNewEnv, focusHeading }) => {
       </div>
 
       {enabledCount === 0 ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm text-muted-foreground">Start with</p>
-          {presets.map((preset) => (
-            <Button
-              key={preset.label}
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                preset.apply();
+        <StarterTemplates
+          kind="charts"
+          cluster={k8sService.name}
+          templates={presets.map((preset) => {
+            const charts = preset.charts.filter((key) => available.has(key));
+            return {
+              label: preset.label,
+              description: preset.description,
+              items: charts,
+              onApply: () => {
+                handleHelmChartsChange({
+                  ...currentCharts,
+                  ...rebuilt(charts, true),
+                });
                 // The presets go away once a chart is selected.
                 focusHeading?.();
-              }}
-            >
-              {preset.label}
-            </Button>
-          ))}
-        </div>
+              },
+            };
+          })}
+        />
       ) : null}
 
       <HelmChartsSelector

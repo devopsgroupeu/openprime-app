@@ -111,6 +111,65 @@ describe("HelmChartsStep categories", () => {
   });
 });
 
+// Spec 37: the starting points are cards with a preview of the chart logos.
+describe("HelmChartsStep templates", () => {
+  const logos = (card) =>
+    [
+      ...card.querySelectorAll(
+        '[data-slot="template-preview"] [data-slot="logo-tile"] img',
+      ),
+    ].map((img) => img.getAttribute("src").split("/").pop());
+
+  it("offers the templates as cards that name what they turn on", () => {
+    render(<Harness initial={envWith("eks")} />);
+    const region = screen.getByRole("region", {
+      name: "Start with a template",
+    });
+    expect(within(region).getAllByRole("button")).toHaveLength(2);
+
+    const monitoring = screen.getByRole("button", {
+      name: "Monitoring stack",
+    });
+    expect(monitoring).toHaveAccessibleDescription(
+      "Metrics in Prometheus, logs in Loki through Promtail. 3 charts",
+    );
+    // Promtail's chart uses Loki's logo: one tile for both.
+    expect(logos(monitoring)).toEqual(["prometheus.svg", "loki.svg"]);
+    expect(
+      monitoring.querySelector('[data-slot="template-preview"]'),
+    ).toHaveAttribute("aria-hidden", "true");
+
+    const ingress = screen.getByRole("button", { name: "Ingress stack" });
+    expect(ingress).toHaveAccessibleDescription(
+      "NGINX ingress with TLS certificates and DNS records. 4 charts",
+    );
+    expect(logos(ingress)).toEqual([
+      "ingress-nginx.png",
+      "cert-manager.svg",
+      "external-dns.png",
+      "aws-load-balancer-controller.svg",
+    ]);
+  });
+
+  it("counts and shows only the charts the cluster has", () => {
+    render(<Harness initial={envWith("gke")} />);
+    const ingress = screen.getByRole("button", { name: "Ingress stack" });
+    expect(ingress).toHaveAccessibleDescription(/ 3 charts$/);
+    expect(logos(ingress)).not.toContain("aws-load-balancer-controller.svg");
+  });
+
+  it("goes away once a chart is selected", () => {
+    render(<Harness initial={envWith("eks")} />);
+    fireEvent.click(screen.getByRole("button", { name: /^Networking/ }));
+    fireEvent.click(
+      screen.getByRole("switch", { name: "Install Ingress NGINX Controller" }),
+    );
+    expect(
+      screen.queryByRole("region", { name: "Start with a template" }),
+    ).toBeNull();
+  });
+});
+
 // Argo CD and Karpenter are always installed and have no switch here.
 describe("HelmChartsStep count", () => {
   it("counts only the charts the step shows", () => {

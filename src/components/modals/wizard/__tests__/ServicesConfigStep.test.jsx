@@ -85,6 +85,62 @@ describe("ServicesConfigStep", () => {
     expect(services.eks.helmCharts).toEqual(env.services.eks.helmCharts);
   });
 
+  // Spec 37: the starting points are cards with a preview of what they turn on.
+  const templates = () =>
+    screen.queryByRole("region", { name: "Start with a template" });
+
+  it("offers the templates as cards that name what they turn on", () => {
+    renderStep();
+    const cards = within(templates()).getAllByRole("button");
+    expect(cards.map((card) => card.textContent)).toEqual([
+      expect.stringContaining("VPC and EKS"),
+      expect.stringContaining("Basic stack"),
+    ]);
+    const vpcAndEks = screen.getByRole("button", { name: "VPC and EKS" });
+    expect(vpcAndEks).toHaveAccessibleDescription(
+      "A private network with a Kubernetes cluster inside. 2 services",
+    );
+    expect(
+      screen.getByRole("button", { name: "Basic stack" }),
+    ).toHaveAccessibleDescription(
+      "A private network, a relational database and S3. 3 services",
+    );
+    // The preview is built from the services' own icons, out of the a11y tree.
+    const preview = vpcAndEks.querySelector('[data-slot="template-preview"]');
+    expect(preview).toHaveAttribute("aria-hidden", "true");
+    expect(preview.querySelectorAll("img")).toHaveLength(2);
+  });
+
+  it("counts only the services the catalog offers", () => {
+    const env = createEmptyEnvironment("aws");
+    delete env.services.rds;
+    renderStep(env);
+    const basic = screen.getByRole("button", { name: "Basic stack" });
+    expect(basic).toHaveAccessibleDescription(/ 2 services$/);
+    expect(
+      basic.querySelectorAll('[data-slot="template-preview"] img'),
+    ).toHaveLength(2);
+  });
+
+  it("shows the templates only while nothing is on and nothing filters", () => {
+    renderStep();
+    const search = screen.getByRole("searchbox", { name: "Search services" });
+
+    fireEvent.change(search, { target: { value: "vpc" } });
+    expect(templates()).toBeNull();
+    fireEvent.change(search, { target: { value: "" } });
+    expect(templates()).toBeInTheDocument();
+
+    const tabs = screen.getByRole("group", { name: "Category" });
+    fireEvent.click(within(tabs).getByRole("button", { name: "Database" }));
+    expect(templates()).toBeNull();
+    fireEvent.click(within(tabs).getByRole("button", { name: "All" }));
+    expect(templates()).toBeInTheDocument();
+
+    fireEvent.click(vpcSwitch());
+    expect(templates()).toBeNull();
+  });
+
   it("starts a preset only with services the catalog offers", () => {
     const env = createEmptyEnvironment("aws");
     delete env.services.rds;

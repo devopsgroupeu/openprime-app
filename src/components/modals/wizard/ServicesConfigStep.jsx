@@ -9,19 +9,39 @@ import DynamicServicesGrid, {
   groupByCategory,
 } from "../../DynamicServicesGrid";
 import { getServiceConfig } from "../../../config/servicesConfig";
+import StarterTemplates from "./StarterTemplates";
 import { FilterTabs, SearchField } from "@/components/shared/list-toolbar";
 import { ResourceActionsMenu } from "@/components/shared/resource-actions-menu";
 import { EmptyState } from "@/components/shared/states";
-import { Button } from "@/components/ui/button";
 
 // Starting points offered while nothing is enabled yet.
 const PRESETS = {
   aws: [
-    { label: "VPC and EKS", services: ["vpc", "eks"] },
-    { label: "Basic stack", services: ["vpc", "rds", "s3"] },
+    {
+      label: "VPC and EKS",
+      description: "A private network with a Kubernetes cluster inside.",
+      services: ["vpc", "eks"],
+    },
+    {
+      label: "Basic stack",
+      description: "A private network, a relational database and S3.",
+      services: ["vpc", "rds", "s3"],
+    },
   ],
-  azure: [{ label: "VNet and AKS", services: ["vnet", "aks"] }],
-  gcp: [{ label: "GKE", services: ["gke"] }],
+  azure: [
+    {
+      label: "VNet and AKS",
+      description: "A virtual network with a Kubernetes cluster inside.",
+      services: ["vnet", "aks"],
+    },
+  ],
+  gcp: [
+    {
+      label: "GKE",
+      description: "A managed Kubernetes cluster.",
+      services: ["gke"],
+    },
+  ],
 };
 
 const matches = (serviceName, query) => {
@@ -75,8 +95,11 @@ const ServicesConfigStep = ({
       enabled ? serviceNames : Object.keys(newEnv.services || {}),
       enabled,
     );
+  // A preset turns on only the services this step shows.
+  const offered = (services) =>
+    services.filter((name) => serviceNames.includes(name));
   const applyPreset = (services) => {
-    const names = services.filter((name) => serviceNames.includes(name));
+    const names = offered(services);
     setEnabled(names, true);
     // The presets go away with the first enabled service.
     if (names.length > 0) focusHeading?.();
@@ -140,19 +163,15 @@ const ServicesConfigStep = ({
       </div>
 
       {presets.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm text-muted-foreground">Start with</p>
-          {presets.map((preset) => (
-            <Button
-              key={preset.label}
-              variant="secondary"
-              size="sm"
-              onClick={() => applyPreset(preset.services)}
-            >
-              {preset.label}
-            </Button>
-          ))}
-        </div>
+        <StarterTemplates
+          kind="services"
+          templates={presets.map((preset) => ({
+            label: preset.label,
+            description: preset.description,
+            items: offered(preset.services),
+            onApply: () => applyPreset(preset.services),
+          }))}
+        />
       ) : null}
 
       {visible.length > 0 ? (
