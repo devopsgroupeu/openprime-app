@@ -215,7 +215,7 @@ const EnvironmentsPage = ({
           <ListToolbar
             search={query}
             onSearchChange={setQuery}
-            searchLabel="Search by name, resource prefix or region"
+            searchLabel="Search environments"
             origins={options}
             origin={activeStatus}
             onOriginChange={setStatus}

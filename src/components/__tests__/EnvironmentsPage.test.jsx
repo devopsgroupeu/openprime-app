@@ -95,9 +95,7 @@ function renderPage(props = {}, path = "/environments") {
 const cardNames = () =>
   screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
 const search = () =>
-  screen.getByRole("searchbox", {
-    name: "Search by name, resource prefix or region",
-  });
+  screen.getByRole("searchbox", { name: "Search environments" });
 const openMenu = (name) =>
   fireEvent.pointerDown(
     screen.getByRole("button", { name: `More actions for ${name}` }),
