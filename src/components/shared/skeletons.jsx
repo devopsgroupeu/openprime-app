@@ -2,10 +2,9 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Mirrors the page layouts: header, ring cards, row cards; real radii.
-function HeaderSkeleton({ tile = false }) {
+function HeaderSkeleton() {
   return (
     <div className="flex items-center gap-3">
-      {tile ? <Skeleton className="size-10 rounded-lg" /> : null}
       <div className="flex flex-col gap-2">
         <Skeleton className="h-7 w-48" />
         <Skeleton className="h-4 w-72" />
@@ -81,7 +80,14 @@ export function ListPageSkeleton({ stats = 0 }) {
 export function DetailPageSkeleton() {
   return (
     <Busy>
-      <HeaderSkeleton tile />
+      {/* The environment header: its cover band, then the title. */}
+      <div className="flex flex-col gap-4">
+        <Skeleton
+          data-slot="cover-skeleton"
+          className="h-20 rounded-xl sm:h-24"
+        />
+        <HeaderSkeleton />
+      </div>
       <div className="flex gap-2">
         {Array.from({ length: 4 }, (_, i) => (
           <Skeleton key={i} className="h-8 w-24" />

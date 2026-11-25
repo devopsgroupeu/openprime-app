@@ -876,6 +876,20 @@ describe("EnvironmentDetailPage identity", () => {
     expect(bands[0]).toHaveAttribute("data-layout", String(layout));
   });
 
+  // The loading state previews the band at its size, so the page does not
+  // jump when the environment arrives.
+  it("previews the cover band while loading, at the band's size", async () => {
+    renderDetailPage();
+    const skeleton = screen.getByRole("status", { name: "Loading" });
+    const placeholder = skeleton.querySelector('[data-slot="cover-skeleton"]');
+    await screen.findByRole("heading", { level: 1, name: "demo-prod" });
+    const band = document.querySelector('[data-slot="cover-gradient"]');
+    for (const size of ["h-20", "sm:h-24", "rounded-xl"]) {
+      expect(placeholder).toHaveClass(size);
+      expect(band).toHaveClass(size);
+    }
+  });
+
   it("shows the official logos of the charts and the git provider", async () => {
     renderDetailPage({ path: "/environments/env-001?tab=helm" });
     // ingress-nginx shows the icon its own chart declares.
