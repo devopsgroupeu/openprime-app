@@ -45,25 +45,25 @@ export const environments = [
       identifier: "123456789012",
       provider: "aws",
     },
+    // Catalog keys and offered values, like an environment the wizard saved.
     services: {
       vpc: {
         enabled: true,
-        cidrBlock: "10.0.0.0/16",
-        region: "eu-west-1",
+        cidr: "10.0.0.0/16",
+        azCount: 3,
+        natGateway: "ONE_PER_AZ",
         enableDnsSupport: true,
-        subnets: 3,
-        availabilityZones: ["eu-west-1a", "eu-west-1b", "eu-west-1c"],
-        natGateway: true,
+        enableDnsHostnames: true,
       },
       eks: {
         enabled: true,
-        version: "1.31",
-        nodeGroups: 2,
-        instanceType: "t3.large",
-        nodeGroupMinSize: 2,
-        nodeGroupMaxSize: 6,
+        kubernetesVersion: "1.35",
+        karpenterEnabled: true,
         endpointPublicAccess: true,
-        addons: ["vpc-cni", "coredns", "kube-proxy"],
+        defaultNodeGroupInstanceTypes: ["t4g.large"],
+        defaultNodeGroupMinSize: 2,
+        defaultNodeGroupMaxSize: 6,
+        defaultNodeGroupDesiredSize: 3,
         // Keys must match HELM_CHARTS_CONFIG / the templates' @section paths
         // (camelCase). The stale kebab-case keys this fixture used to carry
         // matched neither, so generation silently dropped them.
@@ -90,13 +90,13 @@ export const environments = [
       rds: {
         enabled: true,
         engine: "postgres",
-        engineVersion: "16.3",
-        instanceType: "db.t3.medium",
+        version: "16",
+        majorEngineVersion: "16",
+        family: "postgres16",
+        instanceClass: "db.t3.medium",
         allocatedStorage: 100,
-        port: 5432,
-        backupRetentionDays: 7,
+        backupRetention: 7,
         multiAz: true,
-        encryption: true,
       },
     },
     terraform_backend: {
@@ -121,7 +121,7 @@ export const environments = [
     name: "demo-staging",
     global_prefix: "op-",
     provider: "aws",
-    region: "eu-west-3",
+    region: "eu-west-2",
     location: null,
     domain: null,
     status: "pending",
@@ -136,7 +136,10 @@ export const environments = [
     user_id: "mock-user-1",
     cloud_credential_id: null,
     cloudCredential: null,
-    services: { vpc: { enabled: true }, eks: { enabled: true } },
+    services: {
+      vpc: { enabled: true, cidr: "10.10.0.0/16", azCount: 2 },
+      eks: { enabled: true, kubernetesVersion: "1.36" },
+    },
     terraform_backend: { enabled: false },
     git_repository: null,
     created_at: "2026-06-05T09:00:00Z",
@@ -169,17 +172,19 @@ export const environments = [
       provider: "aws",
     },
     services: {
-      vpc: { enabled: true, cidrBlock: "10.20.0.0/16", enableDnsSupport: true },
-      s3: {
+      vpc: {
         enabled: true,
-        bucketName: "an-raw-events",
-        versioning: true,
-        encryption: "aws:kms",
+        cidr: "10.20.0.0/16",
+        azCount: 2,
+        natGateway: "SINGLE",
       },
+      s3: { enabled: true, bucketNames: ["an-raw-events", "an-curated"] },
       opensearch: {
         enabled: true,
-        version: "2.13",
-        instanceType: "r6g.large.search",
+        // Rotated out of the catalog on purpose: the edit wizard shows its
+        // "no longer offered" warning here (and only here).
+        version: "OpenSearch_2.13",
+        instanceType: "m7g.large.search",
         instanceCount: 2,
       },
     },
