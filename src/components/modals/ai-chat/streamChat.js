@@ -1,22 +1,26 @@
 import authService from "../../../services/authService";
 
-// An answer that sends nothing for this long is given up on.
+// An answer that sends nothing for this long is given up on. The first chunk
+// gets longer: the backend sends nothing while it retries a throttled model
+// or falls back to a non-streaming answer.
 export const STALL_MS = 60_000;
+export const FIRST_CHUNK_MS = 120_000;
 
 /**
  * POST /ai/chat with `body` and read its event stream, passing each `data:`
  * event to `onEvent`. Returns `stop()` and `finished`, which resolves with how
  * the answer ended: "done", "stopped" (stop() was called) or "timeout" (no
- * chunk for STALL_MS), and rejects when the request fails. Ending early closes
- * the connection, so the backend stops the model too.
+ * first chunk for FIRST_CHUNK_MS, then none for STALL_MS), and rejects when
+ * the request or `onEvent` fails. Ending early closes the connection, so the
+ * backend stops the model too.
  */
 export function streamChat(body, onEvent) {
   const controller = new AbortController();
   let reader = null;
   let stall;
-  const watch = () => {
+  const watch = (ms) => {
     clearTimeout(stall);
-    stall = setTimeout(() => controller.abort("timeout"), STALL_MS);
+    stall = setTimeout(() => controller.abort("timeout"), ms);
   };
   // Ends a read that is waiting for the next chunk.
   controller.signal.addEventListener("abort", () => {
@@ -24,7 +28,7 @@ export function streamChat(body, onEvent) {
   });
 
   const finished = (async () => {
-    watch();
+    watch(FIRST_CHUNK_MS);
     try {
       const res = await authService.makeAuthenticatedRequest("/ai/chat", {
         method: "POST",
@@ -38,16 +42,19 @@ export function streamChat(body, onEvent) {
       while (!controller.signal.aborted) {
         const { done, value } = await reader.read();
         if (done) break;
-        watch();
+        watch(STALL_MS);
         for (const line of decoder
           .decode(value, { stream: true })
           .split("\n")) {
           if (!line.startsWith("data: ")) continue;
+          let data;
           try {
-            onEvent(JSON.parse(line.replace(/^data: /, "")));
+            data = JSON.parse(line.replace(/^data: /, ""));
           } catch {
-            /* ignore malformed line */
+            continue; // a malformed line
           }
+          // Outside the try: a failing handler fails the answer.
+          onEvent(data);
         }
       }
     } catch (err) {
