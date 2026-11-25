@@ -28,6 +28,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import authService from "../../services/authService";
 import { server } from "../../mocks/server";
 import { environments } from "../../mocks/fixtures";
+import { coverGradient } from "@/components/shared/cover-gradient";
 import { formatRelative } from "@/components/shared/format";
 
 // Full-page render: needs Theme (Toast), Toast, Auth, tooltips (the app shell
@@ -858,6 +859,21 @@ describe("EnvironmentDetailPage overview", () => {
     expect(labels()).toEqual(["Services", "Last generated", "Last pushed"]);
     expect(stats()[1]).toHaveTextContent("Failed");
     expect(stats()[2]).toHaveTextContent("Never");
+  });
+});
+
+describe("EnvironmentDetailPage identity", () => {
+  // The same band as the environment's card, so the two read as one object.
+  it("shows the environment's cover band above the header", async () => {
+    renderDetailPage();
+    await screen.findByRole("heading", { level: 1, name: "demo-prod" });
+
+    const bands = document.querySelectorAll('[data-slot="cover-gradient"]');
+    expect(bands).toHaveLength(1);
+    expect(bands[0]).toHaveAttribute("aria-hidden", "true");
+    const { gradient, layout } = coverGradient("env-001");
+    expect(bands[0]).toHaveAttribute("data-gradient", String(gradient));
+    expect(bands[0]).toHaveAttribute("data-layout", String(layout));
   });
 });
 

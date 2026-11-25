@@ -12,6 +12,7 @@ import {
   prefixOf,
   regionOf,
 } from "../utils/environmentStats";
+import { CoverGradient } from "@/components/shared/cover-gradient";
 import { formatDateTime, formatRelative } from "@/components/shared/format";
 import { IconTile } from "@/components/shared/icon-tile";
 import { ResourceActionsMenu } from "@/components/shared/resource-actions-menu";
@@ -71,6 +72,24 @@ function ServiceIcons({ services }) {
   );
 }
 
+/**
+ * The environment's generated band with its round provider avatar on a card
+ * disc. The card and the detail header show the same one for the same id, so
+ * they read as one object. Decorative: the band is aria-hidden.
+ */
+export function EnvironmentCover({ environment, className }) {
+  return (
+    <CoverGradient id={environment.id} className={className}>
+      <IconTile
+        size="xl"
+        className="absolute bottom-3 left-3 rounded-full bg-card text-foreground shadow-(--shadow-ring-sm)"
+      >
+        <ProviderIcon provider={environment.provider} />
+      </IconTile>
+    </CoverGradient>
+  );
+}
+
 const EnvironmentCard = ({ environment, onCopyId, onDelete }) => {
   const navigate = useNavigate();
   const href = `/environments/${environment.id}`;
@@ -103,10 +122,11 @@ const EnvironmentCard = ({ environment, onCopyId, onDelete }) => {
     <ResourceCard
       href={href}
       title={environment.name}
-      tile={
-        <IconTile className="text-foreground">
-          <ProviderIcon provider={environment.provider} />
-        </IconTile>
+      cover={
+        <EnvironmentCover
+          environment={environment}
+          className="h-24 shrink-0 sm:h-28"
+        />
       }
       badges={<StatusBadge status={getEffectiveStatus(environment)} />}
       description={

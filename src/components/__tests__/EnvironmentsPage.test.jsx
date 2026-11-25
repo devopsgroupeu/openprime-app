@@ -12,6 +12,7 @@ import { ThemeProvider } from "../../contexts/ThemeContext";
 import { ToastProvider } from "../../contexts/ToastContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import EnvironmentsPage from "../EnvironmentsPage";
+import { coverGradient } from "@/components/shared/cover-gradient";
 import { formatDateTime, formatRelative } from "@/components/shared/format";
 
 const prod = {
@@ -147,6 +148,22 @@ describe("EnvironmentsPage", () => {
       "/environments/env-1",
     );
     expect(screen.getByText("3 environments")).toBeInTheDocument();
+  });
+
+  // The environment's generated band, the same one its detail page shows;
+  // decorative, so it is hidden from screen readers.
+  it("tops each card with the environment's decorative cover band", () => {
+    renderPage();
+    const card = screen
+      .getByRole("link", { name: "demo-prod" })
+      .closest("article");
+    const band = card.querySelector('[data-slot="cover-gradient"]');
+    expect(band).toHaveAttribute("aria-hidden", "true");
+    const { gradient, layout } = coverGradient("env-1");
+    expect(band).toHaveAttribute("data-gradient", String(gradient));
+    expect(band).toHaveAttribute("data-layout", String(layout));
+    // The provider avatar sits on the band, inside its decorative layer.
+    expect(band.querySelector('[data-slot="icon-tile"]')).not.toBeNull();
   });
 
   it("shows up to six service icons and counts the rest", () => {

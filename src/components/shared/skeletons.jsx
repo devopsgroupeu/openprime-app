@@ -20,14 +20,19 @@ export function CardGridSkeleton({ count = 6 }) {
       {Array.from({ length: count }, (_, i) => (
         <div
           key={i}
-          className="flex flex-col gap-3 rounded-lg bg-card p-3.5 shadow-(--shadow-ring-xs)"
+          className="flex flex-col overflow-hidden rounded-lg bg-card shadow-(--shadow-ring-xs)"
         >
-          <Skeleton className="size-8 rounded-lg" />
-          <div className="flex flex-col gap-2">
-            <Skeleton className="h-4 w-2/3" />
-            <Skeleton className="h-3 w-full" />
+          {/* The cover band, then name, meta, service icons, modified. */}
+          <Skeleton className="h-24 rounded-none sm:h-28" />
+          <div className="flex flex-col gap-3 p-3.5">
+            {/* Bars inset in the real line heights (20, 16, 20, 16 px). */}
+            <div className="flex flex-col gap-1">
+              <Skeleton className="my-0.5 h-4 w-2/3" />
+              <Skeleton className="my-0.5 h-3 w-1/2" />
+            </div>
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="my-0.5 h-3 w-1/3" />
           </div>
-          <Skeleton className="h-3 w-1/3" />
         </div>
       ))}
     </div>

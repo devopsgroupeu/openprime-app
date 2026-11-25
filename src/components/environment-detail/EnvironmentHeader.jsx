@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Copy, Download, GitBranch, Link2, Pencil, Trash2 } from "lucide-react";
-import ProviderIcon from "../icons/ProviderIcon";
+import { EnvironmentCover } from "../EnvironmentCard";
 import {
   getEffectiveStatus,
   modifiedAt,
@@ -13,7 +13,6 @@ import {
 import { Callout } from "@/components/shared/callout";
 import { CopyButton } from "@/components/shared/copy-button";
 import { RelativeTime } from "@/components/shared/format";
-import { IconTile } from "@/components/shared/icon-tile";
 import { PageHeader } from "@/components/shared/page-header";
 import { ResourceActionsMenu } from "@/components/shared/resource-actions-menu";
 import { usePaletteActions } from "@/components/layout/CommandPalette";
@@ -141,88 +140,91 @@ const EnvironmentHeader = ({
   ];
 
   return (
-    <PageHeader
-      title={environment.name}
-      tile={
-        <IconTile size="xl" className="text-foreground">
-          <ProviderIcon provider={environment.provider} />
-        </IconTile>
-      }
-      status={<StatusBadge status={status} />}
-      description={
-        <Facts>
-          {region ? (
-            <Fact>
-              <span className="font-mono text-xs">{region}</span>
-              {regionName(environment)}
-            </Fact>
-          ) : null}
-          {prefix ? (
-            <Fact>
-              Prefix <span className="font-mono text-xs">{prefix}</span>
-              <CopyButton text={prefix} label="Copy prefix" size="icon-xs" />
-            </Fact>
-          ) : null}
-          {modified ? (
-            <Fact>
-              Modified <RelativeTime iso={modified} />
-            </Fact>
-          ) : null}
-        </Facts>
-      }
-      actions={
-        <>
-          <Button
-            variant={generateFirst ? "default" : "secondary"}
-            onClick={onGenerate}
-            disabled={busy}
-            className={generateFirst ? undefined : "max-lg:hidden"}
-          >
-            {running === "generate" ? (
-              <Spinner aria-hidden />
-            ) : (
-              <Download aria-hidden />
-            )}
-            {running === "generate" ? "Generating..." : "Generate repository"}
-          </Button>
-          <span className="flex max-lg:hidden">
-            {canPush ? (
-              pushButton
-            ) : (
-              // A disabled button gets no pointer events: the wrapper
-              // carries the tooltip (and keyboard focus).
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    tabIndex={0}
-                    className="rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    {pushButton}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{NO_GIT}</TooltipContent>
-              </Tooltip>
-            )}
-          </span>
-          <Button
-            variant={generateFirst ? "secondary" : "default"}
-            asChild
-            className={generateFirst ? "max-lg:hidden" : undefined}
-          >
-            <Link to={editHref}>
-              <Pencil aria-hidden />
-              Edit
-            </Link>
-          </Button>
-        </>
-      }
-      menu={
-        <ResourceActionsMenu
-          label={`More actions for ${environment.name}`}
-          actions={actions}
-        />
-      }
-    />
+    // The card's band and avatar, so the page and the card read as one
+    // object; the avatar on the band stands in for the header tile.
+    <div className="flex flex-col gap-4">
+      <EnvironmentCover
+        environment={environment}
+        className="h-20 shrink-0 rounded-xl sm:h-24"
+      />
+      <PageHeader
+        title={environment.name}
+        status={<StatusBadge status={status} />}
+        description={
+          <Facts>
+            {region ? (
+              <Fact>
+                <span className="font-mono text-xs">{region}</span>
+                {regionName(environment)}
+              </Fact>
+            ) : null}
+            {prefix ? (
+              <Fact>
+                Prefix <span className="font-mono text-xs">{prefix}</span>
+                <CopyButton text={prefix} label="Copy prefix" size="icon-xs" />
+              </Fact>
+            ) : null}
+            {modified ? (
+              <Fact>
+                Modified <RelativeTime iso={modified} />
+              </Fact>
+            ) : null}
+          </Facts>
+        }
+        actions={
+          <>
+            <Button
+              variant={generateFirst ? "default" : "secondary"}
+              onClick={onGenerate}
+              disabled={busy}
+              className={generateFirst ? undefined : "max-lg:hidden"}
+            >
+              {running === "generate" ? (
+                <Spinner aria-hidden />
+              ) : (
+                <Download aria-hidden />
+              )}
+              {running === "generate" ? "Generating..." : "Generate repository"}
+            </Button>
+            <span className="flex max-lg:hidden">
+              {canPush ? (
+                pushButton
+              ) : (
+                // A disabled button gets no pointer events: the wrapper
+                // carries the tooltip (and keyboard focus).
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      tabIndex={0}
+                      className="rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {pushButton}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{NO_GIT}</TooltipContent>
+                </Tooltip>
+              )}
+            </span>
+            <Button
+              variant={generateFirst ? "secondary" : "default"}
+              asChild
+              className={generateFirst ? "max-lg:hidden" : undefined}
+            >
+              <Link to={editHref}>
+                <Pencil aria-hidden />
+                Edit
+              </Link>
+            </Button>
+          </>
+        }
+        menu={
+          <ResourceActionsMenu
+            label={`More actions for ${environment.name}`}
+            actions={actions}
+          />
+        }
+      />
+    </div>
   );
 };
 
