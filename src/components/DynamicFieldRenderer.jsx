@@ -162,8 +162,9 @@ const DynamicFieldRenderer = ({
             {fieldConfig.displayName}
           </legend>
           <div className="flex flex-wrap gap-x-4 gap-y-2">
-            {fieldConfig.options?.map((option) => {
-              const optionId = `${id}-${option.value}`;
+            {fieldConfig.options?.map((option, index) => {
+              // From the index: a value may hold spaces, an id may not.
+              const optionId = `${id}-${index}`;
               return (
                 <div key={option.value} className="flex items-center gap-2">
                   <Checkbox
