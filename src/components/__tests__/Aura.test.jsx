@@ -311,6 +311,7 @@ describe("Aura answers that do not finish", () => {
       await thread().findByText("You stopped this answer."),
     ).toBeInTheDocument();
     const retry = screen.getByRole("button", { name: "Try again" });
+    expect(retry).toHaveAttribute("data-variant", "secondary");
     act(() => retry.focus());
     fireEvent.click(retry);
     // Try again goes with its turn: the composer keeps the focus.

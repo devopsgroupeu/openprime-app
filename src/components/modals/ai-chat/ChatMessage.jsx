@@ -56,7 +56,7 @@ const ChatMessage = ({ message, onRetry }) => {
   }
 
   const retry = onRetry ? (
-    <Button size="xs" variant="outline" onClick={onRetry}>
+    <Button size="xs" variant="secondary" onClick={onRetry}>
       <RotateCcw aria-hidden />
       Try again
     </Button>

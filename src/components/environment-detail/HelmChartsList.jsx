@@ -65,7 +65,7 @@ function ChartSummary({ chartKey, config, hasValues }) {
         </span>
       </span>
       {version ? (
-        <Badge variant="outline" className="font-mono">
+        <Badge variant="tag" className="font-mono">
           {version}
         </Badge>
       ) : null}

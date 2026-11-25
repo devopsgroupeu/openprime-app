@@ -422,11 +422,7 @@ const BasicConfigStep = ({
               disabled={!provider.enabled}
               title={PROVIDER_NAMES[provider.value] ?? provider.name}
               badge={
-                provider.enabled ? null : (
-                  <Badge variant="outline" className="text-muted-foreground">
-                    Roadmap
-                  </Badge>
-                )
+                provider.enabled ? null : <Badge variant="tag">Roadmap</Badge>
               }
               art={
                 <ProviderIcon

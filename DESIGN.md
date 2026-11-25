@@ -397,14 +397,14 @@ header buttons into the menu on small screens.
 | `attention` | `bg-warning/10 text-foreground [&>svg]:text-warning`         | "Needs VPC", "Needs attention" (`TriangleAlert`)          |
 | `error`     | `bg-destructive/10 text-foreground [&>svg]:text-destructive` | Failed                                                    |
 | `info`      | `bg-info/10 text-foreground [&>svg]:text-info`               | "Custom values" (`FileCode`)                              |
-| `tag`       | `rounded-md bg-muted font-normal text-muted-foreground`      | "Default", chart versions (`font-mono`)                   |
+| `tag`       | `rounded-md bg-muted font-normal text-muted-foreground`      | "Default", "Roadmap", chart versions (`font-mono`)        |
 
 Statuses only through `StatusBadge` (`ui/status-badge.jsx`, drawing `StatusPill` from
 `shared/badges.jsx`), driven by `getEffectiveStatus()` and `statusDisplay()`
 (`src/utils/environmentStats.js`): `succeeded` and `running` read Ready (success, `CircleCheck`),
 `failed` and `error` Failed (error, `CircleAlert`), `pending` Not generated, `deploying` Processing
 (spinner), `stopped` and `destroyed` neutral. `deploying` wins, else the newest job (by `last_*_at`),
-else `status`. "Roadmap" is `variant="outline" className="text-muted-foreground"`.
+else `status`.
 
 ### 5.8 Callouts and toasts
 
@@ -702,9 +702,7 @@ tab in the path. Search is component state; sort, theme, the wizard Aura column 
 
 Follow the code unless your task is to close one of these; never "fix" them on the side.
 
-| Decision or rule                                 | Code today                                                                                                                                                                               |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Legacy `outline` variants are compatibility only | Badge `outline` on the Roadmap badges and the detail Helm tab version (`environment-detail/HelmChartsList.jsx`; the wizard and Review use `tag`); Button `outline` on Aura's "Try again" |
+None known.
 
 ## 11. Definition of done and commands
 

@@ -171,7 +171,9 @@ describe("BasicConfigStep", () => {
 
     const onPrem = screen.getByRole("radio", { name: /On-premises/ });
     expect(onPrem).toBeDisabled();
-    expect(within(onPrem.closest("label")).getByText("Roadmap")).toBeVisible();
+    const badge = within(onPrem.closest("label")).getByText("Roadmap");
+    expect(badge).toBeVisible();
+    expect(badge).toHaveAttribute("data-variant", "tag");
   });
 
   // Guards OP-256: nothing reads the industry/standards presets yet, so they may
@@ -187,7 +189,10 @@ describe("BasicConfigStep", () => {
     expect(within(section).queryAllByRole("button")).toHaveLength(0);
     // Each tile says it is on the roadmap, with its own icon.
     for (const tile of tiles) {
-      expect(within(tile).getByText("Roadmap")).toBeInTheDocument();
+      expect(within(tile).getByText("Roadmap")).toHaveAttribute(
+        "data-variant",
+        "tag",
+      );
       expect(tile.querySelector("svg.lucide")).not.toBeNull();
     }
   });

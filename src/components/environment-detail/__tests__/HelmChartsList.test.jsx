@@ -69,6 +69,25 @@ describe("HelmChartsList", () => {
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
   });
 
+  // Like the wizard's Helm step and Review.
+  it("shows the chart version as a mono tag", () => {
+    render(
+      <HelmChartsList
+        environment={{
+          services: {
+            eks: {
+              enabled: true,
+              helmCharts: { loki: { enabled: true, version: "6.29.0" } },
+            },
+          },
+        }}
+      />,
+    );
+    const version = screen.getByText("6.29.0");
+    expect(version).toHaveAttribute("data-variant", "tag");
+    expect(version).toHaveClass("font-mono");
+  });
+
   it("marks a chart with custom values and shows them read-only", () => {
     const values = "grafana:\n  replicas: 2";
     render(

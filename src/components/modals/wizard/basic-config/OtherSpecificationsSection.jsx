@@ -50,11 +50,7 @@ const OtherSpecificationsSection = () => {
               title={label}
               disabled
               art={<Icon className="size-6 text-muted-foreground opacity-60" />}
-              badge={
-                <Badge variant="outline" className="text-muted-foreground">
-                  Roadmap
-                </Badge>
-              }
+              badge={<Badge variant="tag">Roadmap</Badge>}
             />
           </li>
         ))}
