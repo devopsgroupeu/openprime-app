@@ -400,6 +400,46 @@ describe("EnvironmentDetailPage leaving during a job", () => {
     unmount();
   });
 
+  it("closes the leave prompt when the job ends while it is open", async () => {
+    let finished = false;
+    server.use(
+      http.get("*/jobs/:jobId", ({ params }) =>
+        HttpResponse.json(
+          finished
+            ? {
+                id: params.jobId,
+                status: "succeeded",
+                result: { downloadUrl: `/jobs/${params.jobId}/download` },
+              }
+            : { id: params.jobId, status: "running" },
+        ),
+      ),
+    );
+    renderDetailPage({ shell: <Shell palette /> });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Generate repository" }),
+    );
+    await screen.findByRole("button", { name: /Generating/ });
+    fireEvent.click(screen.getByRole("button", { name: "Open palette" }));
+    fireEvent.click(
+      await screen.findByRole("option", { name: "Environments" }),
+    );
+    expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+
+    finished = true;
+    await toasts().findByText(
+      "Repository generated and downloaded.",
+      {},
+      { timeout: 4000 },
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+    );
+    expect(screen.getByLabelText("Path")).toHaveTextContent(
+      "/environments/env-001",
+    );
+  }, 10000);
+
   it("keeps a job and its outcome on the environment it ran on", async () => {
     let finished = false;
     server.use(

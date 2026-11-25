@@ -29,7 +29,11 @@ export function useUnsavedGuard(dirty) {
   const [pending, setPending] = useState(null);
 
   useEffect(() => {
-    if (!dirty) return;
+    // Nothing left to lose (saved, the job ended): an open prompt goes away.
+    if (!dirty) {
+      setPending(null);
+      return;
+    }
     const confirm = (go) => setPending({ go });
     registered.confirm = confirm;
     const onBeforeUnload = (e) => e.preventDefault();
