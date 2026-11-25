@@ -91,8 +91,18 @@ export function useUnsavedGuard(dirty, { within } = {}) {
   };
 }
 
-/** Sticky save bar of multi-field forms: Discard and Save when dirty; guards navigation. */
-export function SaveBar({ dirty, saving, onSave, onDiscard, within }) {
+/**
+ * Sticky save bar of multi-field forms: Discard and Save when dirty; guards navigation.
+ * `label` says where the edits are when they are not on screen.
+ */
+export function SaveBar({
+  dirty,
+  saving,
+  onSave,
+  onDiscard,
+  within,
+  label = "Unsaved changes",
+}) {
   const guard = useUnsavedGuard(dirty, { within });
   return (
     <>
@@ -104,7 +114,7 @@ export function SaveBar({ dirty, saving, onSave, onDiscard, within }) {
           // A floating bar at the bottom of the content column.
           className="motion-enter sticky bottom-4 z-20 mx-auto mt-2 flex w-full max-w-xl items-center justify-between gap-3 rounded-xl border bg-card py-2 pr-2 pl-4 shadow-xl"
         >
-          <p className="text-sm text-muted-foreground">Unsaved changes</p>
+          <p className="text-sm text-muted-foreground">{label}</p>
           <div className="flex items-center gap-2">
             <Button variant="ghost" onClick={onDiscard} disabled={saving}>
               Discard

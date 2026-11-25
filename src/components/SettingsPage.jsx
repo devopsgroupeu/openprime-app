@@ -6,7 +6,7 @@ import { useToast } from "../contexts/ToastContext";
 import authService from "../services/authService";
 import CloudCredentialModal from "./modals/CloudCredentialModal";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
-import AccountTab from "./settings-page/AccountTab";
+import AccountTab, { ACCOUNT_FIELDS } from "./settings-page/AccountTab";
 import CloudCredentialsTab from "./settings-page/CloudCredentialsTab";
 import PreferencesTab from "./settings-page/PreferencesTab";
 import { PageHeader } from "@/components/shared/page-header";
@@ -66,10 +66,10 @@ const SettingsPage = () => {
   const [credentialToDelete, setCredentialToDelete] = useState(null);
   const [credentialUsage, setCredentialUsage] = useState(null);
   // After a Save stopped by account problems: they show under their fields
-  // (and go as they are fixed); the first one takes the focus once the
-  // account form is on screen.
+  // (and go as they are fixed); the first one (its input id) takes the focus
+  // once the account form is on screen.
   const [showAccountErrors, setShowAccountErrors] = useState(false);
-  const [focusAccountError, setFocusAccountError] = useState(false);
+  const [focusAccountError, setFocusAccountError] = useState(null);
 
   useEffect(() => {
     loadUserData();
@@ -87,8 +87,8 @@ const SettingsPage = () => {
 
   useEffect(() => {
     if (!focusAccountError || activeTab !== "account") return;
-    setFocusAccountError(false);
-    document.querySelector('[aria-invalid="true"]')?.focus();
+    setFocusAccountError(null);
+    document.getElementById(focusAccountError)?.focus();
   }, [focusAccountError, activeTab]);
 
   const loadUserData = async () => {
@@ -156,9 +156,11 @@ const SettingsPage = () => {
   };
 
   const saveSettings = async () => {
-    if (Object.keys(accountProblems()).length > 0) {
+    const problems = accountProblems();
+    const firstInvalid = ACCOUNT_FIELDS.find((field) => problems[field.key]);
+    if (firstInvalid) {
       setShowAccountErrors(true);
-      setFocusAccountError(true);
+      setFocusAccountError(firstInvalid.id);
       if (activeTab !== "account") navigate("/settings/account");
       return;
     }
@@ -264,11 +266,21 @@ const SettingsPage = () => {
   const onCredentials = activeTab === "cloud-credentials";
   const status = onCredentials ? credentialsStatus : userStatus;
   // The account and preferences drafts live across the tabs; either one
-  // shows the save bar, on every tab, and Save sends both.
-  const dirty =
-    userStatus === "ready" &&
-    (changed(profile, saved.profile) ||
-      changed(userPreferences, saved.preferences));
+  // shows the save bar, on every tab, and Save sends both. Off the tab with
+  // the edits, the bar names the tabs that hold them.
+  const edited =
+    userStatus === "ready"
+      ? SETTINGS_TABS.filter(
+          ({ id }) =>
+            (id === "account" && changed(profile, saved.profile)) ||
+            (id === "preferences" &&
+              changed(userPreferences, saved.preferences)),
+        )
+      : [];
+  const dirty = edited.length > 0;
+  const saveLabel = edited.some(({ id }) => id !== activeTab)
+    ? `Unsaved changes in ${edited.map((t) => t.label).join(" and ")}`
+    : undefined;
 
   return (
     <>
@@ -325,6 +337,7 @@ const SettingsPage = () => {
           onSave={saveSettings}
           onDiscard={discardChanges}
           within="/settings/"
+          label={saveLabel}
         />
       </PageShell>
 

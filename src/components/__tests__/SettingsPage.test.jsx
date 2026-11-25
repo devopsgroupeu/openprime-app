@@ -120,14 +120,14 @@ describe("SettingsPage", () => {
   });
 
   it("checks the account form before it saves", async () => {
-    const puts = [];
+    const puts = { profile: [], preferences: [] };
     server.use(
       http.put("*/users/me/profile", async ({ request }) => {
-        puts.push(await request.json());
+        puts.profile.push(await request.json());
         return HttpResponse.json({});
       }),
       http.put("*/users/me/preferences", async ({ request }) => {
-        puts.push(await request.json());
+        puts.preferences.push(await request.json());
         return HttpResponse.json({});
       }),
     );
@@ -162,20 +162,28 @@ describe("SettingsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     expect(await screen.findByText("Changes saved")).toBeInTheDocument();
-    expect(puts).toHaveLength(2);
-    expect(puts[0]).toEqual({
-      firstName: "Mocka",
-      lastName: "User",
-      email: "mocka@openprime.dev",
-    });
+    expect(puts.profile).toEqual([
+      { firstName: "Mocka", lastName: "User", email: "mocka@openprime.dev" },
+    ]);
+    expect(puts.preferences).toHaveLength(1);
   });
 
   it("goes back to the account form when Save finds a problem there", async () => {
+    const puts = [];
+    server.use(
+      http.put("*/users/me/*", ({ request }) => {
+        puts.push(request.url);
+        return HttpResponse.json({});
+      }),
+    );
     renderSettingsPage(
       "/settings/account",
       undefined,
       <nav>
         <Link to="/settings/preferences">To preferences</Link>
+        {/* Another invalid control on the page (the shell, a dialog) does
+            not take the focus meant for the account field. */}
+        <input aria-label="Elsewhere" aria-invalid="true" />
       </nav>,
     );
 
@@ -189,6 +197,7 @@ describe("SettingsPage", () => {
     const email = await screen.findByLabelText(/Email/i);
     expect(email).toHaveAccessibleDescription("Enter a valid email address.");
     await waitFor(() => expect(email).toHaveFocus());
+    expect(puts).toEqual([]);
   });
 
   it("saves preferences next to an untouched profile without names", async () => {
@@ -313,9 +322,42 @@ describe("SettingsPage", () => {
     expect(await screen.findByText("aws-sandbox")).toBeInTheDocument();
     expect(
       screen.getByRole("region", { name: "Unsaved changes" }),
-    ).toBeInTheDocument();
+    ).toHaveTextContent("Unsaved changes in Account");
     fireEvent.click(screen.getByRole("link", { name: "To environments" }));
     expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+  });
+
+  // On the tab that holds them the edits are in sight; elsewhere the bar
+  // names the tabs that hold them.
+  it("names the tabs with edits when they are not the one shown", async () => {
+    renderSettingsPage(
+      "/settings/account",
+      undefined,
+      <nav>
+        <Link to="/settings/preferences">To preferences</Link>
+        <Link to="/settings/cloud-credentials">To credentials</Link>
+      </nav>,
+    );
+    const bar = () => screen.getByRole("region", { name: "Unsaved changes" });
+
+    fireEvent.change(await screen.findByLabelText(/First Name/i), {
+      target: { value: "Mocka" },
+    });
+    expect(bar()).toHaveTextContent(/^Unsaved changesDiscardSave$/);
+
+    fireEvent.click(screen.getByRole("link", { name: "To preferences" }));
+    fireEvent.change(await screen.findByLabelText(/Default Region/i), {
+      target: { value: "eu-central-1" },
+    });
+    expect(bar()).toHaveTextContent(
+      "Unsaved changes in Account and Preferences",
+    );
+
+    fireEvent.click(screen.getByRole("link", { name: "To credentials" }));
+    expect(await screen.findByText("aws-sandbox")).toBeInTheDocument();
+    expect(bar()).toHaveTextContent(
+      "Unsaved changes in Account and Preferences",
+    );
   });
 
   it("does not ask when the palette moves between settings tabs", async () => {

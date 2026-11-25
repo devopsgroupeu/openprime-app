@@ -9,7 +9,8 @@ import {
   invalidProps,
 } from "../modals/wizard/basic-config/FieldControl";
 
-const FIELDS = [
+// The profile fields in page order; SettingsPage focuses the first invalid.
+export const ACCOUNT_FIELDS = [
   {
     key: "firstName",
     id: "settings-first-name",
@@ -35,7 +36,7 @@ const FIELDS = [
 const AccountTab = ({ profile, errors, onProfileChange }) => (
   <SettingsSection title="Profile">
     <SettingsRowGroup>
-      {FIELDS.map((field) => (
+      {ACCOUNT_FIELDS.map((field) => (
         <SettingsRow
           key={field.key}
           title={field.label}
