@@ -231,22 +231,20 @@ describe("SshKeyTabs", () => {
     ).not.toBeInTheDocument();
   });
 
-  // Like every other failure retry in the app.
-  it("offers Try again after a failed generation", () => {
-    const sshKeys = controller({
-      pair: null,
-      status: "error",
-      error: "Could not generate a key.",
-    });
-    render(<SshKeyTabs sshKeys={sshKeys} gitRepository={{}} />);
+  // Like every other failure retry in the app; the message names the button
+  // and the tab it offers.
+  it("offers Try again after a failed generation", async () => {
+    generateSshKeyPair.mockClear().mockRejectedValue(new Error("insecure"));
+    render(<Harness />);
+    selectTab("Generate in browser");
     const panel = within(
       screen.getByRole("tabpanel", { name: "Generate in browser" }),
     );
-    expect(panel.getByRole("alert")).toHaveTextContent(
-      "Could not generate a key.",
+    expect(await panel.findByRole("alert")).toHaveTextContent(
+      "Could not generate a key. Use HTTPS or localhost. Try again, or paste an existing key.",
     );
     fireEvent.click(panel.getByRole("button", { name: "Try again" }));
-    expect(sshKeys.generate).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(generateSshKeyPair).toHaveBeenCalledTimes(2));
   });
 
   it("keeps the pasted key as an editable private-key input with existing-key help", () => {

@@ -106,7 +106,7 @@ export function useSshKeyGeneration({ newEnv, setNewEnv, active, identity }) {
             ...prev,
             status: "error",
             error:
-              "Could not generate a key. Use HTTPS or localhost, retry, or use Manual.",
+              "Could not generate a key. Use HTTPS or localhost. Try again, or paste an existing key.",
           }));
         },
       )
