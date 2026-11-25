@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router";
 import { BookOpen, KeyRound, Keyboard, Layers, Moon, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,14 +45,30 @@ const STATUS_DOT = {
  * Puts the open page's own actions in the palette while it shows (AppLayout
  * passes the setter as the outlet context). `group`: { heading, actions }, an
  * action { label, icon, to } (navigates, guarded) or { label, icon, onSelect,
- * disabled }. Re-registered on every render, so the actions stay current.
+ * disabled }. Registered again only when a heading, label, target or disabled
+ * state changes; onSelect always runs the page's latest callback.
  */
 export function usePaletteActions(group) {
   const setGroup = useOutletContext();
-  useEffect(() => {
-    setGroup?.(group);
-    return () => setGroup?.(null);
+  const latest = useRef(group);
+  useLayoutEffect(() => {
+    latest.current = group;
   });
+  const shown = [group.heading]
+    .concat(group.actions.map((a) => `${a.label}|${a.to}|${!!a.disabled}`))
+    .join("\n");
+  useEffect(() => {
+    const { heading, actions } = latest.current;
+    setGroup?.({
+      heading,
+      actions: actions.map((action, i) => ({
+        ...action,
+        onSelect:
+          action.onSelect && (() => latest.current.actions[i].onSelect()),
+      })),
+    });
+    return () => setGroup?.(null);
+  }, [setGroup, shown]);
 }
 
 function Shortcut({ id }) {
