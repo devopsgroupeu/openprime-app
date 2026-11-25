@@ -209,8 +209,8 @@ const EnvironmentConfiguration = ({
           </DetailRow>
           {prefix ? (
             <DetailRow
-              label="Global prefix"
-              actions={copy(prefix, "Copy prefix")}
+              label="Resource prefix"
+              actions={copy(prefix, "Copy resource prefix")}
             >
               <Mono>{prefix}</Mono>
             </DetailRow>

@@ -141,7 +141,7 @@ const EnvironmentCard = ({ environment, onCopyId, onDelete }) => {
             ) : null}
             {prefix ? (
               <>
-                Prefix <span className="font-mono">{prefix}</span>
+                Resource prefix <span className="font-mono">{prefix}</span>
               </>
             ) : null}
           </>

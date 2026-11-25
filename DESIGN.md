@@ -519,9 +519,10 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
 - `ListToolbar`: status `FilterTabs` "All" + only the statuses that occur (Ready, Not generated,
   Failed first) with counts, a live "N environments", search by name, prefix or region, and the sort
   (Recently modified, Name A to Z, Most services).
-- Card: cover with provider avatar, name, `StatusBadge`, region and "Prefix" in mono, up to six
-  `ServiceIcon`s with tooltips and "+N", "Modified 3 days ago" (exact UTC time for screen readers
-  only), menu Open, Edit, Copy environment ID, Delete. Opening the list re-reads `GET /environments`.
+- Card: cover with provider avatar, name, `StatusBadge`, region and "Resource prefix" (the prefix
+  in mono), up to six `ServiceIcon`s with tooltips and "+N", "Modified 3 days ago" (exact UTC time
+  for screen readers only), menu Open, Edit, Copy environment ID, Delete. Opening the list re-reads
+  `GET /environments`.
 
 ### 6.2 Environment detail and jobs (`EnvironmentDetailPage.jsx`, `environment-detail/`)
 
@@ -659,9 +660,9 @@ tab in the path. Search is component state; sort, theme, the wizard Aura column 
    "Roadmap"). Toasts are a past-tense outcome + object ("Created demo-prod.", "Pushed to <repo>.").
 8. Time is relative ("3 days ago") with the absolute UTC time in a tooltip and for screen readers
    (`RelativeTime` in `shared/format.jsx`).
-9. The prefix is "Resource prefix" in the wizard and Review, "Prefix" in card and header facts and
-   "Global prefix" on the Configuration tab; match the surface. Product names as their owners write
-   them: AWS, Amazon EKS, Argo CD, GitHub, GitLab.
+9. The prefix is "Resource prefix" everywhere: wizard, Review, card, detail header and Configuration
+   tab ("Copy resource prefix"). Product names as their owners write them: AWS, Amazon EKS, Argo CD,
+   GitHub, GitLab.
 
 ## 8. Accessibility checklist
 

@@ -160,8 +160,13 @@ const EnvironmentHeader = ({
             ) : null}
             {prefix ? (
               <Fact>
-                Prefix <span className="font-mono text-xs">{prefix}</span>
-                <CopyButton text={prefix} label="Copy prefix" size="icon-xs" />
+                Resource prefix{" "}
+                <span className="font-mono text-xs">{prefix}</span>
+                <CopyButton
+                  text={prefix}
+                  label="Copy resource prefix"
+                  size="icon-xs"
+                />
               </Fact>
             ) : null}
             {modified ? (

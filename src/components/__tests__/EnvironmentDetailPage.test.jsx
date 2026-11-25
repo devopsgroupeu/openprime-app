@@ -994,6 +994,18 @@ describe("EnvironmentDetailPage identity", () => {
     }
   });
 
+  // One name for the prefix, as in the wizard and Review.
+  it("names the resource prefix in the header and on the Configuration tab", async () => {
+    renderDetailPage({ path: "/environments/env-001?tab=configuration" });
+    await screen.findByRole("heading", { level: 1, name: "demo-prod" });
+
+    // The header fact and the Basics row, each with its copy button.
+    expect(screen.getAllByText("Resource prefix")).toHaveLength(2);
+    expect(
+      screen.getAllByRole("button", { name: "Copy resource prefix" }),
+    ).toHaveLength(2);
+  });
+
   it("shows the official logos of the charts and the git provider", async () => {
     renderDetailPage({ path: "/environments/env-001?tab=helm" });
     // ingress-nginx shows the icon its own chart declares.

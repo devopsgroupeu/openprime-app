@@ -166,6 +166,17 @@ describe("EnvironmentsPage", () => {
     expect(band.querySelector('[data-slot="icon-tile"]')).not.toBeNull();
   });
 
+  // One name for the prefix, as in the wizard and Review.
+  it("names the resource prefix on the card", () => {
+    renderPage();
+    const card = screen
+      .getByRole("link", { name: "demo-prod" })
+      .closest("article");
+    // The description runs region, then "Resource prefix" and the value.
+    expect(within(card).getByText(/Resource prefix/)).toBeInTheDocument();
+    expect(within(card).getByText("op-")).toHaveClass("font-mono");
+  });
+
   it("shows up to six service icons and counts the rest", () => {
     renderPage();
     const card = screen
