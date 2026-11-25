@@ -365,6 +365,30 @@ describe("WizardPage", () => {
     );
   });
 
+  // The draft never stores the deploy key (wizardDraft stripSecrets).
+  it("says on Cancel that the draft is kept without the deploy key", async () => {
+    localStorage.clear();
+    renderWizardCreate(vi.fn());
+    await stepHeading("Basics");
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "prod" },
+    });
+    fireEvent.click(screen.getByRole("switch", { name: /git repository/i }));
+    fireEvent.change(screen.getByLabelText("SSH private key (deploy key)"), {
+      target: { value: "-----BEGIN OPENSSH PRIVATE KEY-----" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(await screen.findByText("Environment list")).toBeInTheDocument();
+    expect(
+      screen.getByText("Draft saved without the deploy key."),
+    ).toBeInTheDocument();
+    expect(localStorage.getItem("op-wizard-draft:mock-user-1")).not.toContain(
+      "PRIVATE KEY",
+    );
+  });
+
   // An untouched wizard is not a draft: nothing is kept, nothing is said.
   it("keeps no draft of an untouched wizard", async () => {
     localStorage.clear();

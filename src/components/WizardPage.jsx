@@ -379,9 +379,14 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       guardedNavigate(() => navigate(leaveTo));
       return;
     }
-    // A draft exists once a change was saved, or when one was restored.
+    // A draft exists once a change was saved, or when one was restored. It
+    // never stores the deploy key.
     if (savedAt || initial.restored)
-      info("Draft saved. Resume it from New environment.");
+      info(
+        newEnv.gitRepository?.sshKey?.trim()
+          ? "Draft saved without the deploy key."
+          : "Draft saved. Resume it from New environment.",
+      );
     navigate(leaveTo);
   };
 
