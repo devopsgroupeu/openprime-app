@@ -254,6 +254,26 @@ describe("SettingsPage", () => {
     );
   });
 
+  // The shared copy button: in-view "Copied" feedback, like everywhere else.
+  it("copies a credential's account ID with the shared copy button", async () => {
+    const writeText = vi.fn(() => Promise.resolve());
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    renderSettingsPage("/settings/cloud-credentials");
+
+    const [copy] = await screen.findAllByRole("button", {
+      name: "Copy account ID",
+    });
+    fireEvent.click(copy);
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("123456789012"));
+    expect(
+      await screen.findByRole("button", { name: "Copied" }),
+    ).toBeInTheDocument();
+  });
+
   it("shows one add action in the empty state when there are no credentials", async () => {
     server.use(
       http.get("*/cloud-credentials", () =>

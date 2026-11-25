@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Check, Copy, KeyRound, Pencil, Plus, Trash2 } from "lucide-react";
+import { KeyRound, Pencil, Plus, Trash2 } from "lucide-react";
 
 import authService from "../../services/authService";
 import { useToast } from "../../contexts/ToastContext";
 import AwsIcon from "../icons/AwsIcon";
+import { CopyButton } from "@/components/shared/copy-button";
 import { RelativeTime } from "@/components/shared/format";
 import { IconTile } from "@/components/shared/icon-tile";
 import { ResourceActionsMenu } from "@/components/shared/resource-actions-menu";
@@ -16,41 +17,6 @@ import { EmptyState } from "@/components/shared/states";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
-// Icon button that copies a value; the icon turns into a check for a moment.
-const CopyButton = ({ text, label }) => {
-  const toast = useToast();
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      toast.error("Couldn't copy to the clipboard.");
-    }
-  };
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label={label}
-          onClick={copy}
-        >
-          {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  );
-};
 
 const CloudCredentialsTab = ({
   credentials,
@@ -160,6 +126,7 @@ const CloudCredentialsTab = ({
                       <CopyButton
                         text={credential.identifier}
                         label="Copy account ID"
+                        size="icon-xs"
                       />
                     </span>
                     <span>
