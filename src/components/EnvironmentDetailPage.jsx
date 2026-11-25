@@ -35,6 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { describeError } from "@/lib/describe-error";
 import { cn } from "@/lib/utils";
 
 const TABS = [
@@ -381,9 +382,7 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
       toast.success(`Deleted ${environment.name}.`);
       navigate("/environments");
     } catch (err) {
-      toast.error(err.data?.error || err.message || "Try again.", {
-        title: `Couldn't delete ${environment.name}`,
-      });
+      toast.error(describeError(err, `delete ${environment.name}`));
     }
   };
 

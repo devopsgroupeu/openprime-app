@@ -484,9 +484,33 @@ describe("EnvironmentsPage", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
 
     expect(
-      await screen.findByText("Couldn't delete demo-prod"),
+      await screen.findByText("Couldn't delete demo-prod: Server said no"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Server said no")).toBeInTheDocument();
+    expect(screen.getByText(/Server said no/)).toBeInTheDocument();
+  });
+
+  it("asks to check the connection when the delete request fails", async () => {
+    const onDelete = vi.fn(() =>
+      Promise.reject(new TypeError("Failed to fetch")),
+    );
+    renderPage({ onDelete });
+
+    openMenu("demo-prod");
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
+    const dialog = await screen.findByRole("alertdialog");
+    fireEvent.change(
+      within(dialog).getByLabelText("Type demo-prod to confirm"),
+      {
+        target: { value: "demo-prod" },
+      },
+    );
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    expect(
+      await screen.findByText(
+        "Couldn't delete demo-prod. Check your connection and try again.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("has no Delete without a delete handler", async () => {

@@ -22,6 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { describeError } from "@/lib/describe-error";
 
 export const gitRepositoryOf = (env) => env.git_repository || env.gitRepository;
 export const terraformBackendOf = (env) =>
@@ -80,7 +81,7 @@ function RotateSshKeyDialog({ environment, gitRepo, onClose, onUpdated }) {
       success("SSH key rotated.");
     } catch (err) {
       console.error("Failed to update SSH key:", err);
-      showError(err.message || "Couldn't rotate the SSH key.");
+      showError(describeError(err, "rotate the SSH key"));
     } finally {
       setSaving(false);
     }

@@ -17,6 +17,7 @@ import { EmptyState } from "@/components/shared/states";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { describeError } from "@/lib/describe-error";
 
 const CloudCredentialsTab = ({
   credentials,
@@ -70,7 +71,7 @@ const CloudCredentialsTab = ({
         );
         return;
       }
-      toast.error(error.message || "Couldn't test the credentials.");
+      toast.error(describeError(error, `test ${credential.name}`));
     } finally {
       setTestingId(null);
     }

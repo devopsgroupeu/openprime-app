@@ -15,6 +15,7 @@ import { SaveBar } from "@/components/shared/save-bar";
 import { SettingsPageSkeleton } from "@/components/shared/skeletons";
 import { ErrorState } from "@/components/shared/states";
 import { Separator } from "@/components/ui/separator";
+import { describeError } from "@/lib/describe-error";
 
 // True when any top-level value differs (drafts are edited one key at a time).
 const changed = (a, b) =>
@@ -152,9 +153,7 @@ const SettingsPage = () => {
       toast.success("Changes saved");
     } catch (error) {
       console.error("Failed to save settings:", error);
-      const message = error.data?.error || error.message;
-      const errorId = error.requestId ? ` (Error ID: ${error.requestId})` : "";
-      toast.error(`Couldn't save your changes: ${message}${errorId}`);
+      toast.error(describeError(error, "save your changes"));
     } finally {
       setSaving(false);
     }
@@ -206,12 +205,7 @@ const SettingsPage = () => {
       setCredentialUsage(null);
     } catch (error) {
       console.error("Failed to delete credential:", error);
-      const message =
-        error.data?.error || error.message || "Failed to delete credential";
-      const errorId = error.requestId ? ` (Error ID: ${error.requestId})` : "";
-      toast.error(`${message}${errorId}`, {
-        title: `Couldn't delete ${credentialToDelete.name}`,
-      });
+      toast.error(describeError(error, `delete ${credentialToDelete.name}`));
     }
   };
 
@@ -232,11 +226,7 @@ const SettingsPage = () => {
       setSelectedCredential(null);
     } catch (error) {
       console.error("Failed to save credential:", error);
-      const message =
-        error.data?.error || error.message || "Failed to save credential";
-      const errorId = error.requestId ? ` (Error ID: ${error.requestId})` : "";
-      toast.error(`${message}${errorId}`, {
-        title: "Couldn't save the credentials",
+      toast.error(describeError(error, `save ${credentialData.name}`), {
         duration: 7000,
       });
     }

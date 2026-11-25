@@ -34,6 +34,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { describeError } from "@/lib/describe-error";
 import {
   backfillServices,
   createEmptyEnvironment,
@@ -179,9 +180,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
         setCurrentStep(2);
         setCompletedSteps(new Set([1]));
       } catch (err) {
-        error(`Couldn't load the environment. ${err.message}`, {
-          duration: 6000,
-        });
+        error(describeError(err, "load the environment"), { duration: 6000 });
         navigate("/environments");
       }
     })();
@@ -363,7 +362,10 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       }
     } catch (err) {
       error(
-        `Couldn't ${isEditMode ? "save changes to" : "create"} ${newEnv.name}. ${err.message}`,
+        describeError(
+          err,
+          `${isEditMode ? "save changes to" : "create"} ${newEnv.name}`,
+        ),
         { duration: 7000 },
       );
     } finally {

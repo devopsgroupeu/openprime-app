@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { describeError } from "@/lib/describe-error";
 
 const SORT_KEY = "openprime-environments-sort";
 const SORT_LABELS = {
@@ -161,9 +162,7 @@ const EnvironmentsPage = ({
       await onDelete(environment.id);
       toast.success(`Deleted ${environment.name}.`);
     } catch (error) {
-      toast.error(error.data?.error || error.message || "Try again.", {
-        title: `Couldn't delete ${environment.name}`,
-      });
+      toast.error(describeError(error, `delete ${environment.name}`));
     }
   };
 

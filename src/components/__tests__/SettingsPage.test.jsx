@@ -98,6 +98,25 @@ describe("SettingsPage", () => {
     );
   });
 
+  it("asks to check the connection when the save request fails", async () => {
+    server.use(http.put("*/users/me/profile", () => HttpResponse.error()));
+    renderSettingsPage("/settings/account");
+
+    fireEvent.change(await screen.findByLabelText(/Last Name/i), {
+      target: { value: "Person" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(
+      await screen.findByText(
+        "Couldn't save your changes. Check your connection and try again.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Unsaved changes" }),
+    ).toBeInTheDocument();
+  });
+
   it("discards unsaved changes", async () => {
     renderSettingsPage("/settings/account");
 
@@ -343,7 +362,9 @@ describe("SettingsPage", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
 
     expect(
-      await screen.findByText("Couldn't delete aws-sandbox"),
+      await screen.findByText(
+        "Couldn't delete aws-sandbox: Credential is locked",
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText(/Credential is locked/)).toBeInTheDocument();
     expect(screen.getByText("aws-sandbox")).toBeInTheDocument();

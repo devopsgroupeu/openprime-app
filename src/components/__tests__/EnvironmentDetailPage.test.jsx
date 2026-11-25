@@ -997,9 +997,9 @@ describe("EnvironmentDetailPage delete", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
 
     expect(
-      await toasts().findByText("Couldn't delete demo-prod"),
+      await toasts().findByText("Couldn't delete demo-prod: Server said no"),
     ).toBeInTheDocument();
-    expect(toasts().getByText("Server said no")).toBeInTheDocument();
+    expect(toasts().getByText(/Server said no/)).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "demo-prod" }),
     ).toBeInTheDocument();

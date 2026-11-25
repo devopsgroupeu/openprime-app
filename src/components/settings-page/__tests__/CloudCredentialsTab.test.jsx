@@ -121,6 +121,21 @@ describe("CloudCredentialsTab", () => {
     expect(screen.getByText(/Access denied/)).toBeInTheDocument();
   });
 
+  it("asks to check the connection when the test request fails", async () => {
+    server.use(
+      http.post("*/cloud-credentials/:id/test", () => HttpResponse.error()),
+    );
+
+    renderTab();
+    fireEvent.click(screen.getByRole("button", { name: /Test/i }));
+
+    expect(
+      await screen.findByText(
+        "Couldn't test aws-sandbox. Check your connection and try again.",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("shows a warning toast for temporary failures", async () => {
     server.use(
       http.post("*/cloud-credentials/:id/test", () =>

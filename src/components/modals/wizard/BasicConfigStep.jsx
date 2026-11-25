@@ -27,6 +27,7 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { describeError } from "@/lib/describe-error";
 import { cn } from "@/lib/utils";
 
 // Short provider names for the radio cards.
@@ -195,9 +196,7 @@ const BasicConfigStep = ({
         toast.error(response.error || "Couldn't create the state backend.");
       }
     } catch (error) {
-      const errorMessage =
-        error.message || "Couldn't create the state backend.";
-      toast.error(errorMessage);
+      toast.error(describeError(error, "create the state backend"));
     } finally {
       setCreatingBackend(false);
     }
