@@ -35,6 +35,8 @@ const DynamicFieldRenderer = ({
   );
   const [jsonError, setJsonError] = React.useState("");
   const [expandedIndex, setExpandedIndex] = React.useState(null);
+  // A list field's text as typed, empty lines included.
+  const [listText, setListText] = React.useState("");
 
   React.useEffect(() => {
     // Update JSON text when value changes from outside
@@ -219,17 +221,26 @@ const DynamicFieldRenderer = ({
 
     case FIELD_TYPES.ARRAY: {
       const countId = `${id}-count`;
-      const count = Array.isArray(value) ? value.length : 0;
+      const items = Array.isArray(value) ? value : [];
+      const count = items.length;
+      const toItems = (text) =>
+        text.split("\n").filter((line) => line.trim() !== "");
+      // The items are stored without empty lines. The typed text is shown as
+      // long as it reads as the same items, so the new line after Enter stays;
+      // a list set from outside (Aura) replaces it.
+      const text =
+        toItems(listText).join("\n") === items.join("\n")
+          ? listText
+          : items.join("\n");
       return field(
         <Textarea
           id={id}
-          value={Array.isArray(value) ? value.join("\n") : ""}
+          value={text}
           onChange={(e) => {
-            const lines = e.target.value
-              .split("\n")
-              .filter((line) => line.trim() !== "");
-            handleChange(lines);
+            setListText(e.target.value);
+            handleChange(toItems(e.target.value));
           }}
+          onBlur={() => setListText(items.join("\n"))}
           disabled={disabled}
           rows={4}
           placeholder="Enter one item per line"
