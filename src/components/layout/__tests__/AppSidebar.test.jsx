@@ -51,6 +51,30 @@ describe("AppSidebar", () => {
     );
   });
 
+  // One current row: the wizard is New environment, an edit an environment.
+  it("marks New environment, not Environments, on the create wizard", () => {
+    renderSidebar("/environments/create");
+
+    expect(
+      screen.getByRole("link", { name: "New environment" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      screen.getByRole("link", { name: "Environments" }),
+    ).not.toHaveAttribute("aria-current");
+  });
+
+  it("keeps Environments active while editing an environment", () => {
+    renderSidebar("/environments/env-1/edit");
+
+    expect(screen.getByRole("link", { name: "Environments" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(
+      screen.getByRole("link", { name: "New environment" }),
+    ).not.toHaveAttribute("aria-current");
+  });
+
   it("swaps to the settings nav on /settings/*", () => {
     renderSidebar("/settings/preferences");
 

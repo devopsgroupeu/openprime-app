@@ -16,14 +16,16 @@ import { ToastProvider } from "../../contexts/ToastContext";
 import { AuthProvider } from "../../contexts/AuthContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import WizardPage from "../WizardPage";
+import AppLayout from "../layout/AppLayout";
 import authService from "../../services/authService";
 import { generateSshKeyPair } from "../../utils/sshKeyPair";
 
 vi.mock("../../utils/sshKeyPair", () => ({ generateSshKeyPair: vi.fn() }));
 
-// WizardPage is a full page: it needs Theme (toasts)/Auth, Toast, Tooltip (the
-// app root provides it) and a router (useParams/useNavigate). In mock mode
-// AuthProvider auto-authenticates. The two plain routes show where Cancel goes.
+// WizardPage is a page of the app shell (AppLayout, as in App): it needs
+// Theme (toasts)/Auth, Toast, Tooltip and a router (useParams/useNavigate). In
+// mock mode AuthProvider auto-authenticates. The two plain routes show where
+// Cancel goes.
 function renderAt(path, { onCreateEnvironment, onUpdateEnvironment } = {}) {
   const wizard = (
     <WizardPage
@@ -38,13 +40,19 @@ function renderAt(path, { onCreateEnvironment, onUpdateEnvironment } = {}) {
           <TooltipProvider>
             <MemoryRouter initialEntries={[path]}>
               <Routes>
-                <Route path="/environments/create" element={wizard} />
-                <Route path="/environments/:id/edit" element={wizard} />
-                <Route path="/environments" element={<p>Environment list</p>} />
-                <Route
-                  path="/environments/:id"
-                  element={<p>Environment detail</p>}
-                />
+                <Route element={<AppLayout environments={environments} />}>
+                  <Route path="/environments/create" element={wizard} />
+                  <Route path="/environments/:id/edit" element={wizard} />
+                  <Route
+                    path="/environments"
+                    element={<p>Environment list</p>}
+                  />
+                  <Route
+                    path="/environments/:id"
+                    element={<p>Environment detail</p>}
+                  />
+                  <Route path="/settings/:tab" element={<p>Settings</p>} />
+                </Route>
               </Routes>
             </MemoryRouter>
           </TooltipProvider>
@@ -138,10 +146,54 @@ describe("WizardPage", () => {
     ).toBeInTheDocument();
   });
 
+  // The base layout of every signed-in page: the sidebar stays, the shell's
+  // top bar names the task, only the content area is the wizard.
+  it("renders inside the app shell", async () => {
+    renderWizard();
+    await stepHeading("Basics");
+
+    const nav = screen.getByRole("navigation", { name: "Main navigation" });
+    expect(
+      within(nav).getByRole("link", { name: "Environments" }),
+    ).toHaveAttribute("href", "/environments");
+    expect(
+      within(nav).getByRole("link", { name: "New environment" }),
+    ).toHaveAttribute("aria-current", "page");
+    const crumbs = screen.getByRole("navigation", { name: "Breadcrumb" });
+    expect(
+      within(crumbs).getByRole("link", { name: "Environments" }),
+    ).toHaveAttribute("href", "/environments");
+    expect(within(crumbs).getByText("New environment")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    // One Aura per screen: the wizard's own, no floating launcher.
+    expect(screen.queryByRole("button", { name: "Ask Aura" })).toBeNull();
+    expect(screen.getAllByRole("main")).toHaveLength(1);
+  });
+
+  it("names the environment it edits in the shell's breadcrumbs", async () => {
+    renderWizardEdit(vi.fn());
+    await stepHeading("Services");
+
+    const crumbs = screen.getByRole("navigation", { name: "Breadcrumb" });
+    expect(
+      within(crumbs).getByRole("link", { name: "demo-prod" }),
+    ).toHaveAttribute("href", "/environments/env-001");
+    expect(within(crumbs).getByText("Edit")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.queryByRole("button", { name: "Ask Aura" })).toBeNull();
+  });
+
   it("skips the top bar to the step content, like the app shell", async () => {
     renderWizard();
     await stepHeading("Basics");
 
+    expect(
+      screen.getAllByRole("link", { name: "Skip to content" }),
+    ).toHaveLength(1);
     const skip = screen.getByRole("link", { name: "Skip to content" });
     expect(skip).toHaveAttribute("href", "#main");
     const main = screen.getByRole("main");
@@ -608,6 +660,104 @@ describe("WizardPage", () => {
     expect(await screen.findByText("Environment detail")).toBeInTheDocument();
   });
 
+  // Every way out through the shell asks first: links (sidebar, breadcrumbs,
+  // user menu) and the palette (guardedNavigate).
+  describe("leaving unsaved edits through the shell", () => {
+    const editDomain = async () => {
+      renderWizardEdit(vi.fn());
+      await stepHeading("Services");
+      fireEvent.click(screen.getByRole("button", { name: "Back" }));
+      fireEvent.change(await screen.findByPlaceholderText("e.g. example.com"), {
+        target: { value: "new.example.com" },
+      });
+    };
+    const asks = async () => {
+      expect(
+        await screen.findByRole("alertdialog", { name: "Discard changes?" }),
+      ).toBeInTheDocument();
+      expect(screen.queryByText("Environment list")).toBeNull();
+      expect(screen.queryByText("Environment detail")).toBeNull();
+      expect(screen.queryByText("Settings")).toBeNull();
+    };
+
+    it("asks on a sidebar link", async () => {
+      await editDomain();
+      fireEvent.click(
+        within(
+          screen.getByRole("navigation", { name: "Main navigation" }),
+        ).getByRole("link", { name: "Environments" }),
+      );
+      await asks();
+    });
+
+    it("asks on a breadcrumb", async () => {
+      await editDomain();
+      fireEvent.click(
+        within(
+          screen.getByRole("navigation", { name: "Breadcrumb" }),
+        ).getByRole("link", { name: "demo-prod" }),
+      );
+      await asks();
+    });
+
+    it("asks on a palette jump", async () => {
+      await editDomain();
+      fireEvent.keyDown(document, { key: "k", metaKey: true });
+      fireEvent.click(
+        within(await screen.findByRole("dialog")).getByRole("option", {
+          name: "Environments",
+        }),
+      );
+      await asks();
+    });
+
+    it("asks on the user menu's Settings", async () => {
+      await editDomain();
+      fireEvent.pointerDown(
+        screen.getByRole("button", { name: /Account menu/ }),
+        { button: 0, ctrlKey: false },
+      );
+      fireEvent.click(
+        await screen.findByRole("menuitem", { name: "Settings" }),
+      );
+      await asks();
+    });
+
+    it("leaves after Discard", async () => {
+      await editDomain();
+      fireEvent.click(
+        within(
+          screen.getByRole("navigation", { name: "Main navigation" }),
+        ).getByRole("link", { name: "Environments" }),
+      );
+      fireEvent.click(
+        within(await screen.findByRole("alertdialog")).getByRole("button", {
+          name: "Discard",
+        }),
+      );
+      expect(await screen.findByText("Environment list")).toBeInTheDocument();
+    });
+  });
+
+  // Create mode keeps its draft, so the sidebar leaves at once.
+  it("leaves create mode through the sidebar without asking", async () => {
+    localStorage.clear();
+    renderWizard();
+    fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
+      target: { value: "prod" },
+    });
+
+    fireEvent.click(
+      within(
+        screen.getByRole("navigation", { name: "Main navigation" }),
+      ).getByRole("link", { name: "Environments" }),
+    );
+
+    expect(await screen.findByText("Environment list")).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(localStorage.getItem("op-wizard-draft:mock-user-1")).not.toBeNull();
+  });
+
   it("leaves edit mode without asking when nothing changed", async () => {
     renderWizardEdit(vi.fn());
     await stepHeading("Services");
@@ -675,7 +825,7 @@ describe("WizardPage", () => {
     );
     renderWizard();
     await stepHeading("Basics");
-    // Below xl the top bar's Aura opens the sheet (the column toggle hides).
+    // Below 2xl the top bar's Aura opens the sheet (the column toggle hides).
     const openSheet = () =>
       fireEvent.click(
         screen

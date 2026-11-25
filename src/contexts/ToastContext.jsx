@@ -228,7 +228,7 @@ export const ToastProvider = ({ children }) => {
         className={cn(
           "pointer-events-none fixed right-4 bottom-20 z-70 flex w-[min(22.5rem,calc(100vw-2rem))] flex-col gap-2 sm:right-6",
           "max-sm:top-15 max-sm:bottom-auto",
-          "xl:[body:has(aside_[data-slot=prompt-input])_&]:right-86",
+          "2xl:[body:has(aside_[data-slot=prompt-input])_&]:right-86",
           "[body:has([role=dialog]_[data-slot=prompt-input])_&]:top-15 [body:has([role=dialog]_[data-slot=prompt-input])_&]:right-1/2 [body:has([role=dialog]_[data-slot=prompt-input])_&]:bottom-auto [body:has([role=dialog]_[data-slot=prompt-input])_&]:translate-x-1/2",
         )}
       >

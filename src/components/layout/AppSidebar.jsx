@@ -83,13 +83,14 @@ function TopRow({ onSearch }) {
   );
 }
 
-/** App mode of the sidebar. */
+/** App mode of the sidebar. The create wizard is New environment's page. */
 function AppNav({ pathname }) {
+  const creating = pathname === "/environments/create";
   return (
     <>
       <SidebarGroup className={GROUP}>
         <SidebarMenu className="gap-px">
-          <NavRow to="/environments/create" icon={Plus}>
+          <NavRow to="/environments/create" icon={Plus} active={creating}>
             New environment
           </NavRow>
         </SidebarMenu>
@@ -99,7 +100,7 @@ function AppNav({ pathname }) {
           <NavRow
             to="/environments"
             icon={Layers}
-            active={isActive(pathname, "/environments")}
+            active={!creating && isActive(pathname, "/environments")}
           >
             Environments
           </NavRow>

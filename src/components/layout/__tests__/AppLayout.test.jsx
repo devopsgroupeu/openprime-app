@@ -5,7 +5,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { Link, MemoryRouter, Route, Routes } from "react-router";
+import { Link, MemoryRouter, Route, Routes, useParams } from "react-router";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "../../../contexts/AuthContext";
@@ -30,6 +30,21 @@ describe("breadcrumbsFor", () => {
       { label: "Environments", to: "/environments" },
       { label: "Environment" },
     ]);
+  });
+
+  it("names the wizard's task, and the environment it edits as saved", () => {
+    expect(breadcrumbsFor("/environments/create", environments)).toEqual([
+      { label: "Environments", to: "/environments" },
+      { label: "New environment" },
+    ]);
+    expect(breadcrumbsFor("/environments/env-1/edit", environments)).toEqual([
+      { label: "Environments", to: "/environments" },
+      { label: "demo-prod", to: "/environments/env-1" },
+      { label: "Edit" },
+    ]);
+    expect(
+      breadcrumbsFor("/environments/unknown/edit", environments)[1],
+    ).toEqual({ label: "Environment", to: "/environments/unknown" });
   });
 });
 
@@ -56,20 +71,37 @@ describe("AppTopBar", () => {
   });
 });
 
+// A settings tab with a field: a tab switch must keep what was typed.
+function SettingsTab() {
+  const { tab } = useParams();
+  return (
+    <>
+      <h1>{tab}</h1>
+      <input aria-label="Draft" />
+      <Link to="/settings/preferences">Preferences tab</Link>
+    </>
+  );
+}
+
 describe("AppLayout", () => {
-  function renderLayout() {
+  function renderLayout(path = "/environments") {
     render(
       <ThemeProvider>
         <AuthProvider>
           <TooltipProvider>
-            <MemoryRouter initialEntries={["/environments"]}>
+            <MemoryRouter initialEntries={[path]}>
               <Routes>
                 <Route element={<AppLayout environments={environments} />}>
                   <Route
                     path="/environments"
                     element={<Link to="/settings/account">Go to settings</Link>}
                   />
-                  <Route path="/settings/account" element={<p>Settings</p>} />
+                  <Route path="/environments/create" element={<p>Wizard</p>} />
+                  <Route
+                    path="/environments/:id/edit"
+                    element={<p>Wizard</p>}
+                  />
+                  <Route path="/settings/:tab" element={<SettingsTab />} />
                 </Route>
               </Routes>
             </MemoryRouter>
@@ -92,28 +124,29 @@ describe("AppLayout", () => {
 
     fireEvent.click(screen.getByRole("link", { name: "Go to settings" }));
 
-    expect(await screen.findByText("Settings")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "account" }),
+    ).toBeInTheDocument();
     expect(scroller.scrollTop).toBe(0);
   });
 
-  // Layout is CSS (checked in screenshots): the room kept under the last card
-  // for the Aura launcher would lift a SaveBar off its resting place at the
-  // end of the page, so a page with one goes without it. It also fills the
-  // screen, so the bar rests at the bottom (under the Aura window), not in
-  // the middle of a short page.
-  it("keeps no launcher room under a page with a save bar", () => {
-    renderLayout();
-    const scroller = screen
-      .getByRole("main")
-      .querySelector('[data-slot="page-scroller"]');
+  // One Aura per screen: the wizard has its own panel.
+  it.each(["/environments/create", "/environments/env-1/edit"])(
+    "has no floating Aura launcher on %s",
+    (path) => {
+      renderLayout(path);
 
-    expect(scroller.firstElementChild).toHaveClass(
-      "pb-16",
-      "has-[[data-slot=save-bar]]:pb-0",
-      "has-[[data-slot=save-bar]]:flex",
-      "has-[[data-slot=save-bar]]:min-h-full",
-      "has-[[data-slot=save-bar]]:flex-col",
-    );
+      expect(screen.getByText("Wizard")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Ask Aura" })).toBeNull();
+    },
+  );
+
+  it("has the floating Aura launcher on other pages", () => {
+    renderLayout();
+
+    expect(
+      screen.getByRole("button", { name: "Ask Aura" }),
+    ).toBeInTheDocument();
   });
 
   it("skips the sidebar and top bar to the main landmark", () => {

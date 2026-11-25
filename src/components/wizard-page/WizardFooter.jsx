@@ -2,8 +2,9 @@ import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
-// Footer of the wizard's content column: Back, "Step N of M" (lg and up; the
-// compact progress above the h1 shows it below lg) and the one primary action.
+// Footer of the wizard's content column: Back, "Step N of M" (beside the
+// stepper; without it the compact progress above the h1 says it) and the one
+// primary action.
 // Presentational: navigation and validation live in WizardPage.
 const WizardFooter = ({
   currentStep,
@@ -27,7 +28,7 @@ const WizardFooter = ({
             </Button>
           ) : null}
         </div>
-        <p className="hidden text-sm text-muted-foreground tabular-nums lg:block">
+        <p className="hidden text-sm text-muted-foreground tabular-nums @4xl/wizard:block">
           Step {currentStep} of {totalSteps}
         </p>
         <div className="flex flex-1 justify-end">

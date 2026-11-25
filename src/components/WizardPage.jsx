@@ -1,18 +1,20 @@
 // src/components/WizardPage.jsx
-// Full-screen environment wizard, outside the app shell: its own top bar, a
-// vertical stepper, the step form with its footer, and the Aura column.
+// The environment wizard, a page of the app shell: it fills the content area
+// with a vertical stepper, the step form with its footer and the Aura column,
+// and puts its controls in the shell's top bar.
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router";
-import { PanelRight } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import WizardAssistant from "./WizardAssistant";
 import AIChatModal from "./modals/AIChatModal";
-import WizardTopBar from "./wizard-page/WizardTopBar";
+import WizardActions from "./wizard-page/WizardActions";
 import WizardStepSidebar, {
   WizardStepProgress,
 } from "./wizard-page/WizardStepSidebar";
 import WizardFooter from "./wizard-page/WizardFooter";
 import WizardStepContent from "./wizard-page/WizardStepContent";
 import { STEP_DEFS } from "./wizard-page/stepDefs";
+import { TopBarActions } from "@/components/layout/AppTopBar";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageShell } from "@/components/shared/page-shell";
 import { guardedNavigate, useUnsavedGuard } from "@/components/shared/save-bar";
@@ -55,7 +57,7 @@ import {
 import { useCatalog } from "../contexts/CatalogContext";
 import { useSshKeyGeneration } from "./wizard-page/useSshKeyGeneration.js";
 
-// The Aura column (xl and up) remembers whether it was closed.
+// The Aura column (2xl and up) remembers whether it was closed.
 const AURA_PANEL_KEY = "op-wizard-aura-open";
 const readAuraOpen = () => {
   try {
@@ -449,17 +451,6 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     }
   };
 
-  const breadcrumbs = isEditMode
-    ? [
-        { label: "Environments", to: "/environments" },
-        { label: newEnv?.name || "Environment", to: `/environments/${id}` },
-        { label: "Edit" },
-      ]
-    : [
-        { label: "Environments", to: "/environments" },
-        { label: "New environment" },
-      ];
-
   const assistant = newEnv ? (
     <WizardAssistant
       context={{
@@ -476,9 +467,9 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     />
   ) : null;
 
-  const topBar = (
-    <WizardTopBar
-      breadcrumbs={breadcrumbs}
+  // In the shell's top bar, after its breadcrumbs.
+  const actions = (
+    <WizardActions
       savedAt={isEditMode ? null : savedAt}
       draftRestored={draftRestored}
       onStartOver={() =>
@@ -490,9 +481,9 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       auraSheet={
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="sm" className="xl:hidden">
-              <PanelRight aria-hidden />
-              Aura
+            <Button variant="ghost" size="sm" className="2xl:hidden">
+              <Sparkles aria-hidden />
+              <span className="max-sm:sr-only">Aura</span>
             </Button>
           </SheetTrigger>
           <SheetContent
@@ -515,18 +506,12 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
 
   if (!newEnv) {
     return (
-      <div className="flex h-dvh flex-col bg-background">
-        {topBar}
-        <main
-          id="main"
-          tabIndex={-1}
-          className="min-h-0 flex-1 overflow-y-auto outline-none"
-        >
-          <PageShell width="settings">
-            <SettingsPageSkeleton />
-          </PageShell>
-        </main>
-      </div>
+      <>
+        <TopBarActions>{actions}</TopBarActions>
+        <PageShell width="settings">
+          <SettingsPageSkeleton />
+        </PageShell>
+      </>
     );
   }
 
@@ -540,9 +525,12 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const activeStep = steps[currentStep - 1];
 
   return (
-    <div className="flex h-dvh flex-col bg-background">
-      {topBar}
-      <div className="flex min-h-0 flex-1">
+    <>
+      <TopBarActions>{actions}</TopBarActions>
+      {/* Fills the shell's content area; each column scrolls on its own. The
+          stepper shows when the area (beside an open or hidden sidebar) has
+          room for it next to the form. */}
+      <div className="@container/wizard flex h-full min-h-0 border-t">
         <WizardStepSidebar
           steps={stepperSteps}
           currentStep={currentStep}
@@ -550,12 +538,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
           onStepChange={handleStepChange}
         />
 
-        {/* The skip link's target (WizardTopBar). */}
-        <main
-          id="main"
-          tabIndex={-1}
-          className="flex min-w-0 flex-1 flex-col outline-none"
-        >
+        <div className="flex min-w-0 flex-1 flex-col">
           <div ref={scrollerRef} className="min-h-0 flex-1 overflow-y-auto">
             <PageShell key={`${currentId}:${resetCount}`} width="settings">
               <div className="flex flex-col gap-3">
@@ -605,12 +588,12 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
             onNext={handleNext}
             onSubmit={submit}
           />
-        </main>
+        </div>
 
         {auraOpen ? (
           <aside
             aria-label="Aura"
-            className="hidden w-80 shrink-0 flex-col border-l bg-card xl:flex"
+            className="hidden w-80 shrink-0 flex-col border-l bg-card 2xl:flex"
           >
             {assistant}
           </aside>
@@ -684,7 +667,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
           }
         />
       )}
-    </div>
+    </>
   );
 };
 

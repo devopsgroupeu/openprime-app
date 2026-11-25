@@ -5,33 +5,54 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { matches, shortcut } from "@/lib/shortcuts";
 import AuraChatButton from "../AuraChatButton";
 import AppSidebar from "./AppSidebar";
-import AppTopBar from "./AppTopBar";
+import AppTopBar, { TopBarSlot } from "./AppTopBar";
 import CommandPalette from "./CommandPalette";
 import KeyboardShortcutsDialog from "./KeyboardShortcutsDialog";
 
-/** Crumbs only from depth 2 (openprime-ai): the last one is the resource. */
+/** The environment wizard: create, or edit environment `:id`. */
+const isWizardPath = (pathname) =>
+  pathname === "/environments/create" ||
+  Boolean(matchPath("/environments/:id/edit", pathname));
+
+/**
+ * Crumbs only from depth 2 (openprime-ai): the last one is the page. The
+ * environment is named as saved (the list's copy).
+ */
 export function breadcrumbsFor(pathname, environments) {
+  const root = { label: "Environments", to: "/environments" };
+  const nameOf = (id) =>
+    environments.find((e) => e.id === id)?.name || "Environment";
+  if (pathname === "/environments/create")
+    return [root, { label: "New environment" }];
+  const edit = matchPath("/environments/:id/edit", pathname);
+  if (edit) {
+    const { id } = edit.params;
+    return [
+      root,
+      { label: nameOf(id), to: `/environments/${id}` },
+      { label: "Edit" },
+    ];
+  }
   const env = matchPath("/environments/:id", pathname);
-  if (!env) return [];
-  const name = environments.find((e) => e.id === env.params.id)?.name;
-  return [
-    { label: "Environments", to: "/environments" },
-    { label: name || "Environment" },
-  ];
+  return env ? [root, { label: nameOf(env.params.id) }] : [];
 }
 
 /**
  * The app shell (port of openprime-ai AppShell): deep-green sidebar, top bar
  * with a hairline once the content scrolls, the Cmd+K palette, the
  * shortcuts dialog and the floating Aura. The viewport never scrolls; the area
- * under the top bar does.
+ * under the top bar does. Every signed-in page renders here, the wizard too
+ * (it fills the area and scrolls its own columns).
  */
 const AppLayout = ({ environments }) => {
   const { pathname } = useLocation();
+  const wizard = isWizardPath(pathname);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   // The open page's own palette group (usePaletteActions).
   const [pageActions, setPageActions] = useState(null);
+  // The top bar's slot for the page's own controls (TopBarActions).
+  const [actionsSlot, setActionsSlot] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const scrollerRef = useRef(null);
 
@@ -67,6 +88,7 @@ const AppLayout = ({ environments }) => {
         <AppTopBar
           breadcrumbs={breadcrumbsFor(pathname, environments)}
           scrolled={scrolled}
+          actionsRef={setActionsSlot}
         />
         <div
           ref={scrollerRef}
@@ -78,9 +100,18 @@ const AppLayout = ({ environments }) => {
               under a SaveBar: it would lift the bar off its sticky place at
               the end of the page, under the launcher. A page with a SaveBar
               fills the screen, so a short one has its bar at the bottom too,
-              under the Aura launcher and window, never behind them. */}
-          <div className="pb-16 has-[[data-slot=save-bar]]:flex has-[[data-slot=save-bar]]:min-h-full has-[[data-slot=save-bar]]:flex-col has-[[data-slot=save-bar]]:pb-0">
-            <Outlet context={setPageActions} />
+              under the Aura launcher and window, never behind them. The
+              wizard has no launcher and fills the area. */}
+          <div
+            className={
+              wizard
+                ? "h-full"
+                : "pb-16 has-[[data-slot=save-bar]]:flex has-[[data-slot=save-bar]]:min-h-full has-[[data-slot=save-bar]]:flex-col has-[[data-slot=save-bar]]:pb-0"
+            }
+          >
+            <TopBarSlot.Provider value={actionsSlot}>
+              <Outlet context={setPageActions} />
+            </TopBarSlot.Provider>
           </div>
         </div>
       </SidebarInset>
@@ -95,7 +126,8 @@ const AppLayout = ({ environments }) => {
         open={shortcutsOpen}
         onOpenChange={setShortcutsOpen}
       />
-      <AuraChatButton />
+      {/* One Aura per screen: the wizard has its own panel. */}
+      {wizard ? null : <AuraChatButton />}
     </SidebarProvider>
   );
 };

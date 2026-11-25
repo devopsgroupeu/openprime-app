@@ -33,7 +33,8 @@ function StepMarker({ step, current, complete }) {
 }
 
 /**
- * Vertical stepper of the wizard (lg and up). Completed and earlier steps are
+ * Vertical stepper of the wizard (a content area of 56rem and up, the wizard
+ * container). Completed and earlier steps are
  * buttons; the current step carries `aria-current="step"`; later steps are
  * plain text. WizardPage refuses a jump forward to an unvisited step.
  */
@@ -45,7 +46,7 @@ const WizardStepSidebar = ({
 }) => (
   <nav
     aria-label="Steps"
-    className="hidden w-60 shrink-0 overflow-y-auto border-r px-3 py-6 lg:block"
+    className="hidden w-60 shrink-0 overflow-y-auto border-r px-3 py-6 @4xl/wizard:block"
   >
     <ol className="flex flex-col">
       {steps.map((step, index) => {
@@ -108,10 +109,10 @@ const WizardStepSidebar = ({
   </nav>
 );
 
-/** Below lg the stepper collapses to "Step 2 of 4" and a segmented track. */
+/** Without the stepper: "Step 2 of 4" and a segmented track. */
 export function WizardStepProgress({ steps, currentStep }) {
   return (
-    <div className="flex items-center justify-between gap-3 lg:hidden">
+    <div className="flex items-center justify-between gap-3 @4xl/wizard:hidden">
       <p className="text-xs text-muted-foreground tabular-nums">
         Step {currentStep} of {steps.length}
       </p>

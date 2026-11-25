@@ -153,10 +153,11 @@ describe("ToastProvider", () => {
     );
   });
 
+  // The column shows from 2xl, where the shell's sidebar leaves room for it.
   it("moves toasts left of the wizard's Aura column", () => {
     render(<ToastProvider />);
     expect(screen.getByRole("region", { name: "Notifications" })).toHaveClass(
-      "xl:[body:has(aside_[data-slot=prompt-input])_&]:right-86",
+      "2xl:[body:has(aside_[data-slot=prompt-input])_&]:right-86",
     );
   });
 });
