@@ -59,3 +59,39 @@ describe("settings routes", () => {
     },
   );
 });
+
+describe("unknown routes", () => {
+  afterEach(() => window.history.pushState({}, "", "/"));
+
+  test("an unknown URL shows Page not found inside the shell", async () => {
+    window.history.pushState({}, "", "/does-not-exist");
+    render(<App />);
+
+    expect(
+      await screen.findByRole(
+        "heading",
+        { level: 1, name: "Page not found" },
+        { timeout: 3000 },
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("main")).toBeInTheDocument();
+    expect(document.querySelector('[data-slot="sidebar"]')).not.toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Back to environments" }),
+    ).toHaveAttribute("href", "/environments");
+  });
+
+  test("/environments/new opens the create wizard", async () => {
+    window.history.pushState({}, "", "/environments/new");
+    render(<App />);
+
+    expect(
+      await screen.findByRole(
+        "heading",
+        { level: 1, name: "Basics" },
+        { timeout: 3000 },
+      ),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/environments/create");
+  });
+});

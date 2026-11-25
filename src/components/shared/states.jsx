@@ -83,8 +83,11 @@ export function ErrorState({ thing, onRetry, retrying = false }) {
   );
 }
 
-/** Missing or ungranted resource: existence is never revealed. */
-export function NotFound({ thing = "page", backHref = "/environments" }) {
+/**
+ * Missing or ungranted resource: existence is never revealed. `title` replaces
+ * the sentence (an unknown URL reads "Page not found").
+ */
+export function NotFound({ thing = "page", title }) {
   return (
     <Empty data-slot="not-found" className="min-h-80">
       <EmptyHeader>
@@ -93,14 +96,14 @@ export function NotFound({ thing = "page", backHref = "/environments" }) {
         </EmptyMedia>
         {/* A page in this state has no other h1. */}
         <h1 className="text-xl font-semibold">
-          {`This ${thing} doesn't exist or you don't have access.`}
+          {title ?? `This ${thing} doesn't exist or you don't have access.`}
         </h1>
       </EmptyHeader>
       <EmptyContent>
         <Button variant="secondary" asChild>
-          <Link to={backHref}>
+          <Link to="/environments">
             <ArrowLeft aria-hidden />
-            Go back
+            Back to environments
           </Link>
         </Button>
       </EmptyContent>

@@ -13,7 +13,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./contexts/ToastContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CatalogProvider } from "./contexts/CatalogContext";
-import { FullScreenState } from "@/components/shared/states";
+import { PageShell } from "@/components/shared/page-shell";
+import { FullScreenState, NotFound } from "@/components/shared/states";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -139,6 +140,11 @@ function AppContent() {
                     />
                   }
                 />
+                {/* The URL people guess for the wizard; before :id. */}
+                <Route
+                  path="/environments/new"
+                  element={<Navigate to="/environments/create" replace />}
+                />
                 <Route
                   path="/environments/:id"
                   element={
@@ -150,6 +156,14 @@ function AppContent() {
                   element={<Navigate to="/settings/account" replace />}
                 />
                 <Route path="/settings/:tab" element={<SettingsPage />} />
+                <Route
+                  path="*"
+                  element={
+                    <PageShell width="detail">
+                      <NotFound title="Page not found" />
+                    </PageShell>
+                  }
+                />
               </Route>
               <Route
                 path="/environments/create"
