@@ -394,6 +394,18 @@ describe("EnvironmentsPage", () => {
     expect(screen.queryByText("No environments yet")).not.toBeInTheDocument();
   });
 
+  it("reloads the list when it opens with environments", () => {
+    const onRefresh = vi.fn();
+    renderPage({ onRefresh });
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not reload while the first load is running", () => {
+    const onRefresh = vi.fn();
+    renderPage({ environments: [], loading: true, onRefresh });
+    expect(onRefresh).not.toHaveBeenCalled();
+  });
+
   it("shows a skeleton while loading, stat strip included", () => {
     renderPage({ environments: [], loading: true });
     const skeleton = screen.getByRole("status", { name: "Loading" });

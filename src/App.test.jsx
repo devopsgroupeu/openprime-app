@@ -8,6 +8,7 @@ import {
 import { http, HttpResponse } from "msw";
 import App from "./App";
 import { server } from "./mocks/server";
+import { environments } from "./mocks/fixtures";
 
 // In mock mode (vitest runs with VITE_MOCK=true) the app auto-authenticates via
 // the mock AuthProvider and loads its data from MSW — no real Keycloak/backend.
@@ -102,6 +103,103 @@ describe("environment jobs", () => {
       await screen.findByRole("link", { name: "demo-staging" })
     ).closest("article");
     expect(within(card).getByText("Ready")).toBeInTheDocument();
+  });
+});
+
+// A job can end after its page closed (push has no leave guard; generate can
+// be left). The list reads the server again whenever it opens.
+describe("environments list reload", () => {
+  afterEach(() => window.history.pushState({}, "", "/"));
+
+  const openList = () =>
+    fireEvent.click(
+      within(document.querySelector('[data-slot="sidebar"]')).getByRole(
+        "link",
+        { name: "Environments" },
+      ),
+    );
+  const openStaging = async () => {
+    window.history.pushState({}, "", "/environments/env-002");
+    render(<App />);
+    await screen.findByRole(
+      "heading",
+      { level: 1, name: "demo-staging" },
+      { timeout: 3000 },
+    );
+  };
+
+  test("loads the list once on the first visit", async () => {
+    let loads = 0;
+    server.use(
+      http.get("*/environments", () => {
+        loads += 1;
+        return HttpResponse.json(environments);
+      }),
+    );
+    window.history.pushState({}, "", "/environments");
+    render(<App />);
+    await screen.findByRole("link", { name: "demo-prod" }, { timeout: 3000 });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(loads).toBe(1);
+  });
+
+  test("reloads when the list opens again and shows the newer status", async () => {
+    await openStaging();
+    // demo-staging was generated after its page closed.
+    server.use(
+      http.get("*/environments", () =>
+        HttpResponse.json(
+          environments.map((env) =>
+            env.id === "env-002"
+              ? {
+                  ...env,
+                  status: "running",
+                  last_generate_at: new Date().toISOString(),
+                  last_generate_status: "succeeded",
+                }
+              : env,
+          ),
+        ),
+      ),
+    );
+    openList();
+
+    const card = (
+      await screen.findByRole("link", { name: "demo-staging" })
+    ).closest("article");
+    await waitFor(() =>
+      expect(within(card).getByText("Ready")).toBeInTheDocument(),
+    );
+  });
+
+  test("keeps the current list while it reloads and when the reload fails", async () => {
+    await openStaging();
+    let answer;
+    server.use(
+      http.get(
+        "*/environments",
+        () => new Promise((resolve) => (answer = resolve)),
+      ),
+    );
+    openList();
+
+    // No skeleton: the list it has stays up while the reload runs.
+    expect(
+      await screen.findByRole("link", { name: "demo-staging" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("status", { name: "Loading" }),
+    ).not.toBeInTheDocument();
+
+    await waitFor(() => expect(answer).toBeDefined());
+    answer(
+      HttpResponse.json({ error: "Database unavailable" }, { status: 503 }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.getByRole("link", { name: "demo-staging" })).toBeVisible();
+    expect(
+      screen.queryByText("Couldn't load environments."),
+    ).not.toBeInTheDocument();
   });
 });
 

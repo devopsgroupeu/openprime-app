@@ -47,6 +47,21 @@ function AppContent() {
     }
   };
 
+  // A quiet reload when the list opens again: a job may have ended after its
+  // page closed. The list it has stays up meanwhile; a failure only shows
+  // when there is nothing to show.
+  const refreshEnvironments = async () => {
+    try {
+      setEnvironments(await authService.get("/environments"));
+      setLoadError(null);
+    } catch (error) {
+      console.error("Failed to reload environments:", error);
+      if (environments.length === 0) {
+        setLoadError({ message: error.message, requestId: error.requestId });
+      }
+    }
+  };
+
   const handleCreateEnvironment = async (newEnv) => {
     try {
       const createdEnvironment = await authService.post(
@@ -143,6 +158,7 @@ function AppContent() {
                       loading={environmentsLoading}
                       loadError={loadError}
                       onRetry={loadEnvironments}
+                      onRefresh={refreshEnvironments}
                       onDelete={handleDeleteEnvironment}
                     />
                   }

@@ -62,6 +62,7 @@ const EnvironmentsPage = ({
   loading = false,
   loadError,
   onRetry,
+  onRefresh,
   onDelete,
 }) => {
   const toast = useToast();
@@ -96,6 +97,12 @@ const EnvironmentsPage = ({
   useEffect(() => {
     if (staleStatus) setStatus("all");
   }, [staleStatus]);
+
+  // Opening the list reads the server again (jobs end after their page
+  // closed), except during the first load, which already does.
+  useEffect(() => {
+    if (!loading) onRefresh?.();
+  }, []);
 
   useEffect(() => {
     if (!loading && !hasEnvironments && !loadError) {
