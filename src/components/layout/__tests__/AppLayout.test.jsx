@@ -85,7 +85,9 @@ describe("AppLayout", () => {
 
   it("starts every page at the top of the scroll area", async () => {
     renderLayout();
-    const scroller = screen.getByRole("main").querySelector(".overflow-y-auto");
+    const scroller = screen
+      .getByRole("main")
+      .querySelector('[data-slot="page-scroller"]');
     scroller.scrollTop = 400;
 
     fireEvent.click(screen.getByRole("link", { name: "Go to settings" }));

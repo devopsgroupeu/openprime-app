@@ -15,9 +15,10 @@ globalThis.TextDecoder = TextDecoder;
 // jsdom doesn't implement scrollIntoView (used by chat/list auto-scroll effects)
 Element.prototype.scrollIntoView = vi.fn();
 
-// jsdom doesn't implement matchMedia (used by the sidebar's useIsMobile).
-// Width queries are answered from window.innerWidth (jsdom: 1024), so a test
-// that narrows the window gets the same answer from both.
+// jsdom doesn't implement matchMedia (the sidebar's useIsMobile, the theme's
+// prefers-color-scheme default). Width queries are answered from
+// window.innerWidth (jsdom: 1024), so a test that narrows the window gets the
+// same answer from both; any other query does not match (light theme).
 window.matchMedia = (query) => {
   const min = /min-width:\s*(\d+)px/.exec(query);
   const max = /max-width:\s*(\d+)px/.exec(query);

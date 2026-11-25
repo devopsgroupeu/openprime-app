@@ -68,6 +68,7 @@ const AppLayout = ({ environments }) => {
         />
         <div
           ref={scrollerRef}
+          data-slot="page-scroller"
           className="min-h-0 flex-1 overflow-y-auto"
           onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 0)}
         >
