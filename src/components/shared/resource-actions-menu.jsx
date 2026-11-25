@@ -54,26 +54,31 @@ export function ResourceActionsMenu({ label, actions, triggerClassName }) {
                 key={a.label}
                 onSelect={a.onSelect}
                 disabled={a.disabled}
-                // The hint stays readable on a disabled item; the label fades.
                 aria-label={a.hint ? a.label : undefined}
                 aria-describedby={a.hint ? `${id}-${i}` : undefined}
+                // The hint stays readable on a disabled item; icon and label fade.
                 className={cn(
                   a.hint &&
-                    "flex-wrap data-[disabled]:opacity-100 data-[disabled]:*:not-[[data-hint]]:opacity-50",
+                    "items-start data-[disabled]:opacity-100 data-[disabled]:[&>svg]:opacity-50 [&>svg]:mt-0.5",
                   a.className,
                 )}
               >
                 {a.icon ? <a.icon aria-hidden /> : null}
-                {a.hint ? <span>{a.label}</span> : a.label}
                 {a.hint ? (
-                  <span
-                    id={`${id}-${i}`}
-                    data-hint
-                    className="basis-full pl-6 text-xs text-muted-foreground"
-                  >
-                    {a.hint}
+                  <span className="flex flex-col gap-0.5">
+                    <span className="in-data-[disabled]:opacity-50">
+                      {a.label}
+                    </span>
+                    <span
+                      id={`${id}-${i}`}
+                      className="max-w-52 text-xs text-muted-foreground"
+                    >
+                      {a.hint}
+                    </span>
                   </span>
-                ) : null}
+                ) : (
+                  a.label
+                )}
               </DropdownMenuItem>
             ))}
           </DropdownMenuGroup>
