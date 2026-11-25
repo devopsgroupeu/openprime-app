@@ -659,6 +659,53 @@ describe("WizardPage", () => {
     expect(localStorage.getItem("op-wizard-aura-open")).toBe("false");
   });
 
+  it("keeps the Aura conversation when the sheet closes and opens again", async () => {
+    localStorage.clear();
+    // Column closed: the sheet is the only Aura.
+    localStorage.setItem("op-wizard-aura-open", "false");
+    server.use(
+      http.post(
+        "*/ai/chat",
+        () =>
+          new HttpResponse(
+            'data: {"chunk":"Use eu-west-1."}\n\ndata: {"done":true}\n\n',
+            { headers: { "Content-Type": "text/event-stream" } },
+          ),
+      ),
+    );
+    renderWizard();
+    await stepHeading("Basics");
+    // Below xl the top bar's Aura opens the sheet (the column toggle hides).
+    const openSheet = () =>
+      fireEvent.click(
+        screen
+          .getAllByRole("button", { name: "Aura" })
+          .find((b) => b.getAttribute("aria-haspopup") === "dialog"),
+      );
+
+    openSheet();
+    const sheet = await screen.findByRole("dialog", { name: "Aura" });
+    const input = within(sheet).getByRole("textbox", { name: "Message Aura" });
+    fireEvent.change(input, { target: { value: "Which region?" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(
+      await within(sheet).findByText("Use eu-west-1."),
+    ).toBeInTheDocument();
+
+    // The Escape that ends an IME composition leaves the sheet open.
+    fireEvent.keyDown(input, { key: "Escape", isComposing: true });
+    expect(screen.getByRole("dialog", { name: "Aura" })).toBeInTheDocument();
+    fireEvent.keyDown(input, { key: "Escape" });
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Aura" })).toBeNull(),
+    );
+
+    openSheet();
+    const again = await screen.findByRole("dialog", { name: "Aura" });
+    expect(within(again).getByText("Which region?")).toBeInTheDocument();
+    expect(within(again).getByText("Use eu-west-1.")).toBeInTheDocument();
+  });
+
   it("marks a step completed with a check once the user advances past it", async () => {
     localStorage.clear();
     renderWizardCreate(vi.fn());

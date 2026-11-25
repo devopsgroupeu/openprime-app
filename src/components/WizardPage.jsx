@@ -492,6 +492,8 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
           <SheetContent
             aria-describedby={undefined}
             className="w-full gap-0 p-0 sm:max-w-md"
+            // The Escape that ends an IME composition is not for the sheet.
+            onEscapeKeyDown={(e) => e.isComposing && e.preventDefault()}
             onOpenAutoFocus={(e) => {
               e.preventDefault();
               e.currentTarget.querySelector("textarea")?.focus();

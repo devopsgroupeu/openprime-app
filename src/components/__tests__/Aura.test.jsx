@@ -13,6 +13,9 @@ import { useState } from "react";
 import { http, HttpResponse } from "msw";
 import { server } from "../../mocks/server";
 import keycloak from "../../config/keycloak";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ToastProvider } from "@/contexts/ToastContext";
+import AuraChatButton from "../AuraChatButton";
 import AIChatModal from "../modals/AIChatModal";
 import { STALL_MS } from "../modals/ai-chat/streamChat";
 import WizardAssistant from "../WizardAssistant";
@@ -29,7 +32,7 @@ function WizardHarness() {
   );
 }
 
-function ModalHarness() {
+function ModalHarness({ onClose = () => {} }) {
   const [messages, setMessages] = useState([]);
   return (
     <AIChatModal
@@ -40,7 +43,7 @@ function ModalHarness() {
       messages={messages}
       setMessages={setMessages}
       setNewEnv={() => {}}
-      onClose={() => {}}
+      onClose={onClose}
     />
   );
 }
@@ -90,6 +93,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
+  window.innerWidth = 1024;
 });
 
 const composer = () => screen.getByRole("textbox", { name: /Message Aura/ });
@@ -251,5 +255,91 @@ describe("Aura for screen readers", () => {
         "Aura couldn't answer right now.",
       ),
     );
+  });
+});
+
+// The app shell's floating Aura next to a page with its own button.
+function Shell() {
+  return (
+    <ToastProvider>
+      <TooltipProvider>
+        <button type="button">Page action</button>
+        <AuraChatButton />
+      </TooltipProvider>
+    </ToastProvider>
+  );
+}
+const launcher = () => screen.getByRole("button", { name: "Ask Aura" });
+const auraWindow = () => screen.queryByRole("dialog", { name: "Aura" });
+
+describe("Aura window", () => {
+  it("is modal when it fills a phone screen", async () => {
+    window.innerWidth = 390;
+    render(<Shell />);
+    fireEvent.click(launcher());
+
+    expect(auraWindow()).toBeInTheDocument();
+    // Everything behind it is out of reach.
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Page action" })).toBeNull(),
+    );
+    expect(composer()).toHaveFocus();
+  });
+
+  it("floats beside the page from sm up", () => {
+    render(<Shell />);
+    fireEvent.click(launcher());
+
+    expect(composer()).toHaveFocus();
+    const page = screen.getByRole("button", { name: "Page action" });
+    fireEvent.pointerDown(page);
+    page.focus();
+    fireEvent.keyDown(page, { key: "Escape" });
+    // The page stays usable and Aura stays open.
+    expect(auraWindow()).toBeInTheDocument();
+  });
+
+  it("has one close button while open", () => {
+    render(<Shell />);
+    fireEvent.click(launcher());
+
+    expect(screen.getAllByRole("button", { name: /Close Aura/ })).toHaveLength(
+      1,
+    );
+    expect(screen.queryByRole("button", { name: "Ask Aura" })).toBeNull();
+  });
+
+  it("closes one level per Escape and gives focus back to the launcher", async () => {
+    reply = () => answer("Run:\n```bash\nls\n```");
+    render(<Shell />);
+    fireEvent.click(launcher());
+    ask("How do I list files?");
+    const copy = await screen.findByRole("button", { name: "Copy code" });
+
+    act(() => copy.focus());
+    expect(await screen.findByRole("tooltip")).toBeInTheDocument();
+    fireEvent.keyDown(copy, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("tooltip")).toBeNull());
+    expect(auraWindow()).toBeInTheDocument();
+
+    // Escape while an IME composes only cancels the composition.
+    fireEvent.keyDown(copy, { key: "Escape", isComposing: true });
+    expect(auraWindow()).toBeInTheDocument();
+
+    fireEvent.keyDown(copy, { key: "Escape" });
+    await waitFor(() => expect(auraWindow()).toBeNull());
+    await waitFor(() => expect(launcher()).toHaveFocus());
+  });
+});
+
+describe("Aura service dialog", () => {
+  it("lets Escape end an IME composition without closing", () => {
+    const onClose = vi.fn();
+    render(<ModalHarness onClose={onClose} />);
+
+    fireEvent.keyDown(composer(), { key: "Escape", isComposing: true });
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.keyDown(composer(), { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

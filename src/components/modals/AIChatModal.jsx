@@ -327,6 +327,8 @@ const AIChatModal = ({
       <DialogContent
         size="lg"
         className="flex h-[min(80dvh,44rem)] flex-col gap-0 p-0"
+        // The Escape that ends an IME composition is not for the dialog.
+        onEscapeKeyDown={(e) => e.isComposing && e.preventDefault()}
         onOpenAutoFocus={(e) => {
           e.preventDefault();
           inputRef.current?.focus();

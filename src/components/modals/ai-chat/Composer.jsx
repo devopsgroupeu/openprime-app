@@ -17,7 +17,6 @@ const Composer = ({
   onStop,
   placeholder,
   busy,
-  autoFocus,
 }) => {
   const canSend = value.trim() !== "" && !busy;
   const send = () => {
@@ -37,7 +36,6 @@ const Composer = ({
         <textarea
           ref={ref}
           aria-label="Message Aura"
-          autoFocus={autoFocus}
           rows={1}
           value={value}
           placeholder={placeholder}

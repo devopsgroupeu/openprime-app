@@ -9,7 +9,8 @@ import { http, HttpResponse } from "msw";
 import { server } from "../../mocks/server";
 import keycloak from "../../config/keycloak";
 import AIChatModal from "../modals/AIChatModal";
-import AuraChatWindow, { INITIAL_MESSAGES } from "../AuraChatWindow";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import AuraChatButton from "../AuraChatButton";
 import WizardAssistant from "../WizardAssistant";
 
 function ModalHarness() {
@@ -40,16 +41,18 @@ function WizardHarness() {
   );
 }
 
+// The floating Aura as the app shell renders it, opened.
 function AuraHarness() {
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
   return (
-    <AuraChatWindow
-      onClose={() => {}}
-      messages={messages}
-      setMessages={setMessages}
-    />
+    <TooltipProvider>
+      <AuraChatButton />
+    </TooltipProvider>
   );
 }
+const openAura = () => {
+  render(<AuraHarness />);
+  fireEvent.click(screen.getByRole("button", { name: "Ask Aura" }));
+};
 
 const type = (input) =>
   fireEvent.change(input, { target: { value: "Which node size?" } });
@@ -67,7 +70,7 @@ const components = [
   [
     "AuraChatWindow",
     () => {
-      render(<AuraHarness />);
+      openAura();
       const input = screen.getByPlaceholderText(/Ask Aura anything/);
       type(input);
       fireEvent.keyDown(input, { key: "Enter" });

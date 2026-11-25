@@ -11,14 +11,12 @@ export const AURA_ERROR =
   "Aura couldn't answer right now. Try again in a moment.";
 
 /** Symbol, "Aura" and its one-line status; `action` sits on the right. */
-export function AuraHeader({ titleAs: Title = "h2", titleId, action }) {
+export function AuraHeader({ titleAs: Title = "h2", action }) {
   return (
     <div className="flex h-13 shrink-0 items-center gap-2.5 border-b pr-2 pl-4">
       <img src={symbol} alt="" className="size-5" />
       <div className="min-w-0 flex-1">
-        <Title id={titleId} className="text-sm leading-4 font-medium">
-          Aura
-        </Title>
+        <Title className="text-sm leading-4 font-medium">Aura</Title>
         <p className="truncate text-xs text-muted-foreground">
           AI assistant for OpenPrime
         </p>
@@ -39,7 +37,6 @@ export default function AuraConversation({
   setMessages,
   context,
   prompts = [],
-  autoFocus = false,
 }) {
   const [input, setInput] = useState("");
   const inputRef = useRef(null);
@@ -157,7 +154,6 @@ export default function AuraConversation({
           onStop={pending?.stop}
           busy={Boolean(pending)}
           placeholder="Ask Aura anything..."
-          autoFocus={autoFocus}
         />
       </div>
     </div>
