@@ -612,7 +612,8 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
 
 - Account: Profile rows First name, Last name, Email. Preferences: Default cloud provider and
   Default region (`NativeSelect`; the region pre-fills a new wizard; a provider change sets that
-  provider's default region unless it offers the current one). The provider list is AWS,
+  provider's default region unless it offers the current one, and a stored region the provider does
+  not list loads as that default, so Save sends what is shown). The provider list is AWS,
   On-premises (selectable, OP-271) and the disabled "Azure (Roadmap)" and "Google Cloud (Roadmap)"
   (D-9), which still show as the current value when stored. They are drafts with one
   `SaveBar` on every settings tab that saves both; off the edited tab it reads "Unsaved changes in

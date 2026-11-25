@@ -243,6 +243,62 @@ describe("SettingsPage", () => {
     });
   });
 
+  // Rows saved by the old select ("on-premise", OP-271) or by the old
+  // provider-change bug hold a region their provider does not list; the select
+  // shows that provider's default region, and that is what Save sends.
+  it.each([
+    ["onpremise", "eu-west-1"],
+    ["on-premise", "us-east-1"],
+  ])(
+    "saves the shown region for a stored %s with %s",
+    async (storedProvider, storedRegion) => {
+      const puts = {};
+      server.use(
+        http.get("*/users/me/preferences", () =>
+          HttpResponse.json({
+            preferences: {
+              defaultProvider: storedProvider,
+              defaultRegion: storedRegion,
+            },
+          }),
+        ),
+        http.put("*/users/me/*", async ({ request }) => {
+          const key = new URL(request.url).pathname.split("/").pop();
+          puts[key] = await request.json();
+          return HttpResponse.json(puts[key]);
+        }),
+      );
+      renderSettingsPage(
+        "/settings/preferences",
+        undefined,
+        <nav>
+          <Link to="/settings/account">To account</Link>
+        </nav>,
+      );
+
+      const provider = await screen.findByLabelText(/Default Cloud Provider/i);
+      const region = screen.getByLabelText(/Default Region/i);
+      expect(region).toHaveValue("datacenter-1");
+      // Nothing was edited yet.
+      expect(
+        screen.queryByRole("region", { name: "Unsaved changes" }),
+      ).not.toBeInTheDocument();
+      const shown = { provider: provider.value, region: region.value };
+
+      fireEvent.click(screen.getByRole("link", { name: "To account" }));
+      fireEvent.change(await screen.findByLabelText(/Last Name/i), {
+        target: { value: "Person" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+      expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+      expect(puts.preferences).toMatchObject({
+        defaultProvider: shown.provider,
+        defaultRegion: shown.region,
+      });
+    },
+  );
+
   // A roadmap provider cannot be picked any more, but a stored one is kept.
   it.each([
     ["azure", "East US", "West Europe"],

@@ -2,6 +2,10 @@
 import { useState, useEffect } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router";
 import { SETTINGS_TABS } from "../config/nav";
+import {
+  getProviderConfig,
+  getProviderRegions,
+} from "../config/providersConfig";
 import { useToast } from "../contexts/ToastContext";
 import authService from "../services/authService";
 import CloudCredentialModal from "./modals/CloudCredentialModal";
@@ -31,6 +35,27 @@ const accountErrors = ({ firstName, lastName, email }) => ({
     email: "Enter a valid email address.",
   }),
 });
+
+// Loaded preferences as the selects show them, so Save sends what is shown:
+// the old select's "on-premise" is "onpremise" (OP-271), and a region its
+// provider does not list (saved by the old provider-change bug) shows as that
+// provider's default region.
+const shownPreferences = (preferences) => {
+  const defaultProvider =
+    preferences.defaultProvider === "on-premise"
+      ? "onpremise"
+      : preferences.defaultProvider;
+  const listed = getProviderRegions(defaultProvider).some(
+    (r) => r.value === preferences.defaultRegion,
+  );
+  return {
+    ...preferences,
+    defaultProvider,
+    defaultRegion: listed
+      ? preferences.defaultRegion
+      : getProviderConfig(defaultProvider).defaultRegion,
+  };
+};
 
 const SettingsPage = () => {
   const toast = useToast();
@@ -106,11 +131,14 @@ const SettingsPage = () => {
         lastName: userResponse.lastName || "",
         email: userResponse.email || "",
       };
+      const loadedPreferences = shownPreferences(
+        preferencesResponse.preferences,
+      );
       setProfile(loadedProfile);
-      setUserPreferences(preferencesResponse.preferences);
+      setUserPreferences(loadedPreferences);
       setSaved({
         profile: loadedProfile,
-        preferences: preferencesResponse.preferences,
+        preferences: loadedPreferences,
       });
       if (preferencesResponse.preferences?.gitIntegration) {
         setGitIntegration(preferencesResponse.preferences.gitIntegration);
