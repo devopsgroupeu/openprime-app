@@ -129,6 +129,18 @@ describe("Aura composer", () => {
     expect(requests).toHaveLength(1);
   });
 
+  it("fills the composer from a suggested question without sending", async () => {
+    render(<WizardHarness />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Which region for EU customers?" }),
+    );
+    expect(composer()).toHaveValue("Which region for EU customers?");
+    expect(composer()).toHaveFocus();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(requests).toHaveLength(0);
+  });
+
   it("shows Thinking and sends nothing else while Aura answers", async () => {
     reply = () => hang();
     render(<WizardHarness />);
