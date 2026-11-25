@@ -11,7 +11,7 @@ const badgeVariants = cva(
         success: "bg-primary/10 text-primary",
         neutral: "bg-muted text-muted-foreground",
         attention: "bg-warning/10 text-foreground [&>svg]:text-warning",
-        error: "bg-destructive/10 text-destructive",
+        error: "bg-destructive/10 text-foreground [&>svg]:text-destructive",
         info: "bg-info/10 text-foreground [&>svg]:text-info",
         // Meta tag ("Form", "Featured", "Version 3").
         tag: "rounded-md bg-muted font-normal text-muted-foreground",

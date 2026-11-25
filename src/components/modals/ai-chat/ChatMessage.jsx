@@ -13,7 +13,7 @@ function Marker({ icon: Icon, tone = "muted", children }) {
       className={cn(
         "flex w-full items-start gap-2 rounded-lg border px-3 py-2 text-sm whitespace-pre-wrap",
         tone === "destructive"
-          ? "border-destructive/40 bg-destructive/5 text-destructive"
+          ? "border-destructive/40 bg-destructive/5 text-foreground [&>svg]:text-destructive"
           : "bg-muted/40 text-muted-foreground",
       )}
     >

@@ -143,6 +143,22 @@ describe.each(Object.entries(themes))("%s theme tokens", (theme, t) => {
     },
   );
 
+  // Red text on a red tint is below AA in light (4.1:1), so the error pill
+  // (10 %), the focused destructive menu item (10 %, dark 20 %) and the Aura
+  // error marker (5 %) keep their label text-foreground; only the icon is red.
+  it.each([
+    ["background", 0.1],
+    ["card", 0.1],
+    ["popover", 0.1],
+    ["popover", 0.2],
+    ["background", 0.05],
+    ["card", 0.05],
+  ])("label on a destructive tint over %s (%s) is AA", (surface, alpha) => {
+    const tint = over(t.destructive, t[surface], alpha);
+    expect(contrast(t.foreground, tint)).toBeGreaterThanOrEqual(TEXT);
+    expect(contrast(t.destructive, tint)).toBeGreaterThanOrEqual(NON_TEXT);
+  });
+
   it.each([1, 2, 3, 4, 5])(
     "chart-%s icon stays >= 3:1 on its 15 %% tile",
     (n) => {
