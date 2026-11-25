@@ -757,6 +757,37 @@ describe("WizardPage", () => {
     expect(within(section).getByLabelText("Bucket name")).toHaveFocus();
   });
 
+  // Ruling: Save holds a switched-on git section without a URL like Create;
+  // the recovery is to fill it in or switch it off.
+  it("sends Save back to Basics for a switched-on git repository without a URL", async () => {
+    server.use(
+      http.get("*/environments/env-001", () =>
+        HttpResponse.json({
+          ...environments[0],
+          git_repository: { enabled: true, url: "", branch: "main" },
+        }),
+      ),
+    );
+    const onUpdateEnvironment = vi.fn();
+    renderWizardEdit(onUpdateEnvironment);
+    await stepHeading("Services");
+    while (screen.queryByRole("button", { name: /Continue/i })) {
+      fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+    }
+    await stepHeading("Review");
+
+    fireEvent.click(screen.getByRole("button", { name: /Save changes/i }));
+
+    await stepHeading("Basics");
+    const url = screen.getByLabelText("Repository URL");
+    expect(url).toHaveAttribute("aria-invalid", "true");
+    expect(url).toHaveAccessibleDescription(
+      "Enter the repository URL or switch this off.",
+    );
+    await waitFor(() => expect(url).toHaveFocus());
+    expect(onUpdateEnvironment).not.toHaveBeenCalled();
+  });
+
   it("lists a missing service prerequisite on Review and links to Services", async () => {
     localStorage.clear();
     const onCreateEnvironment = vi.fn();
