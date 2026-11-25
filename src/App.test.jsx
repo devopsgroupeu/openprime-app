@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import App from "./App";
 
 // In mock mode (vitest runs with VITE_MOCK=true) the app auto-authenticates via
@@ -93,5 +99,26 @@ describe("unknown routes", () => {
       ),
     ).toBeInTheDocument();
     expect(window.location.pathname).toBe("/environments/create");
+  });
+});
+
+describe("document title", () => {
+  afterEach(() => window.history.pushState({}, "", "/"));
+
+  // WCAG 2.4.2: "<h1> - OpenPrime"; the wizard names the task, not the step.
+  test.each([
+    ["/environments", "Environments - OpenPrime"],
+    ["/environments/env-001", "demo-prod - OpenPrime"],
+    ["/settings/preferences", "Preferences - OpenPrime"],
+    ["/environments/create", "New environment - OpenPrime"],
+    ["/environments/env-001/edit", "Edit demo-prod - OpenPrime"],
+    ["/does-not-exist", "Page not found - OpenPrime"],
+  ])("%s is titled %s", async (path, title) => {
+    window.history.pushState({}, "", path);
+    render(<App />);
+
+    await waitFor(() => expect(document.title).toBe(title), {
+      timeout: 3000,
+    });
   });
 });

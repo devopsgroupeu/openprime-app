@@ -1,8 +1,13 @@
 import { IconTile } from "@/components/shared/icon-tile";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
-/** The one h1 of a page: title, description, status, actions and `menu`; optional tile. */
+/**
+ * The one h1 of a page: title, description, status, actions and `menu`; optional tile. The tab
+ * reads "`documentTitle` - OpenPrime" (default: the title).
+ */
 export function PageHeader({
   title,
+  documentTitle = title,
   description,
   tile,
   icon: Icon,
@@ -11,6 +16,7 @@ export function PageHeader({
   actions,
   menu,
 }) {
+  useDocumentTitle(documentTitle);
   const resourceTile =
     tile ??
     (Icon ? (

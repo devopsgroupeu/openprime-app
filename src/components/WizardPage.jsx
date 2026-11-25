@@ -475,6 +475,9 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                 <PageHeader
                   title={activeStep?.title}
                   description={activeStep?.summary}
+                  documentTitle={
+                    isEditMode ? `Edit ${newEnv.name}` : "New environment"
+                  }
                 />
               </div>
               <WizardStepContent

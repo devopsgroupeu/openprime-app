@@ -14,6 +14,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Spinner } from "@/components/ui/spinner";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { cn } from "@/lib/utils";
 
 const DASHED = "border border-dashed border-input";
@@ -88,6 +89,9 @@ export function ErrorState({ thing, onRetry, retrying = false }) {
  * the sentence (an unknown URL reads "Page not found").
  */
 export function NotFound({ thing = "page", title }) {
+  const heading =
+    title ?? `This ${thing} doesn't exist or you don't have access.`;
+  useDocumentTitle(heading);
   return (
     <Empty data-slot="not-found" className="min-h-80">
       <EmptyHeader>
@@ -95,9 +99,7 @@ export function NotFound({ thing = "page", title }) {
           <FileQuestion aria-hidden />
         </EmptyMedia>
         {/* A page in this state has no other h1. */}
-        <h1 className="text-xl font-semibold">
-          {title ?? `This ${thing} doesn't exist or you don't have access.`}
-        </h1>
+        <h1 className="text-xl font-semibold">{heading}</h1>
       </EmptyHeader>
       <EmptyContent>
         <Button variant="secondary" asChild>
