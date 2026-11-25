@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { ChevronRight, FileCode, Pencil } from "lucide-react";
 import { getHelmChartsByCategory } from "../config/helmChartsConfig";
-import { chartLogo } from "../config/logos";
+import { chartLogo, chartLogos } from "../config/logos";
 import { chartValues, withValues } from "../utils/helmValues";
 import HelmValuesDialog from "./modals/wizard/HelmValuesDialog";
 import { LogoTile } from "@/components/shared/logo-tile";
@@ -65,6 +65,17 @@ const HelmChartsSelector = ({ value = {}, onChange, k8sServiceName }) => {
             <h2>
               <CollapsibleTrigger className="group flex w-full items-center gap-2 px-3.5 py-3 text-left outline-none transition-[background-color] duration-(--dur-fast) hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
                 <span className="flex-1 text-md font-medium">{category}</span>
+                {/* Closed, it shows which charts are inside. */}
+                <span
+                  data-slot="chart-logos"
+                  className="flex gap-1 group-data-[state=open]:hidden"
+                >
+                  {chartLogos(charts.map((chart) => chart.key)).map(
+                    (tile, i) => (
+                      <LogoTile key={tile.logo ?? i} {...tile} size="sm" />
+                    ),
+                  )}
+                </span>
                 <Badge
                   variant={selected > 0 ? "success" : "neutral"}
                   className="tabular-nums"

@@ -32,6 +32,15 @@ export const chartLogo = (key) => ({
   icon: Package,
 });
 
+/** LogoTile props of a group of charts; a logo two charts share shows once. */
+export const chartLogos = (keys) =>
+  keys
+    .map(chartLogo)
+    .filter(
+      (tile, i, all) =>
+        !tile.logo || all.findIndex((t) => t.logo === tile.logo) === i,
+    );
+
 // Host part of a git URL: git@host:path, ssh://user@host:port/path or
 // https://host/path. Empty when it cannot be read.
 export const gitHost = (url = "") => {

@@ -6,6 +6,7 @@ import {
   CHART_LOGOS,
   GIT_LOGOS,
   chartLogo,
+  chartLogos,
   gitLogo,
   gitProviderOf,
 } from "../logos";
@@ -27,6 +28,15 @@ describe("logos", () => {
       expect(Object.hasOwn(CHART_LOGOS, key), key).toBe(true);
       expect(chartLogo(key).icon).toBe(Package);
     }
+  });
+
+  // Promtail's chart uses Loki's logo: a group of charts shows it once.
+  it("shows a logo two charts share once in a group", () => {
+    expect(
+      chartLogos(["prometheusStack", "loki", "promtail", "tempo"]).map(
+        ({ logo }) => baseName(logo),
+      ),
+    ).toEqual(["prometheus.svg", "loki.svg", "tempo.svg"]);
   });
 
   it("has a logo file for both git providers", () => {

@@ -1,5 +1,6 @@
 import { useId, useRef } from "react";
-import { CircleCheck } from "lucide-react";
+import { CircleCheck, Link, Plus } from "lucide-react";
+import ServiceIcon from "../../../icons/ServiceIcon";
 import { Callout } from "@/components/shared/callout";
 import { CopyButton } from "@/components/shared/copy-button";
 import {
@@ -15,6 +16,17 @@ import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { FieldControl, invalidProps } from "./FieldControl";
 import { RadioCard, RadioCardGroup } from "./RadioCard";
+
+// The picture of a bucket choice: the S3 icon with a plus (new) or a link
+// (existing) on its corner.
+const bucketArt = (badge) => (
+  <span className="relative">
+    <ServiceIcon service="s3" className="size-8" />
+    <span className="absolute -right-1.5 -bottom-1.5 flex size-4 items-center justify-center rounded-full bg-card text-foreground shadow-(--shadow-ring-sm) [&_svg]:size-3">
+      {badge}
+    </span>
+  </span>
+);
 
 // Terraform state backend section of the wizard's Basics step (AWS only).
 // Presentational: all state and the create-backend action live in the parent
@@ -132,12 +144,14 @@ const TerraformBackendSection = ({
               value="create"
               title="Create a new bucket"
               description="OpenPrime creates it in your account now."
+              art={bucketArt(<Plus />)}
             />
             <RadioCard
               id={`${id}-existing`}
               value="existing"
               title="Use an existing bucket"
               description="Point Terraform at a bucket you already have."
+              art={bucketArt(<Link />)}
             />
           </RadioCardGroup>
           {useExistingBucket ? (

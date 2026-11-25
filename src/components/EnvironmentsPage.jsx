@@ -1,7 +1,7 @@
 // src/components/EnvironmentsPage.jsx
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import { Plus, Server } from "lucide-react";
+import { Layers, Plus } from "lucide-react";
 
 import EnvironmentCard from "./EnvironmentCard";
 import PrerequisitesChecklist from "./PrerequisitesChecklist";
@@ -184,7 +184,7 @@ const EnvironmentsPage = ({
       ) : !hasEnvironments ? (
         <>
           <EmptyState
-            icon={Server}
+            icon={Layers}
             title="No environments yet"
             description="Create an environment to generate Terraform, Helm and Argo CD code for AWS."
             action={<NewEnvironmentButton size="sm" />}

@@ -359,6 +359,11 @@ describe("EnvironmentsPage", () => {
     renderPage({ environments: [] });
 
     expect(screen.getByText("No environments yet")).toBeInTheDocument();
+    // The environments icon of the sidebar and the palette, not on-premises.
+    const empty = screen
+      .getByText("No environments yet")
+      .closest('[data-slot="empty-state"]');
+    expect(empty.querySelector("svg")).toHaveClass("lucide-layers");
     // One way forward: the empty state's button, not the header's as well.
     const create = screen.getAllByRole("link", { name: "New environment" });
     expect(create).toHaveLength(1);

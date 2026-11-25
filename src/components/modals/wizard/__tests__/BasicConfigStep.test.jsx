@@ -79,6 +79,25 @@ describe("BasicConfigStep", () => {
     ).toBeInTheDocument();
   });
 
+  // The two bucket choices carry a picture, like the cloud provider cards:
+  // the S3 icon, with a plus for a new bucket and a link for an existing one.
+  it("pictures the new and the existing bucket", () => {
+    renderStep();
+    fireEvent.click(screen.getByRole("switch", { name: /state backend/i }));
+    const art = (name) =>
+      screen
+        .getByRole("radio", { name })
+        .closest("label")
+        .querySelector('[aria-hidden="true"]');
+    for (const [name, badge] of [
+      [/Create a new bucket/, "lucide-plus"],
+      [/Use an existing bucket/, "lucide-link"],
+    ]) {
+      expect(art(name).querySelector("img")).not.toBeNull();
+      expect(art(name).querySelector("svg")).toHaveClass(badge);
+    }
+  });
+
   it("reveals the Git Repository config when its toggle is enabled", () => {
     renderStep();
     expect(screen.queryByText("Repository URL")).not.toBeInTheDocument();

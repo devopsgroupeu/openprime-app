@@ -52,7 +52,7 @@ export default function WizardActions({
         size="sm"
         aria-pressed={auraOpen}
         onClick={onToggleAura}
-        className="hidden 2xl:inline-flex"
+        className="hidden aria-pressed:bg-accent aria-pressed:text-accent-foreground 2xl:inline-flex"
       >
         <AuraMark />
         Aura

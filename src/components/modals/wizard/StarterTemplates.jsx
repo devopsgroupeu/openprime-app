@@ -3,7 +3,7 @@
 // or chart logos it turns on, then its name, one line and a count.
 import { useId } from "react";
 import ServiceIcon from "../../icons/ServiceIcon";
-import { chartLogo } from "../../../config/logos";
+import { chartLogos } from "../../../config/logos";
 import { LogoTile } from "@/components/shared/logo-tile";
 import { SettingsSection } from "@/components/shared/settings";
 import { cn } from "@/lib/utils";
@@ -59,17 +59,11 @@ function ServicesPreview({ services }) {
   );
 }
 
-/** The cluster holding the charts' logos; a logo two charts share shows once. */
+/** The cluster holding the charts' logos. */
 function ChartsPreview({ charts, cluster }) {
-  const tiles = charts
-    .map(chartLogo)
-    .filter(
-      (tile, i, all) =>
-        !tile.logo || all.findIndex((t) => t.logo === tile.logo) === i,
-    );
   return (
     <Frame service={cluster}>
-      {tiles.map((tile, i) => (
+      {chartLogos(charts).map((tile, i) => (
         <LogoTile key={tile.logo ?? i} {...tile} />
       ))}
     </Frame>

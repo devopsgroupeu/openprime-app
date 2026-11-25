@@ -170,6 +170,25 @@ describe("HelmChartsStep templates", () => {
   });
 });
 
+// A closed category shows which charts are inside by their logos; open, its
+// rows show them, so the header drops them (jsdom applies no CSS: pinned).
+describe("HelmChartsStep category preview", () => {
+  it("shows the logos of a closed category's charts in its header", () => {
+    render(<Harness initial={envWith("eks")} />);
+    // The logos add nothing to the trigger's name.
+    const monitoring = screen.getByRole("button", {
+      name: /^Monitoring\s*0 of 4$/,
+    });
+    const preview = monitoring.querySelector('[data-slot="chart-logos"]');
+    expect(
+      [...preview.querySelectorAll("img")].map((img) =>
+        img.getAttribute("src").split("/").pop(),
+      ),
+    ).toEqual(["prometheus.svg", "loki.svg", "tempo.svg"]);
+    expect(preview).toHaveClass("group-data-[state=open]:hidden");
+  });
+});
+
 // Argo CD and Karpenter are always installed and have no switch here.
 describe("HelmChartsStep count", () => {
   it("counts only the charts the step shows", () => {
