@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Download, Trash2 } from "lucide-react";
 import { useToast } from "../../contexts/ToastContext";
+import { getProviderConfig } from "../../config/providersConfig";
 import {
-  getProviderConfig,
-  getProviderRegions,
-} from "../../config/providersConfig";
-import { modifiedAt, prefixOf, regionOf } from "../../utils/environmentStats";
+  modifiedAt,
+  prefixOf,
+  regionName,
+  regionOf,
+} from "../../utils/environmentStats";
 import { DetailList, DetailRow, Mono, NotConfigured } from "./DetailList";
 import ExternalResources from "./ExternalResources";
 import { CopyButton } from "@/components/shared/copy-button";
@@ -17,11 +19,6 @@ import {
 } from "@/components/shared/settings";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-export const regionName = (environment) =>
-  getProviderRegions(environment.provider)?.find(
-    (r) => r.value === regionOf(environment),
-  )?.label;
 
 // The downloadable description of the environment (services, settings and
 // metadata; no credentials or deploy key).

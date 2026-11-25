@@ -6,10 +6,10 @@ import {
   getEffectiveStatus,
   modifiedAt,
   prefixOf,
+  regionName,
   regionOf,
   statusDisplay,
 } from "../../utils/environmentStats";
-import { regionName } from "./EnvironmentConfiguration";
 import { Callout } from "@/components/shared/callout";
 import { CopyButton } from "@/components/shared/copy-button";
 import { RelativeTime } from "@/components/shared/format";

@@ -1,3 +1,5 @@
+import { getProviderRegions } from "../config/providersConfig";
+
 // Derived views of the environments list: effective status and how it reads,
 // enabled services, the stat strip, the status filter tabs and the client-side
 // search, filter and sort.
@@ -100,6 +102,11 @@ export const enabledServices = (environment) =>
 // The API is snake_case; older payloads carry camelCase or `location`.
 export const prefixOf = (env) => env.global_prefix || env.globalPrefix || "";
 export const regionOf = (env) => env.region || env.location || "";
+
+/** "Europe (Ireland)" for a listed region of the provider, else undefined. */
+export const regionName = (env) =>
+  getProviderRegions(env.provider)?.find((r) => r.value === regionOf(env))
+    ?.label;
 export const modifiedAt = (env) =>
   env.updated_at || env.updatedAt || env.created_at || env.createdAt;
 

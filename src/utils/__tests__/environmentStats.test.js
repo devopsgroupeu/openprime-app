@@ -5,6 +5,7 @@ import {
   lastJob,
   statusDisplay,
   statusFilters,
+  regionName,
   summarizeEnvironments,
 } from "../environmentStats";
 
@@ -77,6 +78,20 @@ describe("summarizeEnvironments", () => {
       summarizeEnvironments([prod, { ...staging, region: "eu-west-1" }])
         .regions,
     ).toBe(1);
+  });
+});
+
+describe("regionName", () => {
+  it("names a listed region and nothing else", () => {
+    expect(regionName({ provider: "aws", region: "eu-west-1" })).toBe(
+      "Europe (Ireland)",
+    );
+    expect(regionName({ provider: "aws", location: "us-east-1" })).toBe(
+      "US East (N. Virginia)",
+    );
+    expect(
+      regionName({ provider: "aws", region: "eu-west-3" }),
+    ).toBeUndefined();
   });
 });
 
