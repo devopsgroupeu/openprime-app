@@ -90,13 +90,14 @@ describe("Create Environment with All Helm Charts", () => {
       // Wait for regions to load
       await ctx.page.waitForTimeout(500);
 
-      // Select eu-west-1 region
+      // Select eu-west-1 region (options show the region name, the code
+      // sits next to it)
       const regionSelect = ctx.page
         .locator("select")
-        .filter({ hasText: /us-east-1|eu-west-1|region/i })
+        .filter({ hasText: /Europe \(Ireland\)|region/i })
         .or(ctx.page.getByLabel(/region/i));
       if ((await regionSelect.count()) > 0) {
-        await regionSelect.first().selectOption({ label: "eu-west-1" });
+        await regionSelect.first().selectOption({ label: "Europe (Ireland)" });
         await ctx.page.waitForTimeout(300);
         console.log("✓ Region set to: eu-west-1");
       } else {
