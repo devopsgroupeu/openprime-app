@@ -70,8 +70,30 @@ const EnvironmentsPage = ({
   const status = params.get("status") ?? "all";
   const [sort, setSort] = useState(readSort);
   const [deleting, setDeleting] = useState(null);
-  const [hasCredentials, setHasCredentials] = useState(false);
+  // null until the check answers, so the first-run tips do not flash.
+  const [hasCredentials, setHasCredentials] = useState(null);
   const hasEnvironments = environments.length > 0;
+
+  const setStatus = (value) =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (value === "all") next.delete("status");
+        else next.set("status", value);
+        return next;
+      },
+      { replace: true },
+    );
+
+  // A status no environment has (an old link, the last one deleted) is All,
+  // in the URL too.
+  const staleStatus =
+    !loading &&
+    status !== "all" &&
+    !statusFilters(environments).some((o) => o.value === status);
+  useEffect(() => {
+    if (staleStatus) setStatus("all");
+  }, [staleStatus]);
 
   useEffect(() => {
     if (!loading && !hasEnvironments && !loadError) {
@@ -101,22 +123,10 @@ const EnvironmentsPage = ({
     }
   };
 
-  const setStatus = (value) =>
-    setParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (value === "all") next.delete("status");
-        else next.set("status", value);
-        return next;
-      },
-      { replace: true },
-    );
-
   const options = [
     { value: "all", label: "All", count: environments.length },
     ...statusFilters(environments),
   ];
-  // A status no environment has (an old link, the last one deleted) is All.
   const activeStatus = options.some((o) => o.value === status) ? status : "all";
   const visible = filterAndSortEnvironments(environments, {
     query,
@@ -165,7 +175,9 @@ const EnvironmentsPage = ({
             description="Create an environment to generate Terraform, Helm and Argo CD code for AWS."
             action={<NewEnvironmentButton size="sm" />}
           />
-          <PrerequisitesChecklist hasCredentials={hasCredentials} />
+          {hasCredentials !== null ? (
+            <PrerequisitesChecklist hasCredentials={hasCredentials} />
+          ) : null}
         </>
       ) : (
         <>

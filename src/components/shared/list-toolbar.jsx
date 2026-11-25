@@ -83,7 +83,8 @@ const results = (n, [one, other]) =>
   n === 0 ? `No ${other}` : n === 1 ? `1 ${one}` : `${n} ${other}`;
 
 /**
- * List page toolbar: filter tabs left; filters, search and sort right; state in the URL.
+ * List page toolbar: filter tabs left; filters, search and sort right; controlled (the page
+ * decides where the state lives, e.g. the environments status in `?status=`).
  * `origins` are the FilterTabs options (`{ value, label, count? }`); `resultNoun`
  * names what `resultCount` counts (`[one, other]`, default results).
  */

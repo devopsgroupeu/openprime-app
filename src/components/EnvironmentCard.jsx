@@ -28,17 +28,18 @@ const MAX_ICONS = 6;
 const serviceName = (key) =>
   getServiceConfig(key)?.displayName ?? key.toUpperCase();
 
-// Above the card's stretched link so each icon can show its name on hover.
+// Above the card's stretched link so each icon can show its name on hover;
+// the gaps between icons stay part of the link.
 function ServiceIcons({ services }) {
   const shown = services.slice(0, MAX_ICONS);
   const more = services.slice(MAX_ICONS).map(serviceName);
   return (
     <ul
       aria-label="Enabled services"
-      className="relative z-10 flex w-fit flex-wrap items-center gap-1.5"
+      className="pointer-events-none relative z-10 flex w-fit flex-wrap items-center gap-1.5"
     >
       {shown.map((key) => (
-        <li key={key} className="flex">
+        <li key={key} className="pointer-events-auto flex">
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="flex">
@@ -54,7 +55,7 @@ function ServiceIcons({ services }) {
         </li>
       ))}
       {more.length > 0 ? (
-        <li className="flex">
+        <li className="pointer-events-auto flex">
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="text-xs text-muted-foreground tabular-nums">

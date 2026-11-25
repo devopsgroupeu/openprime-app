@@ -146,21 +146,24 @@ describe("EnvironmentsPage", () => {
     expect(within(icons).getByText("+2")).toBeInTheDocument();
   });
 
-  it("offers All and only the statuses that occur, Ready first", () => {
-    renderPage({ environments: [staging, sandbox, prod] });
-    const tabs = screen.getByRole("group", { name: "Show" });
-    expect(
-      within(tabs)
-        .getAllByRole("button")
-        .map((b) => b.textContent),
-    ).toEqual(["All 3", "Ready 1", "Not generated 1", "Failed 1"]);
+  const filterTabs = () =>
+    within(screen.getByRole("group", { name: "Show" }))
+      .getAllByRole("button")
+      .map((b) => b.textContent);
 
+  it("offers All and the statuses that occur, Ready first", () => {
+    renderPage({ environments: [staging, sandbox, prod] });
+    expect(filterTabs()).toEqual([
+      "All 3",
+      "Ready 1",
+      "Not generated 1",
+      "Failed 1",
+    ]);
+  });
+
+  it("offers no tab for a status that does not occur", () => {
     renderPage({ environments: [staging] });
-    expect(
-      within(screen.getAllByRole("group", { name: "Show" })[1])
-        .getAllByRole("button")
-        .map((b) => b.textContent),
-    ).toEqual(["All 1", "Not generated 1"]);
+    expect(filterTabs()).toEqual(["All 1", "Not generated 1"]);
   });
 
   it("labels the cards by the last job outcome", () => {
@@ -220,13 +223,18 @@ describe("EnvironmentsPage", () => {
     expect(cardNames()).toEqual(["demo-prod"]);
   });
 
-  it("treats a status no environment has as All", () => {
+  it("treats a status no environment has as All and drops it from the URL", async () => {
     renderPage({}, "/environments?status=stopped");
     expect(screen.getByRole("button", { name: "All 3" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
     expect(cardNames()).toHaveLength(3);
+    await waitFor(() =>
+      expect(
+        screen.getByRole("status", { name: "Query" }),
+      ).toBeEmptyDOMElement(),
+    );
   });
 
   it("sorts by name or by services and remembers the choice", async () => {
@@ -319,8 +327,12 @@ describe("EnvironmentsPage", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("ticks off credentials once they exist", async () => {
+  it("ticks off credentials once they exist, without a flash of the link", async () => {
     renderPage({ environments: [] });
+    // Nothing about credentials until the check has answered.
+    expect(
+      screen.queryByRole("link", { name: "Add AWS credentials" }),
+    ).not.toBeInTheDocument();
     expect(
       await screen.findByText("AWS credentials are added."),
     ).toBeInTheDocument();
