@@ -1,6 +1,7 @@
 // src/components/modals/wizard/BasicConfigStep.js
 import { useState, useEffect, useId, useRef } from "react";
 import { Link } from "react-router";
+import { TriangleAlert } from "lucide-react";
 import ProviderIcon from "../../icons/ProviderIcon";
 import { useToast } from "../../../contexts/ToastContext";
 import {
@@ -100,6 +101,8 @@ const BasicConfigStep = ({
     (newEnv.globalPrefix || "") !== derivePrefix(newEnv.name),
   );
   const trailingDashIsRealRef = useRef(false);
+  // The last keystroke in Name was left out (hyphen, space, symbol).
+  const [nameDropped, setNameDropped] = useState(false);
 
   useEffect(() => {
     if (newEnv.provider) {
@@ -218,9 +221,28 @@ const BasicConfigStep = ({
             title="Name"
             controlId={`${id}-name`}
             description={
-              isEditMode
-                ? undefined
-                : "Lowercase letters and numbers, e.g. production."
+              isEditMode ? undefined : (
+                // Announced: the field leaves out what it cannot keep.
+                <span
+                  aria-live="polite"
+                  className={cn(
+                    nameDropped &&
+                      "inline-flex items-start gap-1.5 text-foreground",
+                  )}
+                >
+                  {nameDropped ? (
+                    <>
+                      <TriangleAlert
+                        aria-hidden
+                        className="mt-px size-3.5 shrink-0 text-warning"
+                      />
+                      Hyphens, spaces and symbols are not allowed in the name.
+                    </>
+                  ) : (
+                    "Lowercase letters and numbers, no hyphens, e.g. production."
+                  )}
+                </span>
+              )
             }
             lockedReason={
               isEditMode
@@ -240,6 +262,7 @@ const BasicConfigStep = ({
                     const value = e.target.value
                       .toLowerCase()
                       .replace(/[^a-z0-9]/g, "");
+                    setNameDropped(value.length < e.target.value.length);
                     setNewEnv({
                       ...newEnv,
                       name: value,

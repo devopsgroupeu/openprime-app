@@ -120,6 +120,28 @@ describe("BasicConfigStep", () => {
     expect(screen.queryByText(/Ready to create/)).not.toBeInTheDocument();
   });
 
+  // The name keeps only lowercase letters and numbers (backend contract); a
+  // dropped keystroke is said, not silently swallowed.
+  it("says when the name leaves out a typed character", () => {
+    renderStep({ ...awsEnv, name: "" });
+    const name = screen.getByLabelText("Name");
+    const hint = screen.getByText(
+      "Lowercase letters and numbers, no hyphens, e.g. production.",
+    );
+    expect(hint).toHaveAttribute("aria-live", "polite");
+
+    fireEvent.change(name, { target: { value: "audit-" } });
+    expect(name).toHaveValue("audit");
+    expect(hint).toHaveTextContent(
+      "Hyphens, spaces and symbols are not allowed in the name.",
+    );
+
+    fireEvent.change(name, { target: { value: "auditenv" } });
+    expect(hint).toHaveTextContent(
+      "Lowercase letters and numbers, no hyphens, e.g. production.",
+    );
+  });
+
   describe("Global Prefix auto-suggest", () => {
     const blankEnv = { ...awsEnv, name: "", globalPrefix: "" };
 
