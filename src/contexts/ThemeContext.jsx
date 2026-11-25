@@ -11,14 +11,16 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
+  // The stored choice, else the OS setting; only a toggle is stored, so the
+  // default keeps following the OS.
   const [isDark, setIsDark] = useState(() => {
-    // Dark-default to match openprime-site + Keycloak theme (toggle still available)
     const saved = localStorage.getItem("openprime-theme-v2");
-    return saved ? JSON.parse(saved) : true;
+    return saved
+      ? JSON.parse(saved)
+      : window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
 
   useEffect(() => {
-    localStorage.setItem("openprime-theme-v2", JSON.stringify(isDark));
     if (isDark) {
       document.documentElement.classList.add("dark");
     } else {
@@ -27,6 +29,7 @@ export const ThemeProvider = ({ children }) => {
   }, [isDark]);
 
   const toggleTheme = () => {
+    localStorage.setItem("openprime-theme-v2", JSON.stringify(!isDark));
     setIsDark(!isDark);
   };
 
