@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { act, render, screen, fireEvent } from "@testing-library/react";
 import CloudCredentialModal from "../CloudCredentialModal";
 
 const baseProps = {
@@ -122,5 +122,39 @@ describe("CloudCredentialModal", () => {
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
 
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("cannot be closed while saving", async () => {
+    let finish;
+    const onSave = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const onClose = vi.fn();
+    render(
+      <CloudCredentialModal
+        {...baseProps}
+        credential={{
+          id: "cred-001",
+          name: "aws-sandbox",
+          provider: "aws",
+          identifier: "123456789012",
+          isDefault: false,
+        }}
+        onSave={onSave}
+        onClose={onClose}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Save changes/i }));
+    expect(onSave).toHaveBeenCalledTimes(1);
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
+    await act(async () => finish());
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeEnabled();
   });
 });

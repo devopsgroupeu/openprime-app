@@ -139,6 +139,48 @@ describe("SettingsPage", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("shows the saved values after a tab change while saving", async () => {
+    let release;
+    server.use(
+      http.put("*/users/me/profile", async ({ request }) => {
+        const body = await request.json();
+        await new Promise((resolve) => {
+          release = resolve;
+        });
+        return HttpResponse.json(body);
+      }),
+    );
+    renderSettingsPage(
+      "/settings/account",
+      undefined,
+      <nav>
+        <Link to="/settings/preferences">To preferences</Link>
+        <Link to="/settings/account">To account</Link>
+      </nav>,
+    );
+
+    fireEvent.change(await screen.findByLabelText(/First Name/i), {
+      target: { value: "Mocka" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(release).toBeDefined());
+    // Away and back while the PUT is still in flight.
+    fireEvent.click(screen.getByRole("link", { name: "To preferences" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Discard changes" }),
+    );
+    await screen.findByLabelText(/Default Cloud Provider/i);
+    fireEvent.click(screen.getByRole("link", { name: "To account" }));
+    await screen.findByLabelText(/First Name/i);
+    release();
+
+    expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+    expect(screen.getByLabelText(/First Name/i)).toHaveValue("Mocka");
+    expect(
+      screen.queryByRole("region", { name: "Unsaved changes" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("shows a retry when the settings fail to load", async () => {
     server.use(
       http.get("*/users/me", () => new HttpResponse(null, { status: 500 })),
@@ -232,5 +274,67 @@ describe("SettingsPage", () => {
 
     expect(await screen.findByText("Deleted aws-sandbox.")).toBeInTheDocument();
     expect(deleted).toBe("cred-001");
+  });
+
+  const openCredentialMenu = async (name) =>
+    fireEvent.pointerDown(
+      await screen.findByRole("button", { name: `More actions for ${name}` }),
+      { button: 0, ctrlKey: false },
+    );
+
+  it("toasts a failed credential delete and keeps the credential", async () => {
+    server.use(
+      http.delete("*/cloud-credentials/:id", () =>
+        HttpResponse.json({ error: "Credential is locked" }, { status: 409 }),
+      ),
+    );
+    renderSettingsPage("/settings/cloud-credentials");
+
+    await openCredentialMenu("aws-sandbox");
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
+    const dialog = await screen.findByRole("alertdialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    expect(
+      await screen.findByText("Couldn't delete aws-sandbox"),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Credential is locked/)).toBeInTheDocument();
+    expect(screen.getByText("aws-sandbox")).toBeInTheDocument();
+  });
+
+  it("retries loading the credentials after a failure", async () => {
+    server.use(
+      http.get(
+        "*/cloud-credentials",
+        () => new HttpResponse(null, { status: 500 }),
+        { once: true },
+      ),
+    );
+    renderSettingsPage("/settings/cloud-credentials");
+
+    expect(
+      await screen.findByText("Couldn't load your cloud credentials."),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByText("aws-sandbox")).toBeInTheDocument();
+  });
+
+  it("toasts when a credential cannot be loaded for editing", async () => {
+    server.use(
+      http.get(
+        "*/cloud-credentials/:id",
+        () => new HttpResponse(null, { status: 500 }),
+      ),
+    );
+    renderSettingsPage("/settings/cloud-credentials");
+
+    await openCredentialMenu("aws-sandbox");
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Edit" }));
+
+    expect(
+      await screen.findByText("Couldn't load aws-sandbox. Try again."),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

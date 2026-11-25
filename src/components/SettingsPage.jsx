@@ -165,6 +165,9 @@ const SettingsPage = () => {
         }),
       ]);
       setSaved({ profile, preferences: userPreferences });
+      // A tab change during the PUT reset the drafts to the old values.
+      setProfile(profile);
+      setUserPreferences(userPreferences);
       toast.success("Changes saved");
     } catch (error) {
       console.error("Failed to save settings:", error);
