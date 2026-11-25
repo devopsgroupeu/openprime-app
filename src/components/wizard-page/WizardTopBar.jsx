@@ -14,8 +14,13 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import symbol from "../../assets/openprime-symbol-color.svg";
 
+// The user's locale, on a 24 hour clock: "15:07".
 const time = (ms) =>
-  new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  new Date(ms).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
 
 /**
  * Top bar of the full-screen wizard: symbol, `breadcrumbs = [{ label, to? }]`
