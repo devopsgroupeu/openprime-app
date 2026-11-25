@@ -2,7 +2,6 @@ import {
   validateField,
   validateServiceConfig,
   validateEnvironmentConfig,
-  getValidationSummary,
   ConfigValidationError,
 } from "../configValidator";
 import { FIELD_TYPES, SERVICES_CONFIG } from "../../config/servicesConfig";
@@ -728,51 +727,6 @@ describe("configValidator", () => {
       });
       expect(errors).toHaveLength(1);
       expect(errors[0].service).toBeNull();
-    });
-  });
-
-  describe("getValidationSummary", () => {
-    test("returns validation summary", () => {
-      const errors = [
-        new ConfigValidationError("Name is required", "name"),
-        new ConfigValidationError("Recommended setting", "setting"),
-      ];
-
-      const summary = getValidationSummary(errors);
-      expect(summary.isValid).toBe(false);
-      expect(summary.totalErrors).toBe(2);
-      expect(summary.hasBlockingErrors).toBe(true);
-    });
-
-    test("returns valid summary for no errors", () => {
-      const summary = getValidationSummary([]);
-      expect(summary.isValid).toBe(true);
-      expect(summary.totalErrors).toBe(0);
-      expect(summary.hasBlockingErrors).toBe(false);
-    });
-
-    test("identifies critical errors", () => {
-      const errors = [
-        new ConfigValidationError("Invalid provider", "provider"),
-        new ConfigValidationError("Invalid setting", "someSetting"),
-      ];
-
-      const summary = getValidationSummary(errors);
-      expect(summary.criticalErrors).toHaveLength(1);
-      expect(summary.criticalErrors[0].field).toBe("provider");
-    });
-
-    test("identifies warnings", () => {
-      const errors = [
-        new ConfigValidationError(
-          "This is recommended for production",
-          "setting",
-        ),
-        new ConfigValidationError("You should enable this feature", "feature"),
-      ];
-
-      const summary = getValidationSummary(errors);
-      expect(summary.warnings).toHaveLength(2);
     });
   });
 

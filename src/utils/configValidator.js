@@ -381,40 +381,6 @@ export const validateEnvironmentConfig = (environment) => {
   return errors;
 };
 
-export const getValidationSummary = (errors) => {
-  if (errors.length === 0) {
-    return {
-      isValid: true,
-      errors: [],
-      warnings: [],
-      criticalErrors: [],
-      totalErrors: 0,
-      hasBlockingErrors: false,
-    };
-  }
-
-  const criticalErrors = errors.filter(
-    (error) =>
-      error.field === "name" ||
-      error.field === "provider" ||
-      error.field === "region",
-  );
-
-  const warnings = errors.filter(
-    (error) =>
-      error.message.includes("recommended") || error.message.includes("should"),
-  );
-
-  return {
-    isValid: false,
-    errors,
-    warnings,
-    criticalErrors,
-    totalErrors: errors.length,
-    hasBlockingErrors: criticalErrors.length > 0,
-  };
-};
-
 // Development helper to validate entire config structure
 export const validateConfigStructure = () => {
   const errors = [];
@@ -449,7 +415,6 @@ const configValidator = {
   validateField,
   validateServiceConfig,
   validateEnvironmentConfig,
-  getValidationSummary,
   validateConfigStructure,
   ConfigValidationError,
 };
