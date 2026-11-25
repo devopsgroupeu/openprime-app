@@ -134,7 +134,7 @@ const DynamicServiceConfig = ({
                   // md on it shows on the row's hover or focus (always on
                   // touch).
                   className={cn(
-                    "text-muted-foreground opacity-0 transition-opacity duration-(--dur-fast) max-md:hidden",
+                    "opacity-0 transition-opacity duration-(--dur-fast) max-md:hidden",
                     "group-focus-within/service:opacity-100 group-hover/service:opacity-100 pointer-coarse:opacity-100",
                   )}
                 >
