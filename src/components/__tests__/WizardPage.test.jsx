@@ -949,6 +949,7 @@ describe("WizardPage", () => {
   // Continue turns into Create under the pointer: the second click of a
   // double click must not create the environment.
   it("never creates on the second click of a double click on Continue", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     localStorage.clear();
     const onCreateEnvironment = vi.fn().mockResolvedValue({ id: "env-new" });
     renderWizardCreate(onCreateEnvironment);
@@ -965,15 +966,18 @@ describe("WizardPage", () => {
       screen.getByRole("button", { name: /Create environment/i }),
       { detail: 2 },
     );
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await act(() => vi.advanceTimersByTimeAsync(20));
     expect(onCreateEnvironment).not.toHaveBeenCalled();
 
-    // A single click, or Enter / Space (detail 0), creates it.
+    // Once Create has shown for a moment, a click creates it, even a quick
+    // deliberate second click (detail 2).
+    await act(() => vi.advanceTimersByTimeAsync(400));
     fireEvent.click(
       screen.getByRole("button", { name: /Create environment/i }),
-      { detail: 0 },
+      { detail: 2 },
     );
     await waitFor(() => expect(onCreateEnvironment).toHaveBeenCalledTimes(1));
+    vi.useRealTimers();
   });
 
   // The control that had focus often goes away (stepper row, Back, Review's

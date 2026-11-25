@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -14,6 +15,8 @@ const WizardFooter = ({
   onSubmit,
 }) => {
   const last = currentStep === totalSteps;
+  // Until when (Date.now() ms) a click on Create is ignored.
+  const createFrom = useRef(0);
   return (
     <footer className="shrink-0 border-t bg-background">
       <div className="mx-auto flex w-full max-w-(--content-settings) items-center gap-3 px-4 py-3 md:px-8">
@@ -30,10 +33,14 @@ const WizardFooter = ({
         <div className="flex flex-1 justify-end">
           <Button
             onClick={(e) => {
-              if (!last) return onNext();
-              // Continue becomes Create under the pointer: the second click
-              // of a double click is not a submit. Keys report detail 0.
-              if (e.detail <= 1) onSubmit();
+              if (!last) {
+                // Continue can turn into Create under the pointer: a click
+                // in the next 400 ms is the rest of a double click, not a
+                // submit. Keys (detail 0) start no wait.
+                if (e.detail > 0) createFrom.current = Date.now() + 400;
+                return onNext();
+              }
+              if (Date.now() >= createFrom.current) onSubmit();
             }}
             disabled={isLoading}
           >
