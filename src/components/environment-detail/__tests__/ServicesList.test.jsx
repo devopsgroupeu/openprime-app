@@ -61,8 +61,17 @@ describe("summaryOf", () => {
         messageRetention: 345600,
         delaySeconds: 0,
       }),
-    ).toBe("orders, 30 seconds, 345600 seconds");
+    ).toBe("orders, 30 seconds, 4 days");
     expect(summary("sqs", { fifoQueues: true })).toBe("");
+  });
+
+  it("says one unit in the singular and whole hours or days for long times", () => {
+    expect(
+      summary("sqs", { visibilityTimeout: 1, messageRetention: 7200 }),
+    ).toBe("1 second, 2 hours");
+    expect(
+      summary("sqs", { visibilityTimeout: 3601, messageRetention: 86400 }),
+    ).toBe("3601 seconds, 1 day");
   });
 });
 

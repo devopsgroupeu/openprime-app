@@ -69,11 +69,20 @@ const shortLabel = (label) =>
     .split(" - ")[0]
     .replace(/\s*\(.*\)$/, "");
 
-// "Storage (GB)" reads "100 GB", "Instance Count" "2 instances", "Number of
+// "Storage (GB)" reads "100 GB", "Retention (seconds)" "1 second" or, in
+// whole hours or days, "4 days", "Instance Count" "2 instances", "Number of
 // Cache Nodes" "1 cache node".
 const withUnit = (value, label) => {
-  const unit = /\(([^)]+)\)$/.exec(label)?.[1];
-  if (unit) return `${value} ${unit}`;
+  let unit = /\(([^)]+)\)$/.exec(label)?.[1];
+  if (unit === "seconds" && value >= 3600 && value % 3600 === 0) {
+    [value, unit] =
+      value % 86400 === 0 ? [value / 86400, "days"] : [value / 3600, "hours"];
+  }
+  if (unit) {
+    return value === 1 && /^[a-z]+s$/.test(unit)
+      ? `1 ${unit.slice(0, -1)}`
+      : `${value} ${unit}`;
+  }
   const noun = label
     .replace(/^Number of /i, "")
     .replace(/ Count$/i, "")
