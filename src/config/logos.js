@@ -12,8 +12,8 @@ export const CHART_LOGOS = {
   // Promtail has no logo of its own: its chart uses Loki's.
   promtail: file("loki.svg"),
   tempo: file("tempo.svg"),
-  // ingress-nginx has no logo of its own: its chart uses NGINX's.
-  ingressNginx: file("nginx.png"),
+  // The icon the ingress-nginx chart itself declares (the NGINX logo).
+  ingressNginx: file("ingress-nginx.png"),
   certManager: file("cert-manager.svg"),
   karpenter: file("karpenter.svg"),
   awsLoadBalancerController: file("aws-load-balancer-controller.svg"),

@@ -878,10 +878,15 @@ describe("EnvironmentDetailPage identity", () => {
 
   it("shows the official logos of the charts and the git provider", async () => {
     renderDetailPage({ path: "/environments/env-001?tab=helm" });
+    // ingress-nginx shows the icon its own chart declares.
     const nginx = await screen.findByText("Ingress NGINX Controller");
     expect(
       nginx.closest("li").querySelector('[data-slot="logo-tile"] img'),
-    ).toHaveAttribute("src", "/assets/chart-logos/nginx.png");
+    ).toHaveAttribute("src", "/assets/chart-logos/ingress-nginx.png");
+    const prometheus = screen.getByText("Prometheus Stack");
+    expect(
+      prometheus.closest("li").querySelector('[data-slot="logo-tile"] img'),
+    ).toHaveAttribute("src", "/assets/chart-logos/prometheus.svg");
 
     fireEvent.click(screen.getByRole("link", { name: "Overview" }));
     const repo = await screen.findByText("openprime/demo-infra");

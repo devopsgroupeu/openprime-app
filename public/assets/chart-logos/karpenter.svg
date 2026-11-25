@@ -13,9 +13,6 @@
   <style
      id="style2">
     path { fill: #5C62B0; }
-    @media (prefers-color-scheme: dark) {
-        path { fill: #8890e2; }
-    }
     </style>
   <g
      id="Page-1"
