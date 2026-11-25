@@ -248,6 +248,11 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     [isEditMode, baseline, newEnv],
   );
   const leaveGuard = useUnsavedGuard(dirty && !isLoading);
+  // The tab names the environment as saved, not the draft being edited.
+  const savedName = useMemo(
+    () => (baseline ? JSON.parse(baseline).name : null),
+    [baseline],
+  );
 
   const showFieldErrors = () => {
     setShowErrors(true);
@@ -485,7 +490,9 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                   title={activeStep?.title}
                   description={activeStep?.summary}
                   documentTitle={
-                    isEditMode ? `Edit ${newEnv.name}` : "New environment"
+                    isEditMode
+                      ? `Edit ${savedName || "environment"}`
+                      : "New environment"
                   }
                 />
               </div>

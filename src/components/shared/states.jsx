@@ -86,12 +86,13 @@ export function ErrorState({ thing, onRetry, retrying = false }) {
 
 /**
  * Missing or ungranted resource: existence is never revealed. `title` replaces
- * the sentence (an unknown URL reads "Page not found").
+ * the sentence (an unknown URL reads "Page not found"); the tab reads
+ * "<Thing> not found".
  */
 export function NotFound({ thing = "page", title }) {
   const heading =
     title ?? `This ${thing} doesn't exist or you don't have access.`;
-  useDocumentTitle(heading);
+  useDocumentTitle(`${thing[0].toUpperCase()}${thing.slice(1)} not found`);
   return (
     <Empty data-slot="not-found" className="min-h-80">
       <EmptyHeader>

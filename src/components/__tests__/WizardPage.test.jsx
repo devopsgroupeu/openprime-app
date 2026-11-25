@@ -5,8 +5,11 @@ import {
   fireEvent,
   within,
 } from "@testing-library/react";
+import { http, HttpResponse } from "msw";
 import { MemoryRouter, Routes, Route } from "react-router";
 import { vi } from "vitest";
+import { environments } from "../../mocks/fixtures";
+import { server } from "../../mocks/server";
 import { ThemeProvider } from "../../contexts/ThemeContext";
 import { ToastProvider } from "../../contexts/ToastContext";
 import { AuthProvider } from "../../contexts/AuthContext";
@@ -267,6 +270,23 @@ describe("WizardPage", () => {
 
     expect(await screen.findByText("Environment detail")).toBeInTheDocument();
     expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("titles the tab after the task and the saved name", async () => {
+    renderWizardEdit(vi.fn());
+    await stepHeading("Services");
+    expect(document.title).toBe("Edit demo-prod - OpenPrime");
+  });
+
+  it("never titles an edit Edit with no name", async () => {
+    server.use(
+      http.get("*/environments/env-001", () =>
+        HttpResponse.json({ ...environments[0], name: "" }),
+      ),
+    );
+    renderWizardEdit(vi.fn());
+    await stepHeading("Services");
+    expect(document.title).toBe("Edit environment - OpenPrime");
   });
 
   it("remembers that the Aura column was closed", async () => {
