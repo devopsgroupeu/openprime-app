@@ -8,7 +8,7 @@ const DOMAIN_PATTERN =
   /^(?=.{1,253}$)([A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
 
 // Services that need another service enabled: EKS and RDS run inside the VPC.
-// The wizard's "Needs VPC" badge reads the same map.
+// The wizard's "Needs <service>" badge reads the same map.
 export const SERVICE_PREREQUISITES = { eks: "vpc", rds: "vpc" };
 
 // Select values reach the environment as text ("3") while catalog options can

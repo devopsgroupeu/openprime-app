@@ -158,10 +158,12 @@ describe("ServicesConfigStep", () => {
     fireEvent.click(
       screen.getByRole("switch", { name: /Enable Elastic Kubernetes/ }),
     );
-    expect(screen.getByText("Needs VPC")).toBeInTheDocument();
+    expect(
+      screen.getByText("Needs Virtual Private Cloud (VPC)"),
+    ).toBeInTheDocument();
 
     fireEvent.click(vpcSwitch());
-    expect(screen.queryByText("Needs VPC")).toBeNull();
+    expect(screen.queryByText("Needs Virtual Private Cloud (VPC)")).toBeNull();
   });
 
   it("opens a service to its catalog fields when it is switched on", () => {

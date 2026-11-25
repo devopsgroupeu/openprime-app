@@ -41,13 +41,13 @@ const DynamicServicesGrid = ({
   const setExpanded = (serviceName, open) =>
     setExpandedServices({ ...expandedServices, [serviceName]: open });
 
-  // "Needs VPC" on an enabled service whose prerequisite is off.
+  // "Needs <service>" on an enabled service whose prerequisite is off.
   const missingPrerequisite = (serviceName) => {
     const required = SERVICE_PREREQUISITES[serviceName];
     return required &&
       newEnv.services[serviceName]?.enabled &&
       !newEnv.services[required]?.enabled
-      ? required.toUpperCase()
+      ? getServiceConfig(required)?.displayName || required
       : null;
   };
 
