@@ -11,8 +11,8 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  // The stored choice, else the OS setting; only a toggle is stored, so the
-  // default keeps following the OS.
+  // The stored choice, else the OS setting at load; only a toggle is stored,
+  // so until then each load starts from the OS (no live change listener).
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem("openprime-theme-v2");
     return saved
