@@ -4,17 +4,18 @@
 
 /* This file is its own, isolated Tailwind root: it reads the default theme by
    reference, never scans the app (source(none)) and emits ONLY the utilities
-   listed in the @source inline lines below. They stay unlayered like the
-   utilities of index.css and come after them, so they win on equal
-   specificity. Scanning the app here would duplicate every utility and break
-   their order. When a new variant or opacity of text-md, warning or info is
-   needed, add it to the inline lists. */
+   listed in the @source inline lines below into the shared `utilities` cascade
+   layer, after the utilities of index.css. Scanning the app here would
+   duplicate every utility and break their order. When a new variant or
+   opacity of text-md, warning or info is needed, add it to the inline lists. */
 
 /* = `@import "tailwindcss/theme" theme(reference)` and
-   `@import "tailwindcss/utilities" source(none)` in a form the @eslint/css
-   parser reads. */
+   `@import "tailwindcss/utilities" layer(utilities) source(none)` in a form
+   the @eslint/css parser reads. */
 @reference "tailwindcss/theme.css";
-@tailwind utilities source(none);
+@layer utilities {
+  @tailwind utilities source(none);
+}
 
 /* Block form of `@custom-variant dark (&:where(.dark, .dark *))`: the
    @eslint/css parser cannot read the shorthand. */

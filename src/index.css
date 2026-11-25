@@ -5,12 +5,13 @@
    self-hosted via @fontsource in src/index.jsx. motion.css and ui-tokens.css
    are imported after this file, in R's order (src/index.jsx). */
 
-/* Utilities are unlayered, and so are the ones ui-tokens.css emits after
-   them: both sets sort in one cascade by order and specificity. */
+/* = `@import "tailwindcss"`: utilities sit in the `utilities` layer, like the
+   ones ui-tokens.css adds after them, so unlayered rules (motion.css) win over
+   any utility, as in openprime-ai. */
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/preflight.css" layer(base);
-@import "tailwindcss/utilities.css";
+@import "tailwindcss/utilities.css" layer(utilities);
 @import "tw-animate-css";
 
 /* Block form of `@custom-variant dark (&:where(.dark, .dark *))`: the
