@@ -226,6 +226,10 @@ const VERB = {
   },
 };
 
+// The backend wraps job errors in its own "Failed to ...:" prefix; the
+// callout title already says what failed.
+const BACKEND_PREFIX = /^Failed to (generate infrastructure|push to Git):\s*/i;
+
 const pad = (n) => String(n).padStart(2, "0");
 
 // m:ss since `since`, ticking every second.
@@ -283,7 +287,9 @@ export function JobCallout({
       }
     >
       {error.message ? (
-        <span className="wrap-break-word">{error.message}</span>
+        <span className="wrap-break-word">
+          {error.message.replace(BACKEND_PREFIX, "")}
+        </span>
       ) : null}
       {note ? <span className="mt-1 block">{note}</span> : null}
       {error.requestId ? (

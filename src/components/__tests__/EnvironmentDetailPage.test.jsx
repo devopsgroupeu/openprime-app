@@ -375,9 +375,15 @@ describe("EnvironmentDetailPage async jobs", () => {
     expect(
       await screen.findByText("Couldn't generate the repository."),
     ).toBeInTheDocument();
+    // The title already says what failed: the backend's own prefix goes.
     expect(
-      screen.getByText(/AccessDenied for s3:CreateBucket/),
+      screen.getByText(
+        "Couldn't create the Terraform state bucket an-tf-state: AccessDenied for s3:CreateBucket. Use credentials that can create S3 buckets.",
+      ),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Failed to generate infrastructure/),
+    ).not.toBeInTheDocument();
     expect(
       within(document.querySelector('[data-slot="page-header"]')).getByText(
         "Failed",
