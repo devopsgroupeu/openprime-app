@@ -6,7 +6,6 @@ import { useNavigate, useParams } from "react-router";
 import { PanelRight } from "lucide-react";
 import WizardAssistant from "./WizardAssistant";
 import AIChatModal from "./modals/AIChatModal";
-import HelmValuesModal from "./modals/HelmValuesModal";
 import WizardTopBar from "./wizard-page/WizardTopBar";
 import WizardStepSidebar, {
   WizardStepProgress,
@@ -128,8 +127,6 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     serviceTitle: null,
   });
   const [aiChatMessages, setAiChatMessages] = useState({});
-  const [valuesEditor, setValuesEditor] = useState(null);
-  const [editingHelmValues, setEditingHelmValues] = useState("");
   // Edit mode: the loaded environment, to tell whether the user changed it.
   const [baseline, setBaseline] = useState(null);
   const [auraOpen, setAuraOpen] = useState(readAuraOpen);
@@ -390,33 +387,6 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       wizardValues: newEnv,
     });
 
-  const handleSaveHelmValues = () => {
-    const k8s = newEnv.provider === "azure" ? "aks" : "eks";
-    if (!newEnv.services?.[k8s]) {
-      setValuesEditor(null);
-      setEditingHelmValues("");
-      return;
-    }
-    setNewEnv({
-      ...newEnv,
-      services: {
-        ...newEnv.services,
-        [k8s]: {
-          ...newEnv.services[k8s],
-          helmCharts: {
-            ...newEnv.services[k8s]?.helmCharts,
-            [valuesEditor]: {
-              ...newEnv.services[k8s]?.helmCharts?.[valuesEditor],
-              customValues: true,
-            },
-          },
-        },
-      },
-    });
-    setValuesEditor(null);
-    setEditingHelmValues("");
-  };
-
   // Create mode leaves without asking: the draft is already saved. Edit mode
   // asks first when there are unsaved edits (useUnsavedGuard).
   const leaveTo = isEditMode ? `/environments/${id}` : "/environments";
@@ -596,10 +566,6 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                 showErrors={showErrors}
                 validationErrors={validationErrors}
                 basicErrors={basicErrors}
-                onEditHelmValues={(chart, values) => {
-                  setValuesEditor(chart);
-                  setEditingHelmValues(values);
-                }}
                 isEditMode={isEditMode}
                 onEditStep={(stepId) => {
                   // Review's Edit and problem links. Basics is reachable in
@@ -694,16 +660,6 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
               return { ...prev, [aiChatModal.service]: next };
             })
           }
-        />
-      )}
-
-      {valuesEditor && (
-        <HelmValuesModal
-          chartName={valuesEditor}
-          values={editingHelmValues}
-          onChange={setEditingHelmValues}
-          onClose={() => setValuesEditor(null)}
-          onSave={handleSaveHelmValues}
         />
       )}
     </div>

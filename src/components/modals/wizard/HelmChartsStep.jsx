@@ -1,6 +1,6 @@
 // src/components/modals/wizard/HelmChartsStep.js
 // Wizard step 3 (only with a Kubernetes service): where the charts go, the
-// preview note, starting presets and the charts by category.
+// default-values note, starting presets and the charts by category.
 import { Package } from "lucide-react";
 import HelmChartsSelector from "../../HelmChartsSelector";
 import { getHelmChartsForK8sService } from "../../../config/helmChartsConfig";
@@ -8,12 +8,7 @@ import { Callout } from "@/components/shared/callout";
 import { EmptyState } from "@/components/shared/states";
 import { Button } from "@/components/ui/button";
 
-const HelmChartsStep = ({
-  newEnv,
-  setNewEnv,
-  onEditHelmValues,
-  focusHeading,
-}) => {
+const HelmChartsStep = ({ newEnv, setNewEnv, focusHeading }) => {
   // Get the enabled Kubernetes service
   const getEnabledK8sService = () => {
     if (newEnv.services?.eks?.enabled)
@@ -163,7 +158,7 @@ const HelmChartsStep = ({
           </div>
         </div>
         <Callout variant="info">
-          Helm chart configuration is in preview.
+          Charts are generated with their default values.
         </Callout>
       </div>
 
@@ -190,7 +185,6 @@ const HelmChartsStep = ({
       <HelmChartsSelector
         value={currentCharts}
         onChange={handleHelmChartsChange}
-        onEditHelmValues={onEditHelmValues}
         k8sServiceName={k8sService.name}
       />
     </div>

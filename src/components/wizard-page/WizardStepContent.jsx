@@ -15,7 +15,6 @@ const WizardStepContent = ({
   showErrors,
   validationErrors,
   basicErrors,
-  onEditHelmValues,
   onEditStep,
   focusHeading,
   isEditMode,
@@ -48,7 +47,6 @@ const WizardStepContent = ({
         <HelmChartsStep
           newEnv={newEnv}
           setNewEnv={setNewEnv}
-          onEditHelmValues={onEditHelmValues}
           onAskAI={onAskAI}
           focusHeading={focusHeading}
         />

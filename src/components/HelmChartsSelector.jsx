@@ -1,12 +1,11 @@
 // src/components/HelmChartsSelector.js
 // Helm charts by category: one collapsible card per category, open while it
-// holds a selected chart, chart rows with a switch and "Custom values".
+// holds a selected chart, chart rows with a switch.
 import { useState } from "react";
 import { ChevronRight, Package } from "lucide-react";
 import { getHelmChartsByCategory } from "../config/helmChartsConfig";
 import { IconTile } from "@/components/shared/icon-tile";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
@@ -15,12 +14,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
-const HelmChartsSelector = ({
-  value = {},
-  onChange,
-  onEditHelmValues,
-  k8sServiceName,
-}) => {
+const HelmChartsSelector = ({ value = {}, onChange, k8sServiceName }) => {
   // A category the user opened or closed keeps that state; the others are
   // open exactly while they hold a selected chart.
   const [openCategories, setOpenCategories] = useState({});
@@ -79,16 +73,11 @@ const HelmChartsSelector = ({
             <CollapsibleContent>
               <ul className="divide-y divide-border border-t border-border">
                 {charts.map((chart) => {
-                  const chartConfig = value[chart.key] || {
-                    enabled: false,
-                    customValues: false,
-                  };
                   const isChartAvailable = chart.enabled !== false;
                   return (
-                    // Below sm "Custom values" drops under the text.
                     <li
                       key={chart.key}
-                      className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-2 px-3.5 py-3 sm:grid-cols-[auto_1fr_auto_auto]"
+                      className="flex items-center gap-3 px-3.5 py-3"
                     >
                       <IconTile
                         icon={Package}
@@ -120,27 +109,13 @@ const HelmChartsSelector = ({
                         </p>
                       </div>
 
-                      {chartConfig.enabled &&
-                        onEditHelmValues &&
-                        isChartAvailable && (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => onEditHelmValues(chart.key)}
-                            aria-label={`Custom values for ${chart.displayName}`}
-                            className="col-start-2 row-start-2 justify-self-start sm:col-start-3 sm:row-start-1"
-                          >
-                            Custom values
-                          </Button>
-                        )}
                       <Switch
-                        checked={Boolean(chartConfig.enabled)}
+                        checked={Boolean(value[chart.key]?.enabled)}
                         disabled={!isChartAvailable}
                         onCheckedChange={(checked) =>
                           handleChartToggle(chart.key, checked, category)
                         }
                         aria-label={`Install ${chart.displayName}`}
-                        className="col-start-3 row-start-1 sm:col-start-4"
                       />
                     </li>
                   );

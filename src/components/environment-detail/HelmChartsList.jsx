@@ -26,18 +26,13 @@ const HelmChartsList = ({ environment }) => (
         const chart = getHelmChartConfig(key);
         const version = config.version || chart.version;
         const namespace = config.namespace || chart.namespace;
-        // Charts that ship custom values by default are not "edited".
-        const edited = config.customValues && !chart.defaultCustomValues;
         return (
           <li key={key} className="flex items-center gap-3 px-3.5 py-3">
             <IconTile icon={Package} size="lg" />
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
-                <span className="truncate text-sm font-medium">
-                  {chart.displayName}
-                </span>
-                {edited ? <Badge variant="tag">Custom values</Badge> : null}
-              </div>
+              <span className="truncate text-sm font-medium">
+                {chart.displayName}
+              </span>
               <p className="truncate text-xs text-muted-foreground">
                 <span className="font-mono">{`${chart.repository}/${chart.chart}`}</span>
                 {namespace ? (

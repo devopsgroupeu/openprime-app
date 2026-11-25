@@ -956,6 +956,29 @@ describe("WizardPage", () => {
     });
   });
 
+  // Chart values are never stored, so the step offers no editor for them.
+  it("offers no values editor on the Helm step and says charts keep their defaults", async () => {
+    localStorage.clear();
+    renderWizardCreate(vi.fn());
+    fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
+      target: { value: "prod" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+    await stepHeading("Services");
+    fireEvent.click(screen.getByRole("button", { name: "VPC and EKS" }));
+    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+    await stepHeading("Helm charts");
+
+    expect(
+      screen.getByText("Charts are generated with their default values."),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Monitoring stack" }));
+    expect(
+      screen.getByRole("switch", { name: "Install Prometheus Stack" }),
+    ).toHaveAttribute("aria-checked", "true");
+    expect(screen.queryByRole("button", { name: /Custom values/ })).toBeNull();
+  });
+
   // The create payload is an explicit whitelist, so a new field renders,
   // validates and reviews correctly while being dropped on the way out.
   it("sends the domain in the create payload", async () => {
