@@ -80,6 +80,7 @@ describe("HelmValuesDialog when the parser is late or missing", () => {
 
       await act(async () => {
         release();
+        // The late check is to change nothing: give it time to land.
         await new Promise((resolve) => setTimeout(resolve, 50));
       });
       expect(onSave).not.toHaveBeenCalled();

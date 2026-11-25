@@ -77,6 +77,8 @@ beforeAll(() => server.listen({ onUnhandledRequest: "bypass" }));
 afterEach(() => {
   server.resetHandlers();
   resetMockState();
+  // Every test starts without drafts or remembered panels of the one before.
+  localStorage.clear();
 });
 afterAll(() => server.close());
 

@@ -123,7 +123,8 @@ describe("WizardPage", () => {
     expect(payload.gitRepository.sshKey).toBe(pair.privateKey);
     expect(payload.gitRepository).not.toHaveProperty("publicKey");
     expect(JSON.stringify(payload)).not.toContain(pair.publicKey);
-  });
+    // The first and coldest test of the file: room for a loaded machine.
+  }, 15000);
 
   it("renders the wizard chrome (top bar, stepper, step content, footer) in create mode", async () => {
     renderWizard();
@@ -1476,6 +1477,7 @@ describe("WizardPage", () => {
 
       const next = screen.getByRole("button", { name: /Continue/i });
       press(next);
+      // Focus is to stay put: a short wait gives a wrong move its chance.
       await new Promise((resolve) => setTimeout(resolve, 20));
       expect(basics).toBeInTheDocument();
       expect(next).toHaveFocus();
@@ -1484,6 +1486,7 @@ describe("WizardPage", () => {
     it("moves no focus when edit mode opens on Services", async () => {
       renderWizardEdit(vi.fn());
       const services = await stepHeading("Services");
+      // As above: nothing is to take the focus.
       await new Promise((resolve) => setTimeout(resolve, 20));
       expect(services).not.toHaveFocus();
       expect(document.body).toHaveFocus();

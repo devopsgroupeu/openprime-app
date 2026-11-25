@@ -10,6 +10,14 @@ import App from "./App";
 import { server } from "./mocks/server";
 import { environments } from "./mocks/fixtures";
 
+// jsdom cannot download: spies, so vi.restoreAllMocks() puts the real ones
+// back for the next test.
+const stubDownloads = () => {
+  vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:mock-url");
+  vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+  vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+};
+
 // In mock mode (vitest runs with VITE_MOCK=true) the app auto-authenticates via
 // the mock AuthProvider and loads its data from MSW — no real Keycloak/backend.
 test("renders the authenticated app with mocked environments", async () => {
@@ -85,12 +93,7 @@ test("a list load without a response shows no placeholder text", async () => {
 });
 
 describe("environment jobs", () => {
-  beforeEach(() => {
-    // jsdom has no blob URLs or anchor downloads.
-    URL.createObjectURL = vi.fn(() => "blob:mock-url");
-    URL.revokeObjectURL = vi.fn();
-    HTMLAnchorElement.prototype.click = vi.fn();
-  });
+  beforeEach(stubDownloads);
   afterEach(() => {
     vi.restoreAllMocks();
     window.history.pushState({}, "", "/");
@@ -202,6 +205,7 @@ describe("environments list reload", () => {
     window.history.pushState({}, "", "/environments");
     render(<App />);
     await screen.findByRole("link", { name: "demo-prod" }, { timeout: 3000 });
+    // Nothing else is to happen: a short wait gives a second load its chance.
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(loads).toBe(1);
   });
@@ -258,6 +262,7 @@ describe("environments list reload", () => {
     answer(
       HttpResponse.json({ error: "Database unavailable" }, { status: 503 }),
     );
+    // Nothing is to change: a short wait lets the failed reload land.
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(screen.getByRole("link", { name: "demo-staging" })).toBeVisible();
     expect(
@@ -267,13 +272,11 @@ describe("environments list reload", () => {
 });
 
 describe("palette on an environment page", () => {
-  beforeEach(() => {
-    URL.createObjectURL = vi.fn(() => "blob:mock-url");
-    URL.revokeObjectURL = vi.fn();
-    HTMLAnchorElement.prototype.click = vi.fn();
-  });
+  beforeEach(stubDownloads);
   afterEach(() => {
     vi.restoreAllMocks();
+    // jsdom's navigator has no clipboard; a test adds one.
+    delete navigator.clipboard;
     window.history.pushState({}, "", "/");
   });
 
