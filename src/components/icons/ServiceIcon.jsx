@@ -38,7 +38,9 @@ const AWS_ICON_URLS = {
 };
 
 const ServiceIcon = ({ service, className }) => {
-  const url = AWS_ICON_URLS[service];
+  const url = Object.hasOwn(AWS_ICON_URLS, service)
+    ? AWS_ICON_URLS[service]
+    : null;
   if (url) {
     return (
       <img

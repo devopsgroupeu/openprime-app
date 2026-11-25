@@ -15,4 +15,13 @@ describe("ServiceIcon", () => {
     expect(container.querySelector("svg")).not.toBeNull();
     expect(container.querySelector("img")).toBeNull();
   });
+
+  it("treats a key named like an Object member as unknown", () => {
+    for (const service of ["constructor", "toString"]) {
+      const { container, unmount } = render(<ServiceIcon service={service} />);
+      expect(container.querySelector("svg")).not.toBeNull();
+      expect(container.querySelector("img")).toBeNull();
+      unmount();
+    }
+  });
 });
