@@ -140,6 +140,27 @@ describe("WizardReviewStep summary", () => {
     expect(onEditStep).toHaveBeenCalledWith("services");
   });
 
+  // A summary present whenever Review opens, not an event: no alert, so it
+  // does not talk over the step heading on every visit.
+  it("does not announce its problem lists as alerts", () => {
+    render(
+      <WizardReviewStep
+        newEnv={{ ...baseEnv, name: "", services: { eks: { enabled: true } } }}
+        onEditStep={() => {}}
+        problems={[
+          { field: "name", message: "Enter a name for this environment." },
+        ]}
+        serviceProblems={[
+          { field: "eks", message: "EKS requires VPC to be enabled" },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Basics needs attention.")).toBeInTheDocument();
+    expect(screen.getByText("Services need attention.")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("shows each step with an Edit that jumps back to it", () => {
     const onEditStep = vi.fn();
     render(

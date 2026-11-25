@@ -43,9 +43,11 @@ const EditButton = ({ label, onClick }) => (
 );
 
 /** A list of problems in a callout, with a button to the `step` that fixes them. */
+// A summary that is there whenever Review opens: read in place, not announced.
 const Problems = ({ variant, title, items, step, onGo }) => (
   <Callout
     variant={variant}
+    announce={false}
     title={title}
     action={
       <Button variant="secondary" size="xs" onClick={onGo}>

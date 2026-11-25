@@ -24,13 +24,16 @@ const VARIANTS = {
 
 /**
  * One-line or short callout (`rounded-lg px-3 py-2 text-sm`): optional bold `title` before the
- * text, inline links in `children` (underlined), an optional `action` on the right.
+ * text, inline links in `children` (underlined), an optional `action` on the right. An error
+ * that appears is announced (`role="alert"`); `announce={false}` for one that is simply there
+ * when the view opens (a summary, an earlier failure).
  */
 export function Callout({
   variant = "info",
   title,
   icon,
   action,
+  announce = true,
   className,
   children,
 }) {
@@ -40,8 +43,7 @@ export function Callout({
     <div
       data-slot="callout"
       data-variant={variant}
-      // An error that appears (a failed job) is announced; hints are not.
-      role={variant === "error" ? "alert" : undefined}
+      role={variant === "error" && announce ? "alert" : undefined}
       className={cn(
         "flex items-start gap-2 rounded-lg px-3 py-2 text-sm text-foreground ring-1 ring-inset",
         "[&_a]:underline [&_a]:underline-offset-2",

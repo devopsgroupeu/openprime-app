@@ -15,6 +15,17 @@ describe("Callout", () => {
     );
   });
 
+  // A static summary (the Review step's problem lists) is read in place.
+  it("does not announce an error that opts out", () => {
+    render(
+      <Callout variant="error" announce={false}>
+        Basics needs attention.
+      </Callout>,
+    );
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it.each(["info", "warning", "neutral"])(
     "leaves the %s variant unannounced",
     (variant) => {

@@ -143,6 +143,9 @@ function EnvironmentDetail({ id, onDelete }) {
   // The job this page runs: { kind, startedAt } while it polls, then
   // { kind, error } when it ends without an outcome stored on the environment.
   const [job, setJob] = useState(null);
+  // A job failed on this visit: its callout is announced, a failure stored
+  // before the page opened is not.
+  const [failedHere, setFailedHere] = useState(false);
   const mountedRef = useRef(true);
   const running = job && !job.error ? job.kind : null;
   // Leaving drops the download: polling is tied to this page being mounted.
@@ -267,6 +270,7 @@ function EnvironmentDetail({ id, onDelete }) {
       const message = err.data?.error || err.message;
       const errorId = err.requestId ? ` (Error ID: ${err.requestId})` : "";
       toast.error(`${message || FAILED[kind]}${errorId}`);
+      setFailedHere(true);
       if (err.jobFailed) {
         // The callout reads the stored outcome, as after a reload.
         recordOutcome("failed", message);
@@ -288,6 +292,7 @@ function EnvironmentDetail({ id, onDelete }) {
       kind={job?.kind ?? last.kind}
       error={failure}
       onRetry={() => runJob(job?.kind ?? last.kind)}
+      announce={failedHere}
     />
   ) : null;
 

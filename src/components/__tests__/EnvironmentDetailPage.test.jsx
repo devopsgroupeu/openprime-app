@@ -134,10 +134,13 @@ describe("EnvironmentDetailPage async jobs", () => {
     expect(
       await toasts().findByText("Terraform apply failed"),
     ).toBeInTheDocument();
-    // The failure also stays on the page, with Try again.
-    expect(
-      screen.getByText("Couldn't generate the repository."),
-    ).toBeInTheDocument();
+    // The failure also stays on the page, with Try again, announced because
+    // it happened during this visit.
+    const failure = screen.getByText("Couldn't generate the repository.");
+    expect(failure.closest('[data-slot="callout"]')).toHaveAttribute(
+      "role",
+      "alert",
+    );
     expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
   });
 
@@ -200,6 +203,24 @@ describe("EnvironmentDetailPage async jobs", () => {
       screen.getByText(/AccessDenied for s3:CreateBucket/),
     ).toBeInTheDocument();
     expect(screen.getByText("Failed")).toBeInTheDocument();
+    // Already failed when the page opened: shown, not announced.
+    expect(
+      screen
+        .getByText("Couldn't generate the repository.")
+        .closest('[data-slot="callout"]'),
+    ).not.toHaveAttribute("role");
+  });
+
+  it("titles a missing environment Environment not found", async () => {
+    renderDetailPage({ path: "/environments/env-missing" });
+
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "This environment doesn't exist or you don't have access.",
+      }),
+    ).toBeInTheDocument();
+    expect(document.title).toBe("Environment not found - OpenPrime");
   });
 });
 

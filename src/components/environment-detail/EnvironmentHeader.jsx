@@ -197,9 +197,10 @@ function Elapsed({ since }) {
 
 /**
  * Under the header: the job in flight with its elapsed time, or the last
- * failure (`error`: message, optional request ID) with Try again.
+ * failure (`error`: message, optional request ID) with Try again. `announce`
+ * only for a failure of this visit, not one stored before the page opened.
  */
-export function JobCallout({ kind, startedAt, error, onRetry }) {
+export function JobCallout({ kind, startedAt, error, onRetry, announce }) {
   if (!error) {
     return (
       <Callout
@@ -214,6 +215,7 @@ export function JobCallout({ kind, startedAt, error, onRetry }) {
   return (
     <Callout
       variant="error"
+      announce={announce}
       title={VERB[kind].failed}
       action={
         <Button variant="secondary" size="sm" onClick={onRetry}>
