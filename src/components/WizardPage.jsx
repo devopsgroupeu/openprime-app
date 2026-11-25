@@ -64,6 +64,19 @@ const readAuraOpen = () => {
   }
 };
 
+// JSON for "did anything change": key order and empty values ("", null) do not
+// count, so switching a section off and on again is no edit.
+const comparable = (env) =>
+  JSON.stringify(env, (_, value) =>
+    value && typeof value === "object" && !Array.isArray(value)
+      ? Object.fromEntries(
+          Object.entries(value)
+            .filter(([, v]) => v !== "" && v !== null)
+            .sort(([a], [b]) => (a < b ? -1 : 1)),
+        )
+      : value,
+  );
+
 const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const { id } = useParams();
   const isEditMode = Boolean(id);
@@ -73,11 +86,20 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const userId = user?.id;
   const { commit: catalogCommit } = useCatalog();
 
-  const [newEnv, setNewEnv] = useState(() => {
-    if (isEditMode) return null;
+  // Create mode opens on the stored draft or on an empty environment.
+  const [initial] = useState(() => {
+    if (isEditMode) return { env: null, restored: false };
     const draft = loadDraft(userId);
-    return draft ? backfillServices(draft) : createEmptyEnvironment("aws");
+    return draft
+      ? { env: backfillServices(draft), restored: true }
+      : { env: createEmptyEnvironment("aws"), restored: false };
   });
+  const [newEnv, setNewEnv] = useState(initial.env);
+  // Create mode without a restored draft: the untouched wizard (comparable).
+  // Until the environment differs from it there is no draft to keep.
+  const [blank] = useState(() =>
+    isEditMode || initial.restored ? null : comparable(initial.env),
+  );
   // Captured during render, not in an effect: the draft-saving effect below is
   // declared first and therefore runs first, rewriting the stamp to the current
   // commit. Reading it in an effect would always compare equal and the warning
@@ -137,7 +159,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
         // The API answers in snake_case; the wizard reads camelCase.
         const loaded = backfillServices(normalizeEnvironment(env));
         setNewEnv(loaded);
-        setBaseline(JSON.stringify(loaded));
+        setBaseline(comparable(loaded));
         setCurrentStep(2);
         setCompletedSteps(new Set([1]));
       } catch (err) {
@@ -153,12 +175,23 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   }, [id, isEditMode]);
 
   // Persist the in-progress draft (create mode only) so a refresh or navigation
-  // away doesn't lose the configuration. Cleared on successful create.
+  // away doesn't lose the configuration. Cleared on successful create, and
+  // while the wizard is untouched. "Draft saved" shows from the first change:
+  // re-saving the restored draft as it was is not one.
+  const untouched = blank !== null && comparable(newEnv) === blank;
   useEffect(() => {
     if (isEditMode || !newEnv) return;
-    if (saveDraft(userId, newEnv, { commit: catalogCommit }))
+    if (untouched) {
+      clearDraft(userId);
+      setSavedAt(null);
+      return;
+    }
+    if (
+      saveDraft(userId, newEnv, { commit: catalogCommit }) &&
+      newEnv !== initial.env
+    )
       setSavedAt(Date.now());
-  }, [newEnv, isEditMode, userId, catalogCommit]);
+  }, [newEnv, untouched, isEditMode, userId, catalogCommit, initial.env]);
 
   // A draft restored from localStorage was filled in against one version of the
   // service catalog. Once the wizard builds itself from the templates, that set
@@ -219,8 +252,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const canGoNext = currentId !== "basic" || basicErrors.length === 0;
 
   const dirty = useMemo(
-    () =>
-      isEditMode && baseline !== null && JSON.stringify(newEnv) !== baseline,
+    () => isEditMode && baseline !== null && comparable(newEnv) !== baseline,
     [isEditMode, baseline, newEnv],
   );
   const leaveGuard = useUnsavedGuard(dirty && !isLoading);
@@ -347,7 +379,9 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       guardedNavigate(() => navigate(leaveTo));
       return;
     }
-    if (savedAt) info("Draft saved. Resume it from New environment.");
+    // A draft exists once a change was saved, or when one was restored.
+    if (savedAt || initial.restored)
+      info("Draft saved. Resume it from New environment.");
     navigate(leaveTo);
   };
 

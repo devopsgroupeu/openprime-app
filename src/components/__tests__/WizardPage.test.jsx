@@ -350,6 +350,9 @@ describe("WizardPage", () => {
     localStorage.clear();
     renderWizardCreate(vi.fn());
     await stepHeading("Basics");
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "prod" },
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
@@ -357,6 +360,46 @@ describe("WizardPage", () => {
     expect(
       screen.getByText("Draft saved. Resume it from New environment."),
     ).toBeInTheDocument();
+    expect(localStorage.getItem("op-wizard-draft:mock-user-1")).toContain(
+      '"name":"prod"',
+    );
+  });
+
+  // An untouched wizard is not a draft: nothing is kept, nothing is said.
+  it("keeps no draft of an untouched wizard", async () => {
+    localStorage.clear();
+    renderWizardCreate(vi.fn());
+    await stepHeading("Basics");
+    expect(screen.queryByText(/Draft saved/)).toBeNull();
+
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "prod" },
+    });
+    expect(screen.getByText(/Draft saved/)).toBeInTheDocument();
+    // Typed back to where it started: no draft again.
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "" } });
+    expect(screen.queryByText(/Draft saved/)).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(await screen.findByText("Environment list")).toBeInTheDocument();
+    expect(screen.queryByText(/Draft saved/)).toBeNull();
+    expect(localStorage.getItem("op-wizard-draft:mock-user-1")).toBeNull();
+  });
+
+  // Switching git off and on again adds an empty deploy key: no real edit.
+  it("leaves edit mode without asking after a net-zero edit", async () => {
+    renderWizardEdit(vi.fn());
+    await stepHeading("Services");
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    await stepHeading("Basics");
+    const git = screen.getByRole("switch", { name: /git repository/i });
+    fireEvent.click(git);
+    fireEvent.click(git);
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(await screen.findByText("Environment detail")).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).toBeNull();
   });
 
   it("asks before discarding unsaved edits on Cancel", async () => {
