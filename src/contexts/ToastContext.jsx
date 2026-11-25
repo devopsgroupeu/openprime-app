@@ -29,12 +29,27 @@ const TONES = {
   info: { Icon: Info, color: "text-info" },
 };
 
-const ToastItem = ({ toast, onRemove }) => {
+const ToastItem = ({ toast, onRemove, onHold, onRelease }) => {
   const { Icon, color } = TONES[toast.type] ?? TONES.info;
   return (
     <div
       data-slot="toast"
       data-type={toast.type}
+      // The pointer or focus on a toast holds it; once both left, its time
+      // starts again.
+      onPointerEnter={() => onHold(toast.id)}
+      onPointerLeave={(e) => {
+        if (!e.currentTarget.contains(document.activeElement))
+          onRelease(toast.id);
+      }}
+      onFocus={() => onHold(toast.id)}
+      onBlur={(e) => {
+        if (
+          !e.currentTarget.contains(e.relatedTarget) &&
+          !e.currentTarget.matches(":hover")
+        )
+          onRelease(toast.id);
+      }}
       className="motion-enter pointer-events-auto flex w-full items-start gap-2.5 rounded-lg border bg-popover p-4 text-sm text-popover-foreground shadow-lg"
     >
       <Icon aria-hidden className={`mt-px size-4 shrink-0 ${color}`} />
@@ -94,9 +109,34 @@ export const ToastProvider = ({ children }) => {
     [show],
   );
 
+  // Removes the toast after its duration, counted from now.
+  const schedule = useCallback(
+    (toast) => {
+      clearTimeout(timers.current.get(toast.id));
+      if (toast.duration > 0) {
+        timers.current.set(
+          toast.id,
+          setTimeout(() => removeToast(toast.id), toast.duration),
+        );
+      }
+    },
+    [removeToast],
+  );
+
+  const hold = useCallback((id) => clearTimeout(timers.current.get(id)), []);
+  const release = useCallback(
+    (id) => {
+      const toast = shown.current.find((t) => t.id === id);
+      if (toast) schedule(toast);
+    },
+    [schedule],
+  );
+
   const addToast = useCallback(
     (message, type = "info", options = {}) => {
-      // An identical toast already on screen is refreshed, not stacked.
+      // An identical toast already on screen is refreshed, not stacked; it is
+      // drawn anew (`shows` is in its key), so the live region reads it out
+      // again and it enters again as a cue.
       const same = shown.current.find(
         (t) =>
           t.message === message && t.type === type && t.title === options.title,
@@ -107,9 +147,11 @@ export const ToastProvider = ({ children }) => {
         message,
         type,
         title: options.title,
-        // { label, onClick }: one follow-up, e.g. "Open repository".
+        shows: (same?.shows ?? 0) + 1,
+        // { label, onClick }: one follow-up, e.g. "Open repository"; such a
+        // toast stays longer, so there is time to reach the button.
         action: options.action,
-        duration: options.duration || 5000,
+        duration: options.duration || (options.action ? 10000 : 5000),
       };
 
       show(
@@ -119,19 +161,11 @@ export const ToastProvider = ({ children }) => {
       );
 
       // Auto remove after duration, counted from the latest show
-      clearTimeout(timers.current.get(id));
-      if (toast.duration > 0) {
-        timers.current.set(
-          id,
-          setTimeout(() => {
-            removeToast(id);
-          }, toast.duration),
-        );
-      }
+      schedule(toast);
 
       return id;
     },
-    [removeToast, show],
+    [schedule, show],
   );
 
   const clearAllToasts = useCallback(() => {
@@ -199,7 +233,13 @@ export const ToastProvider = ({ children }) => {
         )}
       >
         {toasts.map((toast) => (
-          <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
+          <ToastItem
+            key={`${toast.id}-${toast.shows}`}
+            toast={toast}
+            onRemove={removeToast}
+            onHold={hold}
+            onRelease={release}
+          />
         ))}
       </section>
     </ToastContext.Provider>
