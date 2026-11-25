@@ -39,18 +39,6 @@
     "semantic-release": "semantic-release",
     "test:e2e": "node e2e/runner.js"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
   "devDependencies": {
     "@commitlint/cli": "^20.5.3",
     "@commitlint/config-conventional": "^20.5.3",
