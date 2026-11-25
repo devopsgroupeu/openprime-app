@@ -55,8 +55,6 @@
   --text-md--line-height: 1.25rem;
 
   /* Content widths, consumed as max-w-(--content-settings) etc. */
-  --content-prose: 48rem;
-  --content-catalog: 64rem;
   --content-settings: 53.125rem;
   --content-detail: 52rem;
   --palette-width: 38.75rem;

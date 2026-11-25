@@ -11,7 +11,6 @@ export function PageHeader({
   description,
   tile,
   icon: Icon,
-  color,
   status,
   actions,
   menu,
@@ -20,7 +19,7 @@ export function PageHeader({
   const resourceTile =
     tile ??
     (Icon ? (
-      <IconTile data-slot="resource-tile" icon={Icon} color={color} size="xl" />
+      <IconTile data-slot="resource-tile" icon={Icon} size="xl" />
     ) : null);
   return (
     <header

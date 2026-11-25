@@ -74,8 +74,8 @@ export function SettingsRowGroup({ children, className }) {
 /**
  * One setting: title `text-sm font-medium`, a one-sentence description `text-xs` (what happens,
  * consequences included) and exactly one control on the right (below sm and for `fullWidth`
- * controls such as textareas: under the text). `disabledReason` dims a dependent row and says
- * why; `lockedReason` shows the admin lock ("Set by your admin").
+ * controls such as textareas: under the text). `lockedReason` shows the admin lock ("Set by
+ * your admin").
  */
 export function SettingsRow({
   title,
@@ -83,24 +83,17 @@ export function SettingsRow({
   control,
   controlId,
   fullWidth = false,
-  disabledReason,
   lockedReason,
 }) {
   return (
     <div
       data-slot="settings-row"
-      data-disabled={disabledReason ? true : undefined}
       className={cn(
         "flex flex-col gap-3 p-3.5",
         !fullWidth && "sm:flex-row sm:items-center sm:justify-between sm:gap-6",
       )}
     >
-      <div
-        className={cn(
-          "flex min-w-0 flex-col gap-0.5",
-          disabledReason && "opacity-50",
-        )}
-      >
+      <div className="flex min-w-0 flex-col gap-0.5">
         {controlId ? (
           <label htmlFor={controlId} className="text-sm font-medium">
             {title}
@@ -111,9 +104,6 @@ export function SettingsRow({
         {description ? (
           <p className="text-xs text-muted-foreground">{description}</p>
         ) : null}
-        {disabledReason ? (
-          <p className="text-xs text-muted-foreground">{disabledReason}</p>
-        ) : null}
         {lockedReason ? (
           <p className="flex items-center gap-1 text-xs text-muted-foreground">
             <Lock className="size-3.5" aria-hidden />
@@ -121,13 +111,7 @@ export function SettingsRow({
           </p>
         ) : null}
       </div>
-      <div
-        className={cn(
-          "flex shrink-0 items-center",
-          fullWidth && "w-full",
-          disabledReason && "opacity-50",
-        )}
-      >
+      <div className={cn("flex shrink-0 items-center", fullWidth && "w-full")}>
         {control}
       </div>
     </div>

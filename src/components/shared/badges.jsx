@@ -1,30 +1,13 @@
 // StatusPill: the status next to a title or in a row.
-import { CircleAlert, CircleCheck, TriangleAlert } from "lucide-react";
+import { CircleAlert, CircleCheck } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 
+// Environment and job states (StatusBadge).
 const STATUS_PILLS = {
   ready: { variant: "success", Icon: CircleCheck, label: "Ready" },
-  connected: { variant: "success", Icon: CircleCheck, label: "Connected" },
   processing: { variant: "neutral", Icon: null, label: "Processing" },
-  invited: { variant: "neutral", Icon: null, label: "Invited" },
-  needsReview: {
-    variant: "attention",
-    Icon: TriangleAlert,
-    label: "Needs review",
-  },
-  needsSetup: {
-    variant: "attention",
-    Icon: TriangleAlert,
-    label: "Needs setup",
-  },
-  couldntConnect: {
-    variant: "error",
-    Icon: CircleAlert,
-    label: "Couldn't connect",
-  },
-  // Environment and job states (StatusBadge).
   notGenerated: { variant: "neutral", Icon: null, label: "Not generated" },
   stopped: { variant: "neutral", Icon: null, label: "Stopped" },
   failed: { variant: "error", Icon: CircleAlert, label: "Failed" },

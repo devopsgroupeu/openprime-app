@@ -14,7 +14,6 @@ export function ResourceCard({
   description,
   tile,
   icon: Icon,
-  color,
   badges,
   meta,
   actions,
@@ -31,9 +30,7 @@ export function ResourceCard({
     >
       <div className="flex items-start justify-between gap-2">
         {tile ??
-          (Icon ? (
-            <IconTile data-slot="resource-tile" icon={Icon} color={color} />
-          ) : null)}
+          (Icon ? <IconTile data-slot="resource-tile" icon={Icon} /> : null)}
         {actions ? (
           <div
             data-slot="resource-card-actions"

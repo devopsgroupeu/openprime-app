@@ -1,6 +1,5 @@
 import { createElement } from "react";
 
-import { tileColorClass } from "@/components/shared/tile-color";
 import { cn } from "@/lib/utils";
 
 // The one icon tile, 16 to 56 px.
@@ -16,19 +15,11 @@ const SIZES = {
 };
 
 /**
- * A tile around a concept icon (`icon`) or other content (`children`), tinted
- * with a stored color (chart tokens, info / warning) or neutral `bg-muted`.
- * ResourceCard, PageHeader and list rows use it. Decorative unless
- * `aria-label` is set.
+ * A neutral `bg-muted` tile around a concept icon (`icon`) or other content
+ * (`children`). ResourceCard, PageHeader and list rows use it. Decorative
+ * unless `aria-label` is set.
  */
-export function IconTile({
-  icon,
-  children,
-  color,
-  size = "lg",
-  className,
-  ...props
-}) {
+export function IconTile({ icon, children, size = "lg", className, ...props }) {
   return (
     <span
       data-slot="icon-tile"
@@ -37,7 +28,7 @@ export function IconTile({
       className={cn(
         "inline-flex shrink-0 items-center justify-center overflow-hidden select-none",
         SIZES[size],
-        tileColorClass(color),
+        "bg-muted text-muted-foreground",
         className,
       )}
     >

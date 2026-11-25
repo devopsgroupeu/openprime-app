@@ -1,7 +1,7 @@
 // Loading skeletons that match the final layouts: no fade, no layout shift.
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Mirrors the page layouts: header, ring cards, h-10 / h-13 table rows, row cards; real radii.
+// Mirrors the page layouts: header, ring cards, row cards; real radii.
 function HeaderSkeleton({ tile = false }) {
   return (
     <div className="flex items-center gap-3">
@@ -34,21 +34,6 @@ export function CardGridSkeleton({ count = 6 }) {
   );
 }
 
-export function TableSkeleton({ rows = 8 }) {
-  return (
-    <div className="flex flex-col divide-y overflow-hidden rounded-lg border bg-card">
-      <div className="flex h-10 items-center bg-muted/50 px-4">
-        <Skeleton className="h-3 w-1/3" />
-      </div>
-      {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className="flex h-13 items-center px-4">
-          <Skeleton className="h-4 w-full" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 /** Wrapper role for every page skeleton: busy, labelled, not announced repeatedly. */
 function Busy({ children, className = "flex flex-col gap-6" }) {
   return (
@@ -63,7 +48,7 @@ function Busy({ children, className = "flex flex-col gap-6" }) {
   );
 }
 
-export function ListPageSkeleton({ table = false }) {
+export function ListPageSkeleton() {
   return (
     <Busy>
       <HeaderSkeleton />
@@ -71,7 +56,7 @@ export function ListPageSkeleton({ table = false }) {
         <Skeleton className="h-7 w-56 rounded-lg" />
         <Skeleton className="h-8 w-72 rounded-lg" />
       </div>
-      {table ? <TableSkeleton /> : <CardGridSkeleton />}
+      <CardGridSkeleton />
     </Busy>
   );
 }
