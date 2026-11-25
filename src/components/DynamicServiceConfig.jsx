@@ -1,6 +1,8 @@
 // src/components/DynamicServiceConfig.js
 // One service row of the wizard: icon, name, one line, Aura and the switch.
-// An enabled row opens to the service's catalog fields, in catalog order.
+// An enabled row opens to the service's catalog fields, in catalog order;
+// switching a service on opens it.
+import { useEffect, useRef } from "react";
 import { ChevronRight, Sparkles, TriangleAlert } from "lucide-react";
 import { FIELD_TYPES, getServiceConfig } from "../config/servicesConfig";
 import DynamicFieldRenderer from "./DynamicFieldRenderer";
@@ -30,16 +32,30 @@ const WIDE_FIELDS = new Set([
   FIELD_TYPES.DYNAMIC_LIST,
 ]);
 
+const FIRST_FIELD =
+  "input:not(:disabled), select:not(:disabled), textarea:not(:disabled), button:not(:disabled)";
+
 const DynamicServiceConfig = ({
   serviceName,
   serviceConfig,
   onServiceChange,
   expanded,
-  onToggleExpanded,
+  onExpandedChange,
   onAskAI,
   missingPrerequisite,
 }) => {
   const serviceDefinition = getServiceConfig(serviceName);
+  const enabled = Boolean(serviceConfig.enabled);
+  const open = enabled && Boolean(expanded);
+  // Switched on from the keyboard: focus moves into the opened settings.
+  const focusFirstField = useRef(false);
+  const contentRef = useRef(null);
+
+  useEffect(() => {
+    if (!open || !focusFirstField.current) return;
+    focusFirstField.current = false;
+    contentRef.current?.querySelector(FIRST_FIELD)?.focus();
+  }, [open]);
 
   if (!serviceDefinition) {
     return null;
@@ -53,8 +69,6 @@ const DynamicServiceConfig = ({
   };
 
   const name = serviceDefinition.displayName;
-  const enabled = Boolean(serviceConfig.enabled);
-  const open = enabled && Boolean(expanded);
   const enabledField = serviceDefinition.fields.enabled;
   const otherFields = Object.entries(serviceDefinition.fields).filter(
     ([fieldName]) => fieldName !== "enabled",
@@ -68,7 +82,7 @@ const DynamicServiceConfig = ({
 
   return (
     <li>
-      <Collapsible open={open} onOpenChange={() => onToggleExpanded()}>
+      <Collapsible open={open} onOpenChange={onExpandedChange}>
         <div
           className={cn(
             "relative flex items-center gap-3 px-3.5 py-3 transition-[background-color] duration-(--dur-fast)",
@@ -123,7 +137,14 @@ const DynamicServiceConfig = ({
             {enabledField && (
               <Switch
                 checked={enabled}
-                onCheckedChange={() => handleFieldChange("enabled", !enabled)}
+                // Enter and Space click with detail 0.
+                onClick={(e) => {
+                  focusFirstField.current = !enabled && e.detail === 0;
+                }}
+                onCheckedChange={(checked) => {
+                  handleFieldChange("enabled", checked);
+                  if (checked) onExpandedChange(true);
+                }}
                 aria-label={`Enable ${name}`}
               />
             )}
@@ -138,7 +159,10 @@ const DynamicServiceConfig = ({
           />
         </div>
 
-        <CollapsibleContent className="border-t border-border bg-muted/30 px-3.5 py-4 sm:pl-14.5">
+        <CollapsibleContent
+          ref={contentRef}
+          className="border-t border-border bg-muted/30 px-3.5 py-4 sm:pl-14.5"
+        >
           <div className="grid gap-x-8 gap-y-5 lg:grid-cols-2">
             {otherFields.map(([fieldName, fieldConfig]) => (
               <div

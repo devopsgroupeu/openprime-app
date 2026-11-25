@@ -774,13 +774,11 @@ describe("WizardPage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
     await stepHeading("Services");
+    // Switching it on opens its settings.
     fireEvent.click(
       screen.getByRole("switch", {
         name: "Enable Virtual Private Cloud (VPC)",
       }),
-    );
-    fireEvent.click(
-      screen.getByRole("button", { name: "Virtual Private Cloud (VPC)" }),
     );
     fireEvent.change(screen.getByLabelText("CIDR Block"), {
       target: { value: "10.0.0" },

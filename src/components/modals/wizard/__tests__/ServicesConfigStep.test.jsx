@@ -138,20 +138,52 @@ describe("ServicesConfigStep", () => {
     expect(screen.queryByText("Needs VPC")).toBeNull();
   });
 
-  it("opens an enabled service to its catalog fields", () => {
+  it("opens a service to its catalog fields when it is switched on", () => {
     renderStep();
     // Off: the name is not a control, so there is nothing to open.
     expect(
       screen.queryByRole("button", { name: "Virtual Private Cloud (VPC)" }),
     ).toBeNull();
 
-    fireEvent.click(vpcSwitch());
+    // A pointer click: the switch keeps focus.
+    vpcSwitch().focus();
+    fireEvent.click(vpcSwitch(), { detail: 1 });
     const trigger = screen.getByRole("button", {
       name: "Virtual Private Cloud (VPC)",
     });
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByLabelText("CIDR Block")).toBeInTheDocument();
+    expect(vpcSwitch()).toHaveFocus();
+
+    // The name still closes and opens it.
+    fireEvent.click(trigger);
     expect(trigger).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(trigger);
     expect(trigger).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByLabelText("CIDR Block")).toBeInTheDocument();
+  });
+
+  // Enter and Space click with detail 0.
+  it("moves focus to the first field when switched on from the keyboard", () => {
+    renderStep();
+    vpcSwitch().focus();
+    fireEvent.click(vpcSwitch(), { detail: 0 });
+    expect(screen.getByLabelText("CIDR Block")).toHaveFocus();
+
+    // Switching it off and on with the pointer leaves focus on the switch.
+    fireEvent.click(vpcSwitch(), { detail: 0 });
+    vpcSwitch().focus();
+    fireEvent.click(vpcSwitch(), { detail: 1 });
+    expect(vpcSwitch()).toHaveFocus();
+  });
+
+  it("keeps services closed on Enable all", async () => {
+    renderStep();
+    openActions();
+    fireEvent.click(
+      await screen.findByRole("menuitem", { name: "Enable all" }),
+    );
+    expect(
+      screen.getByRole("button", { name: "Virtual Private Cloud (VPC)" }),
+    ).toHaveAttribute("aria-expanded", "false");
   });
 });

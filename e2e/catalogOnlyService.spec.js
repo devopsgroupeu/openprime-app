@@ -127,10 +127,9 @@ describe("OP-208 runtime catalog drives the wizard", () => {
       .getByRole("switch", { name: `Enable ${SERVICE_LABEL}` })
       .click();
 
-    // Two separate conditions gate the fields: `enabled` AND `expanded`. The
-    // toggle only sets the first, so the card still has to be opened.
+    // Two conditions gate the fields: `enabled` AND `expanded`. Switching the
+    // service on sets both: the row opens.
     const field = ctx.page.getByText(FIELD_LABEL, { exact: false }).first();
-    await heading.click();
     expect(await field.isVisible({ timeout: 10000 })).toBe(true);
   });
 

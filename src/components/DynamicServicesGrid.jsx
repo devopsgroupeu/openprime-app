@@ -34,12 +34,8 @@ const DynamicServicesGrid = ({
     });
   };
 
-  const handleToggleExpanded = (serviceName) => {
-    setExpandedServices({
-      ...expandedServices,
-      [serviceName]: !expandedServices[serviceName],
-    });
-  };
+  const setExpanded = (serviceName, open) =>
+    setExpandedServices({ ...expandedServices, [serviceName]: open });
 
   // "Needs VPC" on an enabled service whose prerequisite is off.
   const missingPrerequisite = (serviceName) => {
@@ -63,7 +59,7 @@ const DynamicServicesGrid = ({
                 serviceConfig={newEnv.services[serviceName]}
                 onServiceChange={handleServiceChange}
                 expanded={expandedServices[serviceName]}
-                onToggleExpanded={() => handleToggleExpanded(serviceName)}
+                onExpandedChange={(open) => setExpanded(serviceName, open)}
                 onAskAI={onAskAI}
                 missingPrerequisite={missingPrerequisite(serviceName)}
               />
