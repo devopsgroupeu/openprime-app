@@ -53,4 +53,24 @@ describe("ToastProvider", () => {
     expect(screen.getByText("Added aws-sandbox.")).toBeInTheDocument();
     expect(screen.getByText("Deleted aws-sandbox.")).toBeInTheDocument();
   });
+  // Placement is CSS (checked in screenshots); these pin the rules that keep
+  // toasts off Aura's composer and off phone dialog footers.
+  it("drops toasts from the top on phones and while Aura is in a dialog", () => {
+    render(<ToastProvider />);
+    const region = screen.getByRole("region", { name: "Notifications" });
+    expect(region).toHaveClass(
+      "bottom-20",
+      "max-sm:top-15",
+      "max-sm:bottom-auto",
+      "[body:has([role=dialog]_[data-slot=prompt-input])_&]:top-15",
+      "[body:has([role=dialog]_[data-slot=prompt-input])_&]:bottom-auto",
+    );
+  });
+
+  it("moves toasts left of the wizard's Aura column", () => {
+    render(<ToastProvider />);
+    expect(screen.getByRole("region", { name: "Notifications" })).toHaveClass(
+      "xl:[body:has(aside_[data-slot=prompt-input])_&]:right-86",
+    );
+  });
 });

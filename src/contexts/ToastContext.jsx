@@ -10,6 +10,7 @@ import {
 } from "react";
 import { CircleAlert, CircleCheck, Info, TriangleAlert, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const ToastContext = createContext();
 
@@ -183,11 +184,19 @@ export const ToastProvider = ({ children }) => {
     >
       {children}
 
-      {/* Above dialogs; bottom-20 clears the Aura launcher and the wizard footer. */}
+      {/* Above dialogs. Bottom right, clear of the Aura launcher and the wizard
+          footer; left of the wizard's Aura column. On phones and while Aura
+          is open in a dialog (its composer sits at the bottom) they drop from
+          the top, under the top bar and off dialog footers. */}
       <section
         aria-live="polite"
         aria-label="Notifications"
-        className="pointer-events-none fixed right-4 bottom-20 z-70 flex w-[min(22.5rem,calc(100vw-2rem))] flex-col gap-2 sm:right-6"
+        className={cn(
+          "pointer-events-none fixed right-4 bottom-20 z-70 flex w-[min(22.5rem,calc(100vw-2rem))] flex-col gap-2 sm:right-6",
+          "max-sm:top-15 max-sm:bottom-auto",
+          "xl:[body:has(aside_[data-slot=prompt-input])_&]:right-86",
+          "[body:has([role=dialog]_[data-slot=prompt-input])_&]:top-15 [body:has([role=dialog]_[data-slot=prompt-input])_&]:right-1/2 [body:has([role=dialog]_[data-slot=prompt-input])_&]:bottom-auto [body:has([role=dialog]_[data-slot=prompt-input])_&]:translate-x-1/2",
+        )}
       >
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
