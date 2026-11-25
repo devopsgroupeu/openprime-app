@@ -171,10 +171,17 @@ const VERB = {
   generate: {
     running: "Generating repository. This can take a few minutes.",
     failed: "Couldn't generate the repository.",
+    retry: "Try again",
   },
   push: {
     running: "Pushing to git. This can take a few minutes.",
     failed: "Couldn't push to git.",
+    retry: "Try again",
+  },
+  download: {
+    running: "Downloading the repository.",
+    failed: "Couldn't download the repository.",
+    retry: "Download again",
   },
 };
 
@@ -197,8 +204,9 @@ function Elapsed({ since }) {
 
 /**
  * Under the header: the job in flight with its elapsed time, or the last
- * failure (`error`: message, optional request ID) with Try again. `announce`
- * only for a failure of this visit, not one stored before the page opened.
+ * failure (`error`: message, optional request ID) with Try again (Download
+ * again for a failed ZIP download). `announce` only for a failure of this
+ * visit, not one stored before the page opened.
  */
 export function JobCallout({ kind, startedAt, error, onRetry, announce }) {
   if (!error) {
@@ -219,7 +227,7 @@ export function JobCallout({ kind, startedAt, error, onRetry, announce }) {
       title={VERB[kind].failed}
       action={
         <Button variant="secondary" size="sm" onClick={onRetry}>
-          Try again
+          {VERB[kind].retry}
         </Button>
       }
     >

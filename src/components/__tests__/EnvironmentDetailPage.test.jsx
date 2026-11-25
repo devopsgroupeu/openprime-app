@@ -146,6 +146,45 @@ describe("EnvironmentDetailPage async jobs", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("offers Download again when the ZIP download fails, without generating again", async () => {
+    let generated = 0;
+    server.use(
+      http.post("*/environments/env-001/generate", () => {
+        generated += 1;
+        return HttpResponse.json(
+          { jobId: "job-generate-env-001", status: "queued" },
+          { status: 202 },
+        );
+      }),
+    );
+    const getBlob = vi
+      .spyOn(authService, "getBlob")
+      .mockRejectedValueOnce(new Error("Network error"))
+      .mockResolvedValueOnce(new Blob(["PK\x03\x04 mock-zip"]));
+    renderDetailPage();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Generate repository" }),
+    );
+
+    const callout = (
+      await screen.findByText("Couldn't download the repository.")
+    ).closest('[data-slot="callout"]');
+    expect(within(callout).getByText("Network error")).toBeVisible();
+    fireEvent.click(
+      within(callout).getByRole("button", { name: "Download again" }),
+    );
+
+    expect(
+      await toasts().findByText("Repository downloaded."),
+    ).toBeInTheDocument();
+    expect(HTMLAnchorElement.prototype.click).toHaveBeenCalledTimes(1);
+    expect(getBlob).toHaveBeenCalledTimes(2);
+    expect(generated).toBe(1);
+    expect(
+      screen.queryByText("Couldn't download the repository."),
+    ).not.toBeInTheDocument();
+  });
+
   it("reads the environment back from the server after a job", async () => {
     const done = new Date().toISOString();
     let finished = false;

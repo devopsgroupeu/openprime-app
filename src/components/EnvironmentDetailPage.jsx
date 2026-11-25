@@ -136,12 +136,15 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   // The job this page runs: { kind, startedAt } while it polls, then
   // { kind, error } when it failed on this visit (announced; a failure stored
-  // before the page opened is shown, not announced).
+  // before the page opened is shown, not announced). Kind "download" fetches
+  // the ZIP of a generated repository again (`downloadUrl`).
   const [job, setJob] = useState(null);
   const mountedRef = useRef(true);
   const running = job && !job.error ? job.kind : null;
   // Leaving drops the download: polling is tied to this page being mounted.
-  const leaveGuard = useUnsavedGuard(running === "generate");
+  const leaveGuard = useUnsavedGuard(
+    running === "generate" || running === "download",
+  );
 
   useEffect(() => {
     mountedRef.current = true;
@@ -232,6 +235,36 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
     }
   };
 
+  const failed = (kind, err, extra) =>
+    setJob({
+      kind,
+      ...extra,
+      error: {
+        message: err.data?.error || err.message,
+        requestId: err.requestId,
+      },
+    });
+
+  // A download that fails after a successful generate keeps its URL, so
+  // Download again does not generate again.
+  const download = async (downloadUrl, done) => {
+    try {
+      const blob = await authService.getBlob(downloadUrl);
+      if (!mountedRef.current) return;
+      triggerDownload(blob, `${environment.name}-infrastructure.zip`);
+      toast.success(done);
+      setJob(null);
+    } catch (err) {
+      console.error("Error downloading the repository:", err);
+      if (mountedRef.current) failed("download", err, { downloadUrl });
+    }
+  };
+
+  const downloadAgain = (downloadUrl) => {
+    setJob({ kind: "download", startedAt: Date.now() });
+    download(downloadUrl, "Repository downloaded.");
+  };
+
   const runJob = async (kind) => {
     setJob({ kind, startedAt: Date.now() });
     try {
@@ -248,13 +281,13 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
         if (!result.result?.downloadUrl) {
           throw new Error("Generated artifact is not available");
         }
-        const blob = await authService.getBlob(result.result.downloadUrl);
-        if (!mountedRef.current) return;
-        triggerDownload(blob, `${environment.name}-infrastructure.zip`);
-        toast.success("Repository generated and downloaded.");
-      } else {
-        toast.success(result.result?.message || "Pushed to git.");
+        await download(
+          result.result.downloadUrl,
+          "Repository generated and downloaded.",
+        );
+        return;
       }
+      toast.success(result.result?.message || "Pushed to git.");
       setJob(null);
     } catch (err) {
       console.error(`Error running the ${kind} job:`, err);
@@ -263,13 +296,7 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
       if (err.jobFailed) await refresh();
       if (!mountedRef.current) return;
       // Shown in the callout (with Try again), not in a toast as well.
-      setJob({
-        kind,
-        error: {
-          message: err.data?.error || err.message,
-          requestId: err.requestId,
-        },
-      });
+      failed(kind, err);
     }
   };
 
@@ -290,7 +317,11 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
     <JobCallout
       kind={job?.kind ?? last.kind}
       error={failure}
-      onRetry={() => runJob(job?.kind ?? last.kind)}
+      onRetry={() =>
+        job?.kind === "download"
+          ? downloadAgain(job.downloadUrl)
+          : runJob(job?.kind ?? last.kind)
+      }
       announce={Boolean(job?.error)}
     />
   ) : null;
@@ -321,7 +352,11 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
     <PageShell width="detail">
       <EnvironmentHeader
         environment={environment}
-        status={running ? "deploying" : getEffectiveStatus(environment)}
+        status={
+          running && running !== "download"
+            ? "deploying"
+            : getEffectiveStatus(environment)
+        }
         running={running}
         canPush={gitEnabled}
         onGenerate={() => runJob("generate")}
