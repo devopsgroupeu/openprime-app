@@ -47,9 +47,7 @@ const Composer = ({
               send();
             }
           }}
-          // rounded-none border-0 p-0 focus:shadow-none: the card is the field
-          // (and they beat legacy.css's textarea rules until it goes).
-          className="field-sizing-content max-h-50 min-h-6 w-full resize-none rounded-none border-0 bg-transparent p-0 text-base outline-none [scrollbar-width:thin] placeholder:text-muted-foreground focus:shadow-none md:text-md"
+          className="field-sizing-content max-h-50 min-h-6 w-full resize-none bg-transparent text-base outline-none [scrollbar-width:thin] placeholder:text-muted-foreground md:text-md"
         />
         <div className="flex h-8 items-center justify-end">
           <Button

@@ -119,8 +119,7 @@ function SettingsSearch({ query, onChange }) {
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search settings"
         aria-label="Search settings"
-        // `!` beats legacy.css's input[type=search] box (gone in Task 11).
-        className="h-full! min-w-0 flex-1 rounded-none! border-0! bg-transparent! p-0! text-sm! text-sidebar-foreground! shadow-none! outline-none placeholder:text-sidebar-foreground/70 [&::-webkit-search-cancel-button]:hidden"
+        className="h-full min-w-0 flex-1 bg-transparent text-sm text-sidebar-foreground outline-none placeholder:text-sidebar-foreground/70 [&::-webkit-search-cancel-button]:hidden"
       />
       {query ? (
         <button

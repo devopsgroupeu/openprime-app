@@ -209,8 +209,7 @@ const CloudCredentialModal = ({
                     type={showSecretKey ? "text" : "password"}
                     autoComplete="off"
                     spellCheck={false}
-                    // `!` beats legacy.css's input[type=password] box (gone in Task 11).
-                    className="rounded-none! border-0! bg-transparent! font-mono shadow-none!"
+                    className="font-mono"
                     placeholder={
                       keyPlaceholder ??
                       "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"

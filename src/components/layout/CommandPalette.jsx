@@ -106,12 +106,11 @@ export default function CommandPalette({
           loop
           className="min-h-0 **:data-[slot=command-input-wrapper]:h-14 **:data-[slot=command-input-wrapper]:px-4 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-item]]:h-10 [&_[cmdk-item]]:rounded-md"
         >
-          {/* `!` beats legacy.css's input[type=text] box (gone in Task 11). */}
           <CommandInput
             value={query}
             onValueChange={setQuery}
             placeholder="Search environments or jump to a page"
-            className="rounded-none! border-0! bg-transparent! px-0! text-base! shadow-none!"
+            className="text-base"
           />
           <CommandList className="max-h-none min-h-0 p-1">
             <CommandEmpty className="p-0">

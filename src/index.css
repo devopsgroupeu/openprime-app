@@ -5,17 +5,13 @@
    self-hosted via @fontsource in src/index.jsx. motion.css and ui-tokens.css
    are imported after this file, in R's order (src/index.jsx). */
 
-/* Utilities stay unlayered, as in v3: the unlayered legacy element rules
-   (label, h1-h3, inputs) must keep losing to utility classes by specificity
-   instead of beating every layered utility. */
+/* Utilities are unlayered, and so are the ones ui-tokens.css emits after
+   them: both sets sort in one cascade by order and specificity. */
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/preflight.css" layer(base);
 @import "tailwindcss/utilities.css";
 @import "tw-animate-css";
-/* Transitional legacy layer (deleted in Task 11). Imported right after the
-   utilities so its unlayered rules keep their v3 place after them. */
-@import "./styles/legacy.css";
 
 /* Block form of `@custom-variant dark (&:where(.dark, .dark *))`: the
    @eslint/css parser cannot read the shorthand. */
@@ -214,8 +210,14 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     letter-spacing: var(--tracking-normal);
+  }
+
+  /* v4 preflight gives buttons `cursor: default`; keep the pointer. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 
   /* Custom scrollbar */

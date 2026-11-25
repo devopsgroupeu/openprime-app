@@ -62,8 +62,7 @@ export function SearchField({ value, onChange, label, className }) {
         placeholder={label}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        // `!` beats legacy.css's input[type=search] box (gone in Task 11).
-        className="h-full! rounded-none! border-0! bg-transparent! py-0! pr-2! pl-2! text-base! shadow-none! md:text-sm! [&::-webkit-search-cancel-button]:hidden"
+        className="[&::-webkit-search-cancel-button]:hidden"
       />
       {value ? (
         <InputGroupAddon align="inline-end">

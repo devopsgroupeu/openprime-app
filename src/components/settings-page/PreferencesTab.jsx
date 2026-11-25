@@ -16,10 +16,6 @@ const PROVIDERS = [
   { value: "onpremise", label: "On-premises" },
 ];
 
-// `!` keeps room for the chevron against legacy.css's select padding (gone in
-// Task 11).
-const SELECT_CLASS = "pr-9!";
-
 const PreferencesTab = ({ userPreferences, onPreferenceChange }) => {
   // The select used to send "on-premise"; everything else, providersConfig
   // included, spells it "onpremise". A value stored by the old select is shown
@@ -39,7 +35,6 @@ const PreferencesTab = ({ userPreferences, onPreferenceChange }) => {
           control={
             <NativeSelect
               id="settings-default-provider"
-              className={SELECT_CLASS}
               value={defaultProvider}
               onChange={(e) =>
                 onPreferenceChange("defaultProvider", e.target.value)
@@ -60,7 +55,6 @@ const PreferencesTab = ({ userPreferences, onPreferenceChange }) => {
           control={
             <NativeSelect
               id="settings-default-region"
-              className={SELECT_CLASS}
               value={userPreferences.defaultRegion}
               onChange={(e) =>
                 onPreferenceChange("defaultRegion", e.target.value)
