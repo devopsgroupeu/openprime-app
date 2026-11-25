@@ -4,6 +4,10 @@ import {
   SettingsSection,
 } from "@/components/shared/settings";
 import { Input } from "@/components/ui/input";
+import {
+  FieldControl,
+  invalidProps,
+} from "../modals/wizard/basic-config/FieldControl";
 
 const FIELDS = [
   {
@@ -27,7 +31,8 @@ const FIELDS = [
   },
 ];
 
-const AccountTab = ({ profile, onProfileChange }) => (
+// `errors`: the message per field key, shown under its input.
+const AccountTab = ({ profile, errors, onProfileChange }) => (
   <SettingsSection title="Profile">
     <SettingsRowGroup>
       {FIELDS.map((field) => (
@@ -36,14 +41,20 @@ const AccountTab = ({ profile, onProfileChange }) => (
           title={field.label}
           controlId={field.id}
           control={
-            <Input
+            <FieldControl
               id={field.id}
-              type={field.type ?? "text"}
-              autoComplete={field.autoComplete}
-              value={profile[field.key]}
-              onChange={(e) => onProfileChange(field.key, e.target.value)}
+              error={errors[field.key]}
               className="sm:w-64"
-            />
+            >
+              <Input
+                id={field.id}
+                type={field.type ?? "text"}
+                autoComplete={field.autoComplete}
+                value={profile[field.key]}
+                {...invalidProps(field.id, errors[field.key])}
+                onChange={(e) => onProfileChange(field.key, e.target.value)}
+              />
+            </FieldControl>
           }
         />
       ))}

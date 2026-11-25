@@ -21,6 +21,17 @@ import { describeError } from "@/lib/describe-error";
 const changed = (a, b) =>
   Object.keys({ ...a, ...b }).some((key) => a[key] !== b[key]);
 
+// What to fix in the account form, by field. The backend takes empty values
+// and checks the email fully; the form asks for both names and an email shape.
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const accountErrors = ({ firstName, lastName, email }) => ({
+  ...(!firstName.trim() && { firstName: "Enter your first name." }),
+  ...(!lastName.trim() && { lastName: "Enter your last name." }),
+  ...(!EMAIL_SHAPE.test(email) && {
+    email: "Enter a valid email address.",
+  }),
+});
+
 const SettingsPage = () => {
   const toast = useToast();
   const { tab: activeTab } = useParams();
@@ -54,6 +65,11 @@ const SettingsPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [credentialToDelete, setCredentialToDelete] = useState(null);
   const [credentialUsage, setCredentialUsage] = useState(null);
+  // After a Save stopped by account problems: they show under their fields
+  // (and go as they are fixed); the first one takes the focus once the
+  // account form is on screen.
+  const [showAccountErrors, setShowAccountErrors] = useState(false);
+  const [focusAccountError, setFocusAccountError] = useState(false);
 
   useEffect(() => {
     loadUserData();
@@ -68,6 +84,12 @@ const SettingsPage = () => {
       navigate(location.pathname, { replace: true, state: null });
     }
   }, [location.state]);
+
+  useEffect(() => {
+    if (!focusAccountError || activeTab !== "account") return;
+    setFocusAccountError(false);
+    document.querySelector('[aria-invalid="true"]')?.focus();
+  }, [focusAccountError, activeTab]);
 
   const loadUserData = async () => {
     try {
@@ -115,7 +137,12 @@ const SettingsPage = () => {
   const discardChanges = () => {
     setProfile(saved.profile);
     setUserPreferences(saved.preferences);
+    setShowAccountErrors(false);
   };
+
+  // Only an edited profile is checked; an untouched one saves as it is.
+  const accountProblems = () =>
+    changed(profile, saved.profile) ? accountErrors(profile) : {};
 
   const loadCloudCredentials = async () => {
     try {
@@ -129,6 +156,12 @@ const SettingsPage = () => {
   };
 
   const saveSettings = async () => {
+    if (Object.keys(accountProblems()).length > 0) {
+      setShowAccountErrors(true);
+      setFocusAccountError(true);
+      if (activeTab !== "account") navigate("/settings/account");
+      return;
+    }
     try {
       setSaving(true);
       await Promise.all([
@@ -140,6 +173,7 @@ const SettingsPage = () => {
       ]);
       // What was sent; edits typed during the PUT stay dirty against it.
       setSaved({ profile, preferences: userPreferences });
+      setShowAccountErrors(false);
       toast.success("Changes saved");
     } catch (error) {
       console.error("Failed to save settings:", error);
@@ -264,6 +298,7 @@ const SettingsPage = () => {
               {status === "ready" && activeTab === "account" ? (
                 <AccountTab
                   profile={profile}
+                  errors={showAccountErrors ? accountProblems() : {}}
                   onProfileChange={handleProfileChange}
                 />
               ) : null}

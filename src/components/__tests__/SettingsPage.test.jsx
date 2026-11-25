@@ -119,6 +119,94 @@ describe("SettingsPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("checks the account form before it saves", async () => {
+    const puts = [];
+    server.use(
+      http.put("*/users/me/profile", async ({ request }) => {
+        puts.push(await request.json());
+        return HttpResponse.json({});
+      }),
+      http.put("*/users/me/preferences", async ({ request }) => {
+        puts.push(await request.json());
+        return HttpResponse.json({});
+      }),
+    );
+    renderSettingsPage("/settings/account");
+
+    const email = await screen.findByLabelText(/Email/i);
+    expect(email).toHaveAttribute("type", "email");
+    expect(email).toHaveAttribute("autocomplete", "email");
+    fireEvent.change(email, { target: { value: "not-an-email" } });
+    fireEvent.change(screen.getByLabelText(/First Name/i), {
+      target: { value: " " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    const firstName = screen.getByLabelText(/First Name/i);
+    expect(firstName).toHaveAttribute("aria-invalid", "true");
+    expect(firstName).toHaveAccessibleDescription("Enter your first name.");
+    expect(email).toHaveAttribute("aria-invalid", "true");
+    expect(email).toHaveAccessibleDescription("Enter a valid email address.");
+    expect(screen.getByLabelText(/Last Name/i)).not.toHaveAttribute(
+      "aria-invalid",
+    );
+    await waitFor(() => expect(firstName).toHaveFocus());
+    expect(
+      screen.getByRole("region", { name: "Unsaved changes" }),
+    ).toBeInTheDocument();
+
+    // Fixed: the errors go and the next Save is the first request.
+    fireEvent.change(firstName, { target: { value: "Mocka" } });
+    fireEvent.change(email, { target: { value: "mocka@openprime.dev" } });
+    expect(email).not.toHaveAttribute("aria-invalid");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+    expect(puts).toHaveLength(2);
+    expect(puts[0]).toEqual({
+      firstName: "Mocka",
+      lastName: "User",
+      email: "mocka@openprime.dev",
+    });
+  });
+
+  it("goes back to the account form when Save finds a problem there", async () => {
+    renderSettingsPage(
+      "/settings/account",
+      undefined,
+      <nav>
+        <Link to="/settings/preferences">To preferences</Link>
+      </nav>,
+    );
+
+    fireEvent.change(await screen.findByLabelText(/Email/i), {
+      target: { value: "mock@" },
+    });
+    fireEvent.click(screen.getByRole("link", { name: "To preferences" }));
+    await screen.findByLabelText(/Default Cloud Provider/i);
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    const email = await screen.findByLabelText(/Email/i);
+    expect(email).toHaveAccessibleDescription("Enter a valid email address.");
+    await waitFor(() => expect(email).toHaveFocus());
+  });
+
+  it("saves preferences next to an untouched profile without names", async () => {
+    server.use(
+      http.get("*/users/me", () =>
+        HttpResponse.json({ email: "mock@openprime.dev" }),
+      ),
+    );
+    renderSettingsPage("/settings/preferences");
+
+    fireEvent.change(await screen.findByLabelText(/Default Region/i), {
+      target: { value: "eu-central-1" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+  });
+
   it("discards unsaved changes", async () => {
     renderSettingsPage("/settings/account");
 
