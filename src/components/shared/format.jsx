@@ -30,7 +30,8 @@ export function formatRelative(iso, now = Date.now()) {
     if (Math.abs(seconds) >= size)
       return relative.format(Math.round(seconds / size), unit);
   }
-  return relative.format(0, "minute");
+  // Under a minute: "now" (`numeric: "auto"` reads 0 minutes as "this minute").
+  return relative.format(0, "second");
 }
 
 /** Relative time with the absolute UTC time in a tooltip (focusable for keyboard users). */
