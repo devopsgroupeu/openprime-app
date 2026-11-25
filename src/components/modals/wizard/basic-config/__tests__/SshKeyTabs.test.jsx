@@ -125,28 +125,33 @@ describe("SshKeyTabs", () => {
     expect(button).toBeEnabled();
   });
 
-  it("defaults to Manual, clears it on reentry, and restores the generated pair in Auto", async () => {
+  it("defaults to pasting a key, clears it on reentry, and restores the generated pair", async () => {
     generateSshKeyPair.mockResolvedValue(pair);
     render(<Harness />);
-    expect(screen.getByRole("tab", { name: "Manual" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-    expect(screen.getByRole("tabpanel", { name: "Manual" })).toBeVisible();
+    expect(
+      screen.getByRole("tab", { name: "Paste existing key" }),
+    ).toHaveAttribute("aria-selected", "true");
+    expect(
+      screen.getByRole("tabpanel", { name: "Paste existing key" }),
+    ).toBeVisible();
     expect(
       screen.queryByRole("button", { name: "Download both keys" }),
     ).not.toBeInTheDocument();
-    selectTab("Auto");
+    selectTab("Generate in browser");
     await screen.findByRole("button", { name: "Download both keys" });
-    selectTab("Manual");
-    const manual = within(screen.getByRole("tabpanel", { name: "Manual" }));
+    selectTab("Paste existing key");
+    const manual = within(
+      screen.getByRole("tabpanel", { name: "Paste existing key" }),
+    );
     expect(manual.getByRole("textbox")).toHaveValue("");
     fireEvent.change(manual.getByRole("textbox"), {
       target: { value: "pasted-key" },
     });
     expect(manual.getByRole("textbox")).toHaveValue("pasted-key");
-    selectTab("Auto");
-    const automatic = within(screen.getByRole("tabpanel", { name: "Auto" }));
+    selectTab("Generate in browser");
+    const automatic = within(
+      screen.getByRole("tabpanel", { name: "Generate in browser" }),
+    );
     expect(
       automatic.getByLabelText("SSH public key (deploy key)"),
     ).toHaveAttribute("readonly");
@@ -162,9 +167,9 @@ describe("SshKeyTabs", () => {
     expect(
       automatic.getByText("This generated key is selected for saving."),
     ).toBeVisible();
-    selectTab("Manual");
+    selectTab("Paste existing key");
     expect(manual.getByRole("textbox")).toHaveValue("");
-    selectTab("Auto");
+    selectTab("Generate in browser");
     expect(
       automatic.getByLabelText("SSH private key (deploy key)"),
     ).not.toHaveValue(pair.privateKey);
@@ -177,8 +182,8 @@ describe("SshKeyTabs", () => {
   it("moves focus with the arrow keys without switching the key mode", async () => {
     const sshKeys = controller({ mode: "manual", pair: null });
     render(<SshKeyTabs sshKeys={sshKeys} gitRepository={{}} />);
-    const manualTab = screen.getByRole("tab", { name: "Manual" });
-    const autoTab = screen.getByRole("tab", { name: "Auto" });
+    const manualTab = screen.getByRole("tab", { name: "Paste existing key" });
+    const autoTab = screen.getByRole("tab", { name: "Generate in browser" });
 
     act(() => manualTab.focus());
     fireEvent.keyDown(manualTab, { key: "ArrowRight" });
@@ -193,14 +198,16 @@ describe("SshKeyTabs", () => {
     expect(sshKeys.setMode).toHaveBeenCalledWith("automatic");
   });
 
-  it("masks the generated private key until revealed and provides one download action in Auto", () => {
+  it("masks the generated private key until revealed and provides one download action when generated", () => {
     render(
       <SshKeyTabs
         sshKeys={controller()}
         gitRepository={{ sshKey: pair.privateKey }}
       />,
     );
-    const panel = within(screen.getByRole("tabpanel", { name: "Auto" }));
+    const panel = within(
+      screen.getByRole("tabpanel", { name: "Generate in browser" }),
+    );
     expect(panel.getByLabelText("SSH public key (deploy key)")).toHaveValue(
       pair.publicKey,
     );
@@ -224,7 +231,7 @@ describe("SshKeyTabs", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("keeps Manual as an editable private-key input with existing-key help", () => {
+  it("keeps the pasted key as an editable private-key input with existing-key help", () => {
     const sshKeys = controller({ mode: "manual" });
     render(
       <SshKeyTabs
@@ -232,7 +239,9 @@ describe("SshKeyTabs", () => {
         gitRepository={{ sshKey: "", sshKeyConfigured: true }}
       />,
     );
-    const panel = within(screen.getByRole("tabpanel", { name: "Manual" }));
+    const panel = within(
+      screen.getByRole("tabpanel", { name: "Paste existing key" }),
+    );
     const input = panel.getByLabelText("SSH private key (deploy key)");
     expect(input).toHaveAttribute(
       "placeholder",

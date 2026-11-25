@@ -89,7 +89,9 @@ describe("WizardPage", () => {
       },
     );
     // Radix tabs activate on mouse down.
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Auto" }));
+    fireEvent.mouseDown(
+      screen.getByRole("tab", { name: "Generate in browser" }),
+    );
     await screen.findByText("This generated key is selected for saving.");
     for (let step = 0; step < 3; step += 1) {
       const next = screen.queryByRole("button", { name: /Continue/i });

@@ -81,8 +81,8 @@ export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
       className="gap-3"
     >
       <TabsList aria-label="SSH key setup">
-        <TabsTrigger value="manual">Manual</TabsTrigger>
-        <TabsTrigger value="automatic">Auto</TabsTrigger>
+        <TabsTrigger value="manual">Paste existing key</TabsTrigger>
+        <TabsTrigger value="automatic">Generate in browser</TabsTrigger>
       </TabsList>
 
       <TabsContent
