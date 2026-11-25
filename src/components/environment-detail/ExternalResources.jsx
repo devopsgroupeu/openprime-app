@@ -1,9 +1,11 @@
 import { useId, useState } from "react";
 import { ExternalLink, KeyRound } from "lucide-react";
 import { useToast } from "../../contexts/ToastContext";
+import { gitLogo } from "../../config/logos";
 import authService from "../../services/authService";
 import { DetailList, DetailRow, Mono, NotConfigured } from "./DetailList";
 import { CopyButton } from "@/components/shared/copy-button";
+import { LogoTile } from "@/components/shared/logo-tile";
 import { SettingsSection } from "@/components/shared/settings";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +47,16 @@ export const gitWebUrl = (url) => {
 
 export const s3ConsoleUrl = (region, bucket) =>
   `https://${region}.console.aws.amazon.com/s3/buckets/${bucket}`;
+
+/** A repository URL (shown as `display`) after its git provider's logo. */
+export function RepositoryUrl({ url, display = url }) {
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      <LogoTile {...gitLogo(url)} size="sm" />
+      <Mono title={url}>{display}</Mono>
+    </div>
+  );
+}
 
 /** Icon link that opens `href` in a new tab. */
 export function OpenLink({ href, label }) {
@@ -158,7 +170,7 @@ const ExternalResources = ({ environment, onEnvironmentUpdate, editHref }) => {
                   </>
                 }
               >
-                <Mono>{gitRepo.url}</Mono>
+                <RepositoryUrl url={gitRepo.url} />
               </DetailRow>
               {gitRepo.branch ? (
                 <DetailRow

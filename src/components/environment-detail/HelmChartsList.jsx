@@ -1,6 +1,6 @@
-import { Package } from "lucide-react";
 import { getHelmChartConfig } from "../../config/helmChartsConfig";
-import { IconTile } from "@/components/shared/icon-tile";
+import { chartLogo } from "../../config/logos";
+import { LogoTile } from "@/components/shared/logo-tile";
 import { SettingsSection } from "@/components/shared/settings";
 import { Badge } from "@/components/ui/badge";
 
@@ -33,7 +33,7 @@ const HelmChartsList = ({ environment }) => (
         const namespace = config.namespace || chart.namespace;
         return (
           <li key={key} className="flex items-center gap-3 px-3.5 py-3">
-            <IconTile icon={Package} size="lg" />
+            <LogoTile {...chartLogo(key)} />
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="truncate text-sm font-medium">
                 {chart.displayName}

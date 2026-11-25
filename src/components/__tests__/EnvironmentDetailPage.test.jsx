@@ -875,6 +875,20 @@ describe("EnvironmentDetailPage identity", () => {
     expect(bands[0]).toHaveAttribute("data-gradient", String(gradient));
     expect(bands[0]).toHaveAttribute("data-layout", String(layout));
   });
+
+  it("shows the official logos of the charts and the git provider", async () => {
+    renderDetailPage({ path: "/environments/env-001?tab=helm" });
+    const nginx = await screen.findByText("Ingress NGINX Controller");
+    expect(
+      nginx.closest("li").querySelector('[data-slot="logo-tile"] img'),
+    ).toHaveAttribute("src", "/assets/chart-logos/nginx.png");
+
+    fireEvent.click(screen.getByRole("link", { name: "Overview" }));
+    const repo = await screen.findByText("openprime/demo-infra");
+    expect(
+      repo.closest("dd").querySelector('[data-slot="logo-tile"] img'),
+    ).toHaveAttribute("src", "/assets/chart-logos/github.svg");
+  });
 });
 
 describe("EnvironmentDetailPage tabs", () => {

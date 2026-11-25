@@ -1,7 +1,7 @@
 /* UI tokens (openprime-ai-aws/apps/web/app/ui-tokens.css): warning and info
-   pairs, the non-color scales and the template gradient (as .cover-gradient);
-   imported after motion.css (src/index.jsx). Left out: the chat home widths
-   and the logo tile. */
+   pairs, the non-color scales, the logo tile and the template gradient (as
+   .cover-gradient); imported after motion.css (src/index.jsx). Left out: the
+   chat home widths. */
 
 /* This file is its own, isolated Tailwind root: it reads the default theme by
    reference, never scans the app (source(none)) and emits ONLY the utilities
@@ -61,6 +61,10 @@
   --palette-width: 38.75rem;
   /* DataTable scroll box: the header stays sticky inside it. */
   --table-max-height: 70dvh;
+  /* Logo tile (LogoTile): white in both themes, so black and dark brand
+     logos stay visible on the charcoal page without a recolor or a dark
+     variant. */
+  --logo-tile: oklch(1 0 0);
 
   /* Elevation and rings, built only from existing tokens. */
   --shadow-ring-xs:

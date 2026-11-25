@@ -4,6 +4,7 @@ import { SettingsSection, StatCard } from "@/components/shared/settings";
 import { DetailList, DetailRow, Mono, NotConfigured } from "./DetailList";
 import {
   OpenLink,
+  RepositoryUrl,
   cleanGitUrl,
   gitRepositoryOf,
   gitWebUrl,
@@ -84,7 +85,10 @@ export default function EnvironmentOverview({
               }
             >
               {gitRepo?.enabled ? (
-                <Mono title={gitRepo.url}>{cleanGitUrl(gitRepo.url)}</Mono>
+                <RepositoryUrl
+                  url={gitRepo.url}
+                  display={cleanGitUrl(gitRepo.url)}
+                />
               ) : (
                 <NotConfigured editHref={editHref} />
               )}

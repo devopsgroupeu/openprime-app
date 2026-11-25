@@ -2,9 +2,10 @@
 // Helm charts by category: one collapsible card per category, open while it
 // holds a selected chart, chart rows with a switch.
 import { useState } from "react";
-import { ChevronRight, Package } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { getHelmChartsByCategory } from "../config/helmChartsConfig";
-import { IconTile } from "@/components/shared/icon-tile";
+import { chartLogo } from "../config/logos";
+import { LogoTile } from "@/components/shared/logo-tile";
 import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
@@ -79,9 +80,8 @@ const HelmChartsSelector = ({ value = {}, onChange, k8sServiceName }) => {
                       key={chart.key}
                       className="flex items-center gap-3 px-3.5 py-3"
                     >
-                      <IconTile
-                        icon={Package}
-                        size="lg"
+                      <LogoTile
+                        {...chartLogo(chart.key)}
                         className={cn(!isChartAvailable && "opacity-50")}
                       />
                       <div

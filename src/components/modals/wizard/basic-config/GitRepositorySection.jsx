@@ -1,5 +1,7 @@
 import { useId } from "react";
 import { ChevronRight } from "lucide-react";
+import { gitHost, gitLogo } from "../../../../config/logos";
+import { LogoTile } from "@/components/shared/logo-tile";
 import {
   SettingsRow,
   SettingsRowGroup,
@@ -11,19 +13,14 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Switch } from "@/components/ui/switch";
 import { FieldControl, invalidProps } from "./FieldControl";
 import SshKeyTabs from "./SshKeyTabs";
-
-// Host part of a git URL: git@host:path, ssh://user@host:port/path or
-// https://host/path. Empty when it cannot be read.
-const gitHost = (url = "") => {
-  const match = url
-    .trim()
-    .toLowerCase()
-    .match(/^(?:[a-z+]+:\/\/)?(?:[^@/]+@)?([^/:]+)/);
-  return match ? match[1] : "";
-};
 
 const Code = ({ children }) => (
   <code className="rounded-sm bg-muted px-1 py-0.5 font-mono text-xs">
@@ -141,14 +138,20 @@ const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys, urlError }) => {
             description="The SSH URL OpenPrime pushes to."
             control={
               <FieldControl id={`${id}-url`} error={urlError}>
-                <Input
-                  id={`${id}-url`}
-                  className="font-mono"
-                  placeholder="git@github.com:org/repo.git"
-                  value={git?.url || ""}
-                  {...invalidProps(`${id}-url`, urlError)}
-                  onChange={(e) => setGit({ url: e.target.value })}
-                />
+                {/* The provider's logo once the host is GitHub or GitLab. */}
+                <InputGroup>
+                  <InputGroupAddon>
+                    <LogoTile {...gitLogo(git?.url)} size="xs" />
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    id={`${id}-url`}
+                    className="font-mono"
+                    placeholder="git@github.com:org/repo.git"
+                    value={git?.url || ""}
+                    {...invalidProps(`${id}-url`, urlError)}
+                    onChange={(e) => setGit({ url: e.target.value })}
+                  />
+                </InputGroup>
               </FieldControl>
             }
           />

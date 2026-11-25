@@ -1,15 +1,16 @@
 // src/components/WizardReviewStep.jsx
 // Read-only summary shown as the final wizard step: problems first, then one
 // section per step with an Edit that jumps back to it.
-import { Package, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { PROVIDERS } from "../config/environmentsConfig";
 import { getServiceConfig } from "../config/servicesConfig";
 import { getHelmChartConfig } from "../config/helmChartsConfig";
+import { chartLogo, gitLogo } from "../config/logos";
 import ServiceIcon from "./icons/ServiceIcon";
 import { summaryOf } from "./environment-detail/ServicesList";
 import { DetailList, DetailRow } from "./environment-detail/DetailList";
 import { Callout } from "@/components/shared/callout";
-import { IconTile } from "@/components/shared/icon-tile";
+import { LogoTile } from "@/components/shared/logo-tile";
 import { SettingsSection } from "@/components/shared/settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -248,7 +249,7 @@ const WizardReviewStep = ({
                 const chart = getHelmChartConfig(key);
                 return (
                   <li key={key} className="flex items-center gap-3 px-3.5 py-3">
-                    <IconTile icon={Package} size="lg" />
+                    <LogoTile {...chartLogo(key)} />
                     <span className="min-w-0 flex-1 truncate text-sm font-medium">
                       {chart.displayName}
                     </span>
@@ -275,7 +276,14 @@ const WizardReviewStep = ({
       >
         <DetailList>
           <DetailRow label="Git repository">
-            <Value mono>{git?.url?.trim()}</Value>
+            {gitUrlSet ? (
+              <span className="flex items-center gap-2">
+                <LogoTile {...gitLogo(git.url)} size="sm" />
+                <Value mono>{git.url.trim()}</Value>
+              </span>
+            ) : (
+              <Value />
+            )}
           </DetailRow>
           {gitUrlSet ? (
             <>
