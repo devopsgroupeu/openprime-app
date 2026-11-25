@@ -4,9 +4,8 @@ Official logos of the Helm charts OpenPrime installs and of the git providers it
 are trademarks of their owners and are not covered by this repository's licence. They are used
 only to identify the corresponding chart or provider, always next to its name or its repository
 URL, and are unmodified except for size (no recolour, no crop) and the one change noted at
-`karpenter.svg`. `LogoTile`
-(`src/components/shared/logo-tile.jsx`) is the only place that renders them; the key of each file
-is in `src/config/logos.js`.
+`karpenter.svg`. `LogoTile` (`src/components/shared/logo-tile.jsx`) is the only place that renders
+them; the key of each file is in `src/config/logos.js`.
 
 All files were retrieved on 2026-11-25. Every SVG was checked for scripts, `foreignObject`, event
 handlers, external references and embedded images (none found); they render through `<img>`,

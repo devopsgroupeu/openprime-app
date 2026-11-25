@@ -48,6 +48,17 @@ describe("breadcrumbsFor", () => {
       breadcrumbsFor("/environments/unknown/edit", environments)[1],
     ).toEqual({ label: "Environment", to: "/environments/unknown" });
   });
+
+  // The router opens the wizard for these too (a trailing slash, any case).
+  it.each(["/environments/create/", "/Environments/Create"])(
+    "reads %s as the new environment wizard",
+    (path) => {
+      expect(breadcrumbsFor(path, environments)).toEqual([
+        { label: "Environments", to: "/environments" },
+        { label: "New environment" },
+      ]);
+    },
+  );
 });
 
 describe("AppTopBar", () => {
@@ -101,7 +112,12 @@ describe("AppLayout", () => {
                 <Route element={<AppLayout environments={environments} />}>
                   <Route
                     path="/environments"
-                    element={<Link to="/settings/account">Go to settings</Link>}
+                    element={
+                      <>
+                        <Link to="/settings/account">Go to settings</Link>
+                        <Link to="/environments/env-1">Open demo-prod</Link>
+                      </>
+                    }
                   />
                   <Route path="/environments/create" element={<p>Wizard</p>} />
                   <Route
@@ -139,16 +155,47 @@ describe("AppLayout", () => {
     expect(scroller.scrollTop).toBe(0);
   });
 
-  // One Aura per screen: the wizard has its own panel.
-  it.each(["/environments/create", "/environments/env-1/edit"])(
-    "has no floating Aura launcher on %s",
-    (path) => {
-      renderLayout(path);
+  // One Aura per screen: the wizard has its own panel, and fills the area.
+  it.each([
+    "/environments/create",
+    "/environments/create/",
+    "/Environments/Create",
+    "/environments/env-1/edit",
+  ])("has no floating Aura launcher on %s", (path) => {
+    renderLayout(path);
 
-      expect(screen.getByText("Wizard")).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Ask Aura" })).toBeNull();
-    },
-  );
+    const wizard = screen.getByText("Wizard");
+    expect(screen.queryByRole("button", { name: "Ask Aura" })).toBeNull();
+    expect(wizard.closest('[data-slot="page-scroller"] > div')).toHaveClass(
+      "h-full",
+    );
+  });
+
+  // The palette, a link or a crash page in the same render as the reset.
+  it("shows a page that crashes on the way in inside the shell", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    renderLayout();
+
+    fireEvent.click(screen.getByRole("link", { name: "Open demo-prod" }));
+    const main = screen.getByRole("main");
+    expect(
+      await within(main).findByRole("heading", {
+        level: 1,
+        name: "Something went wrong.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(sidebar()).getByRole("link", { name: "Environments" }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      within(sidebar()).getByRole("link", { name: "Environments" }),
+    );
+    expect(
+      await screen.findByRole("link", { name: "Open demo-prod" }),
+    ).toBeInTheDocument();
+    vi.restoreAllMocks();
+  });
 
   it("has the floating Aura launcher on other pages", () => {
     renderLayout();

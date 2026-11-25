@@ -6,10 +6,11 @@ import { matchPath } from "react-router";
 /**
  * The environment wizard at `pathname` (the routes in App.jsx): `{ mode:
  * "create" }`, `{ mode: "edit", id }` or null. The shell, its breadcrumbs and
- * the sidebar read it from here.
+ * the sidebar read it from here. Matched like the router matches (a trailing
+ * slash and any case open the wizard too), never by string.
  */
 export function wizardRoute(pathname) {
-  if (pathname === "/environments/create") return { mode: "create" };
+  if (matchPath("/environments/create", pathname)) return { mode: "create" };
   const edit = matchPath("/environments/:id/edit", pathname);
   return edit ? { mode: "edit", id: edit.params.id } : null;
 }

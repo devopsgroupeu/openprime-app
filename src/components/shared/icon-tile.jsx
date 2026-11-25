@@ -16,8 +16,8 @@ const SIZES = {
 
 /**
  * A neutral `bg-muted` tile around a concept icon (`icon`) or other content
- * (`children`). ResourceCard, PageHeader and list rows use it. Decorative
- * unless `aria-label` is set.
+ * (`children`). PageHeader, list rows and the environment cover's avatar use
+ * it. Decorative unless `aria-label` is set.
  */
 export function IconTile({ icon, children, size = "lg", className, ...props }) {
   return (
