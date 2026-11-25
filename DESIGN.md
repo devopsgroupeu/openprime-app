@@ -610,7 +610,8 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
 ### 6.5 Settings, save models, destructive actions
 
 - Account: Profile rows First name, Last name, Email. Preferences: Default cloud provider and
-  Default region (`NativeSelect`; the region pre-fills a new wizard). They are drafts with one
+  Default region (`NativeSelect`; the region pre-fills a new wizard; a provider change sets that
+  provider's default region unless it offers the current one). They are drafts with one
   `SaveBar` on every settings tab that saves both; off the edited tab it reads "Unsaved changes in
   Account" (or "in Account and Preferences"). Save checks an edited profile ("Enter your first
   name.", "Enter a valid email address."), opens Account and focuses the first error; then "Changes

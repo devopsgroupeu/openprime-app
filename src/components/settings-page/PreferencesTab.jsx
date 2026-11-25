@@ -1,4 +1,7 @@
-import { getProviderRegions } from "../../config/providersConfig";
+import {
+  getProviderConfig,
+  getProviderRegions,
+} from "../../config/providersConfig";
 import {
   SettingsRow,
   SettingsRowGroup,
@@ -36,9 +39,22 @@ const PreferencesTab = ({ userPreferences, onPreferenceChange }) => {
             <NativeSelect
               id="settings-default-provider"
               value={defaultProvider}
-              onChange={(e) =>
-                onPreferenceChange("defaultProvider", e.target.value)
-              }
+              onChange={(e) => {
+                const provider = e.target.value;
+                onPreferenceChange("defaultProvider", provider);
+                // The region select lists only this provider's regions: a
+                // region it does not offer would show as another one but
+                // still be saved.
+                const offered = getProviderRegions(provider).some(
+                  (r) => r.value === userPreferences.defaultRegion,
+                );
+                if (!offered) {
+                  onPreferenceChange(
+                    "defaultRegion",
+                    getProviderConfig(provider).defaultRegion,
+                  );
+                }
+              }}
             >
               {PROVIDERS.map((p) => (
                 <NativeSelectOption key={p.value} value={p.value}>

@@ -216,6 +216,33 @@ describe("SettingsPage", () => {
     expect(await screen.findByText("Changes saved")).toBeInTheDocument();
   });
 
+  // The region select can only show a region of the chosen provider; a
+  // provider change used to leave the old one in the draft, so Save sent a
+  // region the select did not show.
+  it("saves the region the select shows after a provider change", async () => {
+    const puts = {};
+    server.use(
+      http.put("*/users/me/preferences", async ({ request }) => {
+        puts.preferences = await request.json();
+        return HttpResponse.json(puts.preferences);
+      }),
+    );
+    renderSettingsPage("/settings/preferences");
+
+    fireEvent.change(await screen.findByLabelText(/Default Cloud Provider/i), {
+      target: { value: "onpremise" },
+    });
+    const region = screen.getByLabelText(/Default Region/i);
+    expect(region).toHaveValue("datacenter-1");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+    expect(puts.preferences).toMatchObject({
+      defaultProvider: "onpremise",
+      defaultRegion: region.value,
+    });
+  });
+
   it("discards unsaved changes", async () => {
     renderSettingsPage("/settings/account");
 
