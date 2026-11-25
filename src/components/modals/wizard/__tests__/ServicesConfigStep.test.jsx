@@ -3,6 +3,8 @@ import { useState } from "react";
 import { vi } from "vitest";
 import ServicesConfigStep from "../ServicesConfigStep";
 import { createEmptyEnvironment } from "../../../../config/environmentsConfig";
+import { hydrateServicesConfig } from "../../../../config/servicesConfig";
+import catalogFixture from "../../../../mocks/catalog.json";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Controlled like the wizard: newEnv / setNewEnv and the expanded map.
@@ -125,6 +127,30 @@ describe("ServicesConfigStep", () => {
       screen.queryByRole("heading", { level: 2, name: "Networking" }),
     ).toBeNull();
     expect(screen.queryByRole("switch", { name: /VPC/ })).toBeNull();
+  });
+
+  // A catalog service without a category is grouped under "Other", and the
+  // "Other" tab has to find it there.
+  it("filters a service without a category under Other", () => {
+    const { category, ...uncategorized } = catalogFixture.services.sqs;
+    expect(category).toBeTruthy();
+    hydrateServicesConfig({
+      ...catalogFixture,
+      services: {
+        ...catalogFixture.services,
+        ledger: { ...uncategorized, key: "ledger", displayName: "Ledger" },
+      },
+    });
+    try {
+      renderStep();
+      const tabs = screen.getByRole("group", { name: "Category" });
+      fireEvent.click(within(tabs).getByRole("button", { name: "Other" }));
+      expect(
+        screen.getByRole("heading", { level: 3, name: "Ledger" }),
+      ).toBeInTheDocument();
+    } finally {
+      hydrateServicesConfig(catalogFixture);
+    }
   });
 
   it("marks an enabled service whose prerequisite is off", () => {

@@ -6,11 +6,15 @@ import { SERVICE_PREREQUISITES } from "../utils/configValidator";
 import DynamicServiceConfig from "./DynamicServiceConfig";
 import { SettingsSection } from "@/components/shared/settings";
 
+/** The catalog category of a service; "Other" when it has none. */
+export const categoryOf = (serviceName) =>
+  getServiceConfig(serviceName)?.category || "Other";
+
 /** `[[category, [serviceName, ...]], ...]` in the order the names come. */
 export const groupByCategory = (serviceNames) => {
   const groups = new Map();
   for (const name of serviceNames) {
-    const category = getServiceConfig(name)?.category || "Other";
+    const category = categoryOf(name);
     groups.set(category, [...(groups.get(category) || []), name]);
   }
   return [...groups];

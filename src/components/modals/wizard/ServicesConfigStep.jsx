@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ToggleLeft, ToggleRight } from "lucide-react";
 import { getProviderServices } from "../../../config/providersConfig";
 import DynamicServicesGrid, {
+  categoryOf,
   groupByCategory,
 } from "../../DynamicServicesGrid";
 import { getServiceConfig } from "../../../config/servicesConfig";
@@ -53,7 +54,7 @@ const ServicesConfigStep = ({
   const categories = groupByCategory(serviceNames).map(([c]) => c);
   const visible = serviceNames.filter(
     (name) =>
-      (category === "all" || getServiceConfig(name).category === category) &&
+      (category === "all" || categoryOf(name) === category) &&
       matches(name, query),
   );
 
