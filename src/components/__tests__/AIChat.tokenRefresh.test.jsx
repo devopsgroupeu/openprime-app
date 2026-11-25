@@ -116,7 +116,7 @@ describe("AI chat token refresh (OP-271)", () => {
     async (_name, ask) => {
       ask();
 
-      expect(await screen.findByText(/Fresh answer\./)).toBeInTheDocument();
+      expect(await screen.findByText("Fresh answer.")).toBeInTheDocument();
       expect(keycloak.updateToken).toHaveBeenCalledWith(-1);
       expect(keycloak.logout).not.toHaveBeenCalled();
     },

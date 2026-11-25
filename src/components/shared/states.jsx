@@ -164,7 +164,10 @@ export function FullScreenState({
     >
       <div className="flex w-full max-w-100 flex-col items-center gap-6 text-center">
         {logo ? <img src={symbol} alt="OpenPrime" className="size-10" /> : null}
-        <div className="flex flex-col gap-1.5">
+        <div
+          role={loading ? "status" : undefined}
+          className="flex flex-col gap-1.5"
+        >
           {loading ? (
             <h1 className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Spinner aria-hidden />

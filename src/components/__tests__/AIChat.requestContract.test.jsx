@@ -141,11 +141,11 @@ describe("AI chat request contract (OP-263)", () => {
       mount();
 
       ask(input(), "Which node size?", send);
-      expect(await screen.findByText(/Answer 1\./)).toBeInTheDocument();
+      expect(await screen.findByText("Answer 1.")).toBeInTheDocument();
 
       // The follow-up carries the model's own answer in the history.
       ask(input(), "And for production?", send);
-      expect(await screen.findByText(/Answer 2\./)).toBeInTheDocument();
+      expect(await screen.findByText("Answer 2.")).toBeInTheDocument();
 
       expect(rejections).toEqual([]);
     },

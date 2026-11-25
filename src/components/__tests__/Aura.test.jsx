@@ -1,7 +1,14 @@
 // Aura's conversation behaviour on its surfaces: the floating window of the
 // app shell, the wizard panel and the service dialog.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  act,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { useState } from "react";
 import { http, HttpResponse } from "msw";
 import { server } from "../../mocks/server";
@@ -88,6 +95,8 @@ afterEach(() => {
 const composer = () => screen.getByRole("textbox", { name: /Message Aura/ });
 const type = (text) =>
   fireEvent.change(composer(), { target: { value: text } });
+// Messages, without the status line that repeats a failure.
+const thread = () => within(document.querySelector("[data-slot=chat-thread]"));
 const ask = (text) => {
   type(text);
   fireEvent.keyDown(composer(), { key: "Enter" });
@@ -134,7 +143,7 @@ describe("Aura answers that do not finish", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Stop" }));
     expect(
-      await screen.findByText("You stopped this answer."),
+      await thread().findByText("You stopped this answer."),
     ).toBeInTheDocument();
     expect(screen.getByText("Use m5.large")).toBeInTheDocument();
     expect(composer()).toHaveFocus();
@@ -157,7 +166,7 @@ describe("Aura answers that do not finish", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Stop" }));
     expect(
-      await screen.findByText("You stopped this answer."),
+      await thread().findByText("You stopped this answer."),
     ).toBeInTheDocument();
     expect(screen.queryByText("Thinking")).toBeNull();
   });
@@ -173,7 +182,7 @@ describe("Aura answers that do not finish", () => {
       vi.advanceTimersByTime(STALL_MS);
     });
     expect(
-      await screen.findByText("Aura took too long to answer."),
+      await thread().findByText("Aura took too long to answer."),
     ).toBeInTheDocument();
     expect(screen.getByText("Use m5")).toBeInTheDocument();
 
@@ -191,7 +200,7 @@ describe("Aura answers that do not finish", () => {
     ask("Which node size?");
     expect(await screen.findByText("Answer 1.")).toBeInTheDocument();
     ask("And for production?");
-    expect(await screen.findByText(/couldn't answer/)).toBeInTheDocument();
+    expect(await thread().findByText(/couldn't answer/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("Answer 3.")).toBeInTheDocument();
@@ -208,10 +217,39 @@ describe("Aura answers that do not finish", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Stop" }));
     expect(
-      await screen.findByText("You stopped this answer."),
+      await thread().findByText("You stopped this answer."),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("Use m6i.")).toBeInTheDocument();
     expect(requests[1]).toEqual(requests[0]);
+  });
+});
+
+describe("Aura for screen readers", () => {
+  it("announces a finished answer, not the streaming thread", async () => {
+    const { container } = render(<WizardHarness />);
+    ask("Which node size?");
+    await screen.findByText("Answer 1.");
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Aura answered: Answer 1.",
+      ),
+    );
+    expect(screen.getByRole("status")).toHaveClass("sr-only");
+    const thread = container.querySelector("[data-slot=chat-thread]");
+    expect(thread).not.toHaveAttribute("aria-live");
+  });
+
+  it("announces why an answer failed", async () => {
+    reply = () => HttpResponse.json({ error: "x" }, { status: 500 });
+    render(<WizardHarness />);
+    ask("Which node size?");
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Aura couldn't answer right now.",
+      ),
+    );
   });
 });
