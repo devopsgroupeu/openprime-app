@@ -5,6 +5,7 @@ import authService from "../services/authService";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
 import EnvironmentHeader, {
   JobCallout,
+  NO_GIT,
 } from "./environment-detail/EnvironmentHeader";
 import EnvironmentOverview from "./environment-detail/EnvironmentOverview";
 import ServicesList, {
@@ -14,7 +15,11 @@ import HelmChartsList, {
   enabledCharts,
 } from "./environment-detail/HelmChartsList";
 import EnvironmentConfiguration from "./environment-detail/EnvironmentConfiguration";
-import { gitRepositoryOf } from "./environment-detail/ExternalResources";
+import {
+  cleanGitUrl,
+  gitRepositoryOf,
+  gitWebUrl,
+} from "./environment-detail/ExternalResources";
 import { getEffectiveStatus, lastJob } from "../utils/environmentStats";
 import { PageShell } from "@/components/shared/page-shell";
 import { useUnsavedGuard } from "@/components/shared/save-bar";
@@ -134,6 +139,7 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
   const [fetchError, setFetchError] = useState(null);
   const [reload, setReload] = useState(0);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [confirmPush, setConfirmPush] = useState(false);
   // The job this page runs: { kind, startedAt } while it polls, then
   // { kind, error } when it failed on this visit (announced; a failure stored
   // before the page opened is shown, not announced). Kind "download" fetches
@@ -212,7 +218,10 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
   const basePath = `/environments/${environment.id}`;
   const services = enabledServiceEntries(environment);
   const charts = enabledCharts(environment);
-  const gitEnabled = Boolean(gitRepositoryOf(environment)?.enabled);
+  const gitRepo = gitRepositoryOf(environment);
+  const gitEnabled = Boolean(gitRepo?.enabled);
+  const repoName = cleanGitUrl(gitRepo?.url);
+  const repoWeb = gitWebUrl(gitRepo?.url);
 
   const tabs = TABS.filter((tab) => tab.id !== "helm" || charts.length > 0).map(
     (tab) =>
@@ -289,7 +298,15 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
         );
         return;
       }
-      toast.success(result.result?.message || "Pushed to git.");
+      toast.success(`Pushed to ${repoName}.`, {
+        action: repoWeb
+          ? {
+              label: "Open repository",
+              onClick: () =>
+                window.open(repoWeb, "_blank", "noopener,noreferrer"),
+            }
+          : undefined,
+      });
       setJob(null);
     } catch (err) {
       console.error(`Error running the ${kind} job:`, err);
@@ -313,17 +330,24 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
     last.error
       ? { message: last.error }
       : null);
+  const failedKind = job?.kind ?? last?.kind;
+  // Pushing writes to the customer's branch: it asks first, also on Try again.
+  const retry =
+    failedKind === "download"
+      ? () => downloadAgain(job.downloadUrl)
+      : failedKind === "push"
+        ? gitEnabled
+          ? () => setConfirmPush(true)
+          : undefined
+        : () => runJob(failedKind);
   const callout = running ? (
     <JobCallout kind={running} startedAt={job.startedAt} />
   ) : failure ? (
     <JobCallout
-      kind={job?.kind ?? last.kind}
+      kind={failedKind}
       error={failure}
-      onRetry={() =>
-        job?.kind === "download"
-          ? downloadAgain(job.downloadUrl)
-          : runJob(job?.kind ?? last.kind)
-      }
+      onRetry={retry}
+      note={retry ? undefined : NO_GIT}
       announce={Boolean(job?.error)}
     />
   ) : null;
@@ -362,7 +386,7 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
         running={running}
         canPush={gitEnabled}
         onGenerate={() => runJob("generate")}
-        onPush={() => runJob("push")}
+        onPush={() => setConfirmPush(true)}
         onCopyId={() => copy(environment.id, "Environment ID copied")}
         onCopyLink={() =>
           copy(`${window.location.origin}${basePath}`, "Link copied")
@@ -399,6 +423,29 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
           onConfirm={confirmDelete}
         />
       ) : null}
+
+      <AlertDialog open={confirmPush} onOpenChange={setConfirmPush}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {gitRepo?.branch
+                ? `Push to ${repoName} (${gitRepo.branch})?`
+                : `Push to ${repoName}?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {gitRepo?.branch
+                ? "OpenPrime commits the generated code to this branch."
+                : "OpenPrime commits the generated code to this repository."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => runJob("push")}>
+              Push
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={leaveGuard.pending}

@@ -65,6 +65,16 @@ function renderDetailPage({
 // text inline (the job callout).
 const toasts = () => within(screen.getByLabelText("Notifications"));
 
+// Push to git, confirmed in its dialog.
+const push = async () => {
+  fireEvent.click(await screen.findByRole("button", { name: "Push to git" }));
+  fireEvent.click(
+    within(await screen.findByRole("alertdialog")).getByRole("button", {
+      name: "Push",
+    }),
+  );
+};
+
 // jsdom doesn't implement blob URL helpers or anchor navigation; stub them so
 // triggerDownload() (createObjectURL -> a.click()) runs without throwing.
 beforeEach(() => {
@@ -223,14 +233,98 @@ describe("EnvironmentDetailPage async jobs", () => {
     expect(within(header).getByText("now")).toBeInTheDocument();
   });
 
-  it("pushes: 202 -> succeeded and shows the result message toast", async () => {
+  it("asks before pushing, then names the repository it pushed to", async () => {
+    let pushed = 0;
+    server.use(
+      http.post("*/environments/env-001/push", () => {
+        pushed += 1;
+        return HttpResponse.json(
+          { jobId: "job-push-env-001", status: "queued" },
+          { status: 202 },
+        );
+      }),
+    );
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
     renderDetailPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Push to git" }));
+    let dialog = await screen.findByRole("alertdialog");
+    expect(
+      within(dialog).getByText("Push to openprime/demo-infra (main)?"),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(
+        "OpenPrime commits the generated code to this branch.",
+      ),
+    ).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+    );
+    expect(pushed).toBe(0);
+
+    await push();
+    const toast = (
+      await toasts().findByText("Pushed to openprime/demo-infra.")
+    ).closest('[data-slot="toast"]');
+    expect(pushed).toBe(1);
     fireEvent.click(
-      await screen.findByRole("button", { name: /Push to Git/i }),
+      within(toast).getByRole("button", { name: "Open repository" }),
+    );
+    expect(open).toHaveBeenCalledWith(
+      "https://github.com/openprime/demo-infra",
+      "_blank",
+      "noopener,noreferrer",
+    );
+  });
+
+  it("asks again before Try again pushes", async () => {
+    server.use(
+      http.get("*/environments/env-001", () =>
+        HttpResponse.json({
+          ...environments[0],
+          last_push_at: "2026-11-21T00:00:00Z",
+          last_push_status: "failed",
+          last_push_error: "Permission denied (publickey)",
+        }),
+      ),
+    );
+    renderDetailPage();
+    const callout = (await screen.findByText("Couldn't push to git.")).closest(
+      '[data-slot="callout"]',
+    );
+
+    fireEvent.click(within(callout).getByRole("button", { name: "Try again" }));
+    expect(
+      within(await screen.findByRole("alertdialog")).getByText(
+        "Push to openprime/demo-infra (main)?",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("offers no Try again for a failed push without a git repository", async () => {
+    server.use(
+      http.get("*/environments/env-002", () =>
+        HttpResponse.json({
+          ...environments[1],
+          last_push_at: "2026-11-21T00:00:00Z",
+          last_push_status: "failed",
+          last_push_error: "Repository not found",
+        }),
+      ),
+    );
+    renderDetailPage({ path: "/environments/env-002" });
+    const callout = (await screen.findByText("Couldn't push to git.")).closest(
+      '[data-slot="callout"]',
     );
 
     expect(
-      await screen.findByText("Infrastructure pushed to Git"),
+      within(callout).queryByRole("button", { name: "Try again" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(callout).getByText(
+        "Add a git repository in Edit > Basics to push.",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -477,7 +571,7 @@ describe("EnvironmentDetailPage leaving during a job", () => {
       ),
     );
     renderDetailPage({ shell: <Shell /> });
-    fireEvent.click(await screen.findByRole("button", { name: "Push to git" }));
+    await push();
     await screen.findByRole("button", { name: /Pushing/ });
 
     // Push has no leave guard: go straight to another environment.
@@ -555,7 +649,7 @@ describe("EnvironmentDetailPage header actions", () => {
       ),
     );
     const { unmount } = renderDetailPage();
-    fireEvent.click(await screen.findByRole("button", { name: "Push to git" }));
+    await push();
     await screen.findByRole("button", { name: /Pushing/ });
 
     const menu = await openMore("demo-prod");

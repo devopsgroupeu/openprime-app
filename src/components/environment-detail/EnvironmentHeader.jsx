@@ -25,7 +25,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const NO_GIT = "Add a git repository in Edit > Basics to push.";
+export const NO_GIT = "Add a git repository in Edit > Basics to push.";
 
 // Statuses whose next step is generating (the primary button).
 const GENERATE_FIRST = new Set(["not-generated", "failed"]);
@@ -246,10 +246,18 @@ function Elapsed({ since }) {
 /**
  * Under the header: the job in flight with its elapsed time, or the last
  * failure (`error`: message, optional request ID) with Try again (Download
- * again for a failed ZIP download). `announce` only for a failure of this
- * visit, not one stored before the page opened.
+ * again for a failed ZIP download; no `onRetry`: no button, a `note` says
+ * why). `announce` only for a failure of this visit, not one stored before the
+ * page opened.
  */
-export function JobCallout({ kind, startedAt, error, onRetry, announce }) {
+export function JobCallout({
+  kind,
+  startedAt,
+  error,
+  onRetry,
+  note,
+  announce,
+}) {
   if (!error) {
     return (
       <Callout
@@ -267,14 +275,17 @@ export function JobCallout({ kind, startedAt, error, onRetry, announce }) {
       announce={announce}
       title={VERB[kind].failed}
       action={
-        <Button variant="secondary" size="sm" onClick={onRetry}>
-          {VERB[kind].retry}
-        </Button>
+        onRetry ? (
+          <Button variant="secondary" size="sm" onClick={onRetry}>
+            {VERB[kind].retry}
+          </Button>
+        ) : null
       }
     >
       {error.message ? (
         <span className="wrap-break-word">{error.message}</span>
       ) : null}
+      {note ? <span className="mt-1 block">{note}</span> : null}
       {error.requestId ? (
         <span className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
           Error ID <span className="font-mono">{error.requestId}</span>

@@ -3,6 +3,7 @@
 // bottom-right, popover surface, one icon per tone.
 import { createContext, useContext, useState, useCallback } from "react";
 import { CircleAlert, CircleCheck, Info, TriangleAlert, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const ToastContext = createContext();
 
@@ -39,6 +40,19 @@ const ToastItem = ({ toast, onRemove }) => {
         >
           {toast.message}
         </p>
+        {toast.action ? (
+          <Button
+            variant="secondary"
+            size="xs"
+            className="mt-2"
+            onClick={() => {
+              onRemove(toast.id);
+              toast.action.onClick();
+            }}
+          >
+            {toast.action.label}
+          </Button>
+        ) : null}
       </div>
       <button
         type="button"
@@ -67,6 +81,8 @@ export const ToastProvider = ({ children }) => {
         message,
         type,
         title: options.title,
+        // { label, onClick }: one follow-up, e.g. "Open repository".
+        action: options.action,
         duration: options.duration || 5000,
       };
 
