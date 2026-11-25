@@ -646,8 +646,7 @@ tab in the path. Search is component state; sort, theme, the wizard Aura column 
    into Terraform, Helm and Argo CD code.".
 3. Buttons are verb + object: "New environment", "Generate repository", "Push to git", "Add
    credentials", "Save values", "Download again", "Rotate key". Never "Submit" or "OK". Failures offer
-   "Try again" ("Retry generation" in `basic-config/SshKeyTabs.jsx` is the one exception; do not copy
-   it).
+   "Try again".
 4. Empty states say what goes here and offer one action: "No environments yet" / "Create an
    environment to generate Terraform, Helm and Argo CD code for AWS.".
 5. Errors say what failed and what to do: "Couldn't load <thing>."; actions use

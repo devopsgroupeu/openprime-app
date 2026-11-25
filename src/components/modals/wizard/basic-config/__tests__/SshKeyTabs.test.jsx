@@ -231,6 +231,24 @@ describe("SshKeyTabs", () => {
     ).not.toBeInTheDocument();
   });
 
+  // Like every other failure retry in the app.
+  it("offers Try again after a failed generation", () => {
+    const sshKeys = controller({
+      pair: null,
+      status: "error",
+      error: "Could not generate a key.",
+    });
+    render(<SshKeyTabs sshKeys={sshKeys} gitRepository={{}} />);
+    const panel = within(
+      screen.getByRole("tabpanel", { name: "Generate in browser" }),
+    );
+    expect(panel.getByRole("alert")).toHaveTextContent(
+      "Could not generate a key.",
+    );
+    fireEvent.click(panel.getByRole("button", { name: "Try again" }));
+    expect(sshKeys.generate).toHaveBeenCalledTimes(1);
+  });
+
   it("keeps the pasted key as an editable private-key input with existing-key help", () => {
     const sshKeys = controller({ mode: "manual" });
     render(

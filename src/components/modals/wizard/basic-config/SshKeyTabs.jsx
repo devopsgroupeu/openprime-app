@@ -147,7 +147,7 @@ export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
             )}
             <Button variant="secondary" onClick={keyState.generate}>
               {keyState.status === "error"
-                ? "Retry generation"
+                ? "Try again"
                 : configured || hasKey
                   ? "Generate replacement key"
                   : "Generate key"}
