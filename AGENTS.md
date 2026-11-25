@@ -50,8 +50,9 @@ renders it.
   primitives from `components/ui`, building blocks from `components/shared`,
   lucide icons, brand logos only through `LogoTile`. Every signed-in screen
   uses the same shell; only the content area changes.
-- AWS is the only enabled provider. Azure, Google Cloud and On-premises show
-  only as disabled "Roadmap" options (DESIGN.md D-9); keep their configs.
+- AWS is the only enabled provider. In the wizard, Azure, Google Cloud and
+  On-premises are disabled "Roadmap" cards (DESIGN.md D-9); Settings >
+  Preferences keeps On-premises selectable (OP-271). Keep their configs.
 - No secrets in `.env` (it is committed) or in localStorage. The wizard draft
   drops secret fields (`src/utils/wizardDraft.js`).
 - Mock mode (`VITE_MOCK=true`) runs MSW and mock auth, with no backend or
