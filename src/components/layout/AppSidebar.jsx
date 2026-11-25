@@ -14,7 +14,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { version } from "../../../package.json";
 import logoInverse from "../../assets/openprime-logo-color-inverse.svg";
 import { SETTINGS_TABS } from "../SettingsPage";
 import { IconAction } from "./IconAction";
@@ -227,11 +226,6 @@ export default function AppSidebar({ onSearch, onShortcuts }) {
         </>
       )}
       <SidebarFooter className="gap-2 px-2 pt-1 pb-2">
-        {inSettings ? (
-          <span className="px-1.5 text-xs text-sidebar-foreground/70">
-            v{version}
-          </span>
-        ) : null}
         <UserMenu onShortcuts={onShortcuts} />
       </SidebarFooter>
     </Sidebar>
