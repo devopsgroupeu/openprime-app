@@ -11,12 +11,20 @@ const DOMAIN_PATTERN =
 // The wizard's "Needs VPC" badge reads the same map.
 export const SERVICE_PREREQUISITES = { eks: "vpc", rds: "vpc" };
 
+// Select values reach the environment as text ("3") while catalog options can
+// be numbers (3), so an option matches by its text.
+const isOption = (options, value) =>
+  options.some((opt) => String(opt.value) === String(value));
+
+// `service`: the service the error belongs to, null for the environment's own
+// fields.
 export class ConfigValidationError extends Error {
-  constructor(message, field = null, value = null) {
+  constructor(message, field = null, value = null, service = null) {
     super(message);
     this.name = "ConfigValidationError";
     this.field = field;
     this.value = value;
+    this.service = service;
   }
 }
 
@@ -118,7 +126,14 @@ export const validateField = (fieldConfig, value, fieldName) => {
       break;
 
     case FIELD_TYPES.TOGGLE:
-      if (typeof value !== "boolean") {
+      // A toggle whose template variable is a string holds "true" / "false".
+      if (
+        typeof value !== "boolean" &&
+        !(
+          fieldConfig.valueType === "string" &&
+          ["true", "false"].includes(value)
+        )
+      ) {
         errors.push(
           new ConfigValidationError(
             `${fieldConfig.displayName} must be true or false`,
@@ -132,7 +147,7 @@ export const validateField = (fieldConfig, value, fieldName) => {
     case FIELD_TYPES.DROPDOWN:
       if (fieldConfig.options) {
         const validValues = fieldConfig.options.map((opt) => opt.value);
-        if (!validValues.includes(value)) {
+        if (!isOption(fieldConfig.options, value)) {
           errors.push(
             new ConfigValidationError(
               `${fieldConfig.displayName} must be one of: ${validValues.join(", ")}`,
@@ -154,8 +169,9 @@ export const validateField = (fieldConfig, value, fieldName) => {
           ),
         );
       } else if (fieldConfig.options) {
-        const validValues = fieldConfig.options.map((opt) => opt.value);
-        const invalidValues = value.filter((v) => !validValues.includes(v));
+        const invalidValues = value.filter(
+          (v) => !isOption(fieldConfig.options, v),
+        );
         if (invalidValues.length > 0) {
           errors.push(
             new ConfigValidationError(
@@ -319,14 +335,26 @@ export const validateEnvironmentConfig = (environment) => {
     );
   }
 
-  // Validate services
+  // Only enabled services are generated, so only they are checked. Their
+  // errors name the service: "Virtual Private Cloud (VPC): CIDR Block ...".
   if (environment.services) {
-    Object.entries(environment.services).forEach(
-      ([serviceName, serviceConfig]) => {
-        const serviceErrors = validateServiceConfig(serviceName, serviceConfig);
-        errors.push(...serviceErrors);
-      },
-    );
+    for (const [serviceName, serviceConfig] of Object.entries(
+      environment.services,
+    )) {
+      if (!serviceConfig?.enabled) continue;
+      const label =
+        SERVICES_CONFIG[serviceName]?.displayName ?? serviceName.toUpperCase();
+      for (const error of validateServiceConfig(serviceName, serviceConfig)) {
+        errors.push(
+          new ConfigValidationError(
+            `${label}: ${error.message}`,
+            error.field,
+            error.value,
+            serviceName,
+          ),
+        );
+      }
+    }
 
     // Cross-service validation
     const enabledServices = Object.keys(environment.services).filter(
@@ -341,6 +369,8 @@ export const validateEnvironmentConfig = (environment) => {
         errors.push(
           new ConfigValidationError(
             `${service.toUpperCase()} requires ${required.toUpperCase()} to be enabled`,
+            service,
+            null,
             service,
           ),
         );

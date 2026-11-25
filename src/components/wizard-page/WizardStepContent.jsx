@@ -56,13 +56,9 @@ const WizardStepContent = ({
           newEnv={newEnv}
           onEditStep={onEditStep}
           problems={basicErrors}
-          // Only errors that name an enabled service (the cross-service
-          // rules). Field-level service checks carry no service name and
-          // flag every environment today: disabled services are validated
-          // too, and numeric dropdowns are stored as strings.
-          serviceProblems={validationErrors.filter(
-            (e) => newEnv.services?.[e.field]?.enabled,
-          )}
+          // Every error of an enabled service (the validator skips disabled
+          // ones and names the service in the message).
+          serviceProblems={validationErrors.filter((e) => e.service)}
         />
       );
     default:

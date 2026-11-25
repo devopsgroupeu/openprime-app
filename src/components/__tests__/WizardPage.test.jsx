@@ -406,6 +406,42 @@ describe("WizardPage", () => {
     expect(onCreateEnvironment).not.toHaveBeenCalled();
   });
 
+  it("lists every problem of an enabled service on Review, and only real ones", async () => {
+    localStorage.clear();
+    renderWizardCreate(vi.fn());
+    fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
+      target: { value: "prod" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+    await stepHeading("Services");
+    fireEvent.click(
+      screen.getByRole("switch", {
+        name: "Enable Virtual Private Cloud (VPC)",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Virtual Private Cloud (VPC)" }),
+    );
+    fireEvent.change(screen.getByLabelText("CIDR Block"), {
+      target: { value: "10.0.0" },
+    });
+    // A numeric option, handed over by the select as text.
+    fireEvent.change(screen.getByLabelText("Availability Zones"), {
+      target: { value: "3" },
+    });
+    while (screen.queryByRole("button", { name: /Continue/i })) {
+      fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+    }
+    await stepHeading("Review");
+
+    const callout = screen.getByText("Services need attention.").parentElement;
+    expect(callout).toHaveTextContent(
+      "Virtual Private Cloud (VPC): CIDR Block format is invalid",
+    );
+    expect(callout).not.toHaveTextContent(/Availability Zones/);
+    expect(within(callout).getAllByRole("listitem")).toHaveLength(1);
+  });
+
   it("lets Review's Edit open Basics in edit mode", async () => {
     renderWizardEdit(vi.fn());
     await stepHeading("Services");

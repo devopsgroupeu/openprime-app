@@ -107,13 +107,14 @@ const DynamicFieldRenderer = ({
       // once per list.
       //
       // Rendered `disabled` so it shows as the current selection but cannot be
-      // chosen again once the user moves off it.
+      // chosen again once the user moves off it. Compared as text: the select
+      // hands a numeric option (3 AZs) over as "3".
       const options = fieldConfig.options ?? [];
       const isOrphaned =
         value !== undefined &&
         value !== null &&
         value !== "" &&
-        !options.some((option) => option.value === value);
+        !options.some((option) => String(option.value) === String(value));
       const orphanId = isOrphaned ? `${id}-orphan` : undefined;
 
       return field(

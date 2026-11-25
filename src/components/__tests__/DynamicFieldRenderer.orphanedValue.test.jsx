@@ -74,6 +74,24 @@ describe("DynamicFieldRenderer — dropdown with an orphaned stored value", () =
     expect(screen.queryByText(/no longer supported/i)).toBeNull();
   });
 
+  // The select hands every value over as text, also for numeric options such
+  // as the VPC's availability zones: a picked "3" is the option 3.
+  it("does not call a picked numeric option unsupported", () => {
+    const { container } = render(
+      <DynamicFieldRenderer
+        fieldConfig={cfg({
+          options: [1, 2, 3].map((v) => ({ value: v, label: `${v} AZs` })),
+        })}
+        value="3"
+        onChange={() => {}}
+        fieldName="azCount"
+      />,
+    );
+    expect(container.querySelector("select").value).toBe("3");
+    expect(container.querySelectorAll("option")).toHaveLength(3);
+    expect(screen.queryByText(/no longer/i)).toBeNull();
+  });
+
   it("adds nothing for an empty or absent value", () => {
     // A brand-new field has no value yet; that is not an orphan and must not
     // render a bogus "" option.
