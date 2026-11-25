@@ -17,6 +17,7 @@ const WizardStepContent = ({
   basicErrors,
   onEditHelmValues,
   onEditStep,
+  focusHeading,
   isEditMode,
   sshKeys,
 }) => {
@@ -39,6 +40,7 @@ const WizardStepContent = ({
           expandedServices={expandedServices}
           setExpandedServices={setExpandedServices}
           onAskAI={onAskAI}
+          focusHeading={focusHeading}
         />
       );
     case "helm":
@@ -48,6 +50,7 @@ const WizardStepContent = ({
           setNewEnv={setNewEnv}
           onEditHelmValues={onEditHelmValues}
           onAskAI={onAskAI}
+          focusHeading={focusHeading}
         />
       );
     case "review":

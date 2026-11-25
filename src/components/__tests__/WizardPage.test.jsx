@@ -842,6 +842,120 @@ describe("WizardPage", () => {
     await waitFor(() => expect(onCreateEnvironment).toHaveBeenCalledTimes(1));
   });
 
+  // The control that had focus often goes away (stepper row, Back, Review's
+  // Edit, presets, Clear all): focus lands on the step's h1, never on <body>.
+  describe("focus", () => {
+    const toServices = async () => {
+      localStorage.clear();
+      renderWizardCreate(vi.fn());
+      fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
+        target: { value: "prod" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+      return stepHeading("Services");
+    };
+    // Focuses the control first, as a keyboard user would, then clicks it.
+    const press = (button) => {
+      button.focus();
+      fireEvent.click(button);
+    };
+
+    it("moves to the new step's heading on Continue and on Back", async () => {
+      const services = await toServices();
+      await waitFor(() => expect(services).toHaveFocus());
+
+      press(screen.getByRole("button", { name: "Back" }));
+      const basics = await stepHeading("Basics");
+      await waitFor(() => expect(basics).toHaveFocus());
+      // Back is gone on step 1, focus did not fall to the page.
+      expect(screen.queryByRole("button", { name: "Back" })).toBeNull();
+    });
+
+    it("moves to the heading of the step a stepper row or Review's Edit opens", async () => {
+      await toServices();
+      while (screen.queryByRole("button", { name: /Continue/i })) {
+        fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+      }
+      await stepHeading("Review");
+
+      press(screen.getByRole("button", { name: "Edit services" }));
+      const services = await stepHeading("Services");
+      await waitFor(() => expect(services).toHaveFocus());
+
+      const stepper = screen.getByRole("navigation", { name: "Steps" });
+      press(within(stepper).getByRole("button", { name: /Basics/ }));
+      const basics = await stepHeading("Basics");
+      await waitFor(() => expect(basics).toHaveFocus());
+    });
+
+    it("moves to the heading when a preset or Clear all removes itself", async () => {
+      const services = await toServices();
+      press(screen.getByRole("button", { name: "VPC and EKS" }));
+      expect(screen.queryByRole("button", { name: "VPC and EKS" })).toBeNull();
+      await waitFor(() => expect(services).toHaveFocus());
+
+      fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+      const helm = await stepHeading("Helm charts");
+      press(screen.getByRole("button", { name: "Monitoring stack" }));
+      await waitFor(() =>
+        expect(screen.getByText("3 selected")).toBeInTheDocument(),
+      );
+      await waitFor(() => expect(helm).toHaveFocus());
+
+      press(screen.getByRole("button", { name: "Clear all" }));
+      await waitFor(() =>
+        expect(screen.getByText("0 selected")).toBeInTheDocument(),
+      );
+      await waitFor(() => expect(helm).toHaveFocus());
+    });
+
+    it("moves to the outcome when Create backend replaces itself", async () => {
+      localStorage.clear();
+      renderWizardCreate(vi.fn());
+      fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
+        target: { value: "prod" },
+      });
+      fireEvent.change(await screen.findByLabelText("Credentials (optional)"), {
+        target: { value: "cred-001" },
+      });
+      fireEvent.click(screen.getByRole("switch", { name: /state backend/i }));
+
+      press(screen.getByRole("button", { name: "Create backend" }));
+
+      const outcome = await screen.findByText("Backend created.");
+      await waitFor(() =>
+        expect(outcome.closest('[tabindex="-1"]')).toHaveFocus(),
+      );
+      expect(document.activeElement).toHaveTextContent(
+        "Backend created. Bucket 123456789012-terraform-prod",
+      );
+    });
+
+    // Create with a Basics problem: the field wins over the heading.
+    it("still goes to the first invalid field when Create sends the user back", async () => {
+      await toServices();
+      fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+      await stepHeading("Review");
+      const stepper = screen.getByRole("navigation", { name: "Steps" });
+      fireEvent.click(within(stepper).getByRole("button", { name: /Basics/ }));
+      await stepHeading("Basics");
+      fireEvent.change(screen.getByLabelText("Name"), {
+        target: { value: "" },
+      });
+      fireEvent.click(
+        within(stepper).getByRole("button", { name: /Services/ }),
+      );
+      await stepHeading("Services");
+      while (screen.queryByRole("button", { name: /Continue/i })) {
+        fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+      }
+      press(await screen.findByRole("button", { name: /Create environment/i }));
+
+      await stepHeading("Basics");
+      await waitFor(() => expect(screen.getByLabelText("Name")).toHaveFocus());
+    });
+  });
+
   // The create payload is an explicit whitelist, so a new field renders,
   // validates and reviews correctly while being dropped on the way out.
   it("sends the domain in the create payload", async () => {

@@ -38,8 +38,10 @@ const TerraformBackendSection = ({
   error,
 }) => {
   const id = useId();
-  // Change replaces itself with the bucket name field: focus moves there.
+  // Change replaces itself with the bucket name field, Create backend with
+  // its outcome: focus moves there.
   const focusBucketField = useRef(false);
+  const focusOutcome = useRef(false);
   const switchError = !useExistingBucket && !backendCreated ? error : null;
   const backend = newEnv.terraformBackend;
   const credential = credentials.find((c) => c.id === newEnv.cloudCredentialId);
@@ -173,30 +175,41 @@ const TerraformBackendSection = ({
               />
             </SettingsRowGroup>
           ) : backendCreated ? (
-            <Callout
-              variant="neutral"
-              icon={CircleCheck}
-              title="Backend created."
-              action={
-                createdBucketName ? (
-                  <CopyButton
-                    text={createdBucketName}
-                    label="Copy bucket name"
-                  />
-                ) : null
-              }
+            <div
+              ref={(el) => {
+                if (el && focusOutcome.current) {
+                  focusOutcome.current = false;
+                  el.focus();
+                }
+              }}
+              tabIndex={-1}
+              className="outline-none"
             >
-              {createdBucketName ? (
-                <>
-                  Bucket{" "}
-                  <code className="font-mono text-xs break-all">
-                    {createdBucketName}
-                  </code>
-                </>
-              ) : (
-                "The state bucket is ready."
-              )}
-            </Callout>
+              <Callout
+                variant="neutral"
+                icon={CircleCheck}
+                title="Backend created."
+                action={
+                  createdBucketName ? (
+                    <CopyButton
+                      text={createdBucketName}
+                      label="Copy bucket name"
+                    />
+                  ) : null
+                }
+              >
+                {createdBucketName ? (
+                  <>
+                    Bucket{" "}
+                    <code className="font-mono text-xs break-all">
+                      {createdBucketName}
+                    </code>
+                  </>
+                ) : (
+                  "The state bucket is ready."
+                )}
+              </Callout>
+            </div>
           ) : (
             <>
               <SettingsRowGroup>
@@ -215,7 +228,10 @@ const TerraformBackendSection = ({
                   control={
                     <Button
                       variant="secondary"
-                      onClick={onCreateBackend}
+                      onClick={() => {
+                        focusOutcome.current = true;
+                        onCreateBackend();
+                      }}
                       disabled={!newEnv.cloudCredentialId || creatingBackend}
                     >
                       {creatingBackend ? <Spinner aria-hidden /> : null}

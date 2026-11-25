@@ -3,7 +3,8 @@ import { useDocumentTitle } from "@/hooks/use-document-title";
 
 /**
  * The one h1 of a page: title, description, status, actions and `menu`; optional tile. The tab
- * reads "`documentTitle` - OpenPrime" (default: the title).
+ * reads "`documentTitle` - OpenPrime" (default: the title). With `headingRef` the h1 takes focus
+ * from script (the wizard moves it there on a step change).
  */
 export function PageHeader({
   title,
@@ -14,6 +15,7 @@ export function PageHeader({
   status,
   actions,
   menu,
+  headingRef,
 }) {
   useDocumentTitle(documentTitle);
   const resourceTile =
@@ -30,7 +32,13 @@ export function PageHeader({
         {resourceTile}
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-semibold text-balance">{title}</h1>
+            <h1
+              ref={headingRef}
+              tabIndex={headingRef ? -1 : undefined}
+              className="text-xl font-semibold text-balance outline-none"
+            >
+              {title}
+            </h1>
             {status}
           </div>
           {description ? (

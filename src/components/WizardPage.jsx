@@ -135,9 +135,15 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const [auraOpen, setAuraOpen] = useState(readAuraOpen);
   // One Aura conversation for the column and the sheet.
   const [auraMessages, setAuraMessages] = useState([]);
-  // Bumped when Continue or Create finds errors: focus the first invalid field.
-  const [focusRequest, setFocusRequest] = useState(0);
+  // Where focus goes after the next render: the first match of `selector` in
+  // the step (the first invalid field when Continue or Create found errors,
+  // Name after Start over), else the step's h1. The control that had focus is
+  // often gone: a step change unmounts the stepper row, Back or Review's Edit,
+  // and the presets and Clear all remove themselves.
+  const [focusTarget, setFocusTarget] = useState(null);
+  const focusStep = (selector = null) => setFocusTarget({ selector });
   const scrollerRef = useRef(null);
+  const headingRef = useRef(null);
 
   // Always land at the top when opening the wizard or switching steps.
   useEffect(() => {
@@ -145,17 +151,17 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   }, [currentStep]);
 
   useEffect(() => {
-    if (!focusRequest) return;
-    const field = scrollerRef.current?.querySelector('[aria-invalid="true"]');
-    if (!field) return;
-    field.scrollIntoView({ block: "center" });
-    field.focus({ preventScroll: true });
-  }, [focusRequest]);
-
-  // Start over removes its own button: the cursor goes to the empty Name.
-  useEffect(() => {
-    if (resetCount) scrollerRef.current?.querySelector("input")?.focus();
-  }, [resetCount]);
+    if (!focusTarget) return;
+    const field =
+      focusTarget.selector &&
+      scrollerRef.current?.querySelector(focusTarget.selector);
+    if (field) {
+      field.scrollIntoView({ block: "center" });
+      field.focus({ preventScroll: true });
+    } else {
+      headingRef.current?.focus({ preventScroll: true });
+    }
+  }, [focusTarget]);
 
   // Load environment for edit mode. Editing opens on step 2 because that is
   // where most changes are, but step 1 stays reachable: it is no longer wholly
@@ -304,14 +310,18 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
 
   const showFieldErrors = () => {
     setShowErrors(true);
-    setFocusRequest((n) => n + 1);
+    focusStep('[aria-invalid="true"]');
+  };
+
+  const goToStep = (stepNumber) => {
+    setShowErrors(false);
+    setCurrentStep(stepNumber);
+    focusStep();
   };
 
   const handleStepChange = (stepNumber) => {
-    if (stepNumber <= currentStep || completedSteps.has(stepNumber)) {
-      setShowErrors(false);
-      setCurrentStep(stepNumber);
-    }
+    if (stepNumber <= currentStep || completedSteps.has(stepNumber))
+      goToStep(stepNumber);
   };
 
   const submit = async () => {
@@ -364,16 +374,12 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       showFieldErrors();
       return;
     }
-    setShowErrors(false);
     setCompletedSteps((prev) => new Set([...prev, currentStep]));
-    if (currentStep < totalSteps) setCurrentStep(currentStep + 1);
+    if (currentStep < totalSteps) goToStep(currentStep + 1);
   };
 
   const handlePrevious = () => {
-    if (currentStep > 1) {
-      setShowErrors(false);
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep > 1) goToStep(currentStep - 1);
   };
 
   const handleAskAI = (service, serviceTitle) =>
@@ -445,6 +451,8 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     setShowErrors(false);
     setExpandedServices({});
     setResetCount((n) => n + 1);
+    // Start over removes its own button: the cursor goes to the empty Name.
+    focusStep("input");
   };
   const enabledServices = Object.values(newEnv?.services || {}).filter(
     (service) => service?.enabled,
@@ -568,6 +576,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
               <div className="flex flex-col gap-3">
                 <WizardStepProgress steps={steps} currentStep={currentStep} />
                 <PageHeader
+                  headingRef={headingRef}
                   title={activeStep?.title}
                   description={activeStep?.summary}
                   documentTitle={
@@ -596,10 +605,11 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                   // Review's Edit and problem links. Basics is reachable in
                   // edit mode too (its domain is editable); with problems it
                   // opens on the first invalid field.
-                  setCurrentStep(activeIds.indexOf(stepId) + 1);
+                  goToStep(activeIds.indexOf(stepId) + 1);
                   if (stepId === "basic" && basicErrors.length > 0)
                     showFieldErrors();
                 }}
+                focusHeading={() => focusStep()}
                 sshKeys={sshKeys}
               />
             </PageShell>

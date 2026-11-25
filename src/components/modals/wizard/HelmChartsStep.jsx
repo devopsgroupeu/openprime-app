@@ -8,7 +8,12 @@ import { Callout } from "@/components/shared/callout";
 import { EmptyState } from "@/components/shared/states";
 import { Button } from "@/components/ui/button";
 
-const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
+const HelmChartsStep = ({
+  newEnv,
+  setNewEnv,
+  onEditHelmValues,
+  focusHeading,
+}) => {
   // Get the enabled Kubernetes service
   const getEnabledK8sService = () => {
     if (newEnv.services?.eks?.enabled)
@@ -125,6 +130,8 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
       };
     });
     handleHelmChartsChange(clearedCharts);
+    // Clear all goes away with the last chart.
+    focusHeading?.();
   };
 
   return (
@@ -168,7 +175,11 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
               key={preset.label}
               variant="secondary"
               size="sm"
-              onClick={preset.apply}
+              onClick={() => {
+                preset.apply();
+                // The presets go away once a chart is selected.
+                focusHeading?.();
+              }}
             >
               {preset.label}
             </Button>

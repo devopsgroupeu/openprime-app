@@ -38,6 +38,7 @@ const ServicesConfigStep = ({
   expandedServices,
   setExpandedServices,
   onAskAI,
+  focusHeading,
 }) => {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
@@ -73,11 +74,12 @@ const ServicesConfigStep = ({
       enabled ? serviceNames : Object.keys(newEnv.services || {}),
       enabled,
     );
-  const applyPreset = (services) =>
-    setEnabled(
-      services.filter((name) => serviceNames.includes(name)),
-      true,
-    );
+  const applyPreset = (services) => {
+    const names = services.filter((name) => serviceNames.includes(name));
+    setEnabled(names, true);
+    // The presets go away with the first enabled service.
+    if (names.length > 0) focusHeading?.();
+  };
 
   const clearFilters = () => {
     setQuery("");
