@@ -268,6 +268,36 @@ describe("EnvironmentDetailPage async jobs", () => {
     expect(within(header).getByText("now")).toBeInTheDocument();
   });
 
+  it("keeps the page as it is when reading the environment back fails", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    let failing = false;
+    server.use(
+      http.get("*/environments/env-001", () =>
+        failing
+          ? HttpResponse.json(
+              { error: "Database unavailable" },
+              { status: 503 },
+            )
+          : HttpResponse.json(environments[0]),
+      ),
+    );
+    renderDetailPage();
+    await screen.findByRole("heading", { level: 1, name: "demo-prod" });
+
+    failing = true;
+    await push();
+
+    await toasts().findByText("Pushed to openprime/demo-infra.");
+    expect(error).toHaveBeenCalledWith(
+      "Failed to refresh the environment:",
+      expect.anything(),
+    );
+    expect(
+      screen.getByRole("heading", { level: 1, name: "demo-prod" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("asks before pushing, then names the repository it pushed to", async () => {
     let pushed = 0;
     server.use(
@@ -494,6 +524,18 @@ describe("EnvironmentDetailPage async jobs", () => {
     fireEvent.click(generate);
     await waitFor(() => expect(polled).toEqual(["job-active-7"]));
     unmount();
+  });
+
+  it("keeps Push to git enabled on a processing environment with git", async () => {
+    server.use(
+      http.get("*/environments/env-001", () =>
+        HttpResponse.json({ ...environments[0], status: "deploying" }),
+      ),
+    );
+    renderDetailPage();
+
+    expect(await screen.findByText("Processing")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Push to git" })).toBeEnabled();
   });
 
   it("keeps the server message and the error ID when loading fails", async () => {

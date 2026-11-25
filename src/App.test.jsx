@@ -266,6 +266,32 @@ describe("palette on an environment page", () => {
     );
   });
 
+  test("disables Generate repository while a job runs", async () => {
+    server.use(
+      http.get("*/jobs/:jobId", ({ params }) =>
+        HttpResponse.json({ id: params.jobId, status: "running" }),
+      ),
+    );
+    window.history.pushState({}, "", "/environments/env-002");
+    render(<App />);
+    fireEvent.click(
+      await screen.findByRole(
+        "button",
+        { name: "Generate repository" },
+        { timeout: 3000 },
+      ),
+    );
+    await screen.findByRole("button", { name: /Generating/ });
+
+    const group = await openPalette();
+    expect(
+      within(group).getByRole("option", { name: "Generate repository" }),
+    ).toHaveAttribute("aria-disabled", "true");
+    expect(
+      within(group).getByRole("option", { name: "Copy environment ID" }),
+    ).not.toHaveAttribute("aria-disabled", "true");
+  });
+
   test("has no environment actions elsewhere", async () => {
     render(<App />);
     await screen.findByText(/demo-prod/i, {}, { timeout: 3000 });
