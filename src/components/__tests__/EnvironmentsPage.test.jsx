@@ -12,7 +12,7 @@ import { ThemeProvider } from "../../contexts/ThemeContext";
 import { ToastProvider } from "../../contexts/ToastContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import EnvironmentsPage from "../EnvironmentsPage";
-import { formatRelative } from "@/components/shared/format";
+import { formatDateTime, formatRelative } from "@/components/shared/format";
 
 const prod = {
   id: "env-1",
@@ -157,6 +157,22 @@ describe("EnvironmentsPage", () => {
     const icons = within(card).getByRole("list", { name: "Enabled services" });
     expect(within(icons).getAllByRole("listitem")).toHaveLength(7);
     expect(within(icons).getByText("+2")).toBeInTheDocument();
+  });
+
+  // The stretched card link covers the card: the time sits above it, so its
+  // tooltip can open, and names the exact time to screen readers.
+  it("shows when a card was modified, exactly on hover", async () => {
+    renderPage();
+    const card = screen
+      .getByRole("link", { name: "demo-prod" })
+      .closest("article");
+    const exact = formatDateTime(prod.updated_at);
+    expect(within(card).getByText(`, ${exact}`)).toHaveClass("sr-only");
+
+    fireEvent.pointerMove(
+      within(card).getByText(formatRelative(prod.updated_at)),
+    );
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(exact);
   });
 
   const filterTabs = () =>

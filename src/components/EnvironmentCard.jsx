@@ -129,13 +129,18 @@ const EnvironmentCard = ({ environment, onCopyId, onDelete }) => {
       }
       meta={
         modified ? (
-          <time
-            dateTime={modified}
-            title={formatDateTime(modified)}
-            className="whitespace-nowrap"
-          >
-            Modified {formatRelative(modified)}
-          </time>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              {/* Above the stretched link, like the service icons, so the
+                  exact time can show on hover. */}
+              <span className="relative z-10 whitespace-nowrap">
+                Modified{" "}
+                <time dateTime={modified}>{formatRelative(modified)}</time>
+                <span className="sr-only">{`, ${formatDateTime(modified)}`}</span>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{formatDateTime(modified)}</TooltipContent>
+          </Tooltip>
         ) : null
       }
       actions={
