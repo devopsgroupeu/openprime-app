@@ -1,4 +1,5 @@
 import {
+  act,
   render,
   screen,
   fireEvent,
@@ -7,6 +8,7 @@ import {
 } from "@testing-library/react";
 import { useState } from "react";
 import {
+  Link,
   MemoryRouter,
   Routes,
   Route,
@@ -85,6 +87,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -276,6 +279,36 @@ describe("EnvironmentDetailPage async jobs", () => {
       "https://github.com/openprime/demo-infra",
       "_blank",
       "noopener,noreferrer",
+    );
+  });
+
+  it("runs a failed generate again from Try again", async () => {
+    let generated = 0;
+    server.use(
+      http.post("*/environments/env-003/generate", () => {
+        generated += 1;
+        return HttpResponse.json(
+          { jobId: "job-generate-env-003", status: "queued" },
+          { status: 202 },
+        );
+      }),
+    );
+    renderDetailPage({ path: "/environments/env-003" });
+    const callout = (
+      await screen.findByText("Couldn't generate the repository.")
+    ).closest('[data-slot="callout"]');
+
+    fireEvent.click(within(callout).getByRole("button", { name: "Try again" }));
+
+    expect(
+      await toasts().findByText("Repository generated and downloaded."),
+    ).toBeInTheDocument();
+    expect(generated).toBe(1);
+    // The stored outcome is now a success: the failure is gone.
+    await waitFor(() =>
+      expect(
+        screen.queryByText("Couldn't generate the repository."),
+      ).not.toBeInTheDocument(),
     );
   });
 
@@ -477,6 +510,7 @@ function Shell({ palette = false }) {
       <button type="button" onClick={() => navigate("/environments/env-002")}>
         Open demo-staging
       </button>
+      <Link to="/environments">All environments</Link>
       {palette ? (
         <>
           <button type="button" onClick={() => setOpen(true)}>
@@ -527,6 +561,7 @@ describe("EnvironmentDetailPage leaving during a job", () => {
   });
 
   it("closes the leave prompt when the job ends while it is open", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     let finished = false;
     server.use(
       http.get("*/jobs/:jobId", ({ params }) =>
@@ -553,20 +588,20 @@ describe("EnvironmentDetailPage leaving during a job", () => {
     expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
 
     finished = true;
-    await toasts().findByText(
-      "Repository generated and downloaded.",
-      {},
-      { timeout: 4000 },
-    );
+    // Past the first poll interval (2 s).
+    await act(() => vi.advanceTimersByTimeAsync(2100));
+    await toasts().findByText("Repository generated and downloaded.");
     await waitFor(() =>
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
     );
     expect(screen.getByLabelText("Path")).toHaveTextContent(
       "/environments/env-001",
     );
-  }, 10000);
+  });
 
   it("keeps a job and its outcome on the environment it ran on", async () => {
+    // Fake clock (still ticking): the poll interval passes in no time.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     let finished = false;
     server.use(
       http.get("*/jobs/:jobId", ({ params }) =>
@@ -592,7 +627,7 @@ describe("EnvironmentDetailPage leaving during a job", () => {
     ).toBeInTheDocument();
     finished = true;
     // Longer than the first poll interval (2 s): demo-prod's job would answer.
-    await new Promise((resolve) => setTimeout(resolve, 2600));
+    await act(() => vi.advanceTimersByTimeAsync(2600));
 
     expect(screen.getByText("Not generated")).toBeInTheDocument();
     expect(screen.queryByText("Processing")).not.toBeInTheDocument();
@@ -604,7 +639,62 @@ describe("EnvironmentDetailPage leaving during a job", () => {
     expect(
       screen.getByRole("button", { name: "Generate repository" }),
     ).toBeEnabled();
-  }, 10000);
+  });
+
+  it("asks before a link leaves a generating page, and Stay stays", async () => {
+    server.use(
+      http.get("*/jobs/:jobId", ({ params }) =>
+        HttpResponse.json({ id: params.jobId, status: "running" }),
+      ),
+    );
+    const { unmount } = renderDetailPage({ shell: <Shell /> });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Generate repository" }),
+    );
+    await screen.findByRole("button", { name: /Generating/ });
+
+    fireEvent.click(screen.getByRole("link", { name: "All environments" }));
+    const prompt = await screen.findByRole("alertdialog");
+    fireEvent.click(
+      within(prompt).getByRole("button", { name: "Stay on page" }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+    );
+    expect(screen.getByLabelText("Path")).toHaveTextContent(
+      "/environments/env-001",
+    );
+    expect(screen.getByRole("button", { name: /Generating/ })).toBeDisabled();
+    unmount();
+  });
+
+  // The page stays mounted across ?tab= links, so the job is not at risk.
+  it("switches tabs during a generate without asking", async () => {
+    server.use(
+      http.get("*/jobs/:jobId", ({ params }) =>
+        HttpResponse.json({ id: params.jobId, status: "running" }),
+      ),
+    );
+    const { unmount } = renderDetailPage();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Generate repository" }),
+    );
+    await screen.findByRole("button", { name: /Generating/ });
+
+    const nav = screen.getByRole("navigation", {
+      name: "Environment sections",
+    });
+    fireEvent.click(within(nav).getByRole("link", { name: /^Services/ }));
+
+    await waitFor(() =>
+      expect(
+        within(nav).getByRole("link", { name: /^Services/ }),
+      ).toHaveAttribute("aria-current", "page"),
+    );
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Generating/ })).toBeDisabled();
+    unmount();
+  });
 });
 
 describe("EnvironmentDetailPage overview", () => {

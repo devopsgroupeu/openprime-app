@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 import {
   AlertDialog,
@@ -26,6 +26,7 @@ export function guardedNavigate(go) {
 /** Dirty-form guard: `beforeunload`, in-app link clicks and every `guardedNavigate` call. */
 export function useUnsavedGuard(dirty) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [pending, setPending] = useState(null);
 
   useEffect(() => {
@@ -51,8 +52,9 @@ export function useUnsavedGuard(dirty) {
         return;
       const url = new URL(anchor.href, window.location.href);
       if (url.origin !== window.location.origin) return;
-      // Same page, other ?tab= or filter: the page stays mounted.
-      if (url.pathname === window.location.pathname) return;
+      // Same page, other ?tab= or filter: the page stays mounted (the
+      // router's path, so it holds under any router).
+      if (url.pathname === pathname) return;
       e.preventDefault();
       e.stopPropagation();
       const href = `${url.pathname}${url.search}${url.hash}`;
@@ -65,7 +67,7 @@ export function useUnsavedGuard(dirty) {
       window.removeEventListener("beforeunload", onBeforeUnload);
       document.removeEventListener("click", onClick, true);
     };
-  }, [dirty, navigate]);
+  }, [dirty, navigate, pathname]);
 
   return {
     pending: pending !== null,
