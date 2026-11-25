@@ -18,6 +18,17 @@ describe("FE mock harness", () => {
     expect(envs.map((e) => e.name)).toContain("demo-prod");
   });
 
+  it("reports credential usage from the mocked environments", async () => {
+    expect(await authService.get("/cloud-credentials/cred-002/usage")).toEqual({
+      count: 1,
+      environments: [{ id: "env-003", name: "analytics-dev" }],
+    });
+    expect(await authService.get("/cloud-credentials/cred-new/usage")).toEqual({
+      count: 0,
+      environments: [],
+    });
+  });
+
   it("serves the mocked current user", async () => {
     const user = await authService.get("/users/me");
     expect(user.username).toBe("mockuser");

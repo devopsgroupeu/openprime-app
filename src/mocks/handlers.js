@@ -116,12 +116,13 @@ export const handlers = [
       credential: credentials.find((c) => c.id === params.id) || credentials[0],
     }),
   ),
-  http.get("*/cloud-credentials/:id/usage", () =>
-    HttpResponse.json({
-      count: 1,
-      environments: [{ id: "env-001", name: "demo-prod" }],
-    }),
-  ),
+  // Same shape as the backend: the environments that use this credential.
+  http.get("*/cloud-credentials/:id/usage", ({ params }) => {
+    const users = environments
+      .filter((env) => env.cloud_credential_id === params.id)
+      .map(({ id, name }) => ({ id, name }));
+    return HttpResponse.json({ count: users.length, environments: users });
+  }),
   http.post("*/cloud-credentials", async ({ request }) =>
     HttpResponse.json(
       { id: "cred-new", ...(await request.json()) },
