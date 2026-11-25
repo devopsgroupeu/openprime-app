@@ -20,3 +20,30 @@ export const withValues = (entry, values) => {
  */
 export const rebuiltChart = (entry, enabled) =>
   withValues({ enabled }, chartValues(entry));
+
+// Every chart entry without its values text.
+const withoutValues = (helmCharts) =>
+  Object.fromEntries(
+    Object.entries(helmCharts).map(([key, entry]) => {
+      if (!entry || typeof entry !== "object") return [key, entry];
+      const { values: _values, ...rest } = entry;
+      return [key, rest];
+    }),
+  );
+
+/**
+ * `services` for Aura: the same, except that chart entries lose their custom
+ * values text (it only needs which charts are on). Entries without values
+ * serialize exactly as before.
+ */
+export const withoutChartValues = (services) => {
+  if (!services || typeof services !== "object") return services;
+  return Object.fromEntries(
+    Object.entries(services).map(([name, config]) => [
+      name,
+      config?.helmCharts && typeof config.helmCharts === "object"
+        ? { ...config, helmCharts: withoutValues(config.helmCharts) }
+        : config,
+    ]),
+  );
+};

@@ -1576,6 +1576,59 @@ describe("WizardPage", () => {
       expect(charts.ingressNginx).toEqual(stored.ingressNginx);
     });
 
+    // Aura needs which charts are on, not the saved YAML: neither the
+    // service dialog nor the sheet sends it.
+    it("never sends saved values to Aura", async () => {
+      const bodies = [];
+      server.use(
+        http.post("*/ai/chat", async ({ request }) => {
+          bodies.push(await request.text());
+          return new HttpResponse(
+            'data: {"chunk":"ok"}\n\ndata: {"done":true}\n\n',
+            { headers: { "Content-Type": "text/event-stream" } },
+          );
+        }),
+      );
+      localStorage.setItem("op-wizard-aura-open", "false");
+      renderWizardEdit(vi.fn());
+      await stepHeading("Services");
+      const ask = (input) => {
+        fireEvent.change(input, { target: { value: "Is this right?" } });
+        fireEvent.keyDown(input, { key: "Enter" });
+      };
+
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Ask Aura about Elastic Kubernetes Service (EKS)",
+        }),
+      );
+      const dialog = await screen.findByRole("dialog", {
+        name: /Ask Aura about/,
+      });
+      ask(within(dialog).getByRole("textbox", { name: "Message Aura" }));
+      await waitFor(() => expect(bodies).toHaveLength(1));
+      fireEvent.keyDown(
+        within(dialog).getByRole("textbox", { name: "Message Aura" }),
+        { key: "Escape" },
+      );
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+      fireEvent.click(
+        screen
+          .getAllByRole("button", { name: "Aura" })
+          .find((b) => b.getAttribute("aria-haspopup") === "dialog"),
+      );
+      const sheet = await screen.findByRole("dialog", { name: "Aura" });
+      ask(within(sheet).getByRole("textbox", { name: "Message Aura" }));
+      await waitFor(() => expect(bodies).toHaveLength(2));
+
+      expect(bodies[0]).toContain("ingressNginx");
+      for (const body of bodies) {
+        expect(body).not.toContain("aws-load-balancer-type");
+        expect(body).not.toMatch(/\\?"values\\?"/);
+      }
+    });
+
     it("sends the stored charts unchanged when nothing changed", async () => {
       const onUpdateEnvironment = vi.fn().mockResolvedValue({ id: "env-001" });
       renderWizardEdit(onUpdateEnvironment);

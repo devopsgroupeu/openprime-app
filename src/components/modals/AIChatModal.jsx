@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { SERVICES_CONFIG, FIELD_TYPES } from "../../config/servicesConfig";
+import { withoutChartValues } from "../../utils/helmValues";
 import { AURA_ERROR } from "./ai-chat/AuraConversation";
 import ChatThread from "./ai-chat/ChatThread";
 import Composer from "./ai-chat/Composer";
@@ -25,11 +26,18 @@ import {
 // and the model. Add a field only if it is safe to hand to the model.
 const AI_CONTEXT_FIELDS = ["name", "provider", "region", "services"];
 
+// Services go without the Helm charts' custom values text: customer config the
+// backend never reads (it only needs which charts are on).
 const toAiContext = (wizardValues) =>
   Object.fromEntries(
     AI_CONTEXT_FIELDS.filter(
       (field) => wizardValues?.[field] !== undefined,
-    ).map((field) => [field, wizardValues[field]]),
+    ).map((field) => [
+      field,
+      field === "services"
+        ? withoutChartValues(wizardValues.services)
+        : wizardValues[field],
+    ]),
   );
 
 /**
@@ -221,7 +229,7 @@ const AIChatModal = ({
       },
       {
         type: "system",
-        message: `Current ${currentServiceName} configuration: ${JSON.stringify(wizardValues?.services?.[currentServiceName] || {})}`,
+        message: `Current ${currentServiceName} configuration: ${JSON.stringify(aiContext.services?.[currentServiceName] || {})}`,
       },
       {
         type: "system",
