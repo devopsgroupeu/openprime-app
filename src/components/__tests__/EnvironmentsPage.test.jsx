@@ -338,6 +338,17 @@ describe("EnvironmentsPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("keeps the status filter in the URL when the list fails to load", () => {
+    renderPage(
+      { environments: [], loadError: "boom", onRetry: () => {} },
+      "/environments?status=ready",
+    );
+
+    expect(screen.getByRole("status", { name: "Query" })).toHaveTextContent(
+      "?status=ready",
+    );
+  });
+
   it("shows the error state with Try again", () => {
     const onRetry = vi.fn();
     renderPage({ environments: [], loadError: "boom", onRetry });

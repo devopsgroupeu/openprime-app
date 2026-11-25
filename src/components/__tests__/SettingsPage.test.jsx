@@ -181,6 +181,33 @@ describe("SettingsPage", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("keeps what is typed while the save is in flight", async () => {
+    let release;
+    server.use(
+      http.put("*/users/me/profile", async ({ request }) => {
+        const body = await request.json();
+        await new Promise((resolve) => {
+          release = resolve;
+        });
+        return HttpResponse.json(body);
+      }),
+    );
+    renderSettingsPage("/settings/account");
+
+    const firstName = await screen.findByLabelText(/First Name/i);
+    fireEvent.change(firstName, { target: { value: "Mocka" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(release).toBeDefined());
+    fireEvent.change(firstName, { target: { value: "Mockab" } });
+    release();
+
+    expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+    expect(firstName).toHaveValue("Mockab");
+    expect(
+      screen.getByRole("region", { name: "Unsaved changes" }),
+    ).toBeInTheDocument();
+  });
+
   it("shows a retry when the settings fail to load", async () => {
     server.use(
       http.get("*/users/me", () => new HttpResponse(null, { status: 500 })),

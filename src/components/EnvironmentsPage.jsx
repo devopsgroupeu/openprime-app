@@ -89,6 +89,7 @@ const EnvironmentsPage = ({
   // in the URL too.
   const staleStatus =
     !loading &&
+    !loadError &&
     status !== "all" &&
     !statusFilters(environments).some((o) => o.value === status);
   useEffect(() => {
