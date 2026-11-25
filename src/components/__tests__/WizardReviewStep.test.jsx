@@ -62,6 +62,23 @@ describe("WizardReviewStep readiness gates", () => {
     expect(screen.getByText(CONSEQUENCE_NO_KEY)).toBeInTheDocument();
   });
 
+  // Switching git off keeps its fields; the repository is what is missing.
+  it("asks for no deploy key while git is switched off", () => {
+    renderStep({
+      ...baseEnv,
+      services: { eks: { enabled: true } },
+      gitRepository: {
+        enabled: false,
+        url: "git@github.com:openprime/demo-infra.git",
+        branch: "main",
+        sshKey: "",
+      },
+    });
+
+    expect(screen.queryByText(CONSEQUENCE_NO_KEY)).not.toBeInTheDocument();
+    expect(screen.getByText(CONSEQUENCE_NO_REPO)).toBeInTheDocument();
+  });
+
   // A switched-on section states intent: its empty required field is a
   // Basics problem, listed once, not a delivery warning.
   it("lists a switched-on Terraform backend without a bucket under Basics", () => {

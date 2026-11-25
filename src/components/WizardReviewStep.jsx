@@ -84,6 +84,7 @@ const WizardReviewStep = ({
     newEnv.services?.kubernetes?.enabled;
   const hasHelmCharts = charts.length > 0;
   const needsGitRepo = hasKubernetesService || hasHelmCharts;
+  const gitOn = Boolean(newEnv.gitRepository?.enabled);
   const gitUrlSet = Boolean(newEnv.gitRepository?.url?.trim());
   const sshKeySet = Boolean(
     newEnv.gitRepository?.sshKey?.trim() ||
@@ -92,12 +93,13 @@ const WizardReviewStep = ({
   const terraformBackendEnabled = Boolean(newEnv.terraformBackend?.enabled);
 
   // A switched-on section with an empty required field is a Basics problem.
+  // Switched off, git keeps its fields but is not used.
   const warnings = [
     needsGitRepo &&
-      !gitUrlSet &&
-      !newEnv.gitRepository?.enabled &&
+      !gitOn &&
       "Push to git and Helm charts stay unavailable until you add a repository.",
-    gitUrlSet &&
+    gitOn &&
+      gitUrlSet &&
       !sshKeySet &&
       "Push to git stays unavailable until you add a deploy key.",
   ].filter(Boolean);
