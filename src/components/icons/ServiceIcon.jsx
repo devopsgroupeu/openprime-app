@@ -1,5 +1,7 @@
 // src/components/icons/ServiceIcon.jsx
-// Official AWS Architecture service icons (aws-icons, MIT). Services without
+// AWS service icons from the aws-icons npm package: the package is MIT
+// licensed by its maintainer, the artwork comes from the AWS Architecture
+// Icons set and is covered by AWS's terms for those assets. Services without
 // an AWS icon fall back to the lucide icon from getServiceIcon.
 import vpc from "aws-icons/icons/architecture-service/AmazonVirtualPrivateCloud.svg";
 import eks from "aws-icons/icons/architecture-service/AmazonElasticKubernetesService.svg";
