@@ -218,15 +218,11 @@ describe("HelmChartsStep custom values", () => {
     type("grafana:\n  replicas: 2\n bad: x");
     save();
 
-    expect(
-      await within(dialog()).findByText(
-        "Line 3: All mapping items must start at the same column.",
-      ),
-    ).toBeInTheDocument();
+    // The line is ours; the message is the parser's and may change.
+    const error = await within(dialog()).findByRole("alert");
+    expect(error).toHaveTextContent(/^Line 3: \S/);
     expect(editor()).toHaveAttribute("aria-invalid", "true");
-    expect(editor()).toHaveAccessibleDescription(
-      "Line 3: All mapping items must start at the same column.",
-    );
+    expect(editor()).toHaveAccessibleDescription(error.textContent);
     expect(charts()).toBeUndefined();
   });
 
@@ -308,6 +304,24 @@ describe("HelmChartsStep custom values", () => {
     });
     fireEvent.click(
       screen.getByRole("button", { name: "Add custom values for Loki" }),
+    );
+    save();
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(charts()).toBeUndefined();
+  });
+
+  // Stored by another client with a trailing newline: still untouched.
+  it("leaves stored values as they are when Save is pressed without a change", async () => {
+    const charts = renderCharts({
+      prometheusStack: {
+        enabled: true,
+        customValues: true,
+        values: "grafana:\n  replicas: 2\n",
+      },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Edit values for Prometheus Stack" }),
     );
     save();
 

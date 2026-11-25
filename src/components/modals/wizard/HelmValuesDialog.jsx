@@ -1,6 +1,6 @@
 // The custom values of one Helm chart: a YAML editor that checks the text
 // before it saves.
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { getHelmChartConfig } from "../../../config/helmChartsConfig";
 import { chartLogo } from "../../../config/logos";
 import { LogoTile } from "@/components/shared/logo-tile";
@@ -63,27 +63,48 @@ const problemOf = async (text) => {
   return null;
 };
 
-function ValuesEditor({ chartKey, chart, values, onSave, onClose }) {
+function ValuesEditor({ chartKey, chart, open, values, onSave, onClose }) {
   const id = useId();
   const editor = useRef(null);
   const [text, setText] = useState(values);
+  // `invalid`: the text is wrong (not set when the check could not run).
   const [problem, setProblem] = useState(null);
   const [checking, setChecking] = useState(false);
+  // False once the dialog closes: a check that ends later is dropped.
+  const live = useRef(true);
+  useEffect(() => {
+    live.current = open;
+    return () => {
+      live.current = false;
+    };
+  }, [open]);
 
-  const showProblem = ({ message, at }) => {
-    setProblem(message);
+  const showProblem = ({ message, at, invalid = true }) => {
+    setProblem({ message, invalid });
     editor.current.focus();
     if (at !== undefined) editor.current.setSelectionRange(at, at);
   };
 
   const save = async (event) => {
     event.preventDefault();
-    // Unchanged: no edit to record (Loki's default flag stays as it is).
-    if (tidy(text) === values) return onClose();
+    // Untouched: no edit to record (Loki's default flag, values another
+    // client stored with a trailing newline, stay as they are).
+    if (tidy(text) === tidy(values)) return onClose();
     if (tidy(text)) {
       setChecking(true);
-      const found = await problemOf(text);
-      setChecking(false);
+      let found;
+      try {
+        found = await problemOf(text);
+      } catch {
+        // The parser's chunk did not load (replaced by a deploy, offline).
+        found = {
+          message: "Could not check the values. Reload the page and try again.",
+          invalid: false,
+        };
+      } finally {
+        setChecking(false);
+      }
+      if (!live.current) return;
       if (found) return showProblem(found);
     }
     onSave(tidy(text));
@@ -133,12 +154,12 @@ function ValuesEditor({ chartKey, chart, values, onSave, onClose }) {
             autoCapitalize="off"
             autoComplete="off"
             autoCorrect="off"
-            aria-invalid={problem ? true : undefined}
+            aria-invalid={problem?.invalid ? true : undefined}
             aria-describedby={problem ? `${id}-error` : `${id}-help`}
             className="h-72 resize-y overflow-auto font-mono leading-5 whitespace-pre field-sizing-fixed md:text-xs"
           />
           {problem ? (
-            <FieldError id={`${id}-error`}>{problem}</FieldError>
+            <FieldError id={`${id}-error`}>{problem.message}</FieldError>
           ) : (
             <FieldDescription id={`${id}-help`}>
               YAML, as in the chart&apos;s values.yaml. Up to 64 KB.
@@ -185,6 +206,7 @@ const HelmValuesDialog = ({ chartKey, open, onOpenChange, values, onSave }) => {
           <ValuesEditor
             chartKey={chartKey}
             chart={chart}
+            open={open}
             values={values}
             onSave={onSave}
             onClose={() => onOpenChange(false)}
