@@ -18,17 +18,18 @@ import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 function AppContent() {
-  const { isAuthenticated, isLoading, authError, retryAuth } = useAuth();
+  // AuthProvider renders its own loading screen, so auth has settled here.
+  const { isAuthenticated, authError, retryAuth } = useAuth();
   const [environments, setEnvironments] = useState([]);
   // True until the first load ends, so the list never flashes its empty state.
   const [environmentsLoading, setEnvironmentsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
+    if (isAuthenticated) {
       loadEnvironments();
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated]);
 
   const loadEnvironments = async () => {
     try {
@@ -84,10 +85,6 @@ function AppContent() {
       throw error;
     }
   };
-
-  if (isLoading) {
-    return <FullScreenState logo loading title="Signing you in..." />;
-  }
 
   // An unreachable Keycloak is not an expired session. Saying so, with a way
   // out, beats a spinner that will never resolve.
