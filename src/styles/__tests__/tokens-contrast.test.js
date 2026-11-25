@@ -145,12 +145,14 @@ describe.each(Object.entries(themes))("%s theme tokens", (theme, t) => {
 
   // Red text on a red tint is below AA in light (4.1:1), so the error pill
   // (10 %), the focused destructive menu item (10 %, dark 20 %), the danger
-  // zone button (10 %, dark 15 %) and the Aura error marker (5 %) keep their
-  // label text-foreground; only the icon is red.
+  // zone button (10 %, hover 15 %; dark 15 %, hover 25 %) and the Aura error
+  // marker (5 %) keep their label text-foreground; only the icon is red.
+  // destructive-tint-labels.test.jsx pins those component classes.
   it.each([
     ["background", 0.1],
     ["card", 0.1],
     ["card", 0.15],
+    ["card", 0.25],
     ["popover", 0.1],
     ["popover", 0.2],
     ["background", 0.05],
