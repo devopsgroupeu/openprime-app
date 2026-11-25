@@ -29,6 +29,49 @@ describe("FE mock harness", () => {
     });
   });
 
+  // Mock mode is clicked through like the real app: the list reloads when it
+  // opens, so what the session wrote has to be there.
+  it("keeps the environments the session creates, edits and deletes", async () => {
+    const created = await authService.post("/environments", {
+      name: "sandbox",
+      globalPrefix: "sb-",
+      provider: "aws",
+      region: "eu-central-1",
+      gitRepository: { enabled: true, url: "git@x:y.git", sshKey: "secret" },
+      cloudCredentialId: "cred-001",
+    });
+    // The backend's shape: snake_case, the deploy key never sent back.
+    expect(created).toMatchObject({
+      global_prefix: "sb-",
+      cloud_credential_id: "cred-001",
+      git_repository: { url: "git@x:y.git", sshKeyConfigured: true },
+    });
+    expect(JSON.stringify(created)).not.toContain("secret");
+    const names = async () =>
+      (await authService.get("/environments")).map((e) => e.name);
+    expect(await names()).toContain("sandbox");
+
+    await authService.put(`/environments/${created.id}`, {
+      ...created,
+      region: "eu-west-1",
+    });
+    expect(await authService.get(`/environments/${created.id}`)).toMatchObject({
+      name: "sandbox",
+      region: "eu-west-1",
+    });
+
+    await authService.delete("/environments/env-002");
+    await authService.delete(`/environments/${created.id}`);
+    expect(await names()).toEqual(["demo-prod", "analytics-dev"]);
+    await expect(
+      authService.get(`/environments/${created.id}`),
+    ).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("starts every test from the fixtures", async () => {
+    expect(await authService.get("/environments")).toHaveLength(3);
+  });
+
   it("serves the mocked current user", async () => {
     const user = await authService.get("/users/me");
     expect(user.username).toBe("mockuser");

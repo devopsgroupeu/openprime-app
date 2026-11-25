@@ -7,12 +7,41 @@ import catalog from "./catalog.json";
 const MOCK_ANSWER =
   '(mock answer) One NAT gateway per availability zone keeps private subnets online when a zone fails. A single shared gateway costs less, which is fine for development.\n\n```json\n{"natGateway": "ONE_PER_AZ"}\n```';
 
-// What finished jobs stored on their environment (jobService.persistOutcome
-// and the lifecycle status), by environment id, so reading an environment
-// after a job shows its outcome. Kept until a reload; tests reset it.
-const outcomes = new Map();
-export const resetOutcomes = () => outcomes.clear();
-const withOutcome = (env) => ({ ...env, ...outcomes.get(env.id) });
+// The environments as the backend's database would have them: the fixtures,
+// then what the session created, edited and deleted and what finished jobs
+// stored on them (jobService.persistOutcome and the lifecycle status). The
+// list reloads whenever it opens, so it must read them back. Kept until a
+// reload; tests reset it.
+let stored = environments;
+let created = 0;
+export const resetMockState = () => {
+  stored = environments;
+  created = 0;
+};
+const findStored = (id) => stored.find((env) => env.id === id);
+const store = (env) => {
+  stored = stored.map((e) => (e.id === env.id ? env : e));
+  return env;
+};
+
+// The wizard writes camelCase; the API answers snake_case and never sends the
+// deploy key back, only whether one is set (Environment.toJSON).
+const SNAKE = {
+  globalPrefix: "global_prefix",
+  terraformBackend: "terraform_backend",
+  gitRepository: "git_repository",
+  cloudCredentialId: "cloud_credential_id",
+  stateKey: "state_key",
+};
+const asStored = (body) =>
+  Object.fromEntries(
+    Object.entries(body).map(([key, value]) => {
+      if (key !== "gitRepository" || !value) return [SNAKE[key] ?? key, value];
+      const { sshKey, ...git } = value;
+      const keySet = Boolean(sshKey?.trim() || git.sshKeyConfigured);
+      return ["git_repository", { ...git, sshKeyConfigured: keySet }];
+    }),
+  );
 
 // Job ids carry their kind and environment: job-<kind>-<environment id>.
 const jobOf = (jobId) => {
@@ -58,25 +87,42 @@ export const handlers = [
   ),
 
   // --- Environments ---
-  http.get("*/environments", () =>
-    HttpResponse.json(environments.map(withOutcome)),
-  ),
+  http.get("*/environments", () => HttpResponse.json(stored)),
   http.get("*/environments/:id", ({ params }) => {
-    const env = environments.find((e) => e.id === params.id);
+    const env = findStored(params.id);
     return env
-      ? HttpResponse.json(withOutcome(env))
+      ? HttpResponse.json(env)
       : new HttpResponse(null, { status: 404 });
   }),
-  http.post("*/environments", async ({ request }) =>
-    HttpResponse.json(
-      { id: "env-new", status: "pending", ...(await request.json()) },
-      { status: 201 },
-    ),
-  ),
-  http.put("*/environments/:id", async ({ request, params }) =>
-    HttpResponse.json({ id: params.id, ...(await request.json()) }),
-  ),
-  http.delete("*/environments/:id", () => HttpResponse.json({ success: true })),
+  http.post("*/environments", async ({ request }) => {
+    created += 1;
+    const now = new Date().toISOString();
+    const env = {
+      ...asStored(await request.json()),
+      id: `env-new-${created}`,
+      status: "pending",
+      created_at: now,
+      updated_at: now,
+    };
+    stored = [env, ...stored];
+    return HttpResponse.json(env, { status: 201 });
+  }),
+  http.put("*/environments/:id", async ({ request, params }) => {
+    const env = findStored(params.id);
+    if (!env) return new HttpResponse(null, { status: 404 });
+    return HttpResponse.json(
+      store({
+        ...env,
+        ...asStored(await request.json()),
+        id: env.id,
+        updated_at: new Date().toISOString(),
+      }),
+    );
+  }),
+  http.delete("*/environments/:id", ({ params }) => {
+    stored = stored.filter((env) => env.id !== params.id);
+    return HttpResponse.json({ success: true });
+  }),
   // Shaped like the backend's 201: the bucket name under `data`.
   http.post("*/environments/terraform-backend/create", async ({ request }) => {
     const { environmentName, region, cloudCredentialId } = await request.json();
@@ -112,10 +158,11 @@ export const handlers = [
   http.get("*/jobs/:jobId", ({ params }) => {
     const { kind, environmentId } = jobOf(String(params.jobId));
     const isPush = kind === "push";
-    if (environmentId) {
+    const env = findStored(environmentId);
+    if (env) {
       const now = new Date().toISOString();
-      outcomes.set(environmentId, {
-        ...outcomes.get(environmentId),
+      store({
+        ...env,
         status: "running",
         [`last_${kind}_at`]: now,
         [`last_${kind}_status`]: "succeeded",
@@ -157,7 +204,7 @@ export const handlers = [
   ),
   // Same shape as the backend: the environments that use this credential.
   http.get("*/cloud-credentials/:id/usage", ({ params }) => {
-    const users = environments
+    const users = stored
       .filter((env) => env.cloud_credential_id === params.id)
       .map(({ id, name }) => ({ id, name }));
     return HttpResponse.json({ count: users.length, environments: users });

@@ -5,7 +5,7 @@
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 import { server } from "./mocks/server";
-import { resetOutcomes } from "./mocks/handlers";
+import { resetMockState } from "./mocks/handlers";
 
 // Polyfill for TextEncoder/TextDecoder (required by react-router in Node.js environment)
 import { TextEncoder, TextDecoder } from "node:util";
@@ -76,7 +76,7 @@ Object.defineProperty(window, "localStorage", {
 beforeAll(() => server.listen({ onUnhandledRequest: "bypass" }));
 afterEach(() => {
   server.resetHandlers();
-  resetOutcomes();
+  resetMockState();
 });
 afterAll(() => server.close());
 

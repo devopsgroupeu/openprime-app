@@ -106,6 +106,55 @@ describe("environment jobs", () => {
   });
 });
 
+// Mock mode keeps what the session wrote, as the backend would: the list
+// reloads on every visit and must not bring a deleted environment back.
+test("a deleted environment stays deleted when the list opens again", async () => {
+  window.history.pushState({}, "", "/environments");
+  render(<App />);
+  await screen.findByRole("link", { name: "demo-staging" }, { timeout: 3000 });
+  fireEvent.pointerDown(
+    screen.getByRole("button", { name: "More actions for demo-staging" }),
+    { button: 0, ctrlKey: false },
+  );
+  fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
+  const dialog = await screen.findByRole("alertdialog");
+  fireEvent.change(
+    within(dialog).getByLabelText("Type demo-staging to confirm"),
+    {
+      target: { value: "demo-staging" },
+    },
+  );
+  fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+  await waitFor(() =>
+    expect(screen.queryByRole("link", { name: "demo-staging" })).toBeNull(),
+  );
+
+  fireEvent.click(screen.getByRole("link", { name: "demo-prod" }));
+  await screen.findByRole("heading", { level: 1, name: "demo-prod" });
+  let reloaded = false;
+  const onResponse = ({ request }) => {
+    if (new URL(request.url).pathname.endsWith("/environments"))
+      reloaded = true;
+  };
+  server.events.on("response:mocked", onResponse);
+  try {
+    fireEvent.click(
+      within(document.querySelector('[data-slot="sidebar"]')).getByRole(
+        "link",
+        { name: "Environments" },
+      ),
+    );
+    await waitFor(() => expect(reloaded).toBe(true));
+    await screen.findByRole("link", { name: "demo-prod" });
+    await waitFor(() =>
+      expect(screen.queryByRole("link", { name: "demo-staging" })).toBeNull(),
+    );
+  } finally {
+    server.events.removeListener("response:mocked", onResponse);
+  }
+  window.history.pushState({}, "", "/");
+});
+
 // A job can end after its page closed (push has no leave guard; generate can
 // be left). The list reads the server again whenever it opens.
 describe("environments list reload", () => {
