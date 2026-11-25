@@ -18,13 +18,15 @@ function Marker({ icon: Icon, tone = "muted", action, children }) {
       data-slot="marker"
       data-tone={tone}
       className={cn(
-        "flex w-full items-start gap-2 rounded-lg border px-3 py-2 text-sm whitespace-pre-wrap",
+        "flex w-full gap-2 rounded-lg border px-3 py-2 text-sm whitespace-pre-wrap",
+        // A Try again button (44 px tall on touch) centres the row.
+        action ? "items-center" : "items-start",
         tone === "destructive"
           ? "border-destructive/40 bg-destructive/5 text-foreground [&>svg]:text-destructive"
           : "bg-muted/40 text-muted-foreground",
       )}
     >
-      <Icon aria-hidden className="mt-px size-4 shrink-0" />
+      <Icon aria-hidden className={cn("size-4 shrink-0", !action && "mt-px")} />
       <span className="min-w-0 flex-1">{children}</span>
       {action}
     </div>
@@ -53,7 +55,7 @@ const ChatMessage = ({ message, onRetry }) => {
   }
 
   const retry = onRetry ? (
-    <Button size="xs" variant="outline" className="-my-0.5" onClick={onRetry}>
+    <Button size="xs" variant="outline" onClick={onRetry}>
       <RotateCcw aria-hidden />
       Try again
     </Button>
