@@ -63,8 +63,9 @@ const Problems = ({ variant, title, items, step, onGo }) => (
   </Callout>
 );
 
-// `problems`: Basics errors; `serviceProblems`: errors that name an enabled
-// service ("EKS requires VPC to be enabled"). Shown only; Create stays enabled.
+// `problems`: Basics errors (Create sends the user back to them);
+// `serviceProblems`: errors of enabled services, shown only. Incomplete
+// delivery does not stop Create either, so Review says what stays unavailable.
 const WizardReviewStep = ({
   newEnv,
   onEditStep,
@@ -89,18 +90,16 @@ const WizardReviewStep = ({
     newEnv.gitRepository?.sshKeyConfigured,
   );
   const terraformBackendEnabled = Boolean(newEnv.terraformBackend?.enabled);
-  const bucketNameSet = Boolean(newEnv.terraformBackend?.bucketName?.trim());
 
+  // A switched-on section with an empty required field is a Basics problem.
   const warnings = [
     needsGitRepo &&
       !gitUrlSet &&
-      "Git repository URL is required when using Kubernetes/Helm charts.",
+      !newEnv.gitRepository?.enabled &&
+      "Push to git and Helm charts stay unavailable until you add a repository.",
     gitUrlSet &&
       !sshKeySet &&
-      "An SSH key is required when a Git repository URL is set.",
-    terraformBackendEnabled &&
-      !bucketNameSet &&
-      "S3 bucket name is required when Terraform backend is enabled.",
+      "Push to git stays unavailable until you add a deploy key.",
   ].filter(Boolean);
 
   const services = Object.entries(newEnv.services || {}).filter(
@@ -144,7 +143,7 @@ const WizardReviewStep = ({
           {warnings.length > 0 ? (
             <Problems
               variant="warning"
-              title="Delivery settings are incomplete."
+              title="Delivery is incomplete."
               items={warnings}
               step="Basics"
               onGo={() => onEditStep?.("basic")}

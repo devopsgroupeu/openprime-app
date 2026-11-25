@@ -217,6 +217,135 @@ describe("WizardPage", () => {
     expect(onCreateEnvironment).not.toHaveBeenCalled();
   });
 
+  // The switch states intent, so its empty required field blocks Continue.
+  it("treats a switched-on git repository without a URL as a Basics error", async () => {
+    localStorage.clear();
+    renderWizardCreate(vi.fn());
+    fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
+      target: { value: "prod" },
+    });
+    fireEvent.click(screen.getByRole("switch", { name: /git repository/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+
+    const url = screen.getByLabelText("Repository URL");
+    expect(url).toHaveAttribute("aria-invalid", "true");
+    expect(url).toHaveAccessibleDescription(
+      "Enter the repository URL or switch this off.",
+    );
+    await waitFor(() => expect(url).toHaveFocus());
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Basics",
+    );
+
+    fireEvent.change(url, {
+      target: { value: "git@github.com:example/infra.git" },
+    });
+    expect(url).not.toHaveAttribute("aria-invalid");
+    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+    await stepHeading("Services");
+  });
+
+  it("treats a switched-on state backend without a bucket as a Basics error", async () => {
+    localStorage.clear();
+    renderWizardCreate(vi.fn());
+    fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
+      target: { value: "prod" },
+    });
+    fireEvent.click(screen.getByRole("switch", { name: /state backend/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+
+    const toggle = screen.getByRole("switch", { name: /state backend/i });
+    expect(toggle).toHaveAttribute("aria-invalid", "true");
+    expect(toggle).toHaveAccessibleDescription(
+      "Add a state bucket or switch this off.",
+    );
+    await waitFor(() => expect(toggle).toHaveFocus());
+
+    fireEvent.click(screen.getByRole("radio", { name: /existing bucket/ }));
+    const bucket = screen.getByLabelText("Bucket name");
+    expect(bucket).toHaveAttribute("aria-invalid", "true");
+    fireEvent.change(bucket, { target: { value: "acme-tf-state" } });
+    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+    await stepHeading("Services");
+  });
+
+  it("lets Continue on once the state backend is created", async () => {
+    localStorage.clear();
+    const onCreateEnvironment = vi.fn().mockResolvedValue({ id: "env-new" });
+    renderWizardCreate(onCreateEnvironment);
+    fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
+      target: { value: "prod" },
+    });
+    fireEvent.change(await screen.findByLabelText("Credentials (optional)"), {
+      target: { value: "cred-001" },
+    });
+    fireEvent.click(screen.getByRole("switch", { name: /state backend/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Create backend" }));
+    expect(await screen.findByText("Backend created.")).toBeInTheDocument();
+
+    for (let step = 0; step < 3; step += 1) {
+      const next = screen.queryByRole("button", { name: /Continue/i });
+      if (!next) break;
+      fireEvent.click(next);
+    }
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Create environment/i }),
+    );
+    await waitFor(() => expect(onCreateEnvironment).toHaveBeenCalledTimes(1));
+    expect(onCreateEnvironment.mock.calls[0][0].terraformBackend).toMatchObject(
+      { enabled: true, bucketName: "123456789012-terraform-prod" },
+    );
+  });
+
+  // One Basics error list: the domain gates Continue and Create like the rest.
+  it("holds an invalid domain on Basics and sends Create back to it", async () => {
+    localStorage.clear();
+    const onCreateEnvironment = vi.fn();
+    renderWizardCreate(onCreateEnvironment);
+    fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
+      target: { value: "prod" },
+    });
+    const domain = screen.getByPlaceholderText("e.g. example.com");
+    fireEvent.change(domain, { target: { value: "localhost" } });
+    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+
+    expect(domain).toHaveAttribute("aria-invalid", "true");
+    await waitFor(() => expect(domain).toHaveFocus());
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Basics",
+    );
+
+    // Valid, on to Review; then break it again through the stepper.
+    fireEvent.change(domain, { target: { value: "example.com" } });
+    while (screen.queryByRole("button", { name: /Continue/i })) {
+      fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+    }
+    await stepHeading("Review");
+    const stepper = screen.getByRole("navigation", { name: "Steps" });
+    fireEvent.click(within(stepper).getByRole("button", { name: /Basics/ }));
+    await stepHeading("Basics");
+    fireEvent.change(screen.getByPlaceholderText("e.g. example.com"), {
+      target: { value: "localhost" },
+    });
+    fireEvent.click(within(stepper).getByRole("button", { name: /Services/ }));
+    await stepHeading("Services");
+    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+    await stepHeading("Review");
+    expect(within(stepper).getByText("Needs attention")).toBeInTheDocument();
+    expect(
+      screen.getByText("Basics needs attention.").parentElement,
+    ).toHaveTextContent("Domain must be a hostname such as example.com");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Create environment/i }),
+    );
+    await stepHeading("Basics");
+    await waitFor(() =>
+      expect(screen.getByPlaceholderText("e.g. example.com")).toHaveFocus(),
+    );
+    expect(onCreateEnvironment).not.toHaveBeenCalled();
+  });
+
   it("leaves create mode on Cancel and says the draft is kept", async () => {
     localStorage.clear();
     renderWizardCreate(vi.fn());

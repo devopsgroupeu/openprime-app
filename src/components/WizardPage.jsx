@@ -1,7 +1,7 @@
 // src/components/WizardPage.jsx
 // Full-screen environment wizard, outside the app shell: its own top bar, a
 // vertical stepper, the step form with its footer, and the Aura column.
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router";
 import { PanelRight } from "lucide-react";
 import WizardAssistant from "./WizardAssistant";
@@ -39,10 +39,8 @@ import {
   backfillServices,
   createEmptyEnvironment,
 } from "../config/environmentsConfig";
-import {
-  validateEnvironmentConfig,
-  getValidationSummary,
-} from "../utils/configValidator";
+import { validateEnvironmentConfig } from "../utils/configValidator";
+import { basicFieldErrors } from "./wizard-page/basicErrors";
 import authService from "../services/authService";
 import { normalizeEnvironment } from "../utils/environmentShape";
 import { useToast } from "../contexts/ToastContext";
@@ -65,22 +63,6 @@ const readAuraOpen = () => {
     return true;
   }
 };
-
-// Messages under the Basics fields. The rule is the step's gate (name, prefix,
-// provider, region); the domain error is only shown, it does not gate.
-const basicFieldErrors = (env, validationErrors) =>
-  [
-    !env.name?.trim() && {
-      field: "name",
-      message: "Enter a name for this environment.",
-    },
-    !env.globalPrefix?.trim() && {
-      field: "globalPrefix",
-      message: "Enter a resource prefix.",
-    },
-    !env.region && { field: "region", message: "Choose a region." },
-    validationErrors.find((e) => e.field === "domain"),
-  ].filter(Boolean);
 
 const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const { id } = useParams();
@@ -107,7 +89,6 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const [expandedServices, setExpandedServices] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState(new Set());
-  const [validationErrors, setValidationErrors] = useState([]);
   // Errors stay hidden until the user actually tries to advance a step.
   const [showErrors, setShowErrors] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -221,26 +202,21 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     identity: `${userId || "anonymous"}:${id || "create"}`,
   });
 
-  // The gate of the Basics step; every other step always lets the user on.
-  const basicsComplete = Boolean(
-    newEnv?.name?.trim() &&
-    newEnv?.globalPrefix?.trim() &&
-    newEnv?.provider &&
-    newEnv?.region,
-  );
-
-  const validateCurrentStep = useCallback(() => {
-    if (!newEnv) return false;
+  const validationErrors = useMemo(() => {
+    if (!newEnv) return [];
     try {
-      const errors = validateEnvironmentConfig(newEnv);
-      setValidationErrors(getValidationSummary(errors).errors);
+      return validateEnvironmentConfig(newEnv);
     } catch {
-      setValidationErrors([]);
+      return [];
     }
-    return currentId === "basic" ? basicsComplete : true;
-  }, [newEnv, currentId, basicsComplete]);
-
-  const canGoNext = useMemo(() => validateCurrentStep(), [validateCurrentStep]);
+  }, [newEnv]);
+  // The gate of the Basics step and of Create; every other step always lets
+  // the user on.
+  const basicErrors = useMemo(
+    () => (newEnv ? basicFieldErrors(newEnv, validationErrors) : []),
+    [newEnv, validationErrors],
+  );
+  const canGoNext = currentId !== "basic" || basicErrors.length === 0;
 
   const dirty = useMemo(
     () =>
@@ -267,9 +243,9 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   };
 
   const submit = async () => {
-    // Reachable through the stepper with an emptied Basics step: send the
-    // user back to the fields instead of a toast.
-    if (!newEnv?.name || !newEnv?.globalPrefix) {
+    // Reachable through the stepper with Basics problems: send the user back
+    // to the fields instead of a toast.
+    if (basicErrors.length > 0) {
       setCurrentStep(1);
       showFieldErrors();
       return;
@@ -461,7 +437,9 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
   const stepperSteps = steps.map((step) => ({
     ...step,
     invalid:
-      step.id === "basic" && completedSteps.has(step.number) && !basicsComplete,
+      step.id === "basic" &&
+      completedSteps.has(step.number) &&
+      basicErrors.length > 0,
   }));
   const activeStep = steps[currentStep - 1];
 
@@ -505,7 +483,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                 onAskAI={handleAskAI}
                 showErrors={showErrors}
                 validationErrors={validationErrors}
-                basicErrors={basicFieldErrors(newEnv, validationErrors)}
+                basicErrors={basicErrors}
                 onEditHelmValues={(chart, values) => {
                   setValuesEditor(chart);
                   setEditingHelmValues(values);
@@ -516,10 +494,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
                   // edit mode too (its domain is editable); with problems it
                   // opens on the first invalid field.
                   setCurrentStep(activeIds.indexOf(stepId) + 1);
-                  if (
-                    stepId === "basic" &&
-                    basicFieldErrors(newEnv, validationErrors).length > 0
-                  )
+                  if (stepId === "basic" && basicErrors.length > 0)
                     showFieldErrors();
                 }}
                 sshKeys={sshKeys}

@@ -13,13 +13,13 @@ import TerraformBackendSection from "./basic-config/TerraformBackendSection";
 import GitRepositorySection from "./basic-config/GitRepositorySection";
 import OtherSpecificationsSection from "./basic-config/OtherSpecificationsSection";
 import { RadioCard, RadioCardGroup } from "./basic-config/RadioCard";
+import { FieldControl, invalidProps } from "./basic-config/FieldControl";
 import {
   SettingsRow,
   SettingsRowGroup,
   SettingsSection,
 } from "@/components/shared/settings";
 import { Badge } from "@/components/ui/badge";
-import { FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   NativeSelect,
@@ -36,24 +36,8 @@ const PROVIDER_NAMES = {
   onpremise: "On-premises",
 };
 
-/** A row control with its error message under it; `id` is the control's id. */
-function FieldControl({ id, error, children }) {
-  return (
-    <div className="flex w-full flex-col gap-1.5 sm:w-72">
-      {children}
-      {error ? <FieldError id={`${id}-error`}>{error}</FieldError> : null}
-    </div>
-  );
-}
-
 // NativeSelect hugs its content; in a row it fills the control column instead.
 const FULL_WIDTH_SELECT = "[&>[data-slot=native-select-wrapper]]:w-full";
-
-/** aria props of a control that may carry an error. */
-const invalidProps = (id, error) =>
-  error
-    ? { "aria-invalid": true, "aria-describedby": `${id}-error` }
-    : { "aria-invalid": undefined };
 
 // Derives the suggested Global Prefix from Environment Name, e.g. "demo" ->
 // "demo-". Mirrors the sanitization already applied to the name field, plus
@@ -534,6 +518,7 @@ const BasicConfigStep = ({
           creatingBackend={creatingBackend}
           createdBucketName={createdBucketName}
           onCreateBackend={handleCreateBackend}
+          error={errorFor("bucketName")}
         />
       )}
 
@@ -541,6 +526,7 @@ const BasicConfigStep = ({
         newEnv={newEnv}
         setNewEnv={setNewEnv}
         sshKeys={sshKeys}
+        urlError={errorFor("gitUrl")}
       />
 
       <OtherSpecificationsSection />

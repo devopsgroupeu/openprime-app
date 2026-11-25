@@ -77,13 +77,20 @@ export const handlers = [
     HttpResponse.json({ id: params.id, ...(await request.json()) }),
   ),
   http.delete("*/environments/:id", () => HttpResponse.json({ success: true })),
-  http.post("*/environments/terraform-backend/create", () =>
-    HttpResponse.json({
-      success: true,
-      bucket: "mock-tf-state",
-      dynamodb_table: "mock-tf-lock",
-    }),
-  ),
+  // Shaped like the backend's 201: the bucket name under `data`.
+  http.post("*/environments/terraform-backend/create", async ({ request }) => {
+    const { environmentName, region, cloudCredentialId } = await request.json();
+    const account = credentials.find(
+      (c) => c.id === cloudCredentialId,
+    )?.identifier;
+    return HttpResponse.json(
+      {
+        success: true,
+        data: { bucketName: `${account}-terraform-${environmentName}`, region },
+      },
+      { status: 201 },
+    );
+  }),
   // Async job model: enqueue returns 202 + jobId, UI polls /jobs/:jobId,
   // then downloads the artifact for generate jobs.
   http.post("*/environments/:id/generate", ({ params }) =>

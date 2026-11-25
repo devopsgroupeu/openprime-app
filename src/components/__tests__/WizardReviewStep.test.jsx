@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { vi } from "vitest";
 import WizardReviewStep from "../WizardReviewStep";
+import { basicFieldErrors } from "../wizard-page/basicErrors";
 
 const baseEnv = {
   name: "demo",
@@ -10,9 +11,24 @@ const baseEnv = {
   services: {},
 };
 
+// Review gets the Basics problems from the wizard, which builds them with
+// basicFieldErrors.
 const renderStep = (env) =>
-  render(<WizardReviewStep newEnv={env} onEditStep={() => {}} />);
+  render(
+    <WizardReviewStep
+      newEnv={env}
+      onEditStep={() => {}}
+      problems={basicFieldErrors(env, [])}
+    />,
+  );
 
+const CONSEQUENCE_NO_REPO =
+  "Push to git and Helm charts stay unavailable until you add a repository.";
+const CONSEQUENCE_NO_KEY =
+  "Push to git stays unavailable until you add a deploy key.";
+
+// Creating with incomplete delivery is allowed, so Review says what will not
+// work yet instead of a rule.
 describe("WizardReviewStep readiness gates", () => {
   it("warns when Kubernetes/Helm charts are enabled without a Git repository URL", () => {
     renderStep({
@@ -28,11 +44,8 @@ describe("WizardReviewStep readiness gates", () => {
       gitRepository: { enabled: false },
     });
 
-    expect(
-      screen.getByText(
-        /Git repository URL is required when using Kubernetes\/Helm charts/,
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText(CONSEQUENCE_NO_REPO)).toBeInTheDocument();
+    expect(screen.getByText("Delivery is incomplete.")).toBeInTheDocument();
   });
 
   it("warns when a Git repository URL is set without an SSH key", () => {
@@ -46,14 +59,12 @@ describe("WizardReviewStep readiness gates", () => {
       },
     });
 
-    expect(
-      screen.getByText(
-        /An SSH key is required when a Git repository URL is set/,
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText(CONSEQUENCE_NO_KEY)).toBeInTheDocument();
   });
 
-  it("warns when Terraform backend is enabled without an S3 bucket name", () => {
+  // A switched-on section states intent: its empty required field is a
+  // Basics problem, listed once, not a delivery warning.
+  it("lists a switched-on Terraform backend without a bucket under Basics", () => {
     renderStep({
       ...baseEnv,
       terraformBackend: {
@@ -63,10 +74,22 @@ describe("WizardReviewStep readiness gates", () => {
     });
 
     expect(
-      screen.getByText(
-        /S3 bucket name is required when Terraform backend is enabled/,
-      ),
-    ).toBeInTheDocument();
+      screen.getByText("Basics needs attention.").parentElement,
+    ).toHaveTextContent("Add a state bucket or switch this off.");
+    expect(document.querySelectorAll('[data-slot="callout"]')).toHaveLength(1);
+  });
+
+  it("lists a switched-on git repository without a URL under Basics only", () => {
+    renderStep({
+      ...baseEnv,
+      services: { eks: { enabled: true } },
+      gitRepository: { enabled: true, url: "", branch: "main" },
+    });
+
+    expect(
+      screen.getByText("Basics needs attention.").parentElement,
+    ).toHaveTextContent("Enter the repository URL or switch this off.");
+    expect(document.querySelectorAll('[data-slot="callout"]')).toHaveLength(1);
   });
 
   it("shows no warnings when all required fields are coherent", () => {
@@ -93,14 +116,10 @@ describe("WizardReviewStep readiness gates", () => {
       },
     });
 
+    expect(screen.queryByText(CONSEQUENCE_NO_REPO)).not.toBeInTheDocument();
+    expect(screen.queryByText(CONSEQUENCE_NO_KEY)).not.toBeInTheDocument();
     expect(
-      screen.queryByText(/Git repository URL is required/i),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/An SSH key is required/i),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/S3 bucket name is required/i),
+      screen.queryByText("Basics needs attention."),
     ).not.toBeInTheDocument();
   });
 });

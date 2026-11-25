@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { FieldControl, invalidProps } from "./FieldControl";
 import SshKeyTabs from "./SshKeyTabs";
 
 // Host part of a git URL: git@host:path, ssh://user@host:port/path or
@@ -101,8 +102,9 @@ function CiRequirements({ isGitLab, isGitLabCom }) {
 }
 
 // Git repository section of the wizard's Basics step. Presentational: env
-// state is owned by the parent BasicConfigStep.
-const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys }) => {
+// state is owned by the parent BasicConfigStep; `urlError` is the Basics
+// error of an empty URL while the section is on.
+const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys, urlError }) => {
   const id = useId();
   const git = newEnv.gitRepository;
   // Self-hosted GitLab is recognised only by "gitlab" in its host name.
@@ -115,7 +117,7 @@ const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys }) => {
   return (
     <SettingsSection
       title="Git repository"
-      description="Optional. OpenPrime pushes the generated code to this repository."
+      description="Needed for Push to git and for Helm charts (Argo CD pulls from it)."
       action={
         <Switch
           aria-label="Push to a git repository"
@@ -138,13 +140,16 @@ const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys }) => {
             controlId={`${id}-url`}
             description="The SSH URL OpenPrime pushes to."
             control={
-              <Input
-                id={`${id}-url`}
-                className="font-mono sm:w-72"
-                placeholder="git@github.com:org/repo.git"
-                value={git?.url || ""}
-                onChange={(e) => setGit({ url: e.target.value })}
-              />
+              <FieldControl id={`${id}-url`} error={urlError}>
+                <Input
+                  id={`${id}-url`}
+                  className="font-mono"
+                  placeholder="git@github.com:org/repo.git"
+                  value={git?.url || ""}
+                  {...invalidProps(`${id}-url`, urlError)}
+                  onChange={(e) => setGit({ url: e.target.value })}
+                />
+              </FieldControl>
             }
           />
           <SettingsRow

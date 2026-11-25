@@ -122,10 +122,11 @@ describe("Create Environment with All Helm Charts", () => {
         console.log("✓ Terraform backend already enabled");
       }
 
-      // Note: S3 bucket name is auto-generated in the current UI
-      // The UI shows format: <AWS_ACCOUNT_ID>-terraform-<environment-name>
-      // In a production implementation, this would need to be customizable
-      console.log(`Note: S3 bucket will be auto-generated (target: ${s3BucketName})`);
+      // A switched-on backend needs a bucket before Continue: point it at an
+      // existing one (creating one needs AWS credentials).
+      await ctx.page.getByRole("radio", { name: /existing bucket/i }).click();
+      await ctx.page.getByLabel("Bucket name").fill(s3BucketName);
+      console.log(`✓ State bucket set: ${s3BucketName}`);
     });
 
     // Step 4b: Enable Git Repository with URL and branch

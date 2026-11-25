@@ -9,14 +9,18 @@ import {
   SettingsSection,
 } from "@/components/shared/settings";
 import { Button } from "@/components/ui/button";
+import { FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
+import { FieldControl, invalidProps } from "./FieldControl";
 import { RadioCard, RadioCardGroup } from "./RadioCard";
 
 // Terraform state backend section of the wizard's Basics step (AWS only).
 // Presentational: all state and the create-backend action live in the parent
-// BasicConfigStep and are passed down as props.
+// BasicConfigStep and are passed down as props. `error`: the Basics error of a
+// switched-on backend without a bucket. It sits on the bucket name field, or,
+// while the bucket is still to be created, on the switch.
 const TerraformBackendSection = ({
   newEnv,
   setNewEnv,
@@ -27,8 +31,10 @@ const TerraformBackendSection = ({
   creatingBackend,
   createdBucketName,
   onCreateBackend,
+  error,
 }) => {
   const id = useId();
+  const switchError = !useExistingBucket && !backendCreated ? error : null;
   const backend = newEnv.terraformBackend;
   const credential = credentials.find((c) => c.id === newEnv.cloudCredentialId);
   const locked = backendCreated || creatingBackend;
@@ -53,6 +59,7 @@ const TerraformBackendSection = ({
       action={
         <Switch
           aria-label="Use a Terraform state backend"
+          {...invalidProps(`${id}-bucket`, switchError)}
           checked={backend?.enabled || false}
           onCheckedChange={(checked) =>
             setNewEnv({
@@ -100,21 +107,24 @@ const TerraformBackendSection = ({
                 controlId={`${id}-bucket`}
                 description="The S3 bucket that keeps the Terraform state."
                 control={
-                  <Input
-                    id={`${id}-bucket`}
-                    className="font-mono sm:w-72"
-                    placeholder="e.g. my-terraform-state"
-                    value={backend?.bucketName || ""}
-                    onChange={(e) =>
-                      setNewEnv({
-                        ...newEnv,
-                        terraformBackend: {
-                          ...backend,
-                          bucketName: e.target.value,
-                        },
-                      })
-                    }
-                  />
+                  <FieldControl id={`${id}-bucket`} error={error}>
+                    <Input
+                      id={`${id}-bucket`}
+                      className="font-mono"
+                      placeholder="e.g. my-terraform-state"
+                      value={backend?.bucketName || ""}
+                      {...invalidProps(`${id}-bucket`, error)}
+                      onChange={(e) =>
+                        setNewEnv({
+                          ...newEnv,
+                          terraformBackend: {
+                            ...backend,
+                            bucketName: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  </FieldControl>
                 }
               />
             </SettingsRowGroup>
@@ -144,31 +154,36 @@ const TerraformBackendSection = ({
               )}
             </Callout>
           ) : (
-            <SettingsRowGroup>
-              <SettingsRow
-                title="Bucket name"
-                description={
-                  <>
-                    <code className="font-mono break-all">{preview}</code>
-                    {newEnv.cloudCredentialId ? null : (
-                      <span className="block">
-                        Select credentials above first.
-                      </span>
-                    )}
-                  </>
-                }
-                control={
-                  <Button
-                    variant="secondary"
-                    onClick={onCreateBackend}
-                    disabled={!newEnv.cloudCredentialId || creatingBackend}
-                  >
-                    {creatingBackend ? <Spinner aria-hidden /> : null}
-                    Create backend
-                  </Button>
-                }
-              />
-            </SettingsRowGroup>
+            <>
+              <SettingsRowGroup>
+                <SettingsRow
+                  title="Bucket name"
+                  description={
+                    <>
+                      <code className="font-mono break-all">{preview}</code>
+                      {newEnv.cloudCredentialId ? null : (
+                        <span className="block">
+                          Select credentials above first.
+                        </span>
+                      )}
+                    </>
+                  }
+                  control={
+                    <Button
+                      variant="secondary"
+                      onClick={onCreateBackend}
+                      disabled={!newEnv.cloudCredentialId || creatingBackend}
+                    >
+                      {creatingBackend ? <Spinner aria-hidden /> : null}
+                      Create backend
+                    </Button>
+                  }
+                />
+              </SettingsRowGroup>
+              {switchError ? (
+                <FieldError id={`${id}-bucket-error`}>{switchError}</FieldError>
+              ) : null}
+            </>
           )}
         </>
       )}
