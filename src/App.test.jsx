@@ -105,6 +105,80 @@ describe("environment jobs", () => {
   });
 });
 
+describe("palette on an environment page", () => {
+  beforeEach(() => {
+    URL.createObjectURL = vi.fn(() => "blob:mock-url");
+    URL.revokeObjectURL = vi.fn();
+    HTMLAnchorElement.prototype.click = vi.fn();
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    window.history.pushState({}, "", "/");
+  });
+
+  const openPalette = async () => {
+    fireEvent.keyDown(document, { key: "k", metaKey: true });
+    const palette = await screen.findByRole("dialog");
+    return within(palette).getByRole("group", { name: "This environment" });
+  };
+
+  test("offers the environment's own actions and runs them", async () => {
+    const writeText = vi.fn(() => Promise.resolve());
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    window.history.pushState({}, "", "/environments/env-002");
+    render(<App />);
+    await screen.findByRole(
+      "heading",
+      { level: 1, name: "demo-staging" },
+      { timeout: 3000 },
+    );
+
+    let group = await openPalette();
+    expect(
+      within(group)
+        .getAllByRole("option")
+        .map((o) => o.textContent),
+    ).toEqual([
+      "Edit environment",
+      "Generate repository",
+      "Copy environment ID",
+    ]);
+    fireEvent.click(
+      within(group).getByRole("option", { name: "Copy environment ID" }),
+    );
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("env-002"));
+
+    group = await openPalette();
+    fireEvent.click(
+      within(group).getByRole("option", { name: "Generate repository" }),
+    );
+    expect(
+      await screen.findByText("Repository generated and downloaded."),
+    ).toBeInTheDocument();
+
+    group = await openPalette();
+    fireEvent.click(
+      within(group).getByRole("option", { name: "Edit environment" }),
+    );
+    await waitFor(() =>
+      expect(window.location.pathname).toBe("/environments/env-002/edit"),
+    );
+  });
+
+  test("has no environment actions elsewhere", async () => {
+    render(<App />);
+    await screen.findByText(/demo-prod/i, {}, { timeout: 3000 });
+    fireEvent.keyDown(document, { key: "k", metaKey: true });
+    const palette = await screen.findByRole("dialog");
+    expect(
+      within(palette).queryByRole("group", { name: "This environment" }),
+    ).not.toBeInTheDocument();
+  });
+});
+
 describe("settings routes", () => {
   afterEach(() => window.history.pushState({}, "", "/"));
 

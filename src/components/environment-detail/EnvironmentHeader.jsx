@@ -16,6 +16,7 @@ import { RelativeTime } from "@/components/shared/format";
 import { IconTile } from "@/components/shared/icon-tile";
 import { PageHeader } from "@/components/shared/page-header";
 import { ResourceActionsMenu } from "@/components/shared/resource-actions-menu";
+import { usePaletteActions } from "@/components/layout/CommandPalette";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -73,6 +74,21 @@ const EnvironmentHeader = ({
   const generateFirst = GENERATE_FIRST.has(
     statusDisplay(getEffectiveStatus(environment)).key,
   );
+
+  // The same next steps from Cmd+K.
+  usePaletteActions({
+    heading: "This environment",
+    actions: [
+      { label: "Edit environment", icon: Pencil, to: editHref },
+      {
+        label: "Generate repository",
+        icon: Download,
+        onSelect: onGenerate,
+        disabled: busy,
+      },
+      { label: "Copy environment ID", icon: Copy, onSelect: onCopyId },
+    ],
+  });
 
   const pushButton = (
     <Button variant="secondary" onClick={onPush} disabled={busy || !canPush}>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useOutletContext } from "react-router";
 import { BookOpen, KeyRound, Keyboard, Layers, Moon, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +41,20 @@ const STATUS_DOT = {
   destructive: "bg-destructive",
 };
 
+/**
+ * Puts the open page's own actions in the palette while it shows (AppLayout
+ * passes the setter as the outlet context). `group`: { heading, actions }, an
+ * action { label, icon, to } (navigates, guarded) or { label, icon, onSelect,
+ * disabled }. Re-registered on every render, so the actions stay current.
+ */
+export function usePaletteActions(group) {
+  const setGroup = useOutletContext();
+  useEffect(() => {
+    setGroup?.(group);
+    return () => setGroup?.(null);
+  });
+}
+
 function Shortcut({ id }) {
   return <CommandShortcut>{keyLabels(shortcut(id)).join(" ")}</CommandShortcut>;
 }
@@ -48,13 +62,15 @@ function Shortcut({ id }) {
 /**
  * Command palette (port of openprime-ai CommandPalette): top-anchored search
  * over actions, environments and pages. `environments` is the list App
- * already loaded; nothing is fetched here.
+ * already loaded; nothing is fetched here. `pageActions`: the open page's own
+ * group (usePaletteActions).
  */
 export default function CommandPalette({
   open,
   onOpenChange,
   onShortcuts,
   environments,
+  pageActions,
 }) {
   const navigate = useNavigate();
   const { toggleTheme } = useTheme();
@@ -137,6 +153,23 @@ export default function CommandPalette({
                 </CommandItem>
               ))}
             </CommandGroup>
+
+            {pageActions ? (
+              <CommandGroup heading={pageActions.heading}>
+                {pageActions.actions.map(
+                  ({ label, icon: Icon, to, onSelect, disabled }) => (
+                    <CommandItem
+                      key={label}
+                      disabled={disabled}
+                      onSelect={() => run(to ? () => go(to) : onSelect)}
+                    >
+                      <Icon aria-hidden />
+                      {label}
+                    </CommandItem>
+                  ),
+                )}
+              </CommandGroup>
+            ) : null}
 
             {environments.length > 0 && (
               <CommandGroup heading="Environments">

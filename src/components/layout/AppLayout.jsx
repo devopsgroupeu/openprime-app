@@ -30,6 +30,8 @@ const AppLayout = ({ environments }) => {
   const { pathname } = useLocation();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  // The open page's own palette group (usePaletteActions).
+  const [pageActions, setPageActions] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const scrollerRef = useRef(null);
 
@@ -74,7 +76,7 @@ const AppLayout = ({ environments }) => {
         >
           {/* pb-16: the last card scrolls clear of the Aura launcher. */}
           <div className="pb-16">
-            <Outlet />
+            <Outlet context={setPageActions} />
           </div>
         </div>
       </SidebarInset>
@@ -83,6 +85,7 @@ const AppLayout = ({ environments }) => {
         onOpenChange={setPaletteOpen}
         onShortcuts={() => setShortcutsOpen(true)}
         environments={environments}
+        pageActions={pageActions}
       />
       <KeyboardShortcutsDialog
         open={shortcutsOpen}
