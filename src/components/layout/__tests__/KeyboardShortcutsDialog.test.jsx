@@ -7,13 +7,18 @@ describe("KeyboardShortcutsDialog", () => {
     render(<KeyboardShortcutsDialog open onOpenChange={() => {}} />);
 
     const dialog = screen.getByRole("dialog", { name: "Keyboard shortcuts" });
+    const terms = within(dialog).getAllByRole("term");
+    const definitions = within(dialog).getAllByRole("definition");
+    expect(terms).toHaveLength(SHORTCUTS.length);
+    expect(definitions).toHaveLength(SHORTCUTS.length);
     for (const s of SHORTCUTS) {
-      const row = within(dialog).getByText(s.label).closest("div");
+      const term = within(dialog).getByText(s.label);
+      const keys = definitions[terms.indexOf(term)];
       for (const k of keyLabels(s)) {
-        expect(within(row).getByText(k)).toBeInTheDocument();
+        expect(within(keys).getByText(k)).toBeInTheDocument();
       }
       expect(
-        within(row).queryByText("Replaces a browser shortcut") !== null,
+        within(term).queryByText("Replaces a browser shortcut") !== null,
       ).toBe(s.overridesBrowser);
     }
   });
