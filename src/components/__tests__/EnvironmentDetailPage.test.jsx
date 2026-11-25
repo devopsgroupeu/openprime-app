@@ -748,6 +748,22 @@ describe("EnvironmentDetailPage primary action", () => {
   });
 });
 
+describe("EnvironmentDetailPage configuration", () => {
+  it("rotates the SSH key with one verb throughout", async () => {
+    renderDetailPage({ path: "/environments/env-001?tab=configuration" });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Rotate key" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("Rotate SSH key")).toBeInTheDocument();
+    fireEvent.change(within(dialog).getByLabelText("SSH private key"), {
+      target: { value: "-----BEGIN OPENSSH PRIVATE KEY-----" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Rotate key" }));
+
+    expect(await toasts().findByText("SSH key rotated.")).toBeInTheDocument();
+  });
+});
+
 describe("EnvironmentDetailPage delete", () => {
   it("confirms from the menu and deletes only after the name is typed", async () => {
     const onDelete = vi.fn(() => Promise.resolve());

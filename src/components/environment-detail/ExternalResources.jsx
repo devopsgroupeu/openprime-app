@@ -77,10 +77,10 @@ function RotateSshKeyDialog({ environment, gitRepo, onClose, onUpdated }) {
       });
       onUpdated?.(updated);
       onClose();
-      success("SSH key updated.");
+      success("SSH key rotated.");
     } catch (err) {
       console.error("Failed to update SSH key:", err);
-      showError(err.message || "Couldn't update the SSH key.");
+      showError(err.message || "Couldn't rotate the SSH key.");
     } finally {
       setSaving(false);
     }
@@ -115,7 +115,7 @@ function RotateSshKeyDialog({ environment, gitRepo, onClose, onUpdated }) {
           </Button>
           <Button onClick={save} disabled={saving || !key.trim()}>
             {saving ? <Spinner aria-hidden /> : null}
-            Update key
+            Rotate key
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -181,7 +181,7 @@ const ExternalResources = ({ environment, onEnvironmentUpdate, editHref }) => {
                     onClick={() => setRotating(true)}
                   >
                     <KeyRound aria-hidden />
-                    Rotate
+                    Rotate key
                   </Button>
                 }
               >
