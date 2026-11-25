@@ -81,14 +81,13 @@ export function RadioCard({
 }
 
 /** The checkbox twin of RadioCard, for options that combine. */
-export function CheckboxCard({ id, title, description, art, badge, disabled }) {
+export function CheckboxCard({ id, title, art, badge, disabled }) {
   return (
     <Label htmlFor={id} data-slot="checkbox-card" className={CARD}>
       <CardBody
         art={art}
         title={title}
         badge={badge}
-        description={description}
         control={<Checkbox id={id} disabled={disabled} className="mt-0.5" />}
       />
     </Label>
