@@ -123,6 +123,23 @@ describe("WizardReviewStep summary", () => {
     expect(onEditStep).toHaveBeenCalledWith("basic");
   });
 
+  it("lists service problems with a link to Services", () => {
+    const onEditStep = vi.fn();
+    render(
+      <WizardReviewStep
+        newEnv={{ ...baseEnv, services: { eks: { enabled: true } } }}
+        onEditStep={onEditStep}
+        serviceProblems={[
+          { field: "eks", message: "EKS requires VPC to be enabled" },
+        ]}
+      />,
+    );
+    const callout = screen.getByText("Services need attention.").parentElement;
+    expect(callout).toHaveTextContent("EKS requires VPC to be enabled");
+    fireEvent.click(screen.getByRole("button", { name: "Go to Services" }));
+    expect(onEditStep).toHaveBeenCalledWith("services");
+  });
+
   it("shows each step with an Edit that jumps back to it", () => {
     const onEditStep = vi.fn();
     render(

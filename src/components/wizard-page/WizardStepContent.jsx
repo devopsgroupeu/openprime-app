@@ -39,13 +39,6 @@ const WizardStepContent = ({
           expandedServices={expandedServices}
           setExpandedServices={setExpandedServices}
           onAskAI={onAskAI}
-          validationErrors={
-            showErrors
-              ? validationErrors.filter(
-                  (e) => !["name", "provider", "region"].includes(e.field),
-                )
-              : []
-          }
         />
       );
     case "helm":
@@ -63,6 +56,13 @@ const WizardStepContent = ({
           newEnv={newEnv}
           onEditStep={onEditStep}
           problems={basicErrors}
+          // Only errors that name an enabled service (the cross-service
+          // rules). Field-level service checks carry no service name and
+          // flag every environment today: disabled services are validated
+          // too, and numeric dropdowns are stored as strings.
+          serviceProblems={validationErrors.filter(
+            (e) => newEnv.services?.[e.field]?.enabled,
+          )}
         />
       );
     default:

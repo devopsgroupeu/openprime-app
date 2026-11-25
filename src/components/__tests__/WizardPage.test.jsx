@@ -338,6 +338,39 @@ describe("WizardPage", () => {
     expect(screen.getByPlaceholderText("e.g. example.com")).not.toBeDisabled();
   });
 
+  it("lists a missing service prerequisite on Review and links to Services", async () => {
+    localStorage.clear();
+    const onCreateEnvironment = vi.fn();
+    renderWizardCreate(onCreateEnvironment);
+    fireEvent.change(await screen.findByPlaceholderText("e.g. production"), {
+      target: { value: "prod" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+    await stepHeading("Services");
+    // EKS on, VPC left off.
+    fireEvent.click(
+      screen.getByRole("switch", { name: /Enable Elastic Kubernetes/ }),
+    );
+    while (screen.queryByRole("button", { name: /Continue/i })) {
+      fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+    }
+    await stepHeading("Review");
+
+    expect(
+      screen.getByText("EKS requires VPC to be enabled"),
+    ).toBeInTheDocument();
+    // Field-level checks of disabled services are not listed.
+    expect(screen.queryByText(/Allow Explicit Index/)).toBeNull();
+    // Shown, not gating: Create stays enabled.
+    expect(
+      screen.getByRole("button", { name: /Create environment/i }),
+    ).toBeEnabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Go to Services" }));
+    await stepHeading("Services");
+    expect(onCreateEnvironment).not.toHaveBeenCalled();
+  });
+
   it("lets Review's Edit open Basics in edit mode", async () => {
     renderWizardEdit(vi.fn());
     await stepHeading("Services");

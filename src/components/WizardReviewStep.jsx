@@ -42,14 +42,14 @@ const EditButton = ({ label, onClick }) => (
   </Button>
 );
 
-/** A list of problems in a callout, with a button to the step that fixes them. */
-const Problems = ({ variant, title, items, onGo }) => (
+/** A list of problems in a callout, with a button to the `step` that fixes them. */
+const Problems = ({ variant, title, items, step, onGo }) => (
   <Callout
     variant={variant}
     title={title}
     action={
       <Button variant="secondary" size="xs" onClick={onGo}>
-        Go to Basics
+        Go to {step}
       </Button>
     }
   >
@@ -61,7 +61,14 @@ const Problems = ({ variant, title, items, onGo }) => (
   </Callout>
 );
 
-const WizardReviewStep = ({ newEnv, onEditStep, problems = [] }) => {
+// `problems`: Basics errors; `serviceProblems`: errors that name an enabled
+// service ("EKS requires VPC to be enabled"). Shown only; Create stays enabled.
+const WizardReviewStep = ({
+  newEnv,
+  onEditStep,
+  problems = [],
+  serviceProblems = [],
+}) => {
   const k8s = newEnv.services?.eks || newEnv.services?.aks;
   const charts = Object.entries(k8s?.helmCharts || {})
     .filter(([, c]) => c?.enabled)
@@ -110,14 +117,26 @@ const WizardReviewStep = ({ newEnv, onEditStep, problems = [] }) => {
 
   return (
     <div className="flex flex-col gap-8">
-      {problems.length > 0 || warnings.length > 0 ? (
+      {problems.length > 0 ||
+      serviceProblems.length > 0 ||
+      warnings.length > 0 ? (
         <div className="flex flex-col gap-3">
           {problems.length > 0 ? (
             <Problems
               variant="error"
               title="Basics needs attention."
               items={problems.map((p) => p.message)}
+              step="Basics"
               onGo={() => onEditStep?.("basic")}
+            />
+          ) : null}
+          {serviceProblems.length > 0 ? (
+            <Problems
+              variant="error"
+              title="Services need attention."
+              items={serviceProblems.map((p) => p.message)}
+              step="Services"
+              onGo={() => onEditStep?.("services")}
             />
           ) : null}
           {warnings.length > 0 ? (
@@ -125,6 +144,7 @@ const WizardReviewStep = ({ newEnv, onEditStep, problems = [] }) => {
               variant="warning"
               title="Delivery settings are incomplete."
               items={warnings}
+              step="Basics"
               onGo={() => onEditStep?.("basic")}
             />
           ) : null}
