@@ -1,6 +1,6 @@
 import { useId } from "react";
 import { ChevronRight } from "lucide-react";
-import { gitHost, gitLogo } from "../../../../config/logos";
+import { gitHost, gitLogo, gitProviderOf } from "../../../../config/logos";
 import { LogoTile } from "@/components/shared/logo-tile";
 import {
   SettingsRow,
@@ -104,10 +104,10 @@ function CiRequirements({ isGitLab, isGitLabCom }) {
 const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys, urlError }) => {
   const id = useId();
   const git = newEnv.gitRepository;
-  // Self-hosted GitLab is recognised only by "gitlab" in its host name.
-  const host = gitHost(git?.url);
-  const isGitLab = host.includes("gitlab");
-  const isGitLabCom = host === "gitlab.com";
+  // The rule that picks the logo; self-hosted GitLab is recognised only by
+  // "gitlab" in its host name.
+  const isGitLab = gitProviderOf(git?.url) === "gitlab";
+  const isGitLabCom = gitHost(git?.url) === "gitlab.com";
   const setGit = (changes) =>
     setNewEnv({ ...newEnv, gitRepository: { ...git, ...changes } });
 

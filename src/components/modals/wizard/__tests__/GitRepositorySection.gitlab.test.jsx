@@ -84,6 +84,16 @@ describe("GitRepositorySection — GitLab prerequisites", () => {
     expect(verificationNote()).not.toBeInTheDocument();
   });
 
+  // One rule decides GitLab, the one that picks the logo: a host naming
+  // both is GitHub, so no GitLab notes next to the GitHub logo.
+  it("follows the provider logo for a host that names both", () => {
+    renderWith("git@github-gitlab-mirror.example.com:acme/infra.git");
+    expect(protectedNote()).not.toBeInTheDocument();
+    expect(
+      document.querySelector('[data-slot="logo-tile"] img'),
+    ).toHaveAttribute("src", "/assets/chart-logos/github.svg");
+  });
+
   it("shows no GitLab notes before a URL is entered", () => {
     renderWith("");
     expect(protectedNote()).not.toBeInTheDocument();
