@@ -1,19 +1,20 @@
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Square } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 
 /**
  * Aura's composer (port of openprime-ai PromptInput): a rounded-2xl card with
  * an auto-growing textarea and a round Send button, the only saturated control
  * while there is something to send. Enter sends, Shift+Enter adds a line.
- * `ref` reaches the textarea.
+ * While Aura answers (`busy`) the button is Stop (`onStop`). `ref` reaches the
+ * textarea.
  */
 const Composer = ({
   ref,
   value,
   onChange,
   onSend,
+  onStop,
   placeholder,
   busy,
   autoFocus,
@@ -53,15 +54,31 @@ const Composer = ({
           className="field-sizing-content max-h-50 min-h-6 w-full resize-none bg-transparent text-base outline-none [scrollbar-width:thin] placeholder:text-muted-foreground md:text-md"
         />
         <div className="flex h-8 items-center justify-end">
-          <Button
-            type="submit"
-            size="icon"
-            aria-label="Send message"
-            disabled={!canSend}
-            className="rounded-full disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 disabled:shadow-none"
-          >
-            {busy ? <Spinner aria-hidden /> : <ArrowUp aria-hidden />}
-          </Button>
+          {busy ? (
+            <Button
+              type="button"
+              size="icon"
+              aria-label="Stop"
+              className="rounded-full"
+              onClick={(e) => {
+                onStop();
+                // The button turns into a disabled Send: keep focus usable.
+                e.currentTarget.form.querySelector("textarea").focus();
+              }}
+            >
+              <Square aria-hidden className="fill-current" />
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              size="icon"
+              aria-label="Send message"
+              disabled={!canSend}
+              className="rounded-full disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 disabled:shadow-none"
+            >
+              <ArrowUp aria-hidden />
+            </Button>
+          )}
         </div>
       </form>
       <p className="text-center text-xs text-muted-foreground">

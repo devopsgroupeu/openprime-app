@@ -7,11 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import authService from "../../services/authService";
 import { SERVICES_CONFIG, FIELD_TYPES } from "../../config/servicesConfig";
 import { AURA_ERROR } from "./ai-chat/AuraConversation";
 import ChatThread from "./ai-chat/ChatThread";
 import Composer from "./ai-chat/Composer";
+import { streamChat } from "./ai-chat/streamChat";
 import SuggestionBox from "./ai-chat/SuggestionBox";
 import {
   findServiceByDisplayName,
@@ -47,11 +47,12 @@ const AIChatModal = ({
   setNewEnv,
 }) => {
   const [inputText, setInputText] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [suggestion, setSuggestion] = useState(null);
   const inputRef = useRef(null);
-  // A pending answer survives closing and reopening the dialog.
-  const busy = isLoading || messages.some((m) => m.pending);
+  // A pending answer survives closing and reopening the dialog, and can be
+  // stopped after it.
+  const pending = messages.find((m) => m.pending);
+  const busy = Boolean(pending);
 
   // Initialize welcome message when modal opens
   useEffect(() => {
@@ -156,12 +157,145 @@ const AIChatModal = ({
   };
 
   /**
-   * Send the composer's text and stream the answer from the AI backend
+   * Stream the answer to `userMessage`, asked after the `previous` messages
    */
-  const handleSubmit = async () => {
-    if (!inputText.trim() || busy) return;
-
+  const ask = (previous, userMessage) => {
     setSuggestion(null);
+
+    const aiMessageId = Date.now() + 1;
+    const update = (patch) =>
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aiMessageId ? { ...msg, ...patch } : msg,
+        ),
+      );
+
+    let currentServiceName = service;
+    if (!currentServiceName || !SERVICES_CONFIG[currentServiceName]) {
+      currentServiceName = findServiceByDisplayName(serviceTitle);
+    }
+
+    // Build dropdown field constraints message
+    const dropdownConstraints =
+      currentServiceName && SERVICES_CONFIG[currentServiceName]
+        ? Object.entries(SERVICES_CONFIG[currentServiceName].fields)
+            .filter(
+              ([_, field]) =>
+                field.type === FIELD_TYPES.DROPDOWN && field.options,
+            )
+            .map(
+              ([fieldName, field]) =>
+                `${fieldName}: [${field.options.map((opt) => opt.value).join(", ")}]`,
+            )
+            .join("; ")
+        : "";
+
+    // Build context for AI (system messages + conversation history)
+    const aiContext = toAiContext(wizardValues);
+    const payloadMessages = [
+      {
+        type: "system",
+        message: `The current environment configuration is: ${JSON.stringify(aiContext)}`,
+      },
+      {
+        type: "system",
+        message: `Available service options: ${Object.keys(SERVICES_CONFIG).join(", ")}`,
+      },
+      {
+        type: "system",
+        message: `Current service: ${currentServiceName || serviceTitle}`,
+      },
+      {
+        type: "system",
+        message:
+          currentServiceName && SERVICES_CONFIG[currentServiceName]
+            ? `Available fields for ${currentServiceName}: ${Object.keys(SERVICES_CONFIG[currentServiceName].fields).join(", ")}`
+            : "",
+      },
+      {
+        type: "system",
+        message: dropdownConstraints
+          ? `Dropdown field constraints for ${currentServiceName}: ${dropdownConstraints}`
+          : "",
+      },
+      {
+        type: "system",
+        message: `Current ${currentServiceName} configuration: ${JSON.stringify(wizardValues?.services?.[currentServiceName] || {})}`,
+      },
+      {
+        type: "system",
+        message: `When making configuration suggestions: 1) First analyze if the current config is already optimal for the user's needs. 2) If current config is already good, just explain why it's optimal instead of suggesting changes. 3) Only suggest changes when there's a meaningful improvement. 4) When suggesting changes, use JSON code blocks with exact field names and ONLY use valid field values (especially for dropdown fields - stick to the allowed options). 5) Include suggestion keywords like "I recommend". 6) Avoid suggesting minor variations (like different CIDR ranges) of essentially the same configuration strategy.`,
+      },
+      // Add conversation history
+      ...previous
+        .filter((m) => m.content && m.content.trim() !== "")
+        .map((m) => ({
+          type: m.type === "ai" ? "assistant" : m.type,
+          message: m.content,
+        })),
+      { type: "user", message: userMessage.content },
+    ];
+
+    let content = "";
+    const chat = streamChat(
+      {
+        messages: payloadMessages,
+        topic: serviceTitle,
+        wizardValues: aiContext,
+        currentService: currentServiceName,
+      },
+      (data) => {
+        if (data.chunk) {
+          content += data.chunk;
+          update({ content });
+        }
+        if (data.done) {
+          const newSuggestion = extractSuggestionsFromText(
+            content,
+            service || findServiceByDisplayName(serviceTitle),
+            wizardValues,
+          );
+          if (Object.keys(newSuggestion).length > 0) {
+            setSuggestion(newSuggestion);
+          }
+          update({ pending: false });
+        }
+      },
+    );
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: aiMessageId,
+        type: "ai",
+        content: "",
+        pending: true,
+        stop: chat.stop,
+      },
+    ]);
+    chat.finished.then(
+      (end) =>
+        update({
+          pending: false,
+          stop: undefined,
+          ...(end !== "done" && { interrupted: end }),
+        }),
+      (err) => {
+        console.error(err);
+        update({
+          pending: false,
+          stop: undefined,
+          content: AURA_ERROR,
+          error: true,
+        });
+      },
+    );
+  };
+
+  /**
+   * Send the composer's text
+   */
+  const handleSubmit = () => {
+    if (!inputText.trim() || busy) return;
 
     const userMessage = {
       id: Date.now(),
@@ -170,156 +304,13 @@ const AIChatModal = ({
     };
     setMessages((prev) => [...prev, userMessage]);
     setInputText("");
-    setIsLoading(true);
+    ask(messages, userMessage);
+  };
 
-    const aiMessageId = Date.now() + 1;
-    let aiMessage = { id: aiMessageId, type: "ai", content: "", pending: true };
-    setMessages((prev) => [...prev, aiMessage]);
-    const settle = (patch) =>
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === aiMessageId ? { ...msg, ...patch, pending: false } : msg,
-        ),
-      );
-
-    try {
-      let currentServiceName = service;
-      if (!currentServiceName || !SERVICES_CONFIG[currentServiceName]) {
-        currentServiceName = findServiceByDisplayName(serviceTitle);
-      }
-
-      // Build dropdown field constraints message
-      const dropdownConstraints =
-        currentServiceName && SERVICES_CONFIG[currentServiceName]
-          ? Object.entries(SERVICES_CONFIG[currentServiceName].fields)
-              .filter(
-                ([_, field]) =>
-                  field.type === FIELD_TYPES.DROPDOWN && field.options,
-              )
-              .map(
-                ([fieldName, field]) =>
-                  `${fieldName}: [${field.options.map((opt) => opt.value).join(", ")}]`,
-              )
-              .join("; ")
-          : "";
-
-      // Build context for AI (system messages + conversation history)
-      const aiContext = toAiContext(wizardValues);
-      const payloadMessages = [
-        {
-          type: "system",
-          message: `The current environment configuration is: ${JSON.stringify(aiContext)}`,
-        },
-        {
-          type: "system",
-          message: `Available service options: ${Object.keys(SERVICES_CONFIG).join(", ")}`,
-        },
-        {
-          type: "system",
-          message: `Current service: ${currentServiceName || serviceTitle}`,
-        },
-        {
-          type: "system",
-          message:
-            currentServiceName && SERVICES_CONFIG[currentServiceName]
-              ? `Available fields for ${currentServiceName}: ${Object.keys(SERVICES_CONFIG[currentServiceName].fields).join(", ")}`
-              : "",
-        },
-        {
-          type: "system",
-          message: dropdownConstraints
-            ? `Dropdown field constraints for ${currentServiceName}: ${dropdownConstraints}`
-            : "",
-        },
-        {
-          type: "system",
-          message: `Current ${currentServiceName} configuration: ${JSON.stringify(wizardValues?.services?.[currentServiceName] || {})}`,
-        },
-        {
-          type: "system",
-          message: `When making configuration suggestions: 1) First analyze if the current config is already optimal for the user's needs. 2) If current config is already good, just explain why it's optimal instead of suggesting changes. 3) Only suggest changes when there's a meaningful improvement. 4) When suggesting changes, use JSON code blocks with exact field names and ONLY use valid field values (especially for dropdown fields - stick to the allowed options). 5) Include suggestion keywords like "I recommend". 6) Avoid suggesting minor variations (like different CIDR ranges) of essentially the same configuration strategy.`,
-        },
-        // Add conversation history
-        ...messages
-          .filter((m) => m.content && m.content.trim() !== "")
-          .map((m) => ({
-            type: m.type === "ai" ? "assistant" : m.type,
-            message: m.content,
-          })),
-        { type: "user", message: userMessage.content },
-      ];
-
-      const response = await authService.makeAuthenticatedRequest("/ai/chat", {
-        method: "POST",
-        body: JSON.stringify({
-          messages: payloadMessages,
-          topic: serviceTitle,
-          wizardValues: aiContext,
-          currentService: currentServiceName,
-        }),
-      });
-
-      if (!response.ok || !response.body)
-        throw new Error("Failed to connect to AI service");
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-
-        chunk.split("\n").forEach((line) => {
-          if (line.startsWith("data: ")) {
-            try {
-              const data = JSON.parse(line.replace(/^data: /, ""));
-
-              if (data.chunk) {
-                aiMessage.content += data.chunk;
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === aiMessageId
-                      ? {
-                          ...msg,
-                          content: aiMessage.content,
-                        }
-                      : msg,
-                  ),
-                );
-              }
-
-              if (data.done) {
-                const currentServiceName =
-                  service || findServiceByDisplayName(serviceTitle);
-                const newSuggestion = extractSuggestionsFromText(
-                  aiMessage.content,
-                  currentServiceName,
-                  wizardValues,
-                );
-
-                if (Object.keys(newSuggestion).length > 0) {
-                  setSuggestion(newSuggestion);
-                }
-                settle({});
-                setIsLoading(false);
-              }
-            } catch (err) {
-              console.error("Parse error:", err, "Line:", line);
-            }
-          }
-        });
-      }
-
-      settle({});
-      setIsLoading(false);
-    } catch (err) {
-      console.error("Error in handleSubmit:", err);
-      // Show error message
-      settle({ content: AURA_ERROR, error: true });
-      setIsLoading(false);
-    }
+  // The failed answer goes and its question is asked again, same history.
+  const retry = () => {
+    setMessages(messages.slice(0, -1));
+    ask(messages.slice(0, -2), messages.at(-2));
   };
 
   /**
@@ -327,7 +318,6 @@ const AIChatModal = ({
    */
   const handleClose = () => {
     setInputText("");
-    setIsLoading(false);
     setSuggestion(null);
     onClose();
   };
@@ -352,7 +342,7 @@ const AIChatModal = ({
           </div>
         </DialogHeader>
 
-        <ChatThread messages={messages}>
+        <ChatThread messages={messages} onRetry={retry}>
           {suggestion && (
             <SuggestionBox
               suggestion={suggestion}
@@ -368,6 +358,7 @@ const AIChatModal = ({
             value={inputText}
             onChange={setInputText}
             onSend={handleSubmit}
+            onStop={pending?.stop}
             busy={busy}
             placeholder={`Ask about ${serviceTitle}...`}
           />

@@ -3,9 +3,9 @@ import { useRef, useState } from "react";
 import symbol from "@/assets/openprime-symbol-color.svg";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import authService from "../../../services/authService";
 import ChatThread from "./ChatThread";
 import Composer from "./Composer";
+import { streamChat } from "./streamChat";
 
 export const AURA_ERROR =
   "Aura couldn't answer right now. Try again in a moment.";
@@ -44,70 +44,71 @@ export default function AuraConversation({
   const [input, setInput] = useState("");
   const inputRef = useRef(null);
   // The pending answer lives in the messages, so a remount mid-answer still
-  // knows Aura is busy.
-  const busy = messages.some((m) => m.pending);
+  // knows Aura is busy and can stop it.
+  const pending = messages.find((m) => m.pending);
 
-  const send = async () => {
-    const userMessage = {
-      id: Date.now(),
-      type: "user",
-      message: input,
-      timestamp: new Date(),
-    };
+  // Streams Aura's answer to `history`, which ends with the question.
+  const ask = (history) => {
     const botId = Date.now() + 1;
+    const update = (patch) =>
+      setMessages((prev) =>
+        prev.map((m) => (m.id === botId ? { ...m, ...patch } : m)),
+      );
+    let answer = "";
+    const chat = streamChat({ messages: history, context }, (data) => {
+      if (data.chunk) {
+        answer += data.chunk;
+        update({ message: answer });
+      }
+      if (data.done) update({ pending: false });
+    });
     setMessages((prev) => [
       ...prev,
-      userMessage,
       {
         id: botId,
         type: "bot",
         message: "",
         timestamp: new Date(),
         pending: true,
+        stop: chat.stop,
       },
     ]);
+    chat.finished.then(
+      (end) =>
+        update({
+          pending: false,
+          stop: undefined,
+          ...(end !== "done" && { interrupted: end }),
+        }),
+      (err) => {
+        console.error(err);
+        update({
+          pending: false,
+          stop: undefined,
+          message: AURA_ERROR,
+          error: true,
+        });
+      },
+    );
+  };
+
+  const send = () => {
+    const userMessage = {
+      id: Date.now(),
+      type: "user",
+      message: input,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    ask([...messages, userMessage]);
+  };
 
-    const update = (patch) =>
-      setMessages((prev) =>
-        prev.map((m) => (m.id === botId ? { ...m, ...patch } : m)),
-      );
-    let answer = "";
-    try {
-      const res = await authService.makeAuthenticatedRequest("/ai/chat", {
-        method: "POST",
-        body: JSON.stringify({ messages: [...messages, userMessage], context }),
-      });
-      if (!res.ok || !res.body) throw new Error("Aura is unavailable");
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        decoder
-          .decode(value, { stream: true })
-          .split("\n")
-          .forEach((line) => {
-            if (!line.startsWith("data: ")) return;
-            try {
-              const data = JSON.parse(line.replace(/^data: /, ""));
-              if (data.chunk) {
-                answer += data.chunk;
-                update({ message: answer });
-              }
-              if (data.done) update({ pending: false });
-            } catch {
-              /* ignore malformed line */
-            }
-          });
-      }
-    } catch (err) {
-      console.error(err);
-      update({ message: AURA_ERROR, error: true });
-    } finally {
-      update({ pending: false });
-    }
+  // The failed answer goes and its question is asked again, same history.
+  const retry = () => {
+    const history = messages.slice(0, -1);
+    setMessages(history);
+    ask(history);
   };
 
   const fillPrompt = (prompt) => {
@@ -118,7 +119,7 @@ export default function AuraConversation({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {messages.length > 0 ? (
-        <ChatThread messages={messages} />
+        <ChatThread messages={messages} onRetry={retry} />
       ) : (
         <div className="flex flex-1 flex-col justify-end gap-3 px-4 pb-1">
           <p className="text-sm text-muted-foreground">
@@ -153,7 +154,8 @@ export default function AuraConversation({
           value={input}
           onChange={setInput}
           onSend={send}
-          busy={busy}
+          onStop={pending?.stop}
+          busy={Boolean(pending)}
           placeholder="Ask Aura anything..."
           autoFocus={autoFocus}
         />

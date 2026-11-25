@@ -17,7 +17,11 @@ export class AuthService {
   async makeAuthenticatedRequest(url, options = {}) {
     const controller = new AbortController();
 
-    const { timeout, ...fetchOptions } = options;
+    const { timeout, signal, ...fetchOptions } = options;
+    // The caller's signal (Aura's Stop) aborts the request and its body too.
+    signal?.addEventListener("abort", () => controller.abort(signal.reason), {
+      once: true,
+    });
     const timer = timeout
       ? setTimeout(() => {
           controller.abort(`timeout after ${timeout} ms`);
