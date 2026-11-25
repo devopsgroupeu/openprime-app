@@ -87,25 +87,30 @@ const TerraformBackendSection = ({
           <SettingsRow
             title="State bucket"
             description={
-              <code className="font-mono break-all">{backend.bucketName}</code>
-            }
-            control={
-              <div className="flex items-center gap-1">
+              <span className="inline-flex items-center gap-1">
+                <code className="font-mono break-all">
+                  {backend.bucketName}
+                </code>
                 <CopyButton
                   text={backend.bucketName}
                   label="Copy bucket name"
+                  size="icon-xs"
                 />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    focusBucketField.current = true;
-                    onChangeBucket();
-                  }}
-                >
-                  Change
-                </Button>
-              </div>
+              </span>
+            }
+            control={
+              <Button
+                variant="ghost"
+                size="sm"
+                // Stacked below sm: the label lines up with the row text.
+                className="max-sm:-ml-2"
+                onClick={() => {
+                  focusBucketField.current = true;
+                  onChangeBucket();
+                }}
+              >
+                Change
+              </Button>
             }
           />
         </SettingsRowGroup>
