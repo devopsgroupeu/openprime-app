@@ -25,6 +25,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import authService from "../../services/authService";
 import { server } from "../../mocks/server";
+import { environments } from "../../mocks/fixtures";
 
 // Full-page render: needs Theme (Toast), Toast, Auth, tooltips (the app shell
 // provides them) and a router (useParams/useNavigate). In mock mode
@@ -209,6 +210,41 @@ describe("EnvironmentDetailPage async jobs", () => {
         .getByText("Couldn't generate the repository.")
         .closest('[data-slot="callout"]'),
     ).not.toHaveAttribute("role");
+  });
+
+  // The backend can leave `deploying` behind (an expired retry stores no
+  // outcome); enqueueing again re-attaches to the active job.
+  it("shows a processing environment without its earlier failure and lets Generate re-attach", async () => {
+    const polled = [];
+    server.use(
+      http.get("*/environments/env-003", () =>
+        HttpResponse.json({ ...environments[2], status: "deploying" }),
+      ),
+      http.post("*/environments/env-003/generate", () =>
+        HttpResponse.json(
+          { jobId: "job-active-7", type: "generate", status: "running" },
+          { status: 202 },
+        ),
+      ),
+      http.get("*/jobs/:jobId", ({ params }) => {
+        polled.push(params.jobId);
+        return HttpResponse.json({ id: params.jobId, status: "running" });
+      }),
+    );
+    const { unmount } = renderDetailPage({ path: "/environments/env-003" });
+
+    expect(await screen.findByText("Processing")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Couldn't generate the repository."),
+    ).not.toBeInTheDocument();
+    const generate = screen.getByRole("button", {
+      name: "Generate repository",
+    });
+    expect(generate).toBeEnabled();
+
+    fireEvent.click(generate);
+    await waitFor(() => expect(polled).toEqual(["job-active-7"]));
+    unmount();
   });
 
   it("titles a missing environment Environment not found", async () => {

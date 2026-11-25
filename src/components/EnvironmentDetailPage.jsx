@@ -282,9 +282,16 @@ function EnvironmentDetail({ id, onDelete }) {
   };
 
   const last = lastJob(environment);
+  // A job a worker has claimed (`deploying`) supersedes the stored failure.
+  // The job buttons stay enabled then: the backend can leave `deploying`
+  // behind, and enqueueing again re-attaches to the active job.
   const failure =
     job?.error ??
-    (last?.status === "failed" && last.error ? { message: last.error } : null);
+    (environment.status !== "deploying" &&
+    last?.status === "failed" &&
+    last.error
+      ? { message: last.error }
+      : null);
   const callout = running ? (
     <JobCallout kind={running} startedAt={job.startedAt} />
   ) : failure ? (
