@@ -286,6 +286,16 @@ describe("Create Environment with All Helm Charts", () => {
       }
     });
 
+    // Step 9b: Continue to Review, where Create lives
+    await test.step("Navigate to Review", async () => {
+      await ctx.page.getByRole("button", { name: /continue/i }).click();
+      await ctx.page.waitForTimeout(500);
+
+      const reviewHeading = ctx.page.getByRole("heading", { level: 1, name: "Review" });
+      expect(await reviewHeading.isVisible()).toBe(true);
+      console.log("✓ Navigated to Review step");
+    });
+
     // Step 10: Create the environment
     await test.step("Create environment", async () => {
       const createButton = ctx.page.getByRole("button", {
