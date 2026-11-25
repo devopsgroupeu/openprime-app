@@ -5,13 +5,18 @@ import { SettingsSection } from "@/components/shared/settings";
 import { Badge } from "@/components/ui/badge";
 
 /**
- * Enabled charts `[key, config]` of the EKS cluster. Charts no longer in the
- * catalog are left out: generation drops them and the wizard prunes them.
+ * Enabled charts `[key, config]` of the EKS cluster, as the wizard lists them.
+ * Charts no longer in the catalog are left out (generation drops them and the
+ * wizard prunes them), and so are the always installed ones (Argo CD,
+ * Karpenter).
  */
 export const enabledCharts = (environment) =>
   environment.services?.eks?.enabled
     ? Object.entries(environment.services.eks.helmCharts || {}).filter(
-        ([key, config]) => config?.enabled && getHelmChartConfig(key),
+        ([key, config]) =>
+          config?.enabled &&
+          getHelmChartConfig(key) &&
+          !getHelmChartConfig(key).implicit,
       )
     : [];
 
