@@ -2,9 +2,8 @@
 // One catalog field: label, control, help text (aria-describedby) and, where
 // the field can be wrong, an error under it (aria-invalid).
 import React from "react";
-import { ChevronRight, Plus, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 import { FIELD_TYPES } from "../config/servicesConfig";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FieldDescription, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -34,7 +33,6 @@ const DynamicFieldRenderer = ({
       : "",
   );
   const [jsonError, setJsonError] = React.useState("");
-  const [expandedIndex, setExpandedIndex] = React.useState(null);
   // A list field's text as typed, empty lines included.
   const [listText, setListText] = React.useState("");
 
@@ -306,147 +304,6 @@ const DynamicFieldRenderer = ({
             JSON format
           </p>
         ) : null,
-      );
-    }
-
-    case FIELD_TYPES.DYNAMIC_LIST: {
-      const listValue = Array.isArray(value) ? value : [];
-
-      const createDefaultItem = () => {
-        const defaultItem = {};
-        Object.entries(fieldConfig.itemSchema).forEach(([key, schema]) => {
-          defaultItem[key] =
-            schema.defaultValue !== undefined
-              ? schema.defaultValue
-              : schema.type === FIELD_TYPES.TOGGLE
-                ? false
-                : schema.type === FIELD_TYPES.NUMBER
-                  ? 0
-                  : "";
-        });
-        return defaultItem;
-      };
-
-      const addItem = () => {
-        const newItem = createDefaultItem();
-        const newList = [...listValue, newItem];
-        handleChange(newList);
-        setExpandedIndex(newList.length - 1);
-      };
-
-      const removeItem = (index) => {
-        const newList = listValue.filter((_, i) => i !== index);
-        handleChange(newList);
-        if (expandedIndex === index) {
-          setExpandedIndex(null);
-        } else if (expandedIndex > index) {
-          setExpandedIndex(expandedIndex - 1);
-        }
-      };
-
-      const updateItem = (index, itemFieldName, itemValue) => {
-        const newList = [...listValue];
-        newList[index] = { ...newList[index], [itemFieldName]: itemValue };
-        handleChange(newList);
-      };
-
-      const getItemDisplayName = (item, index) => {
-        // Try to find a 'name' field or use index
-        return item.name || `Item ${index + 1}`;
-      };
-
-      const itemLabel = fieldConfig.displayName?.replace(/s$/, "") || "item";
-
-      return (
-        <div
-          role="group"
-          aria-labelledby={`${id}-label`}
-          aria-describedby={descId}
-          data-slot="dynamic-field"
-          className="flex min-w-0 flex-col gap-1.5"
-        >
-          <p id={`${id}-label`} className="text-sm font-medium">
-            {fieldConfig.displayName}
-          </p>
-          {description}
-
-          {listValue.length > 0 && (
-            <ul className="divide-y divide-border overflow-hidden rounded-lg ring-1 ring-border ring-inset">
-              {listValue.map((item, index) => {
-                const open = expandedIndex === index;
-                const panelId = `${id}-item-${index}`;
-                return (
-                  <li key={index}>
-                    <div className="flex items-center gap-2 pr-2">
-                      <button
-                        type="button"
-                        aria-expanded={open}
-                        aria-controls={panelId}
-                        onClick={() => setExpandedIndex(open ? null : index)}
-                        className="flex min-h-9 flex-1 items-center gap-2 px-3 text-left text-sm font-medium outline-none transition-[background-color] duration-(--dur-fast) hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-                      >
-                        <ChevronRight
-                          aria-hidden
-                          className={`size-4 text-muted-foreground transition-transform duration-(--dur-fast) ${open ? "rotate-90" : ""}`}
-                        />
-                        {getItemDisplayName(item, index)}
-                      </button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="xs"
-                        onClick={() => removeItem(index)}
-                        disabled={disabled}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-
-                    {open && (
-                      <div
-                        id={panelId}
-                        className="flex flex-col gap-4 border-t border-border p-3"
-                      >
-                        {Object.entries(fieldConfig.itemSchema).map(
-                          ([itemFieldName, itemFieldConfig]) => (
-                            <DynamicFieldRenderer
-                              key={itemFieldName}
-                              fieldConfig={itemFieldConfig}
-                              value={item[itemFieldName]}
-                              onChange={(_, newValue) =>
-                                updateItem(index, itemFieldName, newValue)
-                              }
-                              fieldName={itemFieldName}
-                              disabled={disabled}
-                            />
-                          ),
-                        )}
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-
-          <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={addItem}
-              disabled={disabled}
-            >
-              <Plus aria-hidden />
-              Add {itemLabel.toLowerCase()}
-            </Button>
-            {listValue.length > 0 && (
-              <p className="text-xs text-muted-foreground tabular-nums">
-                {listValue.length} item{listValue.length === 1 ? "" : "s"}
-              </p>
-            )}
-          </div>
-        </div>
       );
     }
 
