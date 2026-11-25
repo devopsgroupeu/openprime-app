@@ -1,9 +1,7 @@
 import { RelativeTime } from "@/components/shared/format";
 import { CopyButton } from "@/components/shared/copy-button";
 import { SettingsSection, StatCard } from "@/components/shared/settings";
-import { modifiedAt, regionOf } from "../../utils/environmentStats";
 import { DetailList, DetailRow, Mono, NotConfigured } from "./DetailList";
-import { regionName } from "./EnvironmentConfiguration";
 import {
   OpenLink,
   cleanGitUrl,
@@ -13,6 +11,21 @@ import {
   terraformBackendOf,
 } from "./ExternalResources";
 import { ServicesPreview } from "./ServicesList";
+
+// When a job last ran: "5 days ago", "Failed" over the time, or "Never".
+function LastJob({ label, at, status }) {
+  if (!at) return <StatCard compact label={label} value="Never" />;
+  return status === "failed" ? (
+    <StatCard
+      compact
+      label={label}
+      value="Failed"
+      hint={<RelativeTime iso={at} />}
+    />
+  ) : (
+    <StatCard compact label={label} value={<RelativeTime iso={at} />} />
+  );
+}
 
 /** Overview: the numbers, where the code goes, and the first services. */
 export default function EnvironmentOverview({
@@ -25,23 +38,27 @@ export default function EnvironmentOverview({
   const gitRepo = gitRepositoryOf(environment);
   const tfBackend = terraformBackendOf(environment);
   const credential = environment.cloudCredential;
-  const modified = modifiedAt(environment);
   const web = gitWebUrl(gitRepo?.url);
+  // Helm charts run on EKS; without it the count says nothing.
+  const eks = Boolean(environment.services?.eks?.enabled);
   return (
     <>
-      <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4">
+      <div
+        className={`grid grid-cols-2 gap-2 sm:gap-4 ${eks ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}
+      >
         <StatCard compact label="Services" value={serviceCount} />
-        <StatCard compact label="Helm charts" value={chartCount} />
-        <StatCard
-          compact
-          label="Region"
-          value={regionOf(environment) || "None"}
-          hint={regionName(environment)}
+        {eks ? (
+          <StatCard compact label="Helm charts" value={chartCount} />
+        ) : null}
+        <LastJob
+          label="Last generated"
+          at={environment.last_generate_at}
+          status={environment.last_generate_status}
         />
-        <StatCard
-          compact
-          label="Modified"
-          value={modified ? <RelativeTime iso={modified} /> : "Never"}
+        <LastJob
+          label="Last pushed"
+          at={environment.last_push_at}
+          status={environment.last_push_status}
         />
       </div>
       <div className="grid gap-8 lg:grid-cols-2 lg:items-start">

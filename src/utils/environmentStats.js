@@ -103,15 +103,24 @@ export const regionOf = (env) => env.region || env.location || "";
 export const modifiedAt = (env) =>
   env.updated_at || env.updatedAt || env.created_at || env.createdAt;
 
-/** Stat strip: environments, ready ones, enabled services and distinct regions. */
+/**
+ * Stat strip: environments, enabled services, distinct regions and the time
+ * of the last successful generate (ISO, or null), facts the filter tabs do
+ * not show.
+ */
 export const summarizeEnvironments = (environments) => ({
   total: environments.length,
-  ready: environments.filter((env) => displayOf(env).key === "ready").length,
   services: environments.reduce(
     (sum, env) => sum + enabledServices(env).length,
     0,
   ),
   regions: new Set(environments.map(regionOf).filter(Boolean)).size,
+  lastGenerated:
+    environments
+      .filter((env) => env.last_generate_status === "succeeded")
+      .map((env) => env.last_generate_at)
+      .filter(Boolean)
+      .sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? null,
 });
 
 const FIRST = ["ready", "not-generated", "failed"];

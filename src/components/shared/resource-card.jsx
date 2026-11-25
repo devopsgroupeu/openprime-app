@@ -48,7 +48,7 @@ export function ResourceCard({
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex min-w-0 items-center gap-1.5">
-          <h3 className="truncate text-md font-semibold">
+          <h2 className="truncate text-md font-semibold">
             <Link
               to={href}
               // The link covers the card, so a truncated name shows on hover.
@@ -58,7 +58,7 @@ export function ResourceCard({
             >
               {title}
             </Link>
-          </h3>
+          </h2>
           {badges ? (
             <div className="flex shrink-0 items-center gap-1">{badges}</div>
           ) : null}

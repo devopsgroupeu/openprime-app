@@ -37,41 +37,39 @@ const staging = {
 };
 
 describe("summarizeEnvironments", () => {
-  it("counts environments, ready ones, enabled services and regions", () => {
+  it("counts environments, enabled services and regions", () => {
     expect(summarizeEnvironments([prod, staging])).toEqual({
       total: 2,
-      ready: 1,
       services: 5,
       regions: 2,
+      lastGenerated: null,
     });
   });
 
   it("returns zeros for no environments", () => {
     expect(summarizeEnvironments([])).toEqual({
       total: 0,
-      ready: 0,
       services: 0,
       regions: 0,
+      lastGenerated: null,
     });
   });
 
-  it("counts ready by the effective status the badge shows", () => {
-    const generated = {
-      ...staging,
-      status: "pending",
-      last_generate_at: "2026-07-01T10:00:00Z",
-      last_generate_status: "succeeded",
-    };
-    const broken = {
-      ...prod,
-      last_push_at: "2026-07-01T10:00:00Z",
-      last_push_status: "failed",
-    };
-    expect(summarizeEnvironments([generated]).ready).toBe(1);
-    expect(summarizeEnvironments([broken]).ready).toBe(0);
+  // The Ready count left the strip (the filter tabs show it); the strip
+  // dates the last successful generate instead.
+  it("dates the last successful generate across the environments", () => {
+    const generated = (env, at, status = "succeeded") => ({
+      ...env,
+      last_generate_at: at,
+      last_generate_status: status,
+    });
     expect(
-      summarizeEnvironments([{ ...staging, status: "pending" }]).ready,
-    ).toBe(0);
+      summarizeEnvironments([
+        generated(prod, "2026-07-01T10:00:00Z"),
+        generated(staging, "2026-08-01T10:00:00Z"),
+        generated(staging, "2026-09-01T10:00:00Z", "failed"),
+      ]).lastGenerated,
+    ).toBe("2026-08-01T10:00:00Z");
   });
 
   it("counts a region once however many environments use it", () => {

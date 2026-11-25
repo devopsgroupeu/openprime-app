@@ -12,6 +12,7 @@ import { ThemeProvider } from "../../contexts/ThemeContext";
 import { ToastProvider } from "../../contexts/ToastContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import EnvironmentsPage from "../EnvironmentsPage";
+import { formatRelative } from "@/components/shared/format";
 
 const prod = {
   id: "env-1",
@@ -89,8 +90,9 @@ function renderPage(props = {}, path = "/environments") {
   );
 }
 
+// Card titles are h2: the page's h1 is "Environments".
 const cardNames = () =>
-  screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+  screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
 const search = () =>
   screen.getByRole("searchbox", { name: "Search by name, prefix or region" });
 const openMenu = (name) =>
@@ -121,12 +123,23 @@ describe("EnvironmentsPage", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Environments" }),
     ).toBeInTheDocument();
+    // Facts the filter tabs do not already show; the last successful
+    // generate across the environments.
+    const stats = Array.from(
+      document.querySelectorAll('[data-slot="stat-card"]'),
+    );
+    expect(stats.map((card) => card.firstChild.textContent)).toEqual([
+      "Environments",
+      "Services enabled",
+      "Regions",
+      "Last generated",
+    ]);
+    expect(stats.slice(0, 3).map((card) => card.lastChild.textContent)).toEqual(
+      ["3", "13", "3"],
+    );
     expect(
-      Array.from(
-        document.querySelectorAll('[data-slot="stat-card"]'),
-        (card) => card.textContent,
-      ),
-    ).toEqual(["Environments3", "Ready1", "Services enabled13", "Regions3"]);
+      within(stats[3]).getByText(formatRelative(prod.last_generate_at)),
+    ).toBeInTheDocument();
     // Recently modified first by default.
     expect(cardNames()).toEqual(["demo-staging", "demo-prod", "zeta-sandbox"]);
     expect(screen.getByRole("link", { name: "demo-prod" })).toHaveAttribute(
@@ -312,14 +325,20 @@ describe("EnvironmentsPage", () => {
     renderPage({ environments: [] });
 
     expect(screen.getByText("No environments yet")).toBeInTheDocument();
+    // One way forward: the empty state's button, not the header's as well.
     const create = screen.getAllByRole("link", { name: "New environment" });
-    expect(create).toHaveLength(2);
-    create.forEach((link) =>
-      expect(link).toHaveAttribute("href", "/environments/create"),
-    );
+    expect(create).toHaveLength(1);
+    expect(create[0]).toHaveAttribute("href", "/environments/create");
     expect(
       await screen.findByRole("link", { name: "Add AWS credentials" }),
     ).toHaveAttribute("href", "/settings/cloud-credentials");
+    // The wizard can create the state bucket; no tip says to bring one.
+    expect(
+      screen.getByText(
+        "The wizard can create the S3 bucket for Terraform state.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/S3 bucket name ready/)).not.toBeInTheDocument();
     // Nothing to search or count yet.
     expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
     expect(
@@ -359,12 +378,14 @@ describe("EnvironmentsPage", () => {
     expect(screen.queryByText("No environments yet")).not.toBeInTheDocument();
   });
 
-  it("shows a skeleton while loading", () => {
+  it("shows a skeleton while loading, stat strip included", () => {
     renderPage({ environments: [], loading: true });
-    expect(screen.getByRole("status", { name: "Loading" })).toHaveAttribute(
-      "aria-busy",
-      "true",
-    );
+    const skeleton = screen.getByRole("status", { name: "Loading" });
+    expect(skeleton).toHaveAttribute("aria-busy", "true");
+    // The cards do not jump when the strip arrives.
+    expect(
+      skeleton.querySelectorAll('[data-slot="stat-card-skeleton"]'),
+    ).toHaveLength(4);
     expect(screen.queryByText("No environments yet")).not.toBeInTheDocument();
   });
 

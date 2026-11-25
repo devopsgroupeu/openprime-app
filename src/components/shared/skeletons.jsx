@@ -48,10 +48,22 @@ function Busy({ children, className = "flex flex-col gap-6" }) {
   );
 }
 
-export function ListPageSkeleton() {
+/** `stats`: the list's stat strip (tiles), so the cards do not jump. */
+export function ListPageSkeleton({ stats = 0 }) {
   return (
     <Busy>
       <HeaderSkeleton />
+      {stats > 0 ? (
+        <div className="grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-4">
+          {Array.from({ length: stats }, (_, i) => (
+            <Skeleton
+              key={i}
+              data-slot="stat-card-skeleton"
+              className="h-9 rounded-lg sm:h-16.5"
+            />
+          ))}
+        </div>
+      ) : null}
       <div className="flex items-center justify-between gap-3">
         <Skeleton className="h-7 w-56 rounded-lg" />
         <Skeleton className="h-8 w-72 rounded-lg" />

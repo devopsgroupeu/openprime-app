@@ -14,6 +14,7 @@ import {
   statusFilters,
   summarizeEnvironments,
 } from "../utils/environmentStats";
+import { RelativeTime } from "@/components/shared/format";
 import { ListToolbar } from "@/components/shared/list-toolbar";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageShell } from "@/components/shared/page-shell";
@@ -110,7 +111,7 @@ const EnvironmentsPage = ({
   if (loading) {
     return (
       <PageShell>
-        <ListPageSkeleton />
+        <ListPageSkeleton stats={4} />
       </PageShell>
     );
   }
@@ -164,7 +165,8 @@ const EnvironmentsPage = ({
       <PageHeader
         title="Environments"
         description="AWS environments that OpenPrime turns into Terraform, Helm and Argo CD code."
-        actions={<NewEnvironmentButton />}
+        // First run: the empty state carries the one way forward.
+        actions={hasEnvironments || loadError ? <NewEnvironmentButton /> : null}
       />
       {loadError ? (
         <ErrorState
@@ -190,9 +192,19 @@ const EnvironmentsPage = ({
           {/* Compact below sm so the first card stays above the fold. */}
           <div className="grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-4">
             <StatCard compact label="Environments" value={stats.total} />
-            <StatCard compact label="Ready" value={stats.ready} />
             <StatCard compact label="Services enabled" value={stats.services} />
             <StatCard compact label="Regions" value={stats.regions} />
+            <StatCard
+              compact
+              label="Last generated"
+              value={
+                stats.lastGenerated ? (
+                  <RelativeTime iso={stats.lastGenerated} />
+                ) : (
+                  "Never"
+                )
+              }
+            />
           </div>
           <ListToolbar
             search={query}

@@ -22,8 +22,8 @@ const PrerequisitesChecklist = ({ hasCredentials = false }) => (
           </>
         )}
       </li>
-      <li>Have a Git repository URL ready for your infrastructure code.</li>
-      <li>Have an S3 bucket name ready for Terraform state.</li>
+      <li>Have a git repository ready if you want to push the code.</li>
+      <li>The wizard can create the S3 bucket for Terraform state.</li>
     </ul>
   </Callout>
 );

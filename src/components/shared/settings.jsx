@@ -162,15 +162,24 @@ export function StatCard({ label, value, hint, compact = false }) {
       data-slot="stat-card"
       className={cn(
         "flex flex-col gap-0.5 rounded-lg bg-card p-2.5 shadow-(--shadow-ring-xs)",
+        // Below sm: "3 Services" on one line; a long value pushes the whole
+        // label to the next line rather than breaking it.
         compact &&
-          "max-sm:flex-row-reverse max-sm:items-baseline max-sm:justify-end max-sm:gap-1.5 max-sm:px-2.5 max-sm:py-1.5",
+          "max-sm:flex-row max-sm:flex-wrap max-sm:items-baseline max-sm:gap-x-1.5 max-sm:gap-y-0 max-sm:px-2.5 max-sm:py-1.5",
       )}
     >
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p
+        className={cn(
+          "text-xs text-muted-foreground",
+          compact && "max-sm:whitespace-nowrap",
+        )}
+      >
+        {label}
+      </p>
       <p
         className={cn(
           "text-lg font-semibold tabular-nums",
-          compact && "max-sm:text-md",
+          compact && "max-sm:order-first max-sm:text-md",
         )}
       >
         {value}

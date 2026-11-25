@@ -26,6 +26,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import authService from "../../services/authService";
 import { server } from "../../mocks/server";
 import { environments } from "../../mocks/fixtures";
+import { formatRelative } from "@/components/shared/format";
 
 // Full-page render: needs Theme (Toast), Toast, Auth, tooltips (the app shell
 // provides them) and a router (useParams/useNavigate). In mock mode
@@ -377,7 +378,11 @@ describe("EnvironmentDetailPage async jobs", () => {
     expect(
       screen.getByText(/AccessDenied for s3:CreateBucket/),
     ).toBeInTheDocument();
-    expect(screen.getByText("Failed")).toBeInTheDocument();
+    expect(
+      within(document.querySelector('[data-slot="page-header"]')).getByText(
+        "Failed",
+      ),
+    ).toBeInTheDocument();
     // Already failed when the page opened: shown, not announced.
     expect(
       screen
@@ -594,6 +599,44 @@ describe("EnvironmentDetailPage leaving during a job", () => {
       screen.getByRole("button", { name: "Generate repository" }),
     ).toBeEnabled();
   }, 10000);
+});
+
+describe("EnvironmentDetailPage overview", () => {
+  const stats = () =>
+    Array.from(document.querySelectorAll('[data-slot="stat-card"]'));
+  const labels = () => stats().map((card) => card.firstChild.textContent);
+
+  it("counts services and charts and says when it was generated and pushed", async () => {
+    renderDetailPage();
+    await screen.findByRole("heading", { level: 1, name: "demo-prod" });
+
+    // Not the region and modified time again: the header shows those.
+    expect(labels()).toEqual([
+      "Services",
+      "Helm charts",
+      "Last generated",
+      "Last pushed",
+    ]);
+    expect(
+      within(stats()[2]).getByText(
+        formatRelative(environments[0].last_generate_at),
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(stats()[3]).getByText(
+        formatRelative(environments[0].last_push_at),
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves out Helm charts without EKS and says a generate failed", async () => {
+    renderDetailPage({ path: "/environments/env-003" });
+    await screen.findByRole("heading", { level: 1, name: "analytics-dev" });
+
+    expect(labels()).toEqual(["Services", "Last generated", "Last pushed"]);
+    expect(stats()[1]).toHaveTextContent("Failed");
+    expect(stats()[2]).toHaveTextContent("Never");
+  });
 });
 
 describe("EnvironmentDetailPage tabs", () => {
