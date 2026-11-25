@@ -4,6 +4,7 @@ import { createElement } from "react";
 import { Link } from "react-router";
 
 import symbol from "@/assets/openprime-symbol-color.svg";
+import { CopyButton } from "@/components/shared/copy-button";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -61,13 +62,37 @@ export function EmptyState(props) {
   );
 }
 
-/** "Couldn't load <thing>." + "Try again", announced politely. */
-export function ErrorState({ thing, onRetry, retrying = false }) {
+/**
+ * "Couldn't load <thing>." + "Try again", announced politely. The server's
+ * `message` and `requestId` (the support handle) show under the title.
+ */
+export function ErrorState({
+  thing,
+  onRetry,
+  retrying = false,
+  message,
+  requestId,
+}) {
   return (
     <div role="status" aria-live="polite" data-slot="error-state">
       <Empty>
         <EmptyHeader>
           <EmptyTitle>{`Couldn't load ${thing}.`}</EmptyTitle>
+          {message ? (
+            <EmptyDescription className="wrap-break-word">
+              {message}
+            </EmptyDescription>
+          ) : null}
+          {requestId ? (
+            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+              Error ID <span className="font-mono">{requestId}</span>
+              <CopyButton
+                text={requestId}
+                label="Copy error ID"
+                size="icon-xs"
+              />
+            </p>
+          ) : null}
         </EmptyHeader>
         <EmptyContent>
           <Button

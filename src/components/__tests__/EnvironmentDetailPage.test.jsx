@@ -327,6 +327,27 @@ describe("EnvironmentDetailPage async jobs", () => {
     unmount();
   });
 
+  it("keeps the server message and the error ID when loading fails", async () => {
+    server.use(
+      http.get("*/environments/env-001", () =>
+        HttpResponse.json(
+          { error: "Database unavailable" },
+          { status: 503, headers: { "X-Request-ID": "req-42" } },
+        ),
+      ),
+    );
+    renderDetailPage();
+
+    expect(
+      await screen.findByText("Couldn't load environment."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Database unavailable")).toBeInTheDocument();
+    expect(screen.getByText("req-42")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Copy error ID" }),
+    ).toBeInTheDocument();
+  });
+
   it("titles a missing environment Environment not found", async () => {
     renderDetailPage({ path: "/environments/env-missing" });
 

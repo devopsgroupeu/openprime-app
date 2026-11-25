@@ -5,7 +5,9 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
+import { http, HttpResponse } from "msw";
 import App from "./App";
+import { server } from "./mocks/server";
 
 // In mock mode (vitest runs with VITE_MOCK=true) the app auto-authenticates via
 // the mock AuthProvider and loads its data from MSW — no real Keycloak/backend.
@@ -43,6 +45,28 @@ test("renders the shell and opens the command palette with Cmd+K", async () => {
   // Environments come from the already-loaded list
   expect(within(palette).getByText("demo-prod")).toBeInTheDocument();
   expect(within(palette).getByText("Add AWS credentials")).toBeInTheDocument();
+});
+
+test("a failed list load shows the server message and the error ID", async () => {
+  server.use(
+    http.get("*/environments", () =>
+      HttpResponse.json(
+        { error: "Database unavailable" },
+        { status: 503, headers: { "X-Request-ID": "req-7" } },
+      ),
+    ),
+  );
+  render(<App />);
+
+  expect(
+    await screen.findByText(
+      "Couldn't load environments.",
+      {},
+      { timeout: 3000 },
+    ),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Database unavailable")).toBeInTheDocument();
+  expect(screen.getByText("req-7")).toBeInTheDocument();
 });
 
 describe("environment jobs", () => {

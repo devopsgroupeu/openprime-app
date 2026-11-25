@@ -340,7 +340,7 @@ describe("EnvironmentsPage", () => {
 
   it("keeps the status filter in the URL when the list fails to load", () => {
     renderPage(
-      { environments: [], loadError: "boom", onRetry: () => {} },
+      { environments: [], loadError: { message: "boom" }, onRetry: () => {} },
       "/environments?status=ready",
     );
 
@@ -351,7 +351,7 @@ describe("EnvironmentsPage", () => {
 
   it("shows the error state with Try again", () => {
     const onRetry = vi.fn();
-    renderPage({ environments: [], loadError: "boom", onRetry });
+    renderPage({ environments: [], loadError: { message: "boom" }, onRetry });
 
     expect(screen.getByText("Couldn't load environments.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));

@@ -198,6 +198,8 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
         fetchError.status !== 403 ? (
           <ErrorState
             thing="environment"
+            message={fetchError.message}
+            requestId={fetchError.requestId}
             onRetry={() => setReload((n) => n + 1)}
           />
         ) : (

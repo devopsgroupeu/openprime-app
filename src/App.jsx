@@ -40,7 +40,7 @@ function AppContent() {
       setEnvironments(userEnvironments);
     } catch (error) {
       console.error("Failed to load environments:", error);
-      setLoadError(error.message || "Failed to load environments");
+      setLoadError({ message: error.message, requestId: error.requestId });
       setEnvironments([]);
     } finally {
       setEnvironmentsLoading(false);

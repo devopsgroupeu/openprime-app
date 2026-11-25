@@ -167,7 +167,12 @@ const EnvironmentsPage = ({
         actions={<NewEnvironmentButton />}
       />
       {loadError ? (
-        <ErrorState thing="environments" onRetry={onRetry} />
+        <ErrorState
+          thing="environments"
+          message={loadError.message}
+          requestId={loadError.requestId}
+          onRetry={onRetry}
+        />
       ) : !hasEnvironments ? (
         <>
           <EmptyState
