@@ -85,7 +85,7 @@ const DynamicServiceConfig = ({
       <Collapsible open={open} onOpenChange={onExpandedChange}>
         <div
           className={cn(
-            "relative flex items-center gap-3 px-3.5 py-3 transition-[background-color] duration-(--dur-fast)",
+            "group/service relative flex items-center gap-3 px-3.5 py-3 transition-[background-color] duration-(--dur-fast)",
             // The name is a stretched trigger: the whole row opens it, the
             // controls sit above it.
             "has-[[data-stretched]:hover]:bg-muted/40 has-[[data-stretched]:focus-visible]:ring-2 has-[[data-stretched]:focus-visible]:ring-ring has-[[data-stretched]:focus-visible]:ring-inset",
@@ -113,8 +113,11 @@ const DynamicServiceConfig = ({
                 </Badge>
               ) : null}
             </div>
+            {/* Two lines on a phone, where the row has little width. */}
             {line ? (
-              <p className="truncate text-xs text-muted-foreground">{line}</p>
+              <p className="text-xs text-muted-foreground max-md:line-clamp-2 md:truncate">
+                {line}
+              </p>
             ) : null}
           </div>
 
@@ -127,7 +130,13 @@ const DynamicServiceConfig = ({
                   size="icon-sm"
                   aria-label={askLabel}
                   onClick={() => onAskAI?.(serviceName, name)}
-                  className="text-muted-foreground"
+                  // Below md the Aura panel's prompts stand in for it; from
+                  // md on it shows on the row's hover or focus (always on
+                  // touch).
+                  className={cn(
+                    "text-muted-foreground opacity-0 transition-opacity duration-(--dur-fast) max-md:hidden",
+                    "group-focus-within/service:opacity-100 group-hover/service:opacity-100 pointer-coarse:opacity-100",
+                  )}
                 >
                   <Sparkles aria-hidden />
                 </Button>

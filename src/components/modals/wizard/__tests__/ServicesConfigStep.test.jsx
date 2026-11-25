@@ -176,6 +176,27 @@ describe("ServicesConfigStep", () => {
     expect(vpcSwitch()).toHaveFocus();
   });
 
+  // jsdom applies no media queries, so the responsive recipe is pinned: two
+  // lines of description below md, the row's Aura button only on hover or
+  // focus there and up (the Aura panel's prompts cover phones).
+  it("gives the description room on phones and shows Aura on hover", () => {
+    renderStep();
+    expect(
+      screen.getByText("AWS Virtual Private Cloud for network isolation"),
+    ).toHaveClass("max-md:line-clamp-2", "md:truncate");
+    expect(
+      screen.getByRole("button", {
+        name: "Ask Aura about Virtual Private Cloud (VPC)",
+      }),
+    ).toHaveClass(
+      "max-md:hidden",
+      "opacity-0",
+      "group-hover/service:opacity-100",
+      "group-focus-within/service:opacity-100",
+      "pointer-coarse:opacity-100",
+    );
+  });
+
   it("keeps services closed on Enable all", async () => {
     renderStep();
     openActions();
