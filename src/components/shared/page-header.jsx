@@ -1,5 +1,6 @@
 import { IconTile } from "@/components/shared/icon-tile";
 import { useDocumentTitle } from "@/hooks/use-document-title";
+import { cn } from "@/lib/utils";
 
 /**
  * The one h1 of a page: title, description, status, actions and `menu`; optional tile. The tab
@@ -35,7 +36,10 @@ export function PageHeader({
             <h1
               ref={headingRef}
               tabIndex={headingRef ? -1 : undefined}
-              className="text-xl font-semibold text-balance outline-none"
+              className={cn(
+                "text-xl font-semibold text-balance",
+                headingRef && "outline-none",
+              )}
             >
               {title}
             </h1>
