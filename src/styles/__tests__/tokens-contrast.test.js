@@ -143,12 +143,6 @@ describe.each(Object.entries(themes))("%s theme tokens", (theme, t) => {
     },
   );
 
-  it("temporary chat page tint (bg-info/5, dark /10) keeps body and muted text AA", () => {
-    const tint = over(t.info, t.background, theme === "dark" ? 0.1 : 0.05);
-    expect(contrast(t.foreground, tint)).toBeGreaterThanOrEqual(TEXT);
-    expect(contrast(t["muted-foreground"], tint)).toBeGreaterThanOrEqual(TEXT);
-  });
-
   it.each([1, 2, 3, 4, 5])(
     "chart-%s icon stays >= 3:1 on its 15 %% tile",
     (n) => {

@@ -16,13 +16,22 @@ globalThis.TextDecoder = TextDecoder;
 Element.prototype.scrollIntoView = vi.fn();
 
 // jsdom doesn't implement matchMedia (used by the sidebar's useIsMobile).
-// Desktop width: every query reports "no match".
-window.matchMedia = (query) => ({
-  matches: false,
-  media: query,
-  addEventListener: () => {},
-  removeEventListener: () => {},
-});
+// Width queries are answered from window.innerWidth (jsdom: 1024), so a test
+// that narrows the window gets the same answer from both.
+window.matchMedia = (query) => {
+  const min = /min-width:\s*(\d+)px/.exec(query);
+  const max = /max-width:\s*(\d+)px/.exec(query);
+  const width = window.innerWidth;
+  return {
+    matches:
+      Boolean(min || max) &&
+      (!min || width >= Number(min[1])) &&
+      (!max || width <= Number(max[1])),
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  };
+};
 
 // jsdom doesn't implement ResizeObserver (used by cmdk's list).
 globalThis.ResizeObserver ??= class {

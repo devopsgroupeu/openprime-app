@@ -38,3 +38,24 @@ test("renders the shell and opens the command palette with Cmd+K", async () => {
   expect(within(palette).getByText("demo-prod")).toBeInTheDocument();
   expect(within(palette).getByText("Add AWS credentials")).toBeInTheDocument();
 });
+
+describe("settings routes", () => {
+  afterEach(() => window.history.pushState({}, "", "/"));
+
+  test.each(["/settings", "/settings/unknown"])(
+    "%s lands on the Account tab",
+    async (path) => {
+      window.history.pushState({}, "", path);
+      render(<App />);
+
+      expect(
+        await screen.findByRole(
+          "heading",
+          { level: 1, name: "Account" },
+          { timeout: 3000 },
+        ),
+      ).toBeInTheDocument();
+      expect(window.location.pathname).toBe("/settings/account");
+    },
+  );
+});
