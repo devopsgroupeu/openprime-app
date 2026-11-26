@@ -4,5 +4,3 @@ app:
   env:
     REACT_APP_API_URL: "https://api.ci.example.com/api"
     REACT_APP_KEYCLOAK_URL: "https://keycloak.ci.example.com"
-
-ingress: "broken"
