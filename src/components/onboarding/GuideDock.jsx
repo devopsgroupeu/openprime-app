@@ -201,6 +201,12 @@ const GuideDock = () => {
     points = [pushPoint(detailEnv)];
   }
   const point = points?.find((item) => !item.done) ?? null;
+  // Finished sub-steps share one line, except one whose page can be opened
+  // again (the deploy keys link).
+  const doneItems = (points || []).filter((item) => item.done && !item.link);
+  const doneTitles = STEP_ORDER.filter(
+    (id, index) => guide.steps[index].done,
+  ).map((id) => STEPS[id].title);
   // The guide cannot see GitHub; opening the deploy keys page counts as done.
   const markDeployKeysOpened = () =>
     guide.setWizard((prev) => prev && { ...prev, deployKeysOpened: true });
@@ -209,6 +215,7 @@ const GuideDock = () => {
   const saveAwsCredential = async (credentialData) => {
     try {
       await authService.post("/cloud-credentials", credentialData);
+      guide.rememberAwsKey(credentialData.credentials);
       guide.closeConnectAws();
       guide.refresh();
       toast.success("AWS account connected");
@@ -336,40 +343,41 @@ const GuideDock = () => {
               </p>
             )}
             <ol className="space-y-0.5 p-2">
+              {/* Finished steps take one line between them; the ring and the
+                  header already count them. */}
+              {doneTitles.length > 0 && (
+                <li
+                  title={doneTitles.join(", ")}
+                  className="flex items-center gap-3 px-2 py-1.5 text-xs text-tertiary"
+                >
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-primary text-inverse">
+                    <Check className="h-3 w-3" aria-hidden="true" />
+                  </span>
+                  <span className="truncate">
+                    Done: {doneTitles.join(" · ")}
+                  </span>
+                </li>
+              )}
               {STEP_ORDER.map((id, index) => {
-                const done = guide.steps[index].done;
+                if (guide.steps[index].done) return null;
                 const isCurrent = id === current;
                 return (
                   <li
                     key={id}
                     aria-current={isCurrent ? "step" : undefined}
-                    className={`flex gap-3 rounded-xl px-2 py-2 ${isCurrent ? "bg-surface-elevated" : ""}`}
+                    className={`flex gap-3 rounded-xl px-2 ${isCurrent ? "bg-surface-elevated py-2" : "py-1.5"}`}
                   >
                     <span
                       className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold ${
-                        done
-                          ? "border-primary bg-primary text-inverse"
-                          : isCurrent
-                            ? "border-primary accent-teal"
-                            : "border-border text-tertiary"
+                        isCurrent
+                          ? "border-primary accent-teal"
+                          : "border-border text-tertiary"
                       }`}
                     >
-                      {done ? (
-                        <Check className="h-3 w-3" aria-label="Done" />
-                      ) : (
-                        index + 1
-                      )}
+                      {index + 1}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p
-                        className={
-                          done
-                            ? "text-tertiary line-through"
-                            : isCurrent
-                              ? "font-bold"
-                              : "text-secondary"
-                        }
-                      >
+                      <p className={isCurrent ? "font-bold" : "text-secondary"}>
                         {STEPS[id].title}
                       </p>
                       {isCurrent && (
@@ -379,43 +387,82 @@ const GuideDock = () => {
                           </p>
                           {points && (
                             <ol className="space-y-1">
-                              {points.map((item) => (
+                              {doneItems.length > 0 && (
                                 <li
-                                  key={item.label}
-                                  aria-current={
-                                    item === point ? "step" : undefined
-                                  }
-                                  className={`flex items-center gap-2 text-xs ${
-                                    item.done
-                                      ? "text-tertiary line-through"
-                                      : item === point
-                                        ? "font-semibold text-primary"
-                                        : "text-tertiary"
-                                  }`}
+                                  title={doneItems
+                                    .map((item) => item.label)
+                                    .join(", ")}
+                                  className="flex items-center gap-2 text-xs text-tertiary"
                                 >
-                                  <span
+                                  <Check
+                                    className="h-3 w-3 shrink-0"
                                     aria-hidden="true"
-                                    className={`h-2 w-2 shrink-0 rounded-full ${
-                                      item.done
-                                        ? "bg-tertiary"
-                                        : item === point
-                                          ? "bg-primary"
-                                          : "border border-border"
-                                    }`}
                                   />
-                                  {item.label}
-                                  {item.link && item.done && (
-                                    <a
-                                      href={item.link.href}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="font-semibold text-accent no-underline hover:underline"
-                                    >
-                                      Open again
-                                    </a>
-                                  )}
+                                  <span className="truncate line-through">
+                                    {doneItems
+                                      .map((item) => item.label)
+                                      .join(" · ")}
+                                  </span>
                                 </li>
-                              ))}
+                              )}
+                              {points
+                                .filter((item) => !doneItems.includes(item))
+                                .map((item) => (
+                                  <li
+                                    key={item.label}
+                                    aria-current={
+                                      item === point ? "step" : undefined
+                                    }
+                                    className={`flex items-center gap-2 text-xs ${
+                                      item.done
+                                        ? "text-tertiary"
+                                        : item === point
+                                          ? "font-semibold text-primary"
+                                          : "text-tertiary"
+                                    }`}
+                                  >
+                                    <span
+                                      aria-hidden="true"
+                                      className={`h-2 w-2 shrink-0 rounded-full ${
+                                        item.done
+                                          ? "bg-tertiary"
+                                          : item === point
+                                            ? "bg-primary"
+                                            : "border border-border"
+                                      }`}
+                                    />
+                                    <span
+                                      className={`min-w-0 flex-1 ${item.done ? "line-through" : ""}`}
+                                    >
+                                      {item.label}
+                                    </span>
+                                    {item.link && item.done && (
+                                      <a
+                                        href={item.link.href}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="shrink-0 font-semibold text-accent no-underline hover:underline"
+                                      >
+                                        Open again
+                                      </a>
+                                    )}
+                                    {/* Next to the thing it shows, instead of a
+                                        bar of its own under the panel. */}
+                                    {item === point && (
+                                      <button
+                                        type="button"
+                                        disabled={!targetFound}
+                                        aria-pressed={guide.showing}
+                                        onClick={() =>
+                                          guide.setShowing(!guide.showing)
+                                        }
+                                        className="shrink-0 font-semibold text-accent hover:underline disabled:cursor-not-allowed disabled:opacity-40 disabled:no-underline"
+                                      >
+                                        Show me where
+                                      </button>
+                                    )}
+                                  </li>
+                                ))}
                             </ol>
                           )}
                           {point?.link && (
@@ -425,9 +472,10 @@ const GuideDock = () => {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={markDeployKeysOpened}
+                                title={point.link.label}
                                 className="btn-op-primary"
                               >
-                                {point.link.label}
+                                Open deploy keys
                                 <ExternalLink
                                   className="h-4 w-4"
                                   aria-hidden="true"
@@ -471,20 +519,6 @@ const GuideDock = () => {
               })}
             </ol>
           </div>
-
-          {point && (
-            <div className="border-t border-border px-4 py-3">
-              <button
-                type="button"
-                disabled={!targetFound}
-                aria-pressed={guide.showing}
-                onClick={() => guide.setShowing(!guide.showing)}
-                className="btn-op-secondary w-full"
-              >
-                Show me where
-              </button>
-            </div>
-          )}
         </aside>
       )}
 
@@ -507,6 +541,7 @@ const GuideDock = () => {
       <DeployGuideDialog
         isOpen={deployGuideOpen && current === "deploy"}
         repoUrl={repoUrlOf(guide.pushTarget) || guide.repoUrl}
+        rememberedAwsKey={guide.connectedAwsKey}
         onClose={closeDeployGuide}
         onDone={() => {
           setDeployGuideOpen(false);

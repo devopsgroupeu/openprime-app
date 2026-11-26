@@ -156,6 +156,57 @@ describe("GuideDock", () => {
 
   // The dead end reported on 2026-11-24: the repository was created on
   // GitHub and nothing in the guide said how to move on.
+  it("carries the AWS key connected in step 1 over to the deployment step", async () => {
+    const credentials = [];
+    serve();
+    server.use(
+      http.get("*/cloud-credentials", () => HttpResponse.json({ credentials })),
+      http.post("*/cloud-credentials", async ({ request }) => {
+        const body = await request.json();
+        credentials.push({ id: "cred-1", name: body.name, provider: "aws" });
+        return HttpResponse.json(credentials[0], { status: 201 });
+      }),
+    );
+    renderDock({
+      environments: [
+        {
+          id: "env-1",
+          git_repository: { url: REPO },
+          last_push_status: "succeeded",
+        },
+      ],
+    });
+
+    fireEvent.click(
+      within(await findDock()).getByRole("button", { name: "Connect AWS" }),
+    );
+    fireEvent.change(
+      await screen.findByPlaceholderText("openprime:123456789012:AKIA…"),
+      {
+        target: {
+          value:
+            "openprime:123456789012:AKIAIOSFODNN7EXAMPLE:wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        },
+      },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Connect" }));
+
+    fireEvent.click(
+      await within(await findDock()).findByRole("button", {
+        name: "Show me how",
+      }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Start the deployment",
+    });
+    expect(
+      within(dialog).getByText(/The AWS key from step 1 is filled in below/),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText("AKIAIOSFODNN7EXAMPLE"),
+    ).toBeInTheDocument();
+  });
+
   it("walks the deployment in a dialog and finishes the guide from there", async () => {
     serve({ credentials: KEY });
     renderDock({
@@ -310,9 +361,7 @@ describe("GuideDock", () => {
     await waitFor(() =>
       expect(currentPoint(dock)).toHaveTextContent("Add it on GitHub"),
     );
-    const link = within(dock).getByRole("link", {
-      name: /Open deploy keys for acme\/infra/,
-    });
+    const link = within(dock).getByRole("link", { name: "Open deploy keys" });
     expect(link).toHaveAttribute(
       "href",
       "https://github.com/acme/infra/settings/keys/new",

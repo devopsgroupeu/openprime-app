@@ -79,6 +79,39 @@ describe("DeployGuideDialog", () => {
     );
   });
 
+  it("fills in the AWS key remembered from step 1, and takes another line instead", async () => {
+    renderDialog({
+      rememberedAwsKey: {
+        accessKey: "AKIAREMEMBERED00001",
+        secretKey: "remembered-secret",
+      },
+    });
+
+    expect(
+      screen.queryByLabelText(/Paste the line the AWS command/),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/The AWS key from step 1 is filled in below/),
+    ).toBeInTheDocument();
+    expect(screen.getByText("AKIAREMEMBERED00001")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Copy the secret for AWS_SECRET_ACCESS_KEY",
+      }),
+    );
+    await waitFor(() =>
+      expect(clipboard).toHaveBeenCalledWith("remembered-secret"),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Paste a different line" }),
+    );
+    fireEvent.change(screen.getByLabelText(/Paste the line the AWS command/), {
+      target: { value: LINE },
+    });
+    expect(screen.getByText("AKIAIOSFODNN7EXAMPLE")).toBeInTheDocument();
+  });
+
   it("says when the pasted text is not the line", () => {
     renderDialog();
     fireEvent.change(screen.getByLabelText(/Paste the line the AWS command/), {

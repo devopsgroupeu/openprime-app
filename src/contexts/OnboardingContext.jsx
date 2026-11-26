@@ -38,6 +38,12 @@ export function OnboardingProvider({
   const [awsProgress, setAwsProgress] = useState(null);
   const [wizard, setWizard] = useState(null);
   const [showing, setShowing] = useState(false);
+  // The AWS key connected in step 1, so step 5 can fill in the GitHub secrets
+  // without asking for it again. Only in this page's memory: never stored, gone
+  // on reload, and dropped when the guide is done. The server never hands a
+  // stored key back (cloudCredentialController), so this is the only copy the
+  // browser can have.
+  const [connectedAwsKey, setConnectedAwsKey] = useState(null);
   const prefsRef = useRef({});
   // App passes a new function on every render; keep the latest without making
   // every callback below change with it.
@@ -143,7 +149,20 @@ export function OnboardingProvider({
       // fills it in, so step 3 has one field less.
       repoUrl: prefs?.repoUrl || "",
       saveRepoUrl: (repoUrl) => savePrefs({ repoUrl }),
-      markDeployed: () => savePrefs({ deployed: true }),
+      markDeployed: () => {
+        setConnectedAwsKey(null);
+        savePrefs({ deployed: true });
+      },
+      connectedAwsKey,
+      rememberAwsKey: (credentials) =>
+        setConnectedAwsKey(
+          credentials?.accessKey && credentials?.secretKey
+            ? {
+                accessKey: credentials.accessKey,
+                secretKey: credentials.secretKey,
+              }
+            : null,
+        ),
       connectingAws,
       connectAws: () => setConnectingAws(true),
       closeConnectAws: () => setConnectingAws(false),
@@ -168,6 +187,7 @@ export function OnboardingProvider({
       awsProgress,
       wizard,
       showing,
+      connectedAwsKey,
       refresh,
     ],
   );

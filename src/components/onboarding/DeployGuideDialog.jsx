@@ -44,13 +44,24 @@ const Section = ({ number, title, children }) => (
   </li>
 );
 
-const DeployGuideDialog = ({ isOpen, repoUrl, onClose, onDone }) => {
+const DeployGuideDialog = ({
+  isOpen,
+  repoUrl,
+  rememberedAwsKey,
+  onClose,
+  onDone,
+}) => {
   const [line, setLine] = useState("");
   const [argoKey, setArgoKey] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [keyError, setKeyError] = useState("");
   const [showCommand, setShowCommand] = useState(false);
-  const aws = parseConnectLine(line);
+  const [pasting, setPasting] = useState(false);
+  // The key connected in step 1 of the guide, if this page still has it;
+  // a line pasted here takes its place.
+  const aws =
+    parseConnectLine(line) || (line.trim() ? null : rememberedAwsKey || null);
+  const askForLine = !rememberedAwsKey || pasting;
   const pages = githubPages(repoUrl);
 
   useEffect(() => {
@@ -69,6 +80,7 @@ const DeployGuideDialog = ({ isOpen, repoUrl, onClose, onDone }) => {
     setArgoKey(null);
     setKeyError("");
     setShowCommand(false);
+    setPasting(false);
   }, [isOpen]);
 
   const createArgoKey = async () => {
@@ -193,59 +205,74 @@ const DeployGuideDialog = ({ isOpen, repoUrl, onClose, onDone }) => {
             </Section>
 
             <Section number={2} title="Give the pipeline its three secrets">
-              <label
-                htmlFor="deploy-guide-line"
-                className="block text-sm text-secondary"
-              >
-                Paste the line the AWS command printed in step 1 of the guide.
-                It is still in your AWS terminal. It is only split here, never
-                saved.
-              </label>
-              <input
-                id="deploy-guide-line"
-                type="password"
-                autoComplete="off"
-                value={line}
-                onChange={(event) => setLine(event.target.value)}
-                placeholder="openprime:123456789012:AKIA…"
-                className="w-full rounded-lg border border-border bg-background px-4 py-2 text-primary"
-              />
-              {line.trim() && !aws && (
-                <p className="text-sm text-danger">
-                  That is not the line the command prints. Copy the whole line
-                  that starts with openprime:
+              {askForLine ? (
+                <>
+                  <label
+                    htmlFor="deploy-guide-line"
+                    className="block text-sm text-secondary"
+                  >
+                    Paste the line the AWS command printed in step 1 of the
+                    guide. It is still in your AWS terminal. It is only split
+                    here, never saved.
+                  </label>
+                  <input
+                    id="deploy-guide-line"
+                    type="password"
+                    autoComplete="off"
+                    value={line}
+                    onChange={(event) => setLine(event.target.value)}
+                    placeholder="openprime:123456789012:AKIA…"
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2 text-primary"
+                  />
+                  {line.trim() && !aws && (
+                    <p className="text-sm text-danger">
+                      That is not the line the command prints. Copy the whole
+                      line that starts with openprime:
+                    </p>
+                  )}
+                  <p className="text-xs text-tertiary">
+                    Lost it?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setShowCommand((open) => !open)}
+                      aria-expanded={showCommand}
+                      className="font-semibold text-accent hover:underline"
+                    >
+                      Run the AWS command again
+                    </button>
+                    . It makes a new key and prints a new line.
+                  </p>
+                  {showCommand && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <a
+                        href={AWS_CLOUDSHELL_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-op-secondary"
+                      >
+                        Open AWS CloudShell
+                        <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                      </a>
+                      <CopyButton
+                        value={AWS_CONNECT_COMMAND}
+                        label="Copy the AWS command"
+                      />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-success">
+                  The AWS key from step 1 is filled in below. It is kept only
+                  while this page is open.
+                  <button
+                    type="button"
+                    onClick={() => setPasting(true)}
+                    className="font-semibold text-accent hover:underline"
+                  >
+                    Paste a different line
+                  </button>
                 </p>
               )}
-              <p className="text-xs text-tertiary">
-                Lost it?{" "}
-                <button
-                  type="button"
-                  onClick={() => setShowCommand((open) => !open)}
-                  aria-expanded={showCommand}
-                  className="font-semibold text-accent hover:underline"
-                >
-                  Run the AWS command again
-                </button>
-                . It makes a new key and prints a new line.
-              </p>
-              {showCommand && (
-                <div className="flex flex-wrap items-center gap-2">
-                  <a
-                    href={AWS_CLOUDSHELL_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-op-secondary"
-                  >
-                    Open AWS CloudShell
-                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                  </a>
-                  <CopyButton
-                    value={AWS_CONNECT_COMMAND}
-                    label="Copy the AWS command"
-                  />
-                </div>
-              )}
-
               <div className="overflow-x-auto rounded-xl border border-border">
                 <table className="w-full text-left text-xs">
                   <thead>

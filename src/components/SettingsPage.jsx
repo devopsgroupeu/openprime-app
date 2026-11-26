@@ -12,8 +12,10 @@ import PreferencesTab from "./settings-page/PreferencesTab";
 import SettingsTabNav from "./settings-page/SettingsTabNav";
 
 const SettingsPage = () => {
-  // The setup guide's first step ticks from the saved AWS keys.
-  const refreshGuide = useOnboarding()?.refresh;
+  // The setup guide's first step ticks from the saved AWS keys, and its last
+  // step fills in GitHub secrets from a key entered here.
+  const guide = useOnboarding();
+  const refreshGuide = guide?.refresh;
   const toast = useToast();
   const [userPreferences, setUserPreferences] = useState({
     theme: "light",
@@ -181,6 +183,11 @@ const SettingsPage = () => {
       }
       await loadCloudCredentials();
       refreshGuide?.();
+      // An edit with blank key fields keeps the stored key and sends none;
+      // that must not forget the one remembered from step 1.
+      if (credentialData.provider === "aws" && credentialData.credentials) {
+        guide?.rememberAwsKey(credentialData.credentials);
+      }
       setShowCredentialModal(false);
       setSelectedCredential(null);
     } catch (error) {
