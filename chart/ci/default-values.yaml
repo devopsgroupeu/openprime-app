@@ -1,0 +1,6 @@
+# CI only (helm lint + kubeconform). The chart refuses to render without the
+# two public URLs the browser calls; these are placeholders, nothing resolves them.
+app:
+  env:
+    REACT_APP_API_URL: "https://api.ci.example.com/api"
+    REACT_APP_KEYCLOAK_URL: "https://keycloak.ci.example.com"

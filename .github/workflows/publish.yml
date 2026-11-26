@@ -20,11 +20,20 @@ jobs:
   test:
     uses: ./.github/workflows/reusable-test.yml
 
+  # Same gate as release.yml: a dev image that fails the scan is not pushed.
+  scan:
+    name: Image scan
+    permissions:
+      contents: read
+      security-events: write
+    uses: ./.github/workflows/reusable-image-scan.yml
+
   publish-docker:
-    needs: test
+    needs: [test, scan]
     permissions:
       contents: read
       packages: write
+      id-token: write # caps the reusable workflow's keyless cosign signing
     uses: ./.github/workflows/reusable-docker-publish.yml
     with:
       tags: |

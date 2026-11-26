@@ -1,0 +1,79 @@
+name: Reusable Helm Check
+
+on:
+  workflow_call:
+    inputs:
+      chart-path:
+        required: false
+        type: string
+        default: chart
+        description: "Path to the chart"
+      kubernetes-version:
+        required: false
+        type: string
+        default: "1.36.0"
+        description: "Kubernetes version whose schemas kubeconform validates against; match the target clusters"
+      api-versions:
+        required: false
+        type: string
+        default: monitoring.coreos.com/v1
+        description: "Space-separated API versions the render pretends the cluster serves (for templates gated on .Capabilities)"
+      helm-version:
+        required: false
+        type: string
+        default: v3.12.0
+        description: "Keep in sync with reusable-helm-publish.yml"
+
+jobs:
+  check:
+    name: Helm lint + kubeconform
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      KUBECONFORM_VERSION: v0.7.0
+      KUBECONFORM_SHA256: c31518ddd122663b3f3aa874cfe8178cb0988de944f29c74a0b9260920d115d3
+      CHART_PATH: ${{ inputs.chart-path }}
+      KUBERNETES_VERSION: ${{ inputs.kubernetes-version }}
+      API_VERSIONS: ${{ inputs.api-versions }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Helm
+        uses: azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e # v5.1.0
+        with:
+          version: ${{ inputs.helm-version }}
+
+      - name: Install kubeconform
+        run: |
+          curl -sSLo kubeconform.tar.gz \
+            "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+          echo "${KUBECONFORM_SHA256}  kubeconform.tar.gz" | sha256sum --check
+          tar -xzf kubeconform.tar.gz kubeconform
+          sudo mv kubeconform /usr/local/bin/
+
+      # Every <chart>/ci/*-values.yaml is linted, rendered and validated.
+      # Charts that refuse to render without secrets get them from these files.
+      - name: Lint and validate
+        run: |
+          set -o pipefail
+          shopt -s nullglob
+          values_files=("${CHART_PATH}"/ci/*-values.yaml)
+          if [ ${#values_files[@]} -eq 0 ]; then
+            echo "::error::No ${CHART_PATH}/ci/*-values.yaml found; add at least one."
+            exit 1
+          fi
+          api_args=()
+          for v in ${API_VERSIONS}; do api_args+=(--api-versions "$v"); done
+
+          for values in "${values_files[@]}"; do
+            echo "::group::${values}"
+            helm lint "${CHART_PATH}" --strict -f "$values"
+            helm template ci "${CHART_PATH}" -f "$values" "${api_args[@]}" \
+              | kubeconform -strict -summary \
+                  -kubernetes-version "${KUBERNETES_VERSION}" \
+                  -schema-location default \
+                  -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/04af58d740718c4dc719441bf39fb284c784f4a8/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
+            echo "::endgroup::"
+          done

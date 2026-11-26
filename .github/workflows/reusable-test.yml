@@ -3,20 +3,22 @@ name: Reusable Test
 on:
   workflow_call:
     inputs:
+      # Same major as the Dockerfile build stage (node:26.x-alpine), so CI
+      # builds and tests on the runtime the image is built with.
       node-version:
         required: false
         type: string
-        default: lts/*
+        default: "26"
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ inputs.node-version }}
           cache: "npm"

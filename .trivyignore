@@ -1,0 +1,15 @@
+# Trivy ignore file, read automatically by `trivy fs` and `trivy image`
+# (CI: .github/workflows/reusable-image-scan.yml).
+#
+# Prefer fixing: bump the dependency, rebuild on a newer base digest, or
+# remove the package from the image. Ignore only what cannot be fixed yet.
+#
+# Every entry needs, directly above it, a comment with:
+#   - why it is acceptable (e.g. code path not reachable, fix not usable yet)
+#   - the ticket that tracks removing the entry
+# and an expiry date on the entry itself, so it is looked at again:
+#
+#   # libxslt UAF unreachable: nginx xslt module is not loaded. OP-xxx
+#   CVE-2026-9947 exp:2027-01-31
+#
+# No wildcards, no package-wide ignores, no entries without a CVE/GHSA id.

@@ -1,0 +1,19 @@
+# CI only: the default values plus every optional template switched on,
+# so kubeconform validates all of them.
+app:
+  env:
+    REACT_APP_API_URL: "https://api.ci.example.com/api"
+    REACT_APP_KEYCLOAK_URL: "https://keycloak.ci.example.com"
+ingress:
+  enabled: true
+  className: nginx
+  tls:
+    - secretName: ci-openprime-tls
+      hosts:
+        - openprime.local
+autoscaling:
+  enabled: true
+networkPolicy:
+  enabled: true
+podDisruptionBudget:
+  enabled: true
