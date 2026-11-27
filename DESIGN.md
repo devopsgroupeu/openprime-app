@@ -218,7 +218,7 @@ the page, below the card) with the white-wordmark logo, the logo tile stays whit
 | Icon buttons      | `IconAction` (`label`, `icon`, `shortcutId`, `to`, `onClick`): ghost `icon-sm`, tooltip below with the label and `ShortcutKeys`, no tooltip below md.                                                                                                                                                           |
 | User menu         | `UserMenu.jsx`, opens upward, `w-60`, non-modal: name and email, Theme (Light, Dark), Settings, Help (Documentation, Keyboard shortcuts), Sign out.                                                                                                                                                             |
 | Shortcuts         | `src/lib/shortcuts.js`: Cmd/Ctrl+K palette, Cmd/Ctrl+B sidebar, Cmd/Ctrl+/ shortcuts dialog (`KeyboardShortcutsDialog.jsx`).                                                                                                                                                                                    |
-| Waits and crashes | `CatalogProvider` shows "Loading the service catalog..." in the content area. `ErrorBoundary resetKey={pathname} fallback={PageCrash}` keeps the shell when a page crashes; a route change clears it. The root boundary in `App.jsx` is full screen.                                                            |
+| Waits and crashes | While the catalog loads, the content area shows the route's own loading state (`CatalogLoading`). `ErrorBoundary resetKey={pathname} fallback={PageCrash}` keeps the shell when a page crashes; a route change clears it. The root boundary in `App.jsx` is full screen.                                        |
 | Floating Aura     | `AuraChatButton hidden={wizard} greet={list}`: on every page but the wizard, where it stays mounted so its conversation survives; `greet` (`/environments`) shows the greeting once per page load (6.4).                                                                                                        |
 | Skip link, title  | `SkipLink` ("Skip to content" to `#main`); tab title "<page> - OpenPrime" via `PageHeader` or `useDocumentTitle`.                                                                                                                                                                                               |
 
@@ -229,7 +229,7 @@ one per page, and no page sets its own `max-w`.
 
 | `width`          | Max width                      | Gutters                            | Use for                                   |
 | ---------------- | ------------------------------ | ---------------------------------- | ----------------------------------------- |
-| `wide` (default) | none                           | `px-4 pt-6 pb-16 md:px-8 md:pt-12` | Environments list, catalog wait           |
+| `wide` (default) | none                           | `px-4 pt-6 pb-16 md:px-8 md:pt-12` | Environments list                         |
 | `detail`         | `--content-detail` 52rem       | list gutters                       | Environment detail, Not found, page crash |
 | `settings`       | `--content-settings` 53.125rem | `px-4 py-6 md:px-8 md:py-8`        | Settings pages, the wizard's step column  |
 
@@ -241,8 +241,8 @@ one per page, and no page sets its own `max-w`.
 - List (environments): `PageHeader` (primary "New environment" once there are environments) >
   `ErrorState`, or the first-run `EmptyState` + `PrerequisitesChecklist`, or the stat strip
   (`grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-4` of compact `StatCard`s) > `ListToolbar` > a
-  filtered `EmptyState` or the `ResourceCardGrid`. Loading is `<ListPageSkeleton stats={4} />`. There
-  are no data tables.
+  filtered `EmptyState` or the `ResourceCardGrid`. Loading keeps the header and shows
+  `ListPageSkeleton` (5.9). There are no data tables.
 - Detail (`width="detail"`): `EnvironmentCover` (`h-20 rounded-xl sm:h-24`) > `PageHeader` (name,
   `StatusBadge`, facts divided by hairlines) > `JobCallout` > route tabs > `SettingsSection`s holding
   a `DetailList` or a row list. Route tabs are links in a `<nav>` labelled "Environment sections",
@@ -437,10 +437,24 @@ else `status`.
 | Page crash      | `PageCrash` (`ErrorBoundary.jsx`)              | "Something went wrong." / "Reload the page to try again." + "Reload", "Back to environments"                                                |
 | Before sign-in  | `FullScreenState logo loading title primary`   | Centered `max-w-100`, OpenPrime symbol: "Redirecting to sign in...", or "Couldn't reach the sign-in service" + "Try again"                  |
 
-Skeletons: `ListPageSkeleton`, `CardGridSkeleton`, `DetailPageSkeleton`, `SettingsPageSkeleton` (also
-the wizard while an edit loads), built from `Skeleton` (`animate-pulse rounded-md bg-muted`) in a
-`role="status" aria-busy="true"` wrapper. They mirror the layout (card band `h-24 sm:h-28`), cause no
-layout shift and do not fade in. A pending action is a spinner in its button, never a page spinner.
+Skeletons: `ListPageSkeleton`, `DetailPageSkeleton`, `SettingsPageSkeleton tab` and
+`WizardPageSkeleton mode` (an edit that loads; the catalog wait on a wizard route), built from
+`Skeleton` (`animate-pulse rounded-md bg-muted`, `aria-hidden`).
+
+- A loading page keeps its static header (the list's, a settings tab's) and puts what waits in one
+  `role="status" aria-busy="true"` region named for it: "Loading environments", "Loading
+  environment", "Loading account", "Loading the wizard". The region goes when the data is there.
+- They copy the loaded classes (grids, container switches, `max-sm` compact tiles, `max-md` 44 px
+  controls, radii) and fill each text line box with a bar and margins (`my-0.5 h-3` is a 16 px
+  `text-xs` line); the region map's block keeps its 2.6 aspect. Header, stat strip, toolbar and the
+  first cards or rows do not move when the data arrives.
+- The page keeps its `PageShell` and header mounted from loading to loaded, so the entrance does
+  not replay. The catalog wait (4.1) shows the same loading state (`EnvironmentsPageLoading`,
+  `SettingsPageLoading`, `DetailPageSkeleton`, `WizardPageSkeleton`), one skeleton, never a spinner
+  first.
+- Skeletons do not fade in; under reduced motion the pulse stops (`src/index.css`). Spinners are for
+  actions and waits of unknown shape: a pending action is a spinner in its button, the sign-in wait
+  a `FullScreenState`, never a page spinner.
 
 ### 5.10 Icons, logos, cover gradient
 
