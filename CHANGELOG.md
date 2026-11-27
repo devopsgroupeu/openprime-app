@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.27.0](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.14...v1.27.0) (2026-11-27)
+
+### 🚀 Features
+
+* **onboarding:** guided setup from sign-up to a running environment (OP-283, OP-284) ([#120](https://github.com/devopsgroupeu/openprime-app/issues/120)) ([a2ba859](https://github.com/devopsgroupeu/openprime-app/commit/a2ba859a8ade4100b9b971fafe88ee1481a0898e))
+
 ## [1.26.14](https://github.com/devopsgroupeu/openprime-app/compare/v1.26.13...v1.26.14) (2026-11-23)
 
 ### 🏗️ Build System
