@@ -240,9 +240,9 @@ one per page, and no page sets its own `max-w`.
   and settings pages show no tile; the detail page has its cover band above the header.
 - List (environments): `PageHeader` (primary "New environment" once there are environments) >
   `ErrorState`, or the first-run `EmptyState` + `PrerequisitesChecklist`, or the stat strip
-  (`grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-4` of compact `StatCard`s) > `ListToolbar` > a
-  filtered `EmptyState` or the `ResourceCardGrid`. Loading keeps the header and shows
-  `ListPageSkeleton` (5.9). There are no data tables.
+  (`grid grid-cols-2 gap-2 sm:gap-4 @[59rem]:grid-cols-4` of compact `StatCard`s in an
+  `@container`) > `ListToolbar` > a filtered `EmptyState` or the `ResourceCardGrid`. Loading keeps
+  the header and shows `ListPageSkeleton` (5.9). There are no data tables.
 - Detail (`width="detail"`): `EnvironmentCover` (`h-20 rounded-xl sm:h-24`) > `PageHeader` (name,
   `StatusBadge`, facts divided by hairlines) > `JobCallout` > route tabs > `SettingsSection`s holding
   a `DetailList` or a row list. Route tabs are links in a `<nav>` labelled "Environment sections",
