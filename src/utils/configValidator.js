@@ -7,12 +7,24 @@ import { PROVIDERS_CONFIG } from "../config/providersConfig";
 const DOMAIN_PATTERN =
   /^(?=.{1,253}$)([A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
 
+// Services that need another service enabled: EKS and RDS run inside the VPC.
+// The wizard's "Needs <service>" badge reads the same map.
+export const SERVICE_PREREQUISITES = { eks: "vpc", rds: "vpc" };
+
+// Select values reach the environment as text ("3") while catalog options can
+// be numbers (3), so an option matches by its text.
+const isOption = (options, value) =>
+  options.some((opt) => String(opt.value) === String(value));
+
+// `service`: the service the error belongs to, null for the environment's own
+// fields.
 export class ConfigValidationError extends Error {
-  constructor(message, field = null, value = null) {
+  constructor(message, field = null, value = null, service = null) {
     super(message);
     this.name = "ConfigValidationError";
     this.field = field;
     this.value = value;
+    this.service = service;
   }
 }
 
@@ -114,7 +126,14 @@ export const validateField = (fieldConfig, value, fieldName) => {
       break;
 
     case FIELD_TYPES.TOGGLE:
-      if (typeof value !== "boolean") {
+      // A toggle whose template variable is a string holds "true" / "false".
+      if (
+        typeof value !== "boolean" &&
+        !(
+          fieldConfig.valueType === "string" &&
+          ["true", "false"].includes(value)
+        )
+      ) {
         errors.push(
           new ConfigValidationError(
             `${fieldConfig.displayName} must be true or false`,
@@ -128,7 +147,7 @@ export const validateField = (fieldConfig, value, fieldName) => {
     case FIELD_TYPES.DROPDOWN:
       if (fieldConfig.options) {
         const validValues = fieldConfig.options.map((opt) => opt.value);
-        if (!validValues.includes(value)) {
+        if (!isOption(fieldConfig.options, value)) {
           errors.push(
             new ConfigValidationError(
               `${fieldConfig.displayName} must be one of: ${validValues.join(", ")}`,
@@ -150,8 +169,9 @@ export const validateField = (fieldConfig, value, fieldName) => {
           ),
         );
       } else if (fieldConfig.options) {
-        const validValues = fieldConfig.options.map((opt) => opt.value);
-        const invalidValues = value.filter((v) => !validValues.includes(v));
+        const invalidValues = value.filter(
+          (v) => !isOption(fieldConfig.options, v),
+        );
         if (invalidValues.length > 0) {
           errors.push(
             new ConfigValidationError(
@@ -315,70 +335,50 @@ export const validateEnvironmentConfig = (environment) => {
     );
   }
 
-  // Validate services
+  // Only enabled services are generated, so only they are checked. Their
+  // errors name the service: "Virtual Private Cloud (VPC): CIDR Block ...".
   if (environment.services) {
-    Object.entries(environment.services).forEach(
-      ([serviceName, serviceConfig]) => {
-        const serviceErrors = validateServiceConfig(serviceName, serviceConfig);
-        errors.push(...serviceErrors);
-      },
-    );
+    for (const [serviceName, serviceConfig] of Object.entries(
+      environment.services,
+    )) {
+      if (!serviceConfig?.enabled) continue;
+      const label =
+        SERVICES_CONFIG[serviceName]?.displayName ?? serviceName.toUpperCase();
+      for (const error of validateServiceConfig(serviceName, serviceConfig)) {
+        errors.push(
+          new ConfigValidationError(
+            `${label}: ${error.message}`,
+            error.field,
+            error.value,
+            serviceName,
+          ),
+        );
+      }
+    }
 
     // Cross-service validation
     const enabledServices = Object.keys(environment.services).filter(
       (serviceName) => environment.services[serviceName]?.enabled,
     );
 
-    // EKS requires VPC
-    if (enabledServices.includes("eks") && !enabledServices.includes("vpc")) {
-      errors.push(
-        new ConfigValidationError("EKS requires VPC to be enabled", "eks"),
-      );
-    }
-
-    // RDS requires VPC
-    if (enabledServices.includes("rds") && !enabledServices.includes("vpc")) {
-      errors.push(
-        new ConfigValidationError("RDS requires VPC to be enabled", "rds"),
-      );
+    for (const [service, required] of Object.entries(SERVICE_PREREQUISITES)) {
+      if (
+        enabledServices.includes(service) &&
+        !enabledServices.includes(required)
+      ) {
+        errors.push(
+          new ConfigValidationError(
+            `${service.toUpperCase()} requires ${required.toUpperCase()} to be enabled`,
+            service,
+            null,
+            service,
+          ),
+        );
+      }
     }
   }
 
   return errors;
-};
-
-export const getValidationSummary = (errors) => {
-  if (errors.length === 0) {
-    return {
-      isValid: true,
-      errors: [],
-      warnings: [],
-      criticalErrors: [],
-      totalErrors: 0,
-      hasBlockingErrors: false,
-    };
-  }
-
-  const criticalErrors = errors.filter(
-    (error) =>
-      error.field === "name" ||
-      error.field === "provider" ||
-      error.field === "region",
-  );
-
-  const warnings = errors.filter(
-    (error) =>
-      error.message.includes("recommended") || error.message.includes("should"),
-  );
-
-  return {
-    isValid: false,
-    errors,
-    warnings,
-    criticalErrors,
-    totalErrors: errors.length,
-    hasBlockingErrors: criticalErrors.length > 0,
-  };
 };
 
 // Development helper to validate entire config structure
@@ -415,7 +415,6 @@ const configValidator = {
   validateField,
   validateServiceConfig,
   validateEnvironmentConfig,
-  getValidationSummary,
   validateConfigStructure,
   ConfigValidationError,
 };

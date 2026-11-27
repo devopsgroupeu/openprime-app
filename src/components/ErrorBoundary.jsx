@@ -1,65 +1,121 @@
 import React from "react";
-import { AlertTriangle, RefreshCw, Home } from "lucide-react";
+import { Link } from "react-router";
+import { ArrowLeft, TriangleAlert } from "lucide-react";
+import { PageShell } from "@/components/shared/page-shell";
+import { FullScreenState } from "@/components/shared/states";
+import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+} from "@/components/ui/empty";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
-// Error display component that can use hooks
+const isDev = () =>
+  (typeof import.meta !== "undefined" && import.meta.env?.DEV) ||
+  (typeof process !== "undefined" && process.env?.NODE_ENV === "development");
+
+// In development, the error itself.
+const ErrorDetails = ({ error, errorInfo }) =>
+  isDev() && error ? (
+    <details className="w-full rounded-lg border bg-muted/40 p-3 text-left text-xs">
+      <summary className="cursor-pointer font-medium text-destructive">
+        Error details (development)
+      </summary>
+      <pre className="mt-2 max-h-60 overflow-auto font-mono whitespace-pre-wrap text-muted-foreground">
+        {error.toString()}
+        {errorInfo?.componentStack}
+      </pre>
+    </details>
+  ) : null;
+
+/**
+ * A page that crashed, in the content area of the shell (openprime-ai's
+ * in-shell error): the sidebar and top bar stay. Reload, or back to the list.
+ */
+export function PageCrash({ error, errorInfo, resetError }) {
+  useDocumentTitle("Something went wrong");
+  return (
+    <PageShell width="detail">
+      <Empty role="alert" className="min-h-80">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <TriangleAlert aria-hidden />
+          </EmptyMedia>
+          {/* A page in this state has no other h1. */}
+          <h1 className="text-xl font-semibold">Something went wrong.</h1>
+          <EmptyDescription>Reload the page to try again.</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button onClick={() => window.location.reload()}>Reload</Button>
+            <Button variant="secondary" asChild>
+              {/* Also from the list itself, where the route stays. */}
+              <Link to="/environments" onClick={resetError}>
+                <ArrowLeft aria-hidden />
+                Back to environments
+              </Link>
+            </Button>
+          </div>
+          <ErrorDetails error={error} errorInfo={errorInfo} />
+        </EmptyContent>
+      </Empty>
+    </PageShell>
+  );
+}
+
+// The last-resort crash screen of the shell itself (openprime-ai
+// global-error): what happened, Reload, and in development the error itself.
 const ErrorDisplay = ({ error, errorInfo, onRefresh, onGoHome }) => {
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-background">
-      <div className="max-w-md w-full text-center">
-        <div className="rounded-2xl p-8 shadow-xl border bg-surface border-border">
-          <AlertTriangle className="w-16 h-16 text-danger mx-auto mb-4" />
-
-          <h1 className="text-2xl font-bold mb-2 text-primary">
-            Something went wrong
-          </h1>
-
-          <p className="mb-6 text-secondary">
-            An unexpected error occurred. Please try refreshing the page or
-            return to the home page.
-          </p>
-
-          {((typeof import.meta !== "undefined" && import.meta.env?.DEV) ||
-            (typeof process !== "undefined" &&
-              process.env?.NODE_ENV === "development")) &&
-            error && (
-              <details className="text-left mb-6 rounded-lg p-3 text-sm bg-background-secondary text-secondary">
-                <summary className="cursor-pointer text-danger mb-2">
-                  Error Details (Development Mode)
-                </summary>
-                <pre className="whitespace-pre-wrap font-mono text-xs">
-                  {error.toString()}
-                  {errorInfo?.componentStack}
-                </pre>
-              </details>
-            )}
-
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={onRefresh}
-              className="btn-op-primary flex-1 justify-center space-x-2"
-            >
-              <RefreshCw className="w-4 h-4" />
-              <span>Refresh Page</span>
-            </button>
-
-            <button
-              onClick={onGoHome}
-              className="btn-op-secondary flex-1 justify-center space-x-2"
-            >
-              <Home className="w-4 h-4" />
-              <span>Go Home</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <FullScreenState
+      logo
+      title="Something went wrong."
+      description="Reload the page to try again."
+      primary={
+        <Button size="lg" onClick={onRefresh}>
+          Reload
+        </Button>
+      }
+      secondary={
+        <Button variant="ghost" size="lg" onClick={onGoHome}>
+          Go to environments
+        </Button>
+      }
+    >
+      <ErrorDetails error={error} errorInfo={errorInfo} />
+    </FullScreenState>
   );
 };
 
+/**
+ * Catches a render crash below it. `fallback` replaces the crashed tree (it
+ * gets `error`, `errorInfo` and `resetError`); without one, the full-screen
+ * crash screen. A change of `resetKey` (the route) clears the crash without
+ * remounting the tree.
+ */
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      resetKey: props.resetKey,
+    };
+  }
+
+  static getDerivedStateFromProps(props, state) {
+    return props.resetKey === state.resetKey
+      ? null
+      : {
+          hasError: false,
+          error: null,
+          errorInfo: null,
+          resetKey: props.resetKey,
+        };
   }
 
   static getDerivedStateFromError() {
@@ -73,11 +129,7 @@ class ErrorBoundary extends React.Component {
     });
 
     // Log error to console in development
-    const isDev =
-      (typeof import.meta !== "undefined" && import.meta.env?.DEV) ||
-      (typeof process !== "undefined" &&
-        process.env?.NODE_ENV === "development");
-    if (isDev) {
+    if (isDev()) {
       console.error("Error caught by boundary:", error, errorInfo);
     }
   }
@@ -90,7 +142,10 @@ class ErrorBoundary extends React.Component {
         return (
           <Fallback
             error={this.state.error}
-            resetError={() => this.setState({ hasError: false })}
+            errorInfo={this.state.errorInfo}
+            resetError={() =>
+              this.setState({ hasError: false, error: null, errorInfo: null })
+            }
           />
         );
       }

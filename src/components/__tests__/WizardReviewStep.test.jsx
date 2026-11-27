@@ -1,5 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
+import { vi } from "vitest";
 import WizardReviewStep from "../WizardReviewStep";
+import { basicFieldErrors } from "../wizard-page/basicErrors";
 
 const baseEnv = {
   name: "demo",
@@ -9,9 +11,24 @@ const baseEnv = {
   services: {},
 };
 
+// Review gets the Basics problems from the wizard, which builds them with
+// basicFieldErrors.
 const renderStep = (env) =>
-  render(<WizardReviewStep newEnv={env} onEditStep={() => {}} />);
+  render(
+    <WizardReviewStep
+      newEnv={env}
+      onEditStep={() => {}}
+      problems={basicFieldErrors(env, [])}
+    />,
+  );
 
+const CONSEQUENCE_NO_REPO =
+  "Push to git and Helm charts stay unavailable until you switch git on and add a repository.";
+const CONSEQUENCE_NO_KEY =
+  "Push to git stays unavailable until you add a deploy key.";
+
+// Creating with incomplete delivery is allowed, so Review says what will not
+// work yet instead of a rule.
 describe("WizardReviewStep readiness gates", () => {
   it("warns when Kubernetes/Helm charts are enabled without a Git repository URL", () => {
     renderStep({
@@ -27,11 +44,8 @@ describe("WizardReviewStep readiness gates", () => {
       gitRepository: { enabled: false },
     });
 
-    expect(
-      screen.getByText(
-        /Git repository URL is required when using Kubernetes\/Helm charts/,
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText(CONSEQUENCE_NO_REPO)).toBeInTheDocument();
+    expect(screen.getByText("Delivery is incomplete.")).toBeInTheDocument();
   });
 
   it("warns when a Git repository URL is set without an SSH key", () => {
@@ -45,14 +59,35 @@ describe("WizardReviewStep readiness gates", () => {
       },
     });
 
-    expect(
-      screen.getByText(
-        /An SSH key is required when a Git repository URL is set/,
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText(CONSEQUENCE_NO_KEY)).toBeInTheDocument();
   });
 
-  it("warns when Terraform backend is enabled without an S3 bucket name", () => {
+  // Switching git off keeps its fields; the repository is what is missing.
+  it("asks for no deploy key while git is switched off", () => {
+    renderStep({
+      ...baseEnv,
+      services: { eks: { enabled: true } },
+      gitRepository: {
+        enabled: false,
+        url: "git@github.com:openprime/demo-infra.git",
+        branch: "main",
+        sshKey: "",
+      },
+    });
+
+    expect(screen.queryByText(CONSEQUENCE_NO_KEY)).not.toBeInTheDocument();
+    expect(screen.getByText(CONSEQUENCE_NO_REPO)).toBeInTheDocument();
+    // Switched off, the repository is not used: Delivery does not list it.
+    expect(
+      screen.queryByText("git@github.com:openprime/demo-infra.git"),
+    ).toBeNull();
+    expect(screen.queryByText("Branch or revision")).toBeNull();
+    expect(screen.queryByText("Deploy key")).toBeNull();
+  });
+
+  // A switched-on section states intent: its empty required field is a
+  // Basics problem, listed once, not a delivery warning.
+  it("lists a switched-on Terraform backend without a bucket under Basics", () => {
     renderStep({
       ...baseEnv,
       terraformBackend: {
@@ -62,10 +97,22 @@ describe("WizardReviewStep readiness gates", () => {
     });
 
     expect(
-      screen.getByText(
-        /S3 bucket name is required when Terraform backend is enabled/,
-      ),
-    ).toBeInTheDocument();
+      screen.getByText("Basics needs attention.").parentElement,
+    ).toHaveTextContent("Add a state bucket or switch this off.");
+    expect(document.querySelectorAll('[data-slot="callout"]')).toHaveLength(1);
+  });
+
+  it("lists a switched-on git repository without a URL under Basics only", () => {
+    renderStep({
+      ...baseEnv,
+      services: { eks: { enabled: true } },
+      gitRepository: { enabled: true, url: "", branch: "main" },
+    });
+
+    expect(
+      screen.getByText("Basics needs attention.").parentElement,
+    ).toHaveTextContent("Enter the repository URL or switch this off.");
+    expect(document.querySelectorAll('[data-slot="callout"]')).toHaveLength(1);
   });
 
   it("shows no warnings when all required fields are coherent", () => {
@@ -92,14 +139,139 @@ describe("WizardReviewStep readiness gates", () => {
       },
     });
 
+    expect(screen.queryByText(CONSEQUENCE_NO_REPO)).not.toBeInTheDocument();
+    expect(screen.queryByText(CONSEQUENCE_NO_KEY)).not.toBeInTheDocument();
     expect(
-      screen.queryByText(/Git repository URL is required/i),
+      screen.queryByText("Basics needs attention."),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("WizardReviewStep summary", () => {
+  it("lists Basics problems first and links to the step", () => {
+    const onEditStep = vi.fn();
+    render(
+      <WizardReviewStep
+        newEnv={{ ...baseEnv, name: "" }}
+        onEditStep={onEditStep}
+        problems={[
+          { field: "name", message: "Enter a name for this environment." },
+        ]}
+      />,
+    );
+    const callout = screen.getByText("Basics needs attention.").parentElement;
+    expect(callout).toHaveTextContent("Enter a name for this environment.");
+    fireEvent.click(screen.getAllByRole("button", { name: "Go to Basics" })[0]);
+    expect(onEditStep).toHaveBeenCalledWith("basic");
+  });
+
+  it("lists service problems with a link to Services", () => {
+    const onEditStep = vi.fn();
+    render(
+      <WizardReviewStep
+        newEnv={{ ...baseEnv, services: { eks: { enabled: true } } }}
+        onEditStep={onEditStep}
+        serviceProblems={[
+          { field: "eks", message: "EKS requires VPC to be enabled" },
+        ]}
+      />,
+    );
+    const callout = screen.getByText("Services need attention.").parentElement;
+    expect(callout).toHaveTextContent("EKS requires VPC to be enabled");
+    fireEvent.click(screen.getByRole("button", { name: "Go to Services" }));
+    expect(onEditStep).toHaveBeenCalledWith("services");
+  });
+
+  // A summary present whenever Review opens, not an event: no alert, so it
+  // does not talk over the step heading on every visit.
+  it("does not announce its problem lists as alerts", () => {
+    render(
+      <WizardReviewStep
+        newEnv={{ ...baseEnv, name: "", services: { eks: { enabled: true } } }}
+        onEditStep={() => {}}
+        problems={[
+          { field: "name", message: "Enter a name for this environment." },
+        ]}
+        serviceProblems={[
+          { field: "eks", message: "EKS requires VPC to be enabled" },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Basics needs attention.")).toBeInTheDocument();
+    expect(screen.getByText("Services need attention.")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("shows each step with an Edit that jumps back to it", () => {
+    const onEditStep = vi.fn();
+    render(
+      <WizardReviewStep
+        newEnv={{
+          ...baseEnv,
+          services: {
+            vpc: { enabled: true },
+            eks: { enabled: true, helmCharts: { loki: { enabled: true } } },
+          },
+        }}
+        onEditStep={onEditStep}
+      />,
+    );
+    expect(screen.getByText("Resource prefix")).toBeInTheDocument();
+    expect(screen.getByText("Loki")).toBeInTheDocument();
+    // Empty values read "-", never an em dash.
+    expect(screen.getAllByText("-").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit helm charts" }));
+    expect(onEditStep).toHaveBeenCalledWith("helm");
+  });
+});
+
+// Like the Helm step: Argo CD and Karpenter are always installed, a stored
+// selection of them is not a chart the user picked.
+describe("WizardReviewStep Helm charts", () => {
+  it("lists only the charts the Helm step lists", () => {
+    renderStep({
+      ...baseEnv,
+      services: {
+        eks: {
+          enabled: true,
+          helmCharts: {
+            argocd: { enabled: true, customValues: false },
+            loki: { enabled: true },
+          },
+        },
+      },
+    });
     expect(
-      screen.queryByText(/An SSH key is required/i),
-    ).not.toBeInTheDocument();
+      screen.getByRole("heading", { name: "Helm charts (1)" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Loki")).toBeInTheDocument();
+    expect(screen.queryByText("ArgoCD")).toBeNull();
+  });
+
+  // Saved values are not applied yet; Review says which charts carry some.
+  it("marks the charts that have custom values", () => {
+    renderStep({
+      ...baseEnv,
+      services: {
+        eks: {
+          enabled: true,
+          helmCharts: {
+            loki: { enabled: true, customValues: true },
+            prometheusStack: {
+              enabled: true,
+              customValues: true,
+              values: "grafana:\n  replicas: 2",
+            },
+          },
+        },
+      },
+    });
+    const row = (name) => screen.getByText(name).closest("li");
     expect(
-      screen.queryByText(/S3 bucket name is required/i),
-    ).not.toBeInTheDocument();
+      within(row("Prometheus Stack")).getByText("Custom values"),
+    ).toBeInTheDocument();
+    expect(within(row("Loki")).queryByText("Custom values")).toBeNull();
   });
 });

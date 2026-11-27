@@ -1,9 +1,16 @@
 // src/components/modals/wizard/HelmChartsStep.js
-import { Package, Zap, Info, Sparkles } from "lucide-react";
+// Wizard step 3 (only with a Kubernetes service): where the charts go, the
+// default-values note, starting presets and the charts by category.
+import { Package } from "lucide-react";
 import HelmChartsSelector from "../../HelmChartsSelector";
 import { getHelmChartsForK8sService } from "../../../config/helmChartsConfig";
+import { rebuiltChart } from "../../../utils/helmValues";
+import StarterTemplates from "./StarterTemplates";
+import { Callout } from "@/components/shared/callout";
+import { EmptyState } from "@/components/shared/states";
+import { Button } from "@/components/ui/button";
 
-const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
+const HelmChartsStep = ({ newEnv, setNewEnv, focusHeading }) => {
   // Get the enabled Kubernetes service
   const getEnabledK8sService = () => {
     if (newEnv.services?.eks?.enabled)
@@ -27,10 +34,13 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
 
   const k8sService = getEnabledK8sService();
 
+  // Only the charts with a switch here: Argo CD and Karpenter are always
+  // installed and not listed.
   const getEnabledChartsCount = () => {
-    if (!k8sService || !newEnv.services[k8sService.name]?.helmCharts) return 0;
-    return Object.values(newEnv.services[k8sService.name].helmCharts).filter(
-      (chart) => chart?.enabled,
+    const charts = newEnv.services[k8sService.name]?.helmCharts;
+    if (!charts) return 0;
+    return getHelmChartsForK8sService(k8sService.name).filter(
+      (key) => charts[key]?.enabled,
     ).length;
   };
 
@@ -51,225 +61,116 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
 
   if (!k8sService) {
     return (
-      <div className="text-center py-12">
-        <Package className="w-16 h-16 mx-auto mb-4 text-tertiary" />
-        <h3 className="text-lg font-medium mb-2 text-primary">
-          No Kubernetes Service Enabled
-        </h3>
-        <p className="text-sm text-secondary">
-          This step is only available when a Kubernetes service (EKS, AKS, GKE,
-          or Kubernetes) is enabled.
-        </p>
-      </div>
+      <EmptyState
+        icon={Package}
+        title="No Kubernetes service enabled"
+        description="Helm charts install on a Kubernetes cluster. Enable Amazon EKS in Services to choose them."
+      />
     );
   }
 
+  const currentCharts = newEnv.services[k8sService.name]?.helmCharts || {};
+  const enabledCount = getEnabledChartsCount();
+  // Presets and Clear all rebuild entries; a chart's custom values stay.
+  const rebuilt = (keys, enabled) =>
+    Object.fromEntries(
+      keys.map((key) => [key, rebuiltChart(currentCharts[key], enabled)]),
+    );
+
+  // A preset turns on only the charts this Kubernetes service has.
+  const available = new Set(getHelmChartsForK8sService(k8sService.name));
+  const presets = [
+    {
+      label: "Monitoring stack",
+      description: "Metrics in Prometheus, logs in Loki through Promtail.",
+      charts: ["prometheusStack", "loki", "promtail"],
+    },
+    {
+      label: "Ingress stack",
+      description: "NGINX ingress with TLS certificates and DNS records.",
+      // ingress-nginx exposes a Service of type LoadBalancer. On EKS
+      // nothing provisions one unless the AWS Load Balancer Controller is
+      // running, so ArgoCD blocks on that Service's health and never
+      // applies the Deployment - the customer gets an app stuck with no
+      // pods and nothing explaining why (OP-234). Ship the controller with
+      // the stack; it is EKS-only, and the stack is offered for AKS/GKE too.
+      charts: [
+        "ingressNginx",
+        "certManager",
+        "externalDns",
+        "awsLoadBalancerController",
+      ],
+    },
+  ];
+
+  const clearCharts = () => {
+    handleHelmChartsChange(rebuilt(Object.keys(currentCharts), false));
+    // Clear all goes away with the last chart.
+    focusHeading?.();
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="text-center">
-        <div className="inline-flex items-center px-4 py-2 rounded-full text-sm mb-4 bg-primary-muted text-primary border border-primary">
-          <Package className="w-4 h-4 mr-2" />
-          Helm Charts Configuration
-        </div>
-        <h3 className="text-xl font-bold mb-2 text-primary">
-          Configure Kubernetes Applications
-        </h3>
-        <p className="text-sm text-secondary">
-          Select Helm charts to deploy on your {k8sService.displayName} cluster
-        </p>
-      </div>
-
-      {/* K8s Service Summary */}
-      <div className="p-4 rounded-lg border bg-surface border-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-sm font-medium text-secondary">
-              Kubernetes Service: {k8sService.displayName}
-            </span>
-            <span className="ml-4 text-sm text-secondary">
-              {k8sService.provider} • {newEnv.name}
-            </span>
-          </div>
-          <div
-            className={`text-sm px-3 py-1 rounded-full ${
-              getEnabledChartsCount() > 0
-                ? "bg-primary-muted text-primary"
-                : "bg-background-secondary text-tertiary"
-            }`}
-          >
-            {getEnabledChartsCount()} charts selected
-          </div>
-        </div>
-      </div>
-
-      {/* Preview Banner */}
-      <div className="p-4 rounded-lg border bg-primary-muted border-primary text-primary">
-        <div className="flex items-start">
-          <Sparkles className="w-5 h-5 mr-3 mt-0.5 shrink-0 text-accent" />
-          <div className="text-sm">
-            <p className="font-medium mb-1">Preview</p>
-            <p className="text-xs opacity-80">
-              Helm chart configurations are currently in preview. Full
-              functionality is actively being developed and will be available in
-              an upcoming release.
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+          <p className="text-sm">
+            Deploys to {k8sService.displayName}
+            {newEnv.name ? (
+              <>
+                {" "}
+                in <span className="font-mono text-xs">{newEnv.name}</span>
+              </>
+            ) : null}
+            . Argo CD and Karpenter are always installed.
+          </p>
+          <div className="flex shrink-0 items-center gap-2">
+            <p
+              aria-live="polite"
+              className="text-sm text-muted-foreground tabular-nums"
+            >
+              {enabledCount} selected
             </p>
+            {enabledCount > 0 ? (
+              <Button variant="ghost" size="sm" onClick={clearCharts}>
+                Clear all
+              </Button>
+            ) : null}
           </div>
         </div>
+        <Callout variant="info">
+          Charts are generated with their default values. Custom values are
+          saved with the environment but not applied yet.
+        </Callout>
       </div>
 
-      {/* Info Banner */}
-      <div className="p-4 rounded-lg border bg-primary-muted border-primary text-primary">
-        <div className="flex items-start">
-          <Info className="w-5 h-5 mr-3 mt-0.5 shrink-0" />
-          <div className="text-sm">
-            <p className="font-medium mb-1">Helm Charts Information:</p>
-            <ul className="list-disc list-inside space-y-1 text-xs opacity-80">
-              <li>
-                Charts are organized by category: Monitoring, Security,
-                Networking, etc.
-              </li>
-              <li>
-                Enable &quot;Custom Values&quot; to modify default chart
-                configurations
-              </li>
-              <li>
-                All charts are optional - you can add them later if needed
-              </li>
-              <li>
-                Karpenter and ArgoCD are enabled automatically for all
-                Kubernetes clusters
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Enable Suggestions */}
-      {getEnabledChartsCount() === 0 && (
-        <div className="p-4 rounded-lg border bg-warning-muted border-warning">
-          <div className="text-center">
-            <Zap className="w-8 h-8 mx-auto mb-2 text-warning" />
-            <h4 className="section-label mb-2 text-warning">
-              Quick Start Templates
-            </h4>
-            <div className="flex flex-wrap justify-center gap-2">
-              <button
-                onClick={() => {
-                  const currentCharts =
-                    newEnv.services[k8sService.name]?.helmCharts || {};
-                  handleHelmChartsChange({
-                    ...currentCharts,
-                    prometheusStack: { enabled: true, customValues: false },
-                    loki: { enabled: true, customValues: false },
-                    promtail: { enabled: true, customValues: false },
-                  });
-                }}
-                className="text-xs px-3 py-1 rounded-full transition-colors bg-primary-muted text-primary hover:bg-primary-muted"
-              >
-                Monitoring Stack
-              </button>
-              <button
-                onClick={() => {
-                  const currentCharts =
-                    newEnv.services[k8sService.name]?.helmCharts || {};
-                  handleHelmChartsChange({
-                    ...currentCharts,
-                    argocd: { enabled: true, customValues: false },
-                  });
-                }}
-                className="text-xs px-3 py-1 rounded-full transition-colors bg-primary-muted text-primary hover:bg-primary-muted"
-              >
-                GitOps Setup
-              </button>
-              <button
-                onClick={() => {
-                  const currentCharts =
-                    newEnv.services[k8sService.name]?.helmCharts || {};
-                  // ingress-nginx exposes a Service of type LoadBalancer. On EKS
-                  // nothing provisions one unless the AWS Load Balancer
-                  // Controller is running, so ArgoCD blocks on that Service's
-                  // health and never applies the Deployment - the customer gets
-                  // an app stuck with no pods and nothing explaining why
-                  // (OP-234). Ship the controller with the stack, filtered to
-                  // the charts this Kubernetes service actually has: it is
-                  // EKS-only, and the stack is offered for AKS/GKE too.
-                  const available = new Set(
-                    getHelmChartsForK8sService(k8sService.name),
-                  );
-                  const stack = [
-                    "ingressNginx",
-                    "certManager",
-                    "externalDns",
-                    "awsLoadBalancerController",
-                  ];
-                  handleHelmChartsChange({
-                    ...currentCharts,
-                    ...Object.fromEntries(
-                      stack
-                        .filter((chart) => available.has(chart))
-                        .map((chart) => [
-                          chart,
-                          { enabled: true, customValues: false },
-                        ]),
-                    ),
-                  });
-                }}
-                className="text-xs px-3 py-1 rounded-full transition-colors bg-primary-muted text-primary hover:bg-primary-muted"
-              >
-                Ingress Stack
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Helm Charts Selector */}
-      <div>
-        <HelmChartsSelector
-          value={newEnv.services[k8sService.name]?.helmCharts || {}}
-          onChange={handleHelmChartsChange}
-          onEditHelmValues={onEditHelmValues}
-          k8sServiceName={k8sService.name}
+      {enabledCount === 0 ? (
+        <StarterTemplates
+          kind="charts"
+          cluster={k8sService.name}
+          templates={presets.map((preset) => {
+            const charts = preset.charts.filter((key) => available.has(key));
+            return {
+              label: preset.label,
+              description: preset.description,
+              items: charts,
+              onApply: () => {
+                handleHelmChartsChange({
+                  ...currentCharts,
+                  ...rebuilt(charts, true),
+                });
+                // The presets go away once a chart is selected.
+                if (charts.length > 0) focusHeading?.();
+              },
+            };
+          })}
         />
-      </div>
+      ) : null}
 
-      {/* Summary */}
-      {getEnabledChartsCount() > 0 && (
-        <div className="p-4 rounded-lg border bg-success-muted border-success text-success">
-          <div className="flex items-center">
-            <div className="w-2 h-2 bg-success rounded-full mr-3"></div>
-            <span className="text-sm font-medium">
-              {getEnabledChartsCount()} Helm chart
-              {getEnabledChartsCount() !== 1 ? "s" : ""} will be included in the
-              generated manifests for your {k8sService.displayName} cluster
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Action Buttons */}
-      {getEnabledChartsCount() > 0 && (
-        <div className="flex justify-center">
-          <button
-            onClick={() => {
-              const currentCharts =
-                newEnv.services[k8sService.name]?.helmCharts || {};
-              const clearedCharts = {};
-              Object.keys(currentCharts).forEach((key) => {
-                clearedCharts[key] = {
-                  enabled: false,
-                  customValues: false,
-                };
-              });
-              handleHelmChartsChange(clearedCharts);
-            }}
-            className="text-sm px-4 py-2 rounded-lg transition-colors text-warning hover:bg-warning-muted"
-          >
-            Clear All Charts
-          </button>
-        </div>
-      )}
+      <HelmChartsSelector
+        value={currentCharts}
+        onChange={handleHelmChartsChange}
+        k8sServiceName={k8sService.name}
+      />
     </div>
   );
 };

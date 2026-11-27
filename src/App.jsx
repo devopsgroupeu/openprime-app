@@ -1,44 +1,35 @@
 // src/App.js
 import { useState, useEffect } from "react";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-  useLocation,
-} from "react-router";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import EnvironmentsPage from "./components/EnvironmentsPage";
 import EnvironmentDetailPage from "./components/EnvironmentDetailPage";
 import SettingsPage from "./components/SettingsPage";
 import WizardPage from "./components/WizardPage";
 import AppLayout from "./components/layout/AppLayout";
-import AuraChatButton from "./components/AuraChatButton";
 import ErrorBoundary from "./components/ErrorBoundary";
 import authService from "./services/authService";
 import { useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./contexts/ToastContext";
 import { AuthProvider } from "./contexts/AuthContext";
-import { CatalogProvider } from "./contexts/CatalogContext";
-
-// The wizard has its own inline Aura assistant, so hide the floating one there.
-function FloatingAura() {
-  const { pathname } = useLocation();
-  const onWizard = /^\/environments\/(create|[^/]+\/edit)\/?$/.test(pathname);
-  return onWizard ? null : <AuraChatButton />;
-}
+import { PageShell } from "@/components/shared/page-shell";
+import { FullScreenState, NotFound } from "@/components/shared/states";
+import { Button } from "@/components/ui/button";
+import { serverMessage } from "@/lib/describe-error";
 
 function AppContent() {
-  const { isAuthenticated, isLoading, authError, retryAuth } = useAuth();
+  // AuthProvider renders its own loading screen, so auth has settled here.
+  const { isAuthenticated, authError, retryAuth } = useAuth();
   const [environments, setEnvironments] = useState([]);
-  const [environmentsLoading, setEnvironmentsLoading] = useState(false);
+  // True until the first load ends, so the list never flashes its empty state.
+  const [environmentsLoading, setEnvironmentsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
+    if (isAuthenticated) {
       loadEnvironments();
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated]);
 
   const loadEnvironments = async () => {
     try {
@@ -48,10 +39,31 @@ function AppContent() {
       setEnvironments(userEnvironments);
     } catch (error) {
       console.error("Failed to load environments:", error);
-      setLoadError(error.message || "Failed to load environments");
+      setLoadError({
+        message: serverMessage(error),
+        requestId: error.requestId,
+      });
       setEnvironments([]);
     } finally {
       setEnvironmentsLoading(false);
+    }
+  };
+
+  // A quiet reload when the list opens again: a job may have ended after its
+  // page closed. The list it has stays up meanwhile; a failure only shows
+  // when there is nothing to show.
+  const refreshEnvironments = async () => {
+    try {
+      setEnvironments(await authService.get("/environments"));
+      setLoadError(null);
+    } catch (error) {
+      console.error("Failed to reload environments:", error);
+      if (environments.length === 0) {
+        setLoadError({
+          message: serverMessage(error),
+          requestId: error.requestId,
+        });
+      }
     }
   };
 
@@ -95,144 +107,120 @@ function AppContent() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-openprime-gradient flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-white text-lg font-poppins">
-            Initializing OpenPrime...
-          </p>
-        </div>
-      </div>
+  // The detail page's copy of an environment (after a job, a key rotation)
+  // replaces the list's.
+  const handleEnvironmentChange = (changed) =>
+    setEnvironments((list) =>
+      list.map((env) => (env.id === changed.id ? changed : env)),
     );
-  }
 
-  // An unreachable Keycloak is not an expired session. Saying so — with a way
-  // out — beats a spinner that will never resolve.
+  // The layout rule: every signed-in screen is a page of AppLayout (sidebar,
+  // top bar, content area), the wizard, the catalog wait, not found and a
+  // page crash included. Only the screens before sign-in, where there is no
+  // user to show a sidebar for, are full screen: these two and AuthProvider's
+  // "Signing you in...".
+  //
+  // An unreachable Keycloak is not an expired session. Saying so, with a way
+  // out, beats a spinner that will never resolve.
   if (authError) {
     return (
-      <div className="min-h-screen bg-openprime-gradient flex items-center justify-center p-6">
-        <div className="max-w-md text-center">
-          <h1 className="text-white text-2xl font-poppins font-bold mb-3">
-            Sign-in service temporarily unavailable
-          </h1>
-          <p className="text-white/80 font-poppins mb-6">
-            We could not reach the authentication service. Your account and your
-            environments are unaffected — this is a connection problem, not a
-            sign-out.
-          </p>
-          <button
-            onClick={retryAuth}
-            className="btn-op-primary"
-            aria-label="Retry connecting to the sign-in service"
-          >
+      <FullScreenState
+        logo
+        title="Couldn't reach the sign-in service"
+        description="Your account and environments are unaffected. This is a connection problem, not a sign-out."
+        primary={
+          <Button size="lg" onClick={retryAuth}>
             Try again
-          </button>
-        </div>
-      </div>
+          </Button>
+        }
+      />
     );
   }
 
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-openprime-gradient flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-white text-lg font-poppins">
-            Redirecting to sign in...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (environmentsLoading) {
-    return (
-      <div className="min-h-screen bg-openprime-gradient flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-white text-lg font-poppins">
-            Loading environments...
-          </p>
-        </div>
-      </div>
-    );
+    return <FullScreenState logo loading title="Redirecting to sign in..." />;
   }
 
   return (
-    <ThemeProvider>
-      <ToastProvider>
-        <CatalogProvider
-          fallback={
-            <div className="min-h-screen bg-openprime-gradient flex items-center justify-center">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-white text-lg font-poppins">
-                  Loading service catalog...
-                </p>
-              </div>
-            </div>
-          }
-        >
-          <BrowserRouter>
-            <Routes>
-              <Route element={<AppLayout />}>
-                <Route
-                  path="/"
-                  element={<Navigate to="/environments" replace />}
+    <ToastProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<AppLayout environments={environments} />}>
+            <Route path="/" element={<Navigate to="/environments" replace />} />
+            <Route
+              path="/environments"
+              element={
+                <EnvironmentsPage
+                  environments={environments}
+                  loading={environmentsLoading}
+                  loadError={loadError}
+                  onRetry={loadEnvironments}
+                  onRefresh={refreshEnvironments}
+                  onDelete={handleDeleteEnvironment}
                 />
-                <Route
-                  path="/environments"
-                  element={
-                    <EnvironmentsPage
-                      environments={environments}
-                      loadError={loadError}
-                      onRetry={loadEnvironments}
-                    />
-                  }
+              }
+            />
+            {/* The URL people guess for the wizard; before :id. */}
+            <Route
+              path="/environments/new"
+              element={<Navigate to="/environments/create" replace />}
+            />
+            <Route
+              path="/environments/create"
+              element={
+                <WizardPage
+                  onCreateEnvironment={handleCreateEnvironment}
+                  onUpdateEnvironment={handleUpdateEnvironment}
                 />
-                <Route
-                  path="/environments/:id"
-                  element={
-                    <EnvironmentDetailPage onDelete={handleDeleteEnvironment} />
-                  }
+              }
+            />
+            <Route
+              path="/environments/:id"
+              element={
+                <EnvironmentDetailPage
+                  onDelete={handleDeleteEnvironment}
+                  onEnvironmentChange={handleEnvironmentChange}
                 />
-                <Route path="/settings" element={<SettingsPage />} />
-              </Route>
-              <Route
-                path="/environments/create"
-                element={
-                  <WizardPage
-                    onCreateEnvironment={handleCreateEnvironment}
-                    onUpdateEnvironment={handleUpdateEnvironment}
-                  />
-                }
-              />
-              <Route
-                path="/environments/:id/edit"
-                element={
-                  <WizardPage
-                    onCreateEnvironment={handleCreateEnvironment}
-                    onUpdateEnvironment={handleUpdateEnvironment}
-                  />
-                }
-              />
-            </Routes>
-            <FloatingAura />
-          </BrowserRouter>
-        </CatalogProvider>
-      </ToastProvider>
-    </ThemeProvider>
+              }
+            />
+            <Route
+              path="/environments/:id/edit"
+              element={
+                <WizardPage
+                  onCreateEnvironment={handleCreateEnvironment}
+                  onUpdateEnvironment={handleUpdateEnvironment}
+                />
+              }
+            />
+            <Route
+              path="/settings"
+              element={<Navigate to="/settings/account" replace />}
+            />
+            <Route path="/settings/:tab" element={<SettingsPage />} />
+            <Route
+              path="*"
+              element={
+                <PageShell width="detail">
+                  <NotFound title="Page not found" />
+                </PageShell>
+              }
+            />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ToastProvider>
   );
 }
 
 export default function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
+      {/* Above the auth gate, so the sign-in screens get the theme too. */}
+      <ThemeProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

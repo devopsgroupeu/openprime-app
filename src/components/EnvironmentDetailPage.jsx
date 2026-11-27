@@ -1,65 +1,162 @@
-import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router";
-import {
-  Server,
-  Package,
-  Settings,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import { useCatalog } from "../contexts/CatalogContext";
 import { useToast } from "../contexts/ToastContext";
 import authService from "../services/authService";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
-import EnvironmentHeader from "./environment-detail/EnvironmentHeader";
-import ServicesList from "./environment-detail/ServicesList";
-import HelmChartsList from "./environment-detail/HelmChartsList";
-import ExternalResources from "./environment-detail/ExternalResources";
+import EnvironmentHeader, {
+  JobCallout,
+  NO_GIT,
+} from "./environment-detail/EnvironmentHeader";
+import EnvironmentOverview from "./environment-detail/EnvironmentOverview";
+import ServicesList, {
+  enabledServiceEntries,
+} from "./environment-detail/ServicesList";
+import HelmChartsList, {
+  enabledCharts,
+} from "./environment-detail/HelmChartsList";
 import EnvironmentConfiguration from "./environment-detail/EnvironmentConfiguration";
 import {
-  getProviderConfig,
-  getProviderRegions,
-} from "../config/providersConfig";
+  cleanGitUrl,
+  gitRepositoryOf,
+  gitWebUrl,
+} from "./environment-detail/ExternalResources";
+import { getEffectiveStatus, lastJob } from "../utils/environmentStats";
+import { PageShell } from "@/components/shared/page-shell";
+import { useUnsavedGuard } from "@/components/shared/save-bar";
+import { DetailPageSkeleton } from "@/components/shared/skeletons";
+import { ErrorState, NotFound } from "@/components/shared/states";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { describeError, serverMessage } from "@/lib/describe-error";
+import { cn } from "@/lib/utils";
 
-// InfraFlow-style metric card: uppercase label, large value, optional progress bar.
-const MetricCard = ({ label, value, sub, progress }) => (
-  <div className="rounded-2xl border border-border bg-surface p-6">
-    <p className="section-label mb-2">{label}</p>
-    <p className="text-3xl font-extrabold text-primary">{value}</p>
-    {progress != null && (
-      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
-        <div
-          className="progress-glow h-full rounded-full transition-all"
-          style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
-        />
-      </div>
-    )}
-    {sub && <p className="mt-2 text-xs text-tertiary">{sub}</p>}
-  </div>
-);
+const TABS = [
+  { id: "overview", label: "Overview" },
+  { id: "services", label: "Services" },
+  { id: "helm", label: "Helm charts" },
+  { id: "configuration", label: "Configuration" },
+];
 
-const ConfigRow = ({ label, value, mono }) => (
-  <div className="flex items-center justify-between gap-4 py-2.5">
-    <span className="section-label">{label}</span>
-    <span
-      className={`text-sm font-medium text-primary text-right truncate ${mono ? "font-mono" : ""}`}
+// Async job model: POST returns 202 + jobId, then we poll GET /api/jobs/:jobId
+// until the job reaches a terminal state (succeeded/failed/cancelled).
+// Backoff: 2s for the first 8 polls (~16s), 5s for the next 12 (~60s), then
+// 10s. Keeps total polls (~43) well under the backend jobs-route limiter
+// while still covering ~5 min of background job execution.
+const pollJob = async (jobId, mountedRef) => {
+  const maxPolls = 45;
+  const getPollInterval = (pollIndex) => {
+    if (pollIndex < 8) return 2000;
+    if (pollIndex < 20) return 5000;
+    return 10000;
+  };
+  for (let i = 0; i < maxPolls; i++) {
+    if (!mountedRef.current) return null;
+    const job = await authService.get(`/jobs/${jobId}`);
+    if (job.status === "succeeded") return job;
+    // `jobFailed`: the backend stored this outcome on the environment.
+    if (job.status === "failed")
+      throw Object.assign(new Error(job.error || "Job failed"), {
+        jobFailed: true,
+      });
+    if (job.status === "cancelled") throw new Error("Job was cancelled");
+    await new Promise((resolve) => setTimeout(resolve, getPollInterval(i)));
+  }
+  throw new Error("Operation timed out. Check the job status later.");
+};
+
+const triggerDownload = (blob, filename) => {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
+/** Route tabs: links with the tab in `?tab=` (Overview is the bare URL). */
+function TabNav({ tabs, active, basePath }) {
+  const activeLink = useRef(null);
+  // The active tab stays visible in the scrolling tab row on phones.
+  useEffect(() => {
+    activeLink.current?.scrollIntoView?.({
+      inline: "nearest",
+      block: "nearest",
+    });
+  }, [active]);
+  return (
+    <nav
+      aria-label="Environment sections"
+      className="-mx-4 overflow-x-auto border-b px-4 md:mx-0 md:px-0"
     >
-      {value || "—"}
-    </span>
-  </div>
-);
+      <ul className="flex w-max gap-1">
+        {tabs.map((tab) => {
+          const current = tab.id === active;
+          return (
+            <li key={tab.id}>
+              <Link
+                ref={current ? activeLink : undefined}
+                to={
+                  tab.id === "overview" ? basePath : `${basePath}?tab=${tab.id}`
+                }
+                aria-current={current ? "page" : undefined}
+                className={cn(
+                  "inline-flex h-11 items-center gap-1.5 border-b-2 border-transparent px-3 text-md font-medium text-muted-foreground outline-none lg:h-13",
+                  "transition-[color,border-color] duration-(--dur-fast) hover:text-foreground",
+                  "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+                  current && "border-foreground text-foreground",
+                )}
+              >
+                {tab.label}
+                {tab.count !== undefined ? (
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {tab.count}
+                  </span>
+                ) : null}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
 
-const EnvironmentDetailPage = ({ onDelete }) => {
-  const { id } = useParams();
+function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const toast = useToast();
+  const catalog = useCatalog();
   const [environment, setEnvironment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
+  const [reload, setReload] = useState(0);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isPushing, setIsPushing] = useState(false);
-  const [expandedServices, setExpandedServices] = useState({});
-  const { success, error } = useToast();
+  const [confirmPush, setConfirmPush] = useState(false);
+  // The job this page runs: { kind, startedAt } while it polls, then
+  // { kind, error } when it failed on this visit (announced; a failure stored
+  // before the page opened is shown, not announced). Kind "download" fetches
+  // the ZIP of a generated repository again (`downloadUrl`).
+  const [job, setJob] = useState(null);
   const mountedRef = useRef(true);
+  // One job at a time. A ref, not state: a second trigger that lands before
+  // the next render (the buttons not disabled yet) is ignored too.
+  const inFlight = useRef(false);
+  const running = job && !job.error ? job.kind : null;
+  // Leaving drops the download: polling is tied to this page being mounted.
+  const leaveGuard = useUnsavedGuard(
+    running === "generate" || running === "download",
+  );
 
   useEffect(() => {
     mountedRef.current = true;
@@ -81,7 +178,7 @@ const EnvironmentDetailPage = ({ onDelete }) => {
           setEnvironment(null);
           setFetchError({
             status: err.status,
-            message: err.message,
+            message: serverMessage(err),
             requestId: err.requestId,
           });
         } finally {
@@ -90,371 +187,322 @@ const EnvironmentDetailPage = ({ onDelete }) => {
       }
     };
     fetchEnvironment();
-  }, [id]);
+  }, [id, reload]);
 
-  if (loading) {
+  // The list, the palette and the breadcrumb show the same environment.
+  useEffect(() => {
+    if (environment) onEnvironmentChange?.(environment);
+  }, [environment]);
+
+  // The services tab reads the catalog: it waits here too, in one skeleton.
+  if (loading || catalog.status === "loading") {
     return (
-      <div className="transition-colors duration-200 bg-transparent text-primary">
-        <div className="px-8 py-16 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading environment...</p>
-        </div>
-      </div>
+      <PageShell width="detail">
+        <DetailPageSkeleton />
+      </PageShell>
     );
   }
 
-  if (fetchError) {
-    if (fetchError.status === 404) {
-      return (
-        <div className="transition-colors duration-200 bg-transparent text-primary">
-          <div className="px-8 py-16 text-center">
-            <p className="text-lg font-medium">Environment not found</p>
-            <Link
-              to="/environments"
-              className="text-accent hover:underline mt-2 inline-block"
-            >
-              Back to environments
-            </Link>
-          </div>
-        </div>
-      );
-    }
-
+  if (!environment || fetchError) {
     return (
-      <div className="transition-colors duration-200 bg-transparent text-primary">
-        <div className="px-8 py-16 text-center max-w-lg mx-auto">
-          <p className="text-lg font-medium">Something went wrong</p>
-          <p className="text-secondary mt-2">
-            {fetchError.message || "Failed to load environment"}
-          </p>
-          {fetchError.requestId && (
-            <p className="text-xs text-tertiary mt-2">
-              Error ID: {fetchError.requestId}
-            </p>
-          )}
-          <Link
-            to="/environments"
-            className="text-accent hover:underline mt-6 inline-block"
-          >
-            Back to environments
-          </Link>
-        </div>
-      </div>
+      <PageShell width="detail">
+        {fetchError &&
+        fetchError.status !== 404 &&
+        fetchError.status !== 403 ? (
+          <ErrorState
+            thing="environment"
+            message={fetchError.message}
+            requestId={fetchError.requestId}
+            onRetry={() => setReload((n) => n + 1)}
+          />
+        ) : (
+          <NotFound thing="environment" />
+        )}
+      </PageShell>
     );
   }
 
-  if (!environment) {
-    return (
-      <div className="transition-colors duration-200 bg-transparent text-primary">
-        <div className="px-8 py-16 text-center">
-          <p className="text-lg font-medium">Environment not found</p>
-          <Link
-            to="/environments"
-            className="text-accent hover:underline mt-2 inline-block"
-          >
-            Back to environments
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const basePath = `/environments/${environment.id}`;
+  const services = enabledServiceEntries(environment);
+  const charts = enabledCharts(environment);
+  const gitRepo = gitRepositoryOf(environment);
+  // Git switched on without a URL has nowhere to push to.
+  const gitEnabled = Boolean(gitRepo?.enabled && gitRepo.url?.trim());
+  const repoName = cleanGitUrl(gitRepo?.url);
+  const repoWeb = gitWebUrl(gitRepo?.url);
 
-  const providerConfig = getProviderConfig(environment.provider);
-  // Region location for the metric card sub (e.g. "Ireland" from "EU (Ireland)").
-  const regionLabel = getProviderRegions(environment.provider)?.find(
-    (r) => r.value === environment.region,
-  )?.label;
-  const regionLocation = regionLabel
-    ? regionLabel.match(/\(([^)]+)\)/)?.[1] || regionLabel
-    : providerConfig?.name || environment.provider;
+  const tabs = TABS.filter((tab) => tab.id !== "helm" || charts.length > 0).map(
+    (tab) =>
+      tab.id === "services"
+        ? { ...tab, count: services.length }
+        : tab.id === "helm"
+          ? { ...tab, count: charts.length }
+          : tab,
+  );
+  const requested = params.get("tab");
+  const active = tabs.some((tab) => tab.id === requested)
+    ? requested
+    : "overview";
 
-  const handleEdit = () => navigate(`/environments/${environment.id}/edit`);
-  const handleDelete = () => setShowDeleteModal(true);
-  const confirmDelete = () => {
-    onDelete(environment.id);
-    setShowDeleteModal(false);
-    navigate("/environments");
-  };
-
-  // Async job model: POST returns 202 + jobId, then we poll GET /api/jobs/:jobId
-  // until the job reaches a terminal state (succeeded/failed/cancelled).
-  // Backoff: 2s for the first 8 polls (~16s), 5s for the next 12 (~60s), then
-  // 10s — keeps total polls (~43) well under the backend jobs-route limiter
-  // while still covering ~5 min of background job execution.
-  const pollJob = async (jobId) => {
-    const maxPolls = 45;
-    const getPollInterval = (pollIndex) => {
-      if (pollIndex < 8) return 2000;
-      if (pollIndex < 20) return 5000;
-      return 10000;
-    };
-    for (let i = 0; i < maxPolls; i++) {
-      if (!mountedRef.current) return null;
-      const job = await authService.get(`/jobs/${jobId}`);
-      if (job.status === "succeeded") return job;
-      if (job.status === "failed") throw new Error(job.error || "Job failed");
-      if (job.status === "cancelled") throw new Error("Job was cancelled");
-      await new Promise((resolve) => setTimeout(resolve, getPollInterval(i)));
-    }
-    throw new Error("Operation timed out. Check the job status later.");
-  };
-
-  const triggerDownload = (blob, filename) => {
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  };
-
-  const generateInfrastructure = async () => {
+  // The outcome, status and times the backend stored for a finished job.
+  const refresh = async () => {
     try {
-      setIsGenerating(true);
-      const { jobId } = await authService.post(
-        `/environments/${environment.id}/generate`,
-        {},
-        { headers: { "X-Async-Jobs": "true" } },
-      );
-      const job = await pollJob(jobId);
-      if (job === null) return;
-      if (!job.result?.downloadUrl) {
-        throw new Error("Generated artifact is not available");
-      }
-      const blob = await authService.getBlob(job.result.downloadUrl);
+      const fresh = await authService.get(`/environments/${id}`);
+      if (mountedRef.current) setEnvironment(fresh);
+    } catch (err) {
+      console.error("Failed to refresh the environment:", err);
+    }
+  };
+
+  const failed = (kind, err, extra) =>
+    setJob({
+      kind,
+      ...extra,
+      error: {
+        message: serverMessage(err),
+        requestId: err.requestId,
+      },
+    });
+
+  // A download that fails after a successful generate keeps its URL, so
+  // Download again does not generate again.
+  const download = async (downloadUrl, done) => {
+    try {
+      const blob = await authService.getBlob(downloadUrl);
       if (!mountedRef.current) return;
       triggerDownload(blob, `${environment.name}-infrastructure.zip`);
-      success(
-        "Infrastructure repository generated and downloaded successfully",
-      );
+      toast.success(done);
+      setJob(null);
     } catch (err) {
-      console.error("Error generating infrastructure:", err);
-      if (mountedRef.current) {
-        const message = err.data?.error || err.message;
-        const errorId = err.requestId ? ` (Error ID: ${err.requestId})` : "";
-        error(
-          `${message || "Failed to generate infrastructure. Please try again."}${errorId}`,
-        );
-      }
-    } finally {
-      if (mountedRef.current) setIsGenerating(false);
+      console.error("Error downloading the repository:", err);
+      if (mountedRef.current) failed("download", err, { downloadUrl });
     }
   };
 
-  const pushInfrastructure = async () => {
+  const downloadAgain = async (downloadUrl) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setJob({ kind: "download", startedAt: Date.now() });
     try {
-      setIsPushing(true);
+      await download(downloadUrl, "Repository downloaded.");
+    } finally {
+      inFlight.current = false;
+    }
+  };
+
+  const runJob = async (kind) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setJob({ kind, startedAt: Date.now() });
+    try {
       const { jobId } = await authService.post(
-        `/environments/${environment.id}/push`,
+        `/environments/${environment.id}/${kind}`,
         {},
         { headers: { "X-Async-Jobs": "true" } },
       );
-      const job = await pollJob(jobId);
-      if (job === null) return;
-      success(
-        job.result?.message || "Infrastructure pushed to Git successfully",
-      );
-    } catch (err) {
-      console.error("Error pushing to Git:", err);
-      if (mountedRef.current) {
-        const message = err.data?.error || err.message;
-        const errorId = err.requestId ? ` (Error ID: ${err.requestId})` : "";
-        error(
-          `${message || "Failed to push to Git. Please try again."}${errorId}`,
+      const result = await pollJob(jobId, mountedRef);
+      if (result === null) return;
+      await refresh();
+      if (!mountedRef.current) return;
+      if (kind === "generate") {
+        if (!result.result?.downloadUrl) {
+          throw new Error("Generated artifact is not available");
+        }
+        await download(
+          result.result.downloadUrl,
+          "Repository generated and downloaded.",
         );
+        return;
       }
+      toast.success(`Pushed to ${repoName}.`, {
+        action: repoWeb
+          ? {
+              label: "Open repository",
+              onClick: () =>
+                window.open(repoWeb, "_blank", "noopener,noreferrer"),
+            }
+          : undefined,
+      });
+      setJob(null);
+    } catch (err) {
+      console.error(`Error running the ${kind} job:`, err);
+      if (!mountedRef.current) return;
+      // A failed job stored its outcome and status on the environment.
+      if (err.jobFailed) await refresh();
+      if (!mountedRef.current) return;
+      // Shown in the callout (with Try again), not in a toast as well.
+      failed(kind, err);
     } finally {
-      if (mountedRef.current) setIsPushing(false);
+      inFlight.current = false;
     }
   };
 
-  const services = environment.services || {};
-  const enabledCount = Object.values(services).filter((s) => s?.enabled).length;
-  const helmCount = Object.values(services.eks?.helmCharts || {}).filter(
-    (c) => c?.enabled,
-  ).length;
+  const last = lastJob(environment);
+  // A job a worker has claimed (`deploying`) supersedes the stored failure.
+  // The job buttons stay enabled then: the backend can leave `deploying`
+  // behind, and enqueueing again re-attaches to the active job.
+  const failure =
+    job?.error ??
+    (environment.status !== "deploying" &&
+    last?.status === "failed" &&
+    last.error
+      ? { message: last.error }
+      : null);
+  const failedKind = job?.kind ?? last?.kind;
+  // Pushing writes to the customer's branch: it asks first, also on Try again.
+  const retry =
+    failedKind === "download"
+      ? () => downloadAgain(job.downloadUrl)
+      : failedKind === "push"
+        ? gitEnabled
+          ? () => setConfirmPush(true)
+          : undefined
+        : () => runJob(failedKind);
+  // Keyed by phase: a failure is a new alert, not the running callout's node
+  // given role="alert" (not every screen reader announces that).
+  const callout = running ? (
+    <JobCallout key="running" kind={running} startedAt={job.startedAt} />
+  ) : failure ? (
+    <JobCallout
+      key="failed"
+      kind={failedKind}
+      error={failure}
+      onRetry={retry}
+      note={retry ? undefined : NO_GIT}
+      announce={Boolean(job?.error)}
+    />
+  ) : null;
 
-  const gitRepo = environment.git_repository || environment.gitRepository;
-  const gitEnabled = gitRepo?.enabled;
-  const prefix = environment.globalPrefix || environment.global_prefix;
+  const copy = async (text, done) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(done);
+    } catch {
+      toast.error("Couldn't copy to the clipboard.");
+    }
+  };
 
-  // Services expansion is owned here so the "Expand/Collapse all" toggle can
-  // live on the section heading row (like Config Details · Edit).
-  const expandableServices = Object.entries(services).filter(
-    ([, config]) =>
-      config?.enabled &&
-      Object.keys(config).some((k) => k !== "enabled" && k !== "helmCharts"),
-  );
-  const allServicesExpanded =
-    expandableServices.length > 0 &&
-    expandableServices.every(([name]) => expandedServices[name]);
-  const toggleService = (name) =>
-    setExpandedServices((prev) => ({ ...prev, [name]: !prev[name] }));
-  const toggleAllServices = () => {
-    if (allServicesExpanded) {
-      setExpandedServices({});
-    } else {
-      const next = {};
-      expandableServices.forEach(([name]) => {
-        next[name] = true;
-      });
-      setExpandedServices(next);
+  // The dialog closes after this returns, also after a failure (toasted here).
+  const confirmDelete = async () => {
+    try {
+      await onDelete(environment.id);
+      toast.success(`Deleted ${environment.name}.`);
+      navigate("/environments");
+    } catch (err) {
+      toast.error(describeError(err, `delete ${environment.name}`));
     }
   };
 
   return (
-    <div className="transition-colors duration-200 bg-transparent">
+    <PageShell width="detail">
       <EnvironmentHeader
         environment={environment}
-        providerConfig={providerConfig}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onGenerate={generateInfrastructure}
-        onPush={pushInfrastructure}
-        isGenerating={isGenerating}
-        isPushing={isPushing}
+        status={
+          running && running !== "download"
+            ? "deploying"
+            : getEffectiveStatus(environment)
+        }
+        running={running}
         canPush={gitEnabled}
+        onGenerate={() => runJob("generate")}
+        onPush={() => setConfirmPush(true)}
+        onCopyId={() => copy(environment.id, "Environment ID copied")}
+        onCopyLink={() =>
+          copy(`${window.location.origin}${basePath}`, "Link copied")
+        }
+        onDelete={() => setShowDeleteModal(true)}
       />
+      {callout}
+      <TabNav tabs={tabs} active={active} basePath={basePath} />
 
-      <div className="px-8 py-8 space-y-8">
-        {/* Metrics */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-          <MetricCard
-            label="Active Services"
-            value={enabledCount}
-            sub="Cloud services enabled"
-          />
-          <MetricCard
-            label="Helm Charts"
-            value={helmCount}
-            sub="Kubernetes deployments"
-          />
-          <MetricCard
-            label="Total Resources"
-            value={enabledCount + helmCount}
-            sub="Services + charts"
-          />
-          <MetricCard
-            label="Region"
-            value={environment.region || "—"}
-            sub={regionLocation}
-          />
-        </div>
+      {active === "overview" ? (
+        <EnvironmentOverview
+          environment={environment}
+          serviceCount={services.length}
+          chartCount={charts.length}
+          basePath={basePath}
+        />
+      ) : active === "services" ? (
+        <ServicesList environment={environment} editHref={`${basePath}/edit`} />
+      ) : active === "helm" ? (
+        <HelmChartsList environment={environment} />
+      ) : (
+        <EnvironmentConfiguration
+          environment={environment}
+          onEnvironmentUpdate={setEnvironment}
+          editHref={`${basePath}/edit`}
+          onDelete={() => setShowDeleteModal(true)}
+          busy={Boolean(running)}
+        />
+      )}
 
-        {/* Two-column: services/helm (left) + config/actions (right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            <section>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Server className="w-5 h-5 text-accent" />
-                  <h2 className="text-2xl font-extrabold text-primary">
-                    Infrastructure Services
-                  </h2>
-                </div>
-                {expandableServices.length > 0 && (
-                  <button
-                    onClick={toggleAllServices}
-                    className="flex items-center gap-1 text-xs font-bold text-secondary transition-colors hover:text-primary"
-                  >
-                    {allServicesExpanded ? (
-                      <>
-                        <ChevronUp className="w-3.5 h-3.5" />
-                        Collapse all
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="w-3.5 h-3.5" />
-                        Expand all
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-              <ServicesList
-                environment={environment}
-                expandedServices={expandedServices}
-                onToggleService={toggleService}
-              />
-            </section>
-
-            {environment.services?.eks?.enabled && (
-              <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <Package className="w-5 h-5 text-accent" />
-                  <h2 className="text-2xl font-extrabold text-primary">
-                    Helm Applications
-                  </h2>
-                </div>
-                <HelmChartsList environment={environment} />
-              </section>
-            )}
-
-            <EnvironmentConfiguration environment={environment} />
-          </div>
-
-          <div className="space-y-8">
-            {/* Config details */}
-            <section>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-extrabold text-primary">
-                  Config Details
-                </h2>
-                <button
-                  onClick={handleEdit}
-                  className="flex items-center gap-1 text-xs font-bold text-secondary transition-colors hover:text-primary"
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                  Edit
-                </button>
-              </div>
-              <div className="rounded-2xl border border-border bg-surface p-6">
-                <div className="divide-y divide-border">
-                  <ConfigRow
-                    label="Provider"
-                    value={providerConfig?.name || environment.provider}
-                  />
-                  <ConfigRow label="Region" value={environment.region} />
-                  <ConfigRow label="Global Prefix" value={prefix} mono />
-                  <div className="flex items-start justify-between gap-4 py-2.5">
-                    <span className="section-label">Credentials</span>
-                    {environment.cloudCredential ? (
-                      <div className="min-w-0 text-right">
-                        <p className="text-sm font-medium text-primary truncate">
-                          {environment.cloudCredential.name}
-                        </p>
-                        <p className="text-xs font-mono text-tertiary truncate">
-                          Account {environment.cloudCredential.identifier}
-                        </p>
-                      </div>
-                    ) : (
-                      <span className="text-sm font-medium text-primary text-right">
-                        Manual configuration
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <ExternalResources
-              environment={environment}
-              onEnvironmentUpdate={setEnvironment}
-            />
-          </div>
-        </div>
-      </div>
-
-      {showDeleteModal && (
+      {showDeleteModal ? (
         <ConfirmDeleteModal
           environment={environment}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={confirmDelete}
         />
-      )}
-    </div>
+      ) : null}
+
+      <AlertDialog open={confirmPush} onOpenChange={setConfirmPush}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {gitRepo?.branch
+                ? `Push to ${repoName} (${gitRepo.branch})?`
+                : `Push to ${repoName}?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {gitRepo?.branch
+                ? "OpenPrime commits the generated code to this branch."
+                : "OpenPrime commits the generated code to this repository."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => runJob("push")}>
+              Push
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={leaveGuard.pending}
+        onOpenChange={(open) => !open && leaveGuard.stay()}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave this page?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {running === "download"
+                ? "The ZIP download is still in progress. If you leave, the file will not be saved."
+                : "The repository is still generating. If you leave, the ZIP download will not start."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay on page</AlertDialogCancel>
+            <AlertDialogAction onClick={leaveGuard.leave}>
+              Leave
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </PageShell>
+  );
+}
+
+// One instance per environment: a job, its polling and its outcome end with
+// the page of the environment they ran on (the route element is reused).
+const EnvironmentDetailPage = ({ onDelete, onEnvironmentChange }) => {
+  const { id } = useParams();
+  return (
+    <EnvironmentDetail
+      key={id}
+      id={id}
+      onDelete={onDelete}
+      onEnvironmentChange={onEnvironmentChange}
+    />
   );
 };
 

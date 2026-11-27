@@ -1,73 +1,199 @@
-// src/components/layout/AppSidebar.jsx
-import { NavLink } from "react-router";
-import { Server, Settings, X } from "lucide-react";
+import { useEffect } from "react";
+import { Link, useLocation } from "react-router";
+import { ChevronLeft, Layers, PanelLeft, Plus, Search } from "lucide-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import logo from "../../assets/openprime-logo-color.svg";
+import logoInverse from "../../assets/openprime-logo-color-inverse.svg";
+import { SETTINGS_TABS, wizardRoute } from "../../config/nav";
+import { IconAction } from "./IconAction";
+import UserMenu from "./UserMenu";
 
-const NAV_ITEMS = [
-  { to: "/environments", label: "Environments", icon: Server },
-  { to: "/settings", label: "Settings", icon: Settings, end: true },
-];
+// Row recipe (openprime-ai): 28 px, 6 px padding, 8 px radius, 13 px label at 80 %.
+const ROW =
+  "h-7 gap-1.5 rounded-lg px-1.5 text-sidebar-foreground/80 data-[active=true]:font-normal max-md:min-h-11";
+const LABEL = "h-6 px-1.5 text-xs font-normal text-sidebar-foreground/70";
+const GROUP = "p-0 pt-2.5 first:pt-0";
+const ICON_BUTTON =
+  "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground";
 
-const linkClass = ({ isActive }) =>
-  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium border-l-2 transition-colors ${
-    isActive
-      ? "border-primary bg-primary-muted text-primary"
-      : "border-transparent text-secondary hover:text-primary hover:bg-surface-elevated"
-  }`;
+function isActive(pathname, to) {
+  return pathname === to || pathname.startsWith(`${to}/`);
+}
 
-const NavList = ({ onItemClick }) => (
-  <nav className="flex flex-col gap-1 p-4">
-    <p className="section-label px-3 mb-2">Platform</p>
-    {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
-      <NavLink
-        key={to}
-        to={to}
-        end={end}
-        className={linkClass}
-        onClick={onItemClick}
-      >
-        <Icon className="w-4 h-4" />
-        <span>{label}</span>
-      </NavLink>
-    ))}
-  </nav>
-);
-
-const AppSidebar = ({ mobileOpen, onClose }) => (
-  <>
-    {/* Desktop — static rail */}
-    <aside
-      className="hidden lg:flex flex-col w-64 shrink-0 border-r border-border bg-surface/40 sticky top-20 h-[calc(100vh-5rem)]"
-      aria-label="Primary navigation"
-    >
-      <NavList />
-    </aside>
-
-    {/* Mobile — slide-in drawer */}
-    {mobileOpen && (
-      <div className="lg:hidden fixed inset-0 z-50">
-        <div
-          className="absolute inset-0 bg-black/50 animate-fade-in"
-          onClick={onClose}
-        />
-        <aside
-          className="absolute left-0 top-0 h-full w-64 bg-surface border-r border-border shadow-elevation-4 animate-slide-up"
-          aria-label="Primary navigation"
+/** One sidebar row: a link with an icon, active state and aria-current. */
+function NavRow({ to, active = false, icon: Icon, children }) {
+  const { setOpenMobile } = useSidebar();
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton asChild isActive={active} className={ROW}>
+        <Link
+          to={to}
+          aria-current={active ? "page" : undefined}
+          // Also covers tapping the current page, where the route (and the
+          // effect in AppSidebar) does not change.
+          onClick={() => setOpenMobile(false)}
         >
-          <div className="flex items-center justify-between px-4 h-20 border-b border-border">
-            <span className="section-label">Menu</span>
-            <button
-              onClick={onClose}
-              className="p-2 -mr-2 rounded-lg text-tertiary hover:text-primary hover:bg-surface-elevated"
-              aria-label="Close menu"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <NavList onItemClick={onClose} />
-        </aside>
-      </div>
-    )}
-  </>
-);
+          <Icon aria-hidden />
+          <span className="min-w-0 flex-1 truncate">{children}</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
 
-export default AppSidebar;
+/** Top row: home (the OpenPrime mark), Search (palette) and Hide sidebar. */
+function TopRow({ onSearch }) {
+  const { setOpenMobile, toggleSidebar } = useSidebar();
+  return (
+    <div className="flex items-center gap-0.5">
+      <Link
+        to="/environments"
+        aria-label="OpenPrime home"
+        onClick={() => setOpenMobile(false)}
+        className="mr-auto flex h-7 min-w-0 items-center rounded-lg px-1.5 outline-none transition-[background-color] duration-(--dur-fast) hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring max-md:min-h-11"
+      >
+        {/* Brand lockups: black wordmark on the light sidebar, white on dark. */}
+        <img src={logo} alt="" className="h-4 w-auto dark:hidden" />
+        <img
+          src={logoInverse}
+          alt=""
+          className="hidden h-4 w-auto dark:block"
+        />
+      </Link>
+      <IconAction
+        label="Search"
+        icon={Search}
+        shortcutId="commandPalette"
+        onClick={onSearch}
+        className={ICON_BUTTON}
+      />
+      <IconAction
+        label="Hide sidebar"
+        icon={PanelLeft}
+        shortcutId="toggleSidebar"
+        onClick={toggleSidebar}
+        className={ICON_BUTTON}
+      />
+    </div>
+  );
+}
+
+/** App mode of the sidebar. The create wizard is New environment's page. */
+function AppNav({ pathname }) {
+  const creating = wizardRoute(pathname)?.mode === "create";
+  return (
+    <>
+      <SidebarGroup className={GROUP}>
+        <SidebarMenu className="gap-px">
+          <NavRow to="/environments/create" icon={Plus} active={creating}>
+            New environment
+          </NavRow>
+        </SidebarMenu>
+      </SidebarGroup>
+      <SidebarGroup className={GROUP}>
+        <SidebarMenu className="gap-px">
+          <NavRow
+            to="/environments"
+            icon={Layers}
+            active={!creating && isActive(pathname, "/environments")}
+          >
+            Environments
+          </NavRow>
+        </SidebarMenu>
+      </SidebarGroup>
+    </>
+  );
+}
+
+/** Settings mode of the sidebar: Back to app and the tabs. */
+function SettingsNav({ pathname }) {
+  return (
+    // Back to app stays put; the group scrolls.
+    <nav
+      aria-label="Settings sections"
+      className="flex min-h-0 flex-1 flex-col"
+    >
+      <SidebarHeader className="gap-1 px-2 pt-2 pb-1">
+        <SidebarMenu className="gap-px">
+          <NavRow to="/environments" icon={ChevronLeft}>
+            Back to app
+          </NavRow>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent className="gap-0 px-2 pb-2">
+        <SidebarGroup className={GROUP}>
+          <SidebarGroupLabel className={LABEL}>Personal</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-px">
+              {SETTINGS_TABS.map((tab) => (
+                <NavRow
+                  key={tab.id}
+                  to={`/settings/${tab.id}`}
+                  icon={tab.icon}
+                  active={pathname === `/settings/${tab.id}`}
+                >
+                  {tab.label}
+                </NavRow>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </nav>
+  );
+}
+
+/**
+ * The one sidebar (port of openprime-ai AppSidebar): app navigation, or the
+ * settings navigation on /settings/*.
+ */
+export default function AppSidebar({ onSearch, onShortcuts }) {
+  const { pathname } = useLocation();
+  const { setOpenMobile } = useSidebar();
+  const inSettings = pathname.startsWith("/settings");
+
+  // The mobile Sheet must not keep covering the page after any navigation,
+  // including the ones started from the user menu.
+  useEffect(() => {
+    setOpenMobile(false);
+  }, [pathname, setOpenMobile]);
+
+  const openSearch = () => {
+    setOpenMobile(false);
+    onSearch();
+  };
+
+  return (
+    <Sidebar collapsible="offcanvas" className="border-sidebar-border">
+      {inSettings ? (
+        <SettingsNav pathname={pathname} />
+      ) : (
+        <>
+          <SidebarHeader className="px-2 pt-2 pb-2.5">
+            <TopRow onSearch={openSearch} />
+          </SidebarHeader>
+          <SidebarContent className="gap-0 px-2">
+            <nav aria-label="Main navigation" className="flex flex-col pb-2">
+              <AppNav pathname={pathname} />
+            </nav>
+          </SidebarContent>
+        </>
+      )}
+      <SidebarFooter className="gap-2 px-2 pt-1 pb-2">
+        <UserMenu onShortcuts={onShortcuts} />
+      </SidebarFooter>
+    </Sidebar>
+  );
+}

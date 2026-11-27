@@ -1,6 +1,21 @@
-import { useEffect, useId, useRef, useState } from "react";
-import { Check, Copy, Download, Eye, EyeOff, X } from "lucide-react";
+import { useId, useState } from "react";
+import { Download, Eye, EyeOff } from "lucide-react";
 import { strToU8, zipSync } from "fflate";
+import { CopyButton } from "@/components/shared/copy-button";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+const MASK = "\u2022".repeat(16);
+const KEY_FIELD =
+  "field-sizing-fixed h-32 resize-none font-mono text-xs leading-relaxed md:text-xs";
 
 function downloadKeys(pair) {
   const archive = zipSync(
@@ -29,125 +44,115 @@ function downloadKeys(pair) {
 // the tabs would render and silently do nothing.
 export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
   const id = useId();
-  const tabs = useRef([]);
   const [privateKeyVisible, setPrivateKeyVisible] = useState(false);
   const [downloadError, setDownloadError] = useState("");
-  const [copying, setCopying] = useState(false);
-  const [copyFeedback, setCopyFeedback] = useState(null);
   const configured = Boolean(gitRepository?.sshKeyConfigured);
   const hasKey = Boolean(gitRepository?.sshKey?.trim());
   const busy = keyState.status === "generating";
-  const buttonClass = "btn-op-primary";
-
-  useEffect(() => {
-    if (!copyFeedback) return;
-    const timeout = setTimeout(() => setCopyFeedback(null), 1800);
-    return () => clearTimeout(timeout);
-  }, [copyFeedback]);
-
-  const onTabKeyDown = (event, index) => {
-    const next = {
-      ArrowLeft: (index + 1) % 2,
-      ArrowRight: (index + 1) % 2,
-      Home: 0,
-      End: 1,
-    }[event.key];
-    if (next === undefined) return;
-    event.preventDefault();
-    tabs.current[next]?.focus();
-  };
+  const fingerprint = gitRepository?.sshKeyFingerprint
+    ? ` (${gitRepository.sshKeyFingerprint})`
+    : "";
 
   const download = () => {
     setDownloadError("");
     try {
       downloadKeys(keyState.pair);
     } catch {
-      setDownloadError("Download failed. Please try again.");
+      setDownloadError("Download failed. Try again.");
     }
   };
 
-  const copyKey = async (text, label) => {
-    setCopyFeedback(null);
-    setCopying(true);
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopyFeedback({ label, success: true });
-    } catch {
-      setCopyFeedback({ label, success: false });
-    } finally {
-      setCopying(false);
-    }
-  };
+  const toggleLabel = privateKeyVisible
+    ? "Hide private key"
+    : "Show private key";
 
   return (
-    <div className="space-y-3">
-      <div
-        role="tablist"
-        aria-label="SSH key setup"
-        className="inline-flex gap-1 rounded-xl border border-border bg-background p-1"
-      >
-        {["manual", "automatic"].map((mode, index) => (
-          <button
-            key={mode}
-            ref={(node) => {
-              tabs.current[index] = node;
-            }}
-            type="button"
-            role="tab"
-            id={`${id}-${mode}-tab`}
-            aria-controls={`${id}-${mode}-panel`}
-            aria-selected={keyState.mode === mode}
-            tabIndex={keyState.mode === mode ? 0 : -1}
-            onKeyDown={(event) => onTabKeyDown(event, index)}
-            onClick={() => {
-              setPrivateKeyVisible(false);
-              keyState.setMode(mode);
-            }}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${keyState.mode === mode ? "bg-primary-muted text-primary ring-1 ring-inset ring-primary shadow-sm" : "text-secondary hover:bg-surface hover:text-primary"}`}
-          >
-            {mode === "automatic" ? "Auto" : "Manual"}
-          </button>
-        ))}
-      </div>
+    // Both panels stay mounted (hidden when inactive) so a half-typed key and
+    // the generated pair survive a tab switch. Manual activation: switching
+    // mode clears a pasted key or starts a generation, so arrow keys only move
+    // focus and Enter, Space or a click selects.
+    <Tabs
+      activationMode="manual"
+      value={keyState.mode}
+      onValueChange={(mode) => {
+        setPrivateKeyVisible(false);
+        keyState.setMode(mode);
+      }}
+      className="gap-3"
+    >
+      <TabsList aria-label="SSH key setup">
+        <TabsTrigger value="manual">Paste existing key</TabsTrigger>
+        <TabsTrigger value="automatic">Generate in browser</TabsTrigger>
+      </TabsList>
 
-      <div
-        role="tabpanel"
-        id={`${id}-automatic-panel`}
-        aria-labelledby={`${id}-automatic-tab`}
-        hidden={keyState.mode !== "automatic"}
-        className="space-y-3"
+      <TabsContent
+        value="manual"
+        forceMount
+        hidden={keyState.mode !== "manual"}
+        className="flex flex-col gap-1.5"
       >
-        {busy && <p role="status">Generating SSH key…</p>}
-        {keyState.error && <p role="alert">{keyState.error}</p>}
+        <Label htmlFor={`${id}-private`} className="text-xs font-medium">
+          SSH private key (deploy key)
+        </Label>
+        <Textarea
+          id={`${id}-private`}
+          className={KEY_FIELD}
+          placeholder={
+            configured
+              ? "Leave blank to keep the current key"
+              : "Paste your SSH private key"
+          }
+          value={gitRepository?.sshKey || ""}
+          onChange={(event) => keyState.setManualKey(event.target.value)}
+        />
+        <p className="text-xs text-muted-foreground">
+          {configured
+            ? `A key is already configured${fingerprint}. Leave this blank to keep it, or paste a new key to replace it.`
+            : "A private key with write access to the repository."}
+        </p>
+      </TabsContent>
+
+      <TabsContent
+        value="automatic"
+        forceMount
+        hidden={keyState.mode !== "automatic"}
+        className="flex flex-col gap-3"
+      >
+        {busy && (
+          <p
+            role="status"
+            className="flex items-center gap-2 text-sm text-muted-foreground"
+          >
+            <Spinner aria-hidden />
+            Generating an SSH key...
+          </p>
+        )}
+        {keyState.error && (
+          <p role="alert" className="text-sm text-destructive">
+            {keyState.error}
+          </p>
+        )}
         {!keyState.pair && !busy && (
-          <>
+          <div className="flex flex-col items-start gap-2">
             {configured && (
-              <p className="text-xs text-tertiary">
-                A key is already configured
-                {gitRepository.sshKeyFingerprint
-                  ? ` (${gitRepository.sshKeyFingerprint})`
-                  : ""}
-                . A replacement takes effect when saved; register its public key
-                first.
+              <p className="text-xs text-muted-foreground">
+                A key is already configured{fingerprint}. A replacement takes
+                effect when saved; register its public key first.
               </p>
             )}
             {!configured && hasKey && (
-              <p className="text-xs text-tertiary">
+              <p className="text-xs text-muted-foreground">
                 A manually entered key is selected.
               </p>
             )}
-            <button
-              type="button"
-              className={buttonClass}
-              onClick={keyState.generate}
-            >
+            <Button variant="secondary" onClick={keyState.generate}>
               {keyState.status === "error"
-                ? "Retry generation"
+                ? "Try again"
                 : configured || hasKey
                   ? "Generate replacement key"
                   : "Generate key"}
-            </button>
-          </>
+            </Button>
+          </div>
         )}
         {keyState.pair && (
           <>
@@ -160,169 +165,99 @@ export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
                   suffix: "generated-private",
                 },
               ].map(({ field, label, suffix }) => (
-                <div
-                  key={field}
-                  className="min-w-0 overflow-hidden rounded-xl border border-border bg-background"
-                >
-                  <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2">
-                    <label
+                <div key={field} className="flex min-w-0 flex-col gap-1.5">
+                  <div className="flex h-6 items-center justify-between gap-2">
+                    <Label
                       htmlFor={`${id}-${suffix}`}
-                      className="text-sm font-semibold text-label"
+                      className="text-xs font-medium"
                     >
                       {label} key
-                    </label>
-                    {field === "privateKey" && (
-                      <button
-                        type="button"
-                        className="ml-auto shrink-0 rounded-lg p-2 text-secondary hover:bg-background hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
-                        aria-label={
-                          privateKeyVisible
-                            ? "Hide private key"
-                            : "Unhide private key"
-                        }
-                        title={
-                          privateKeyVisible
-                            ? "Hide private key"
-                            : "Unhide private key"
-                        }
-                        aria-expanded={privateKeyVisible}
-                        aria-controls={`${id}-${suffix}`}
-                        onClick={() =>
-                          setPrivateKeyVisible((visible) => !visible)
-                        }
-                      >
-                        {privateKeyVisible ? (
-                          <EyeOff className="h-4 w-4" aria-hidden="true" />
-                        ) : (
-                          <Eye className="h-4 w-4" aria-hidden="true" />
-                        )}
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className={`shrink-0 rounded-lg p-2 transition-colors motion-safe:transition-transform motion-safe:active:scale-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50 ${copyFeedback?.label === label ? (copyFeedback.success ? "bg-success-muted text-success" : "bg-danger-muted text-danger") : "text-secondary hover:bg-background hover:text-primary"}`}
-                      aria-label={`Copy ${label.toLowerCase()} key`}
-                      title={
-                        copyFeedback?.label === label
-                          ? copyFeedback.success
-                            ? "Copied!"
-                            : "Copy failed. Please try again."
-                          : `Copy ${label.toLowerCase()} key`
-                      }
-                      disabled={copying}
-                      onClick={() => copyKey(keyState.pair[field], label)}
-                    >
-                      {copyFeedback?.label === label ? (
-                        copyFeedback.success ? (
-                          <Check className="h-4 w-4" aria-hidden="true" />
-                        ) : (
-                          <X className="h-4 w-4" aria-hidden="true" />
-                        )
-                      ) : (
-                        <Copy className="h-4 w-4" aria-hidden="true" />
+                    </Label>
+                    <div className="flex items-center gap-0.5">
+                      {field === "privateKey" && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon-xs"
+                              aria-label={toggleLabel}
+                              aria-expanded={privateKeyVisible}
+                              aria-controls={`${id}-${suffix}`}
+                              onClick={() =>
+                                setPrivateKeyVisible((visible) => !visible)
+                              }
+                            >
+                              {privateKeyVisible ? (
+                                <EyeOff aria-hidden />
+                              ) : (
+                                <Eye aria-hidden />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{toggleLabel}</TooltipContent>
+                        </Tooltip>
                       )}
-                    </button>
+                      <CopyButton
+                        text={keyState.pair[field]}
+                        label={`Copy ${label.toLowerCase()} key`}
+                        size="icon-xs"
+                      />
+                    </div>
                   </div>
-                  <textarea
+                  <Textarea
                     id={`${id}-${suffix}`}
-                    aria-label={`SSH ${label} Key (Deploy Key)`}
-                    className="block h-40 w-full resize-none rounded-none border-0 bg-transparent px-4 py-3 font-mono text-xs leading-relaxed focus:ring-inset"
-                    rows={7}
+                    aria-label={`SSH ${label.toLowerCase()} key (deploy key)`}
+                    className={KEY_FIELD}
                     readOnly
                     value={
                       field === "privateKey" && !privateKeyVisible
-                        ? "••••••••••••••••"
+                        ? MASK
                         : keyState.pair[field]
                     }
                   />
                 </div>
               ))}
             </div>
-            <div className="flex flex-col gap-3 rounded-xl border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0 space-y-1">
-                <p role="status" className="text-xs font-medium text-label">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <p role="status" className="text-sm">
                   {keyState.isSelected
                     ? "This generated key is selected for saving."
                     : "This generated key is not selected."}
                 </p>
-                <p className="text-xs text-tertiary">
-                  Download both files together as a ZIP.
+                <p className="text-xs text-muted-foreground">
+                  Add the public key to your repository&apos;s deploy keys with
+                  write access.
                 </p>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
                 {!keyState.isSelected && (
-                  <button
-                    type="button"
-                    className={buttonClass}
+                  <Button
+                    variant="secondary"
                     onClick={keyState.useGeneratedKey}
                   >
                     Use generated key
-                  </button>
+                  </Button>
                 )}
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                  onClick={download}
-                  aria-label="Download both keys"
-                  title="Download both keys"
-                >
-                  <Download className="h-4 w-4" aria-hidden="true" />
-                  Download keys
-                </button>
+                <Button variant="secondary" onClick={download}>
+                  <Download aria-hidden />
+                  Download both keys
+                </Button>
               </div>
             </div>
-            <span role="status" className="sr-only">
-              {copyFeedback &&
-                (copyFeedback.success
-                  ? `${copyFeedback.label} key copied.`
-                  : "Could not copy. Please try again.")}
-            </span>
           </>
         )}
-        {downloadError && <p role="alert">{downloadError}</p>}
-        <div className="space-y-1 text-xs leading-relaxed text-tertiary">
-          <p>
-            Add the public key to your repository&apos;s deploy keys with write
-            access.
+        {downloadError && (
+          <p role="alert" className="text-sm text-destructive">
+            {downloadError}
           </p>
-          <p>
-            Generated in your browser; the selected private key is sent to
-            OpenPrime on save. Download a backup — private keys are not included
-            in saved drafts.
-          </p>
-        </div>
-      </div>
-
-      <div
-        role="tabpanel"
-        id={`${id}-manual-panel`}
-        aria-labelledby={`${id}-manual-tab`}
-        hidden={keyState.mode !== "manual"}
-      >
-        <label
-          htmlFor={`${id}-private`}
-          className="text-sm font-semibold text-label block mb-2"
-        >
-          SSH Private Key (Deploy Key)
-        </label>
-        <textarea
-          id={`${id}-private`}
-          className="w-full px-4 py-2 font-mono text-xs transition-colors"
-          placeholder={
-            configured
-              ? "Leave blank to keep the current key"
-              : "Paste your SSH private key here"
-          }
-          rows={8}
-          value={gitRepository?.sshKey || ""}
-          onChange={(event) => keyState.setManualKey(event.target.value)}
-        />
-        <p className="text-xs mt-1 text-tertiary">
-          {configured
-            ? `A key is already configured${gitRepository.sshKeyFingerprint ? ` (${gitRepository.sshKeyFingerprint})` : ""}. Leave this blank to keep it, or paste a new key to replace it.`
-            : "Private SSH key with write access to the repository"}
+        )}
+        <p className="text-xs text-muted-foreground">
+          Generated in your browser. The selected private key is sent to
+          OpenPrime when you save. Download a backup: drafts never keep private
+          keys.
         </p>
-      </div>
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 }

@@ -1,8 +1,42 @@
-import { Database, Loader, CheckCircle } from "lucide-react";
+import { useId, useRef } from "react";
+import { CircleCheck, Link, Plus } from "lucide-react";
+import ServiceIcon from "../../../icons/ServiceIcon";
+import { Callout } from "@/components/shared/callout";
+import { CopyButton } from "@/components/shared/copy-button";
+import {
+  HelpTooltip,
+  SettingsRow,
+  SettingsRowGroup,
+  SettingsSection,
+} from "@/components/shared/settings";
+import { Button } from "@/components/ui/button";
+import { FieldError } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+import { Switch } from "@/components/ui/switch";
+import { FieldControl, invalidProps } from "./FieldControl";
+import { RadioCard, RadioCardGroup } from "./RadioCard";
 
-// Terraform backend card of the wizard's Basic Configuration step (AWS only).
+// The picture of a bucket choice: the S3 icon with a plus (new) or a link
+// (existing) on its corner.
+const bucketArt = (badge) => (
+  <span className="relative">
+    <ServiceIcon service="s3" className="size-8" />
+    <span className="absolute -right-1.5 -bottom-1.5 flex size-4 items-center justify-center rounded-full bg-card text-foreground shadow-(--shadow-ring-sm) [&_svg]:size-3">
+      {badge}
+    </span>
+  </span>
+);
+
+// Terraform state backend section of the wizard's Basics step (AWS only).
 // Presentational: all state and the create-backend action live in the parent
-// BasicConfigStep and are passed down as props.
+// BasicConfigStep and are passed down as props. `bucketReadOnly`: the bucket
+// the environment already has is shown as it is, and `onChangeBucket` offers
+// the choice again (`onCancelChange` goes back to it). `existingOnly`: only
+// another existing bucket can be named, never one created. `error`: the
+// Basics error of a switched-on backend without a bucket. It sits on the
+// bucket name field, or, while the bucket is still to be created, on the
+// switch.
 const TerraformBackendSection = ({
   newEnv,
   setNewEnv,
@@ -13,220 +47,249 @@ const TerraformBackendSection = ({
   creatingBackend,
   createdBucketName,
   onCreateBackend,
+  bucketReadOnly,
+  onChangeBucket,
+  onCancelChange,
+  existingOnly = false,
+  error,
 }) => {
+  const id = useId();
+  // Change replaces itself with the bucket name field, Cancel with Change,
+  // Create backend with its outcome: focus moves there.
+  const focusBucketField = useRef(false);
+  const focusChange = useRef(false);
+  const focusOutcome = useRef(false);
+  const existing = existingOnly || useExistingBucket;
+  const switchError = !existing && !backendCreated ? error : null;
+  const backend = newEnv.terraformBackend;
+  const credential = credentials.find((c) => c.id === newEnv.cloudCredentialId);
+  const locked = backendCreated || creatingBackend;
+  const preview =
+    credential && newEnv.name
+      ? `${credential.identifier}-terraform-${newEnv.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`
+      : "<account-id>-terraform-<environment>";
+
   return (
-    <div className="p-6 rounded-2xl border bg-surface border-border">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
-          <Database className="w-5 h-5 mr-2 text-accent" />
-          <label className="text-sm font-semibold text-label">
-            Terraform Backend (Optional)
-          </label>
-        </div>
-        <label className="relative inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            className="sr-only peer"
-            checked={newEnv.terraformBackend?.enabled || false}
-            onChange={(e) =>
-              setNewEnv({
-                ...newEnv,
-                terraformBackend: {
-                  ...newEnv.terraformBackend,
-                  enabled: e.target.checked,
-                  bucketName: newEnv.terraformBackend?.bucketName || "",
-                  lockingMechanism:
-                    newEnv.terraformBackend?.lockingMechanism || "s3",
-                  tableName: newEnv.terraformBackend?.tableName || "",
-                },
-              })
+    <SettingsSection
+      title="Terraform state backend"
+      description={
+        <>
+          Optional. An S3 bucket in your account keeps the Terraform state.{" "}
+          <span className="inline-flex align-text-bottom">
+            <HelpTooltip label="About state locking">
+              Uses S3 native locking, which needs Terraform 1.11 or later.
+            </HelpTooltip>
+          </span>
+        </>
+      }
+      action={
+        <Switch
+          aria-label="Use a Terraform state backend"
+          {...invalidProps(`${id}-bucket`, switchError)}
+          checked={backend?.enabled || false}
+          onCheckedChange={(checked) =>
+            setNewEnv({
+              ...newEnv,
+              terraformBackend: {
+                ...backend,
+                enabled: checked,
+                bucketName: backend?.bucketName || "",
+                lockingMechanism: backend?.lockingMechanism || "s3",
+                tableName: backend?.tableName || "",
+              },
+            })
+          }
+        />
+      }
+    >
+      {backend?.enabled && bucketReadOnly ? (
+        <SettingsRowGroup>
+          <SettingsRow
+            title="State bucket"
+            description={
+              <span className="inline-flex items-center gap-1">
+                <code className="font-mono break-all">
+                  {backend.bucketName}
+                </code>
+                <CopyButton
+                  text={backend.bucketName}
+                  label="Copy bucket name"
+                  size="icon-xs"
+                />
+              </span>
+            }
+            control={
+              <Button
+                ref={(el) => {
+                  if (el && focusChange.current) {
+                    focusChange.current = false;
+                    el.focus();
+                  }
+                }}
+                variant="ghost"
+                size="sm"
+                aria-label="Change state bucket"
+                // Stacked below sm: the label lines up with the row text.
+                className="max-sm:-ml-2"
+                onClick={() => {
+                  focusBucketField.current = true;
+                  onChangeBucket();
+                }}
+              >
+                Change
+              </Button>
             }
           />
-          <div className="w-11 h-6 rounded-full peer transition-colors bg-border-strong peer-checked:bg-primary">
-            <div
-              className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full shadow transition-transform ${
-                newEnv.terraformBackend?.enabled ? "translate-x-5" : ""
-              }`}
-            ></div>
-          </div>
-        </label>
-      </div>
-
-      <p className="text-xs mb-4 text-tertiary">
-        Automatically create S3 bucket and optional DynamoDB table for Terraform
-        state management
-      </p>
-
-      {newEnv.terraformBackend?.enabled && !newEnv.cloudCredentialId && (
-        <div className="p-4 rounded-lg border mb-4 bg-warning-muted border-warning text-warning">
-          <div className="flex items-start">
-            <Database className="w-4 h-4 mr-2 mt-0.5" />
-            <div className="space-y-1.5 min-w-0">
-              <p className="text-sm font-medium">
-                AWS credentials are required to create Terraform backend
-                resources
-              </p>
-              <p className="text-xs">
-                Please select cloud credentials above before creating backend
-                resources
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {newEnv.terraformBackend?.enabled && (
-        <div className="space-y-4 mt-4">
-          {/* Toggle between Create New vs Use Existing Bucket */}
-          <div>
-            <label className="text-sm font-semibold text-label block mb-2">
-              S3 Bucket Configuration
-            </label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setUseExistingBucket(false)}
-                disabled={backendCreated || creatingBackend}
-                className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                  !useExistingBucket
-                    ? "bg-primary text-inverse"
-                    : "bg-background-secondary text-secondary hover:bg-surface-elevated"
-                } ${backendCreated || creatingBackend ? "opacity-60 cursor-not-allowed" : ""}`}
-              >
-                Create New Bucket
-              </button>
-              <button
-                type="button"
-                onClick={() => setUseExistingBucket(true)}
-                disabled={backendCreated || creatingBackend}
-                className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                  useExistingBucket
-                    ? "bg-primary text-inverse"
-                    : "bg-background-secondary text-secondary hover:bg-surface-elevated"
-                } ${backendCreated || creatingBackend ? "opacity-60 cursor-not-allowed" : ""}`}
-              >
-                Use Existing Bucket
-              </button>
-            </div>
-          </div>
-
-          {/* S3 Bucket Name Display/Input */}
-          {!useExistingBucket ? (
-            // Create New Bucket Section
-            <div className="p-4 rounded-lg border bg-primary-muted border-primary text-primary">
-              <div className="flex items-start">
-                <Database className="w-4 h-4 mr-2 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-sm font-medium">
-                    S3 Bucket Name (Auto-generated)
-                  </p>
-                  <p className="text-xs mt-1">
-                    Format:{" "}
-                    <code className="font-mono">
-                      &lt;AWS_ACCOUNT_ID&gt;-terraform-&lt;environment-name&gt;
-                    </code>
-                  </p>
-                  {newEnv.name &&
-                    credentials.find(
-                      (c) => c.id === newEnv.cloudCredentialId,
-                    ) && (
-                      <p className="text-xs mt-1 font-mono">
-                        Preview:{" "}
-                        {
-                          credentials.find(
-                            (c) => c.id === newEnv.cloudCredentialId,
-                          )?.identifier
+        </SettingsRowGroup>
+      ) : backend?.enabled ? (
+        <>
+          {existingOnly ? null : (
+            <RadioCardGroup
+              aria-label="State bucket"
+              value={useExistingBucket ? "existing" : "create"}
+              onValueChange={(value) =>
+                setUseExistingBucket(value === "existing")
+              }
+              disabled={locked}
+              className="sm:grid-cols-2"
+            >
+              <RadioCard
+                id={`${id}-create`}
+                value="create"
+                title="Create a new bucket"
+                description="OpenPrime creates it in your account now."
+                art={bucketArt(<Plus />)}
+              />
+              <RadioCard
+                id={`${id}-existing`}
+                value="existing"
+                title="Use an existing bucket"
+                description="Point Terraform at a bucket you already have."
+                art={bucketArt(<Link />)}
+              />
+            </RadioCardGroup>
+          )}
+          {existing ? (
+            <SettingsRowGroup>
+              <SettingsRow
+                title="Bucket name"
+                controlId={`${id}-bucket`}
+                description="The S3 bucket that keeps the Terraform state."
+                control={
+                  <div className="flex w-full items-start gap-2 sm:w-auto">
+                    <FieldControl id={`${id}-bucket`} error={error}>
+                      <Input
+                        ref={(el) => {
+                          if (el && focusBucketField.current) {
+                            focusBucketField.current = false;
+                            el.focus();
+                          }
+                        }}
+                        id={`${id}-bucket`}
+                        className="font-mono"
+                        placeholder="e.g. my-terraform-state"
+                        value={backend?.bucketName || ""}
+                        {...invalidProps(`${id}-bucket`, error)}
+                        onChange={(e) =>
+                          setNewEnv({
+                            ...newEnv,
+                            terraformBackend: {
+                              ...backend,
+                              bucketName: e.target.value,
+                            },
+                          })
                         }
-                        -terraform-
-                        {newEnv.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}
-                      </p>
-                    )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            // Use Existing Bucket Section
-            <div>
-              <label className="text-sm font-semibold text-label block mb-2">
-                S3 Bucket Name
-              </label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 transition-colors"
-                placeholder="e.g., my-terraform-state-bucket"
-                value={newEnv.terraformBackend?.bucketName || ""}
-                onChange={(e) =>
-                  setNewEnv({
-                    ...newEnv,
-                    terraformBackend: {
-                      ...newEnv.terraformBackend,
-                      bucketName: e.target.value,
-                    },
-                  })
+                      />
+                    </FieldControl>
+                    {onCancelChange ? (
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          focusChange.current = true;
+                          onCancelChange();
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    ) : null}
+                  </div>
                 }
               />
-              <p className="text-xs mt-1 text-tertiary">
-                Enter the name of an existing S3 bucket for Terraform state
-                storage
-              </p>
+            </SettingsRowGroup>
+          ) : backendCreated ? (
+            <div
+              ref={(el) => {
+                if (el && focusOutcome.current) {
+                  focusOutcome.current = false;
+                  el.focus();
+                }
+              }}
+              tabIndex={-1}
+              className="outline-none"
+            >
+              <Callout
+                variant="neutral"
+                icon={CircleCheck}
+                title="Backend created."
+                action={
+                  createdBucketName ? (
+                    <CopyButton
+                      text={createdBucketName}
+                      label="Copy bucket name"
+                    />
+                  ) : null
+                }
+              >
+                {createdBucketName ? (
+                  <>
+                    Bucket{" "}
+                    <code className="font-mono text-xs break-all">
+                      {createdBucketName}
+                    </code>
+                  </>
+                ) : (
+                  "The state bucket is ready."
+                )}
+              </Callout>
             </div>
-          )}
-
-          <div className="p-4 rounded-lg border bg-primary-muted border-primary text-primary">
-            <div className="flex items-start">
-              <Database className="w-4 h-4 mr-2 mt-0.5 shrink-0" />
-              <div>
-                <p className="text-sm font-medium">State Locking</p>
-                <p className="text-xs mt-1">
-                  Using S3 native locking (requires Terraform 1.11 or higher).
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Create Backend Button - Only show when creating new bucket */}
-          {!useExistingBucket && (
+          ) : (
             <>
-              {backendCreated ? (
-                <div className="p-4 rounded-lg border bg-success-muted border-success text-success">
-                  <div className="flex items-start">
-                    <CheckCircle className="w-5 h-5 mr-2 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium">
-                        Backend resources created successfully
-                      </p>
-                      {createdBucketName && (
-                        <p className="text-xs mt-1 font-mono opacity-90">
-                          S3 Bucket: {createdBucketName}
-                        </p>
+              <SettingsRowGroup>
+                <SettingsRow
+                  title="Bucket name"
+                  description={
+                    <>
+                      <code className="font-mono break-all">{preview}</code>
+                      {newEnv.cloudCredentialId ? null : (
+                        <span className="block">
+                          Select credentials above first.
+                        </span>
                       )}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={onCreateBackend}
-                  disabled={!newEnv.cloudCredentialId || creatingBackend}
-                  className="btn-op-primary w-full"
-                >
-                  {creatingBackend ? (
-                    <>
-                      <Loader className="w-5 h-5 mr-2 animate-spin" />
-                      Creating Backend Resources...
                     </>
-                  ) : (
-                    <>
-                      <Database className="w-5 h-5 mr-2" />
-                      Create Backend Resources
-                    </>
-                  )}
-                </button>
-              )}
+                  }
+                  control={
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        focusOutcome.current = true;
+                        onCreateBackend();
+                      }}
+                      disabled={!newEnv.cloudCredentialId || creatingBackend}
+                    >
+                      {creatingBackend ? <Spinner aria-hidden /> : null}
+                      Create backend
+                    </Button>
+                  }
+                />
+              </SettingsRowGroup>
+              {switchError ? (
+                <FieldError id={`${id}-bucket-error`}>{switchError}</FieldError>
+              ) : null}
             </>
           )}
-        </div>
-      )}
-    </div>
+        </>
+      ) : null}
+    </SettingsSection>
   );
 };
 

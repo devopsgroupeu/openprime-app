@@ -1,17 +1,34 @@
 // src/components/DynamicServicesGrid.js
-import { getProviderServices } from "../config/providersConfig";
+// The services of the wizard, grouped by their catalog category (in catalog
+// order), one divided card per group.
+import { getServiceConfig } from "../config/servicesConfig";
+import { SERVICE_PREREQUISITES } from "../utils/configValidator";
 import DynamicServiceConfig from "./DynamicServiceConfig";
+import { SettingsSection } from "@/components/shared/settings";
+
+/** The catalog category of a service; "Other" when it has none. */
+export const categoryOf = (serviceName) =>
+  getServiceConfig(serviceName)?.category || "Other";
+
+/** `[[category, [serviceName, ...]], ...]` in the order the names come. */
+export const groupByCategory = (serviceNames) => {
+  const groups = new Map();
+  for (const name of serviceNames) {
+    const category = categoryOf(name);
+    groups.set(category, [...(groups.get(category) || []), name]);
+  }
+  return [...groups];
+};
 
 const DynamicServicesGrid = ({
+  serviceNames,
   newEnv,
   setNewEnv,
   expandedServices,
   setExpandedServices,
-  onEditHelmValues,
   onAskAI,
+  withProblems,
 }) => {
-  const providerServices = getProviderServices(newEnv.provider);
-
   const handleServiceChange = (serviceName, newServiceConfig) => {
     setNewEnv({
       ...newEnv,
@@ -22,32 +39,40 @@ const DynamicServicesGrid = ({
     });
   };
 
-  const handleToggleExpanded = (serviceName) => {
-    setExpandedServices({
-      ...expandedServices,
-      [serviceName]: !expandedServices[serviceName],
-    });
+  const setExpanded = (serviceName, open) =>
+    setExpandedServices({ ...expandedServices, [serviceName]: open });
+
+  // "Needs <service>" on an enabled service whose prerequisite is off.
+  const missingPrerequisite = (serviceName) => {
+    const required = SERVICE_PREREQUISITES[serviceName];
+    return required &&
+      newEnv.services[serviceName]?.enabled &&
+      !newEnv.services[required]?.enabled
+      ? getServiceConfig(required)?.displayName || required
+      : null;
   };
 
   return (
-    <div className="space-y-3">
-      {providerServices.map((serviceName) => {
-        const serviceConfig = newEnv.services[serviceName];
-        if (!serviceConfig) return null;
-
-        return (
-          <DynamicServiceConfig
-            key={serviceName}
-            serviceName={serviceName}
-            serviceConfig={serviceConfig}
-            onServiceChange={handleServiceChange}
-            expanded={expandedServices[serviceName]}
-            onToggleExpanded={() => handleToggleExpanded(serviceName)}
-            onEditHelmValues={onEditHelmValues}
-            onAskAI={onAskAI}
-          />
-        );
-      })}
+    <div className="flex flex-col gap-8">
+      {groupByCategory(serviceNames).map(([category, names]) => (
+        <SettingsSection key={category} title={category}>
+          <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card ring-1 ring-border ring-inset">
+            {names.map((serviceName) => (
+              <DynamicServiceConfig
+                key={serviceName}
+                serviceName={serviceName}
+                serviceConfig={newEnv.services[serviceName]}
+                onServiceChange={handleServiceChange}
+                expanded={expandedServices[serviceName]}
+                onExpandedChange={(open) => setExpanded(serviceName, open)}
+                onAskAI={onAskAI}
+                missingPrerequisite={missingPrerequisite(serviceName)}
+                needsAttention={Boolean(withProblems?.has(serviceName))}
+              />
+            ))}
+          </ul>
+        </SettingsSection>
+      ))}
     </div>
   );
 };

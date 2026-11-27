@@ -80,10 +80,8 @@ describe("hydrateServicesConfig", () => {
     expect(getServiceConfig("rds")).toBeDefined();
   });
 
-  // FIELD_TYPES has no DYNAMIC_LIST, so `case FIELD_TYPES.DYNAMIC_LIST` in the
-  // renderer is `case undefined`: a field with no control lands there and dies
-  // on fieldConfig.itemSchema. Rendering the wrong control beats taking the
-  // service card down, so it degrades to text and says so.
+  // Rendering the wrong control beats taking the service card down, so a
+  // field with no control degrades to text and says so.
   it("falls back to a text control rather than letting the card crash", () => {
     hydrateServicesConfig(
       doc({

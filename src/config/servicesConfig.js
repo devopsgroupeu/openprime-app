@@ -66,10 +66,8 @@ function compilePattern(raw, where) {
 function toField(raw, where) {
   const field = { ...raw };
 
-  // FIELD_TYPES has no DYNAMIC_LIST, so the renderer's
-  // `case FIELD_TYPES.DYNAMIC_LIST` is `case undefined` — a field with no
-  // control lands there and dies on fieldConfig.itemSchema. Coercing to text
-  // renders the wrong control; leaving it undefined takes the card down.
+  // A field with no known control falls back to text, and says so: the wrong
+  // control beats a card that cannot render the field.
   if (!field.type || !CONTROLS.has(field.type)) {
     console.warn(
       `[catalog] ${where}: unknown control ${JSON.stringify(field.type)}, falling back to text`,

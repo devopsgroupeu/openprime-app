@@ -4,69 +4,58 @@ import {
   FileCheck,
   HeartPulse,
   Landmark,
-  ListChecks,
   Network,
   Rocket,
   Shield,
   ShoppingCart,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { CheckboxCard } from "./RadioCard";
 
 const OPTIONS = [
   { id: "healthcare", label: "Healthcare", Icon: HeartPulse },
-  { id: "ecommerce", label: "Ecommerce", Icon: ShoppingCart },
+  { id: "ecommerce", label: "E-commerce", Icon: ShoppingCart },
   { id: "fintech", label: "Fintech", Icon: Landmark },
   { id: "defence", label: "Defence", Icon: Shield },
   { id: "startup", label: "Startup", Icon: Rocket },
-  { id: "iso27001", label: "ISO27001", Icon: BadgeCheck },
+  { id: "iso27001", label: "ISO 27001", Icon: BadgeCheck },
   { id: "dora", label: "DORA", Icon: FileCheck },
   { id: "nis2", label: "NIS2", Icon: Network },
 ];
 
-// Roadmap only: nothing reads a selection yet, so the options render like the
-// disabled providers (visible, never clickable) instead of pretending to work.
+// Roadmap only: nothing reads a selection yet, so every preset is a disabled
+// tile (announced as unavailable), the same look as the roadmap providers.
 const OtherSpecificationsSection = () => {
   const id = useId();
 
   return (
-    <div className="p-6 rounded-2xl border bg-surface border-border">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
-          <ListChecks className="w-5 h-5 mr-2 text-accent" aria-hidden="true" />
-          <label
-            id={`${id}-heading`}
-            className="text-sm font-semibold text-label"
-          >
-            Other specifications
-          </label>
-        </div>
-      </div>
-      <p id={`${id}-description`} className="text-xs text-tertiary mb-4">
-        Industry and compliance presets are on the roadmap. They do not change
-        the generated infrastructure yet.
+    <section
+      aria-labelledby={`${id}-heading`}
+      className="flex flex-col gap-2 border-t pt-6"
+    >
+      <h2 id={`${id}-heading`} className="text-sm font-medium">
+        Industry and compliance presets
+      </h2>
+      <p className="text-xs text-muted-foreground">
+        They do not change the generated infrastructure yet.
       </p>
-      <div
-        role="group"
+      <ul
         aria-labelledby={`${id}-heading`}
-        aria-describedby={`${id}-description`}
-        className="grid gap-3"
-        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))" }}
+        className="mt-1 grid grid-cols-2 gap-3 md:grid-cols-4"
       >
-        {OPTIONS.map(({ id: optionId, label, Icon }) => (
-          <button
-            key={optionId}
-            type="button"
-            disabled
-            className="flex flex-col items-center justify-center gap-2.5 p-5 rounded-xl border-2 transition-all border-border text-tertiary cursor-not-allowed opacity-50"
-          >
-            <Icon className="w-7 h-7" aria-hidden="true" />
-            <span className="text-sm font-bold">{label}</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-warning">
-              Roadmap
-            </span>
-          </button>
+        {OPTIONS.map(({ id: option, label, Icon }) => (
+          <li key={option} className="grid">
+            <CheckboxCard
+              id={`${id}-${option}`}
+              title={label}
+              disabled
+              art={<Icon className="size-6 text-muted-foreground opacity-60" />}
+              badge={<Badge variant="tag">Roadmap</Badge>}
+            />
+          </li>
         ))}
-      </div>
-    </div>
+      </ul>
+    </section>
   );
 };
 

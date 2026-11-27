@@ -5,6 +5,7 @@
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 import { server } from "./mocks/server";
+import { resetMockState } from "./mocks/handlers";
 
 // Polyfill for TextEncoder/TextDecoder (required by react-router in Node.js environment)
 import { TextEncoder, TextDecoder } from "node:util";
@@ -14,6 +15,32 @@ globalThis.TextDecoder = TextDecoder;
 
 // jsdom doesn't implement scrollIntoView (used by chat/list auto-scroll effects)
 Element.prototype.scrollIntoView = vi.fn();
+
+// jsdom doesn't implement matchMedia (the sidebar's useIsMobile, the theme's
+// prefers-color-scheme default). Width queries are answered from
+// window.innerWidth (jsdom: 1024), so a test that narrows the window gets the
+// same answer from both; any other query does not match (light theme).
+window.matchMedia = (query) => {
+  const min = /min-width:\s*(\d+)px/.exec(query);
+  const max = /max-width:\s*(\d+)px/.exec(query);
+  const width = window.innerWidth;
+  return {
+    matches:
+      Boolean(min || max) &&
+      (!min || width >= Number(min[1])) &&
+      (!max || width <= Number(max[1])),
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  };
+};
+
+// jsdom doesn't implement ResizeObserver (used by cmdk's list).
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
 
 // Mock localStorage
 const localStorageMock = (function () {
@@ -47,7 +74,12 @@ Object.defineProperty(window, "localStorage", {
 // MSW intercepts network calls and serves fixtures (see src/mocks/handlers.js),
 // replacing the old hand-rolled global fetch stub.
 beforeAll(() => server.listen({ onUnhandledRequest: "bypass" }));
-afterEach(() => server.resetHandlers());
+afterEach(() => {
+  server.resetHandlers();
+  resetMockState();
+  // Every test starts without drafts or remembered panels of the one before.
+  localStorage.clear();
+});
 afterAll(() => server.close());
 
 // Mock Keycloak globally to avoid constructor errors in ESM

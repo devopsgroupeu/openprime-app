@@ -14,9 +14,11 @@ const WizardStepContent = ({
   onAskAI,
   showErrors,
   validationErrors,
-  onEditHelmValues,
+  basicErrors,
   onEditStep,
+  focusHeading,
   isEditMode,
+  savedBucket,
   sshKeys,
 }) => {
   switch (currentId) {
@@ -26,13 +28,8 @@ const WizardStepContent = ({
           newEnv={newEnv}
           setNewEnv={setNewEnv}
           isEditMode={isEditMode}
-          validationErrors={
-            showErrors
-              ? validationErrors.filter((e) =>
-                  ["name", "provider", "region"].includes(e.field),
-                )
-              : []
-          }
+          savedBucket={savedBucket}
+          validationErrors={showErrors ? basicErrors : []}
           sshKeys={sshKeys}
         />
       );
@@ -44,13 +41,8 @@ const WizardStepContent = ({
           expandedServices={expandedServices}
           setExpandedServices={setExpandedServices}
           onAskAI={onAskAI}
-          validationErrors={
-            showErrors
-              ? validationErrors.filter(
-                  (e) => !["name", "provider", "region"].includes(e.field),
-                )
-              : []
-          }
+          focusHeading={focusHeading}
+          problems={validationErrors.filter((e) => e.service)}
         />
       );
     case "helm":
@@ -58,12 +50,21 @@ const WizardStepContent = ({
         <HelmChartsStep
           newEnv={newEnv}
           setNewEnv={setNewEnv}
-          onEditHelmValues={onEditHelmValues}
           onAskAI={onAskAI}
+          focusHeading={focusHeading}
         />
       );
     case "review":
-      return <WizardReviewStep newEnv={newEnv} onEditStep={onEditStep} />;
+      return (
+        <WizardReviewStep
+          newEnv={newEnv}
+          onEditStep={onEditStep}
+          problems={basicErrors}
+          // Every error of an enabled service (the validator skips disabled
+          // ones and names the service in the message).
+          serviceProblems={validationErrors.filter((e) => e.service)}
+        />
+      );
     default:
       return null;
   }

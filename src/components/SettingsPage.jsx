@@ -1,30 +1,86 @@
 // src/components/SettingsPage.jsx
 import { useState, useEffect } from "react";
-import { Cloud, User, Save, Settings } from "lucide-react";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router";
+import { SETTINGS_TABS } from "../config/nav";
+import {
+  getProviderConfig,
+  getProviderRegions,
+} from "../config/providersConfig";
 import { useToast } from "../contexts/ToastContext";
 import authService from "../services/authService";
 import CloudCredentialModal from "./modals/CloudCredentialModal";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
-import AccountTab from "./settings-page/AccountTab";
+import AccountTab, { ACCOUNT_FIELDS } from "./settings-page/AccountTab";
 import CloudCredentialsTab from "./settings-page/CloudCredentialsTab";
 import PreferencesTab from "./settings-page/PreferencesTab";
-import SettingsTabNav from "./settings-page/SettingsTabNav";
+import { PageHeader } from "@/components/shared/page-header";
+import { PageShell } from "@/components/shared/page-shell";
+import { SaveBar } from "@/components/shared/save-bar";
+import { SettingsPageSkeleton } from "@/components/shared/skeletons";
+import { ErrorState } from "@/components/shared/states";
+import { Separator } from "@/components/ui/separator";
+import { describeError, serverMessage } from "@/lib/describe-error";
+
+// True when any top-level value differs (drafts are edited one key at a time).
+const changed = (a, b) =>
+  Object.keys({ ...a, ...b }).some((key) => a[key] !== b[key]);
+
+// What to fix in the account form, by field. The backend takes empty values
+// and checks the email fully; the form asks for both names and an email shape.
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const accountErrors = ({ firstName, lastName, email }) => ({
+  ...(!firstName.trim() && { firstName: "Enter your first name." }),
+  ...(!lastName.trim() && { lastName: "Enter your last name." }),
+  ...(!EMAIL_SHAPE.test(email) && {
+    email: "Enter a valid email address.",
+  }),
+});
+
+// Loaded preferences as the selects show them, so Save sends what is shown:
+// the old select's "on-premise" is "onpremise" (OP-271), and a region its
+// provider does not list (saved by the old provider-change bug) shows as that
+// provider's default region.
+const shownPreferences = (preferences) => {
+  const defaultProvider =
+    preferences.defaultProvider === "on-premise"
+      ? "onpremise"
+      : preferences.defaultProvider;
+  const listed = getProviderRegions(defaultProvider).some(
+    (r) => r.value === preferences.defaultRegion,
+  );
+  return {
+    ...preferences,
+    defaultProvider,
+    defaultRegion: listed
+      ? preferences.defaultRegion
+      : getProviderConfig(defaultProvider).defaultRegion,
+  };
+};
 
 const SettingsPage = () => {
   const toast = useToast();
+  const { tab: activeTab } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [userPreferences, setUserPreferences] = useState({
     theme: "light",
     notifications: true,
     defaultProvider: "aws",
     defaultRegion: "us-east-1",
   });
-  const [loading, setLoading] = useState(true);
+  // "loading" | "error" | "ready", for the user data and the credentials.
+  const [userStatus, setUserStatus] = useState("loading");
+  const [credentialsStatus, setCredentialsStatus] = useState("loading");
+  // Why the user data or the credentials failed to load (`user`, `credentials`).
+  const [loadErrors, setLoadErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState({
     firstName: "",
     lastName: "",
     email: "",
   });
+  // The last loaded or saved values; the drafts above are dirty against them.
+  const [saved, setSaved] = useState(null);
   const [gitIntegration, setGitIntegration] = useState({
     platform: "github",
     orgUrl: "",
@@ -36,35 +92,62 @@ const SettingsPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [credentialToDelete, setCredentialToDelete] = useState(null);
   const [credentialUsage, setCredentialUsage] = useState(null);
-  const [activeTab, setActiveTab] = useState("account");
+  // After a Save stopped by account problems: they show under their fields
+  // (and go as they are fixed); the first one (its input id) takes the focus
+  // once the account form is on screen.
+  const [showAccountErrors, setShowAccountErrors] = useState(false);
+  const [focusAccountError, setFocusAccountError] = useState(null);
 
   useEffect(() => {
     loadUserData();
     loadCloudCredentials();
   }, []);
 
+  // The command palette's "Add AWS credentials" lands here with this state:
+  // open the add dialog once, then drop the state so reload/back don't reopen.
+  useEffect(() => {
+    if (location.state?.addCredential) {
+      handleAddCredential("aws");
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    if (!focusAccountError || activeTab !== "account") return;
+    setFocusAccountError(null);
+    document.getElementById(focusAccountError)?.focus();
+  }, [focusAccountError, activeTab]);
+
   const loadUserData = async () => {
     try {
-      setLoading(true);
+      setUserStatus("loading");
       const [userResponse, preferencesResponse] = await Promise.all([
         authService.get("/users/me"),
         authService.get("/users/me/preferences"),
       ]);
 
-      setProfile({
+      const loadedProfile = {
         firstName: userResponse.firstName || "",
         lastName: userResponse.lastName || "",
         email: userResponse.email || "",
+      };
+      const loadedPreferences = shownPreferences(
+        preferencesResponse.preferences,
+      );
+      setProfile(loadedProfile);
+      setUserPreferences(loadedPreferences);
+      setSaved({
+        profile: loadedProfile,
+        preferences: loadedPreferences,
       });
-
-      setUserPreferences(preferencesResponse.preferences);
       if (preferencesResponse.preferences?.gitIntegration) {
         setGitIntegration(preferencesResponse.preferences.gitIntegration);
       }
+      setUserStatus("ready");
     } catch (error) {
       console.error("Failed to load user data:", error);
-    } finally {
-      setLoading(false);
+      setLoadErrors((errors) => ({ ...errors, user: error }));
+      setUserStatus("error");
     }
   };
 
@@ -82,16 +165,37 @@ const SettingsPage = () => {
     }));
   };
 
+  const discardChanges = () => {
+    setProfile(saved.profile);
+    setUserPreferences(saved.preferences);
+    setShowAccountErrors(false);
+  };
+
+  // Only an edited profile is checked; an untouched one saves as it is.
+  const accountProblems = () =>
+    changed(profile, saved.profile) ? accountErrors(profile) : {};
+
   const loadCloudCredentials = async () => {
     try {
       const response = await authService.get("/cloud-credentials");
       setCloudCredentials(response.credentials || []);
+      setCredentialsStatus("ready");
     } catch (error) {
       console.error("Failed to load cloud credentials:", error);
+      setLoadErrors((errors) => ({ ...errors, credentials: error }));
+      setCredentialsStatus("error");
     }
   };
 
   const saveSettings = async () => {
+    const problems = accountProblems();
+    const firstInvalid = ACCOUNT_FIELDS.find((field) => problems[field.key]);
+    if (firstInvalid) {
+      setShowAccountErrors(true);
+      setFocusAccountError(firstInvalid.id);
+      if (activeTab !== "account") navigate("/settings/account");
+      return;
+    }
     try {
       setSaving(true);
       await Promise.all([
@@ -101,12 +205,13 @@ const SettingsPage = () => {
           gitIntegration,
         }),
       ]);
-      toast.success("Settings saved successfully");
+      // What was sent; edits typed during the PUT stay dirty against it.
+      setSaved({ profile, preferences: userPreferences });
+      setShowAccountErrors(false);
+      toast.success("Changes saved");
     } catch (error) {
       console.error("Failed to save settings:", error);
-      const message = error.data?.error || error.message;
-      const errorId = error.requestId ? ` (Error ID: ${error.requestId})` : "";
-      toast.error(`Failed to save settings: ${message}${errorId}`);
+      toast.error(describeError(error, "save your changes"));
     } finally {
       setSaving(false);
     }
@@ -128,6 +233,7 @@ const SettingsPage = () => {
       setShowCredentialModal(true);
     } catch (error) {
       console.error("Failed to load credential details:", error);
+      toast.error(`Couldn't load ${credential.name}. Try again.`);
     }
   };
 
@@ -146,20 +252,18 @@ const SettingsPage = () => {
     setShowDeleteModal(true);
   };
 
+  // The dialog closes after this returns, also after a failure (toasted here).
   const confirmDelete = async () => {
     try {
       await authService.delete(`/cloud-credentials/${credentialToDelete.id}`);
       await loadCloudCredentials();
       setShowDeleteModal(false);
-      toast.success("Credential deleted successfully");
+      toast.success(`Deleted ${credentialToDelete.name}.`);
       setCredentialToDelete(null);
       setCredentialUsage(null);
     } catch (error) {
       console.error("Failed to delete credential:", error);
-      const message =
-        error.data?.error || error.message || "Failed to delete credential";
-      const errorId = error.requestId ? ` (Error ID: ${error.requestId})` : "";
-      toast.error(`${message}${errorId}`, { title: "Delete Error" });
+      toast.error(describeError(error, `delete ${credentialToDelete.name}`));
     }
   };
 
@@ -170,111 +274,108 @@ const SettingsPage = () => {
           `/cloud-credentials/${selectedCredential.id}`,
           credentialData,
         );
-        toast.success("Credential updated successfully");
+        toast.success(`Saved ${credentialData.name}.`);
       } else {
         await authService.post("/cloud-credentials", credentialData);
-        toast.success("Credential created successfully");
+        toast.success(`Added ${credentialData.name}.`);
       }
       await loadCloudCredentials();
       setShowCredentialModal(false);
       setSelectedCredential(null);
     } catch (error) {
       console.error("Failed to save credential:", error);
-      const message =
-        error.data?.error || error.message || "Failed to save credential";
-      const errorId = error.requestId ? ` (Error ID: ${error.requestId})` : "";
-      toast.error(`${message}${errorId}`, {
-        title: "Credential Error",
+      toast.error(describeError(error, `save ${credentialData.name}`), {
         duration: 7000,
       });
     }
   };
 
-  if (loading) {
-    return (
-      <div className="transition-colors bg-transparent">
-        <div className="px-8 py-8">
-          <div className="flex items-center justify-center min-h-[50vh]">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-lg text-primary">Loading settings...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  const tab = SETTINGS_TABS.find((t) => t.id === activeTab);
+  if (!tab) {
+    return <Navigate to="/settings/account" replace />;
   }
 
-  const tabs = [
-    { id: "account", label: "Account", icon: User },
-    { id: "preferences", label: "Preferences", icon: Settings },
-    { id: "credentials", label: "Cloud Credentials", icon: Cloud },
-  ];
+  const onCredentials = activeTab === "cloud-credentials";
+  const status = onCredentials ? credentialsStatus : userStatus;
+  const loadError = onCredentials ? loadErrors.credentials : loadErrors.user;
+  // The account and preferences drafts live across the tabs; either one
+  // shows the save bar, on every tab, and Save sends both. Off the tab with
+  // the edits, the bar names the tabs that hold them.
+  const edited =
+    userStatus === "ready"
+      ? SETTINGS_TABS.filter(
+          ({ id }) =>
+            (id === "account" && changed(profile, saved.profile)) ||
+            (id === "preferences" &&
+              changed(userPreferences, saved.preferences)),
+        )
+      : [];
+  const dirty = edited.length > 0;
+  const saveLabel = edited.some(({ id }) => id !== activeTab)
+    ? `Unsaved changes in ${edited.map((t) => t.label).join(" and ")}`
+    : undefined;
 
   return (
-    <div className="transition-colors bg-transparent">
-      <div className="px-8 py-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-8">
-          <div>
-            <h1 className="text-4xl font-extrabold text-primary">Settings</h1>
-            <p className="text-secondary mt-1">
-              Manage your account and platform preferences.
-            </p>
+    <>
+      {/* Grows to the screen's height with the save bar, which rests at its end. */}
+      <PageShell width="settings" className="grow">
+        {/* Static: there at once; only the tab's data waits. */}
+        <PageHeader title={tab.label} description={tab.description} />
+        <Separator />
+        {status === "loading" ? (
+          <SettingsPageSkeleton tab={activeTab} />
+        ) : (
+          <div className="flex flex-col gap-8">
+            {status === "error" ? (
+              <ErrorState
+                thing={
+                  onCredentials ? "your cloud credentials" : "your settings"
+                }
+                message={serverMessage(loadError)}
+                requestId={loadError?.requestId}
+                onRetry={() => {
+                  if (onCredentials) {
+                    setCredentialsStatus("loading");
+                    loadCloudCredentials();
+                  } else {
+                    loadUserData();
+                  }
+                }}
+              />
+            ) : null}
+            {status === "ready" && activeTab === "account" ? (
+              <AccountTab
+                profile={profile}
+                errors={showAccountErrors ? accountProblems() : {}}
+                onProfileChange={handleProfileChange}
+              />
+            ) : null}
+            {status === "ready" && activeTab === "preferences" ? (
+              <PreferencesTab
+                userPreferences={userPreferences}
+                savedPreferences={saved.preferences}
+                onPreferenceChange={handlePreferenceChange}
+              />
+            ) : null}
+            {status === "ready" && onCredentials ? (
+              <CloudCredentialsTab
+                credentials={cloudCredentials}
+                onAddCredential={handleAddCredential}
+                onEditCredential={handleEditCredential}
+                onDeleteCredential={handleDeleteCredential}
+              />
+            ) : null}
           </div>
-          {activeTab !== "credentials" && (
-            <button
-              onClick={saveSettings}
-              disabled={saving}
-              className="btn-op-primary transition-all self-start sm:self-auto"
-            >
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Changes
-                </>
-              )}
-            </button>
-          )}
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-8">
-          <SettingsTabNav
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-          />
-
-          <div className="flex-1 min-w-0">
-            <div className="rounded-2xl border border-border bg-surface p-6">
-              {activeTab === "account" && (
-                <AccountTab
-                  profile={profile}
-                  onProfileChange={handleProfileChange}
-                />
-              )}
-              {activeTab === "preferences" && (
-                <PreferencesTab
-                  userPreferences={userPreferences}
-                  onPreferenceChange={handlePreferenceChange}
-                />
-              )}
-              {activeTab === "credentials" && (
-                <CloudCredentialsTab
-                  credentials={cloudCredentials}
-                  onAddCredential={handleAddCredential}
-                  onEditCredential={handleEditCredential}
-                  onDeleteCredential={handleDeleteCredential}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+        )}
+        <SaveBar
+          dirty={dirty}
+          saving={saving}
+          onSave={saveSettings}
+          onDiscard={discardChanges}
+          within="/settings/"
+          label={saveLabel}
+        />
+      </PageShell>
 
       {showCredentialModal && (
         <CloudCredentialModal
@@ -298,12 +399,12 @@ const SettingsPage = () => {
           }}
           onConfirm={confirmDelete}
           isOpen={showDeleteModal}
-          title="Delete Credential"
-          message="Are you sure you want to delete this credential? This action cannot be undone."
+          title={`Delete "${credentialToDelete.name}"?`}
+          message="OpenPrime deletes its copy of the keys. The access key itself stays active in AWS."
           warningData={credentialUsage}
         />
       )}
-    </div>
+    </>
   );
 };
 

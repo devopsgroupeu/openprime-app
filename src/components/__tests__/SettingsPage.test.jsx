@@ -1,15 +1,37 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { http, HttpResponse } from "msw";
+import { Link, MemoryRouter, Route, Routes, useNavigate } from "react-router";
+import { credentials, currentUser } from "../../mocks/fixtures";
+import { server } from "../../mocks/server";
 import { ThemeProvider } from "../../contexts/ThemeContext";
 import { ToastProvider } from "../../contexts/ToastContext";
 import { AuthProvider } from "../../contexts/AuthContext";
+import { guardedNavigate } from "@/components/shared/save-bar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import SettingsPage from "../SettingsPage";
 
-function renderSettingsPage() {
+// The tab nav moved to the settings sidebar (see AppSidebar.test.jsx); the
+// page now reads its tab from the URL. The app shell provides the tooltips.
+function renderSettingsPage(path = "/settings/account", state, nav = null) {
   return render(
     <ThemeProvider>
       <ToastProvider>
         <AuthProvider>
-          <SettingsPage />
+          <TooltipProvider>
+            <MemoryRouter initialEntries={[{ pathname: path, state }]}>
+              {nav}
+              <Routes>
+                <Route path="/settings/:tab" element={<SettingsPage />} />
+                <Route path="/environments" element={<p>Environments</p>} />
+              </Routes>
+            </MemoryRouter>
+          </TooltipProvider>
         </AuthProvider>
       </ToastProvider>
     </ThemeProvider>,
@@ -18,23 +40,14 @@ function renderSettingsPage() {
 
 describe("SettingsPage", () => {
   it("renders the settings chrome and account tab", async () => {
-    renderSettingsPage();
+    renderSettingsPage("/settings/account");
 
     // Header
-    expect(await screen.findByText("Settings")).toBeInTheDocument();
     expect(
-      screen.getByText("Manage your account and platform preferences."),
-    ).toBeInTheDocument();
-
-    // Tab nav
-    expect(
-      screen.getByRole("button", { name: /Account/i }),
+      await screen.findByRole("heading", { level: 1, name: "Account" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Preferences/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Cloud Credentials/i }),
+      screen.getByText("Your name and email as shown in OpenPrime."),
     ).toBeInTheDocument();
 
     // Account form loaded from MSW fixtures
@@ -42,44 +55,799 @@ describe("SettingsPage", () => {
     expect(screen.getByLabelText(/Last Name/i)).toHaveValue("User");
     expect(screen.getByLabelText(/Email/i)).toHaveValue("mock@openprime.dev");
 
-    // Save button visible on non-credentials tab
+    // The save bar appears only once something changed.
     expect(
-      screen.getByRole("button", { name: /Save Changes/i }),
+      screen.queryByRole("button", { name: "Save" }),
+    ).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/First Name/i), {
+      target: { value: "Mocka" },
+    });
+    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+  });
+
+  it("saves the profile and preferences from the save bar", async () => {
+    const puts = {};
+    server.use(
+      http.put("*/users/me/profile", async ({ request }) => {
+        puts.profile = await request.json();
+        return HttpResponse.json(puts.profile);
+      }),
+      http.put("*/users/me/preferences", async ({ request }) => {
+        puts.preferences = await request.json();
+        return HttpResponse.json(puts.preferences);
+      }),
+    );
+    renderSettingsPage("/settings/account");
+
+    fireEvent.change(await screen.findByLabelText(/Last Name/i), {
+      target: { value: "Person" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+    expect(puts.profile).toEqual({
+      firstName: "Mock",
+      lastName: "Person",
+      email: "mock@openprime.dev",
+    });
+    expect(puts.preferences).toMatchObject({
+      defaultProvider: "aws",
+      defaultRegion: "eu-west-1",
+    });
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Save" }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  it("asks to check the connection when the save request fails", async () => {
+    server.use(http.put("*/users/me/profile", () => HttpResponse.error()));
+    renderSettingsPage("/settings/account");
+
+    fireEvent.change(await screen.findByLabelText(/Last Name/i), {
+      target: { value: "Person" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(
+      await screen.findByText(
+        "Couldn't save your changes. Check your connection and try again.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Unsaved changes" }),
     ).toBeInTheDocument();
   });
 
-  it("switches to the preferences tab and shows provider/region selects", async () => {
-    renderSettingsPage();
+  it("checks the account form before it saves", async () => {
+    const puts = { profile: [], preferences: [] };
+    server.use(
+      http.put("*/users/me/profile", async ({ request }) => {
+        puts.profile.push(await request.json());
+        return HttpResponse.json({});
+      }),
+      http.put("*/users/me/preferences", async ({ request }) => {
+        puts.preferences.push(await request.json());
+        return HttpResponse.json({});
+      }),
+    );
+    renderSettingsPage("/settings/account");
 
-    await screen.findByText("Settings");
-    fireEvent.click(screen.getByRole("button", { name: /Preferences/i }));
+    const email = await screen.findByLabelText(/Email/i);
+    expect(email).toHaveAttribute("type", "email");
+    expect(email).toHaveAttribute("autocomplete", "email");
+    fireEvent.change(email, { target: { value: "not-an-email" } });
+    fireEvent.change(screen.getByLabelText(/First Name/i), {
+      target: { value: " " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    const firstName = screen.getByLabelText(/First Name/i);
+    expect(firstName).toHaveAttribute("aria-invalid", "true");
+    expect(firstName).toHaveAccessibleDescription("Enter your first name.");
+    expect(email).toHaveAttribute("aria-invalid", "true");
+    expect(email).toHaveAccessibleDescription("Enter a valid email address.");
+    expect(screen.getByLabelText(/Last Name/i)).not.toHaveAttribute(
+      "aria-invalid",
+    );
+    await waitFor(() => expect(firstName).toHaveFocus());
+    expect(
+      screen.getByRole("region", { name: "Unsaved changes" }),
+    ).toBeInTheDocument();
+
+    // Fixed: the errors go and the next Save is the first request.
+    fireEvent.change(firstName, { target: { value: "Mocka" } });
+    fireEvent.change(email, { target: { value: "mocka@openprime.dev" } });
+    expect(email).not.toHaveAttribute("aria-invalid");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+    expect(puts.profile).toEqual([
+      { firstName: "Mocka", lastName: "User", email: "mocka@openprime.dev" },
+    ]);
+    expect(puts.preferences).toHaveLength(1);
+  });
+
+  it("goes back to the account form when Save finds a problem there", async () => {
+    const puts = [];
+    server.use(
+      http.put("*/users/me/*", ({ request }) => {
+        puts.push(request.url);
+        return HttpResponse.json({});
+      }),
+    );
+    renderSettingsPage(
+      "/settings/account",
+      undefined,
+      <nav>
+        <Link to="/settings/preferences">To preferences</Link>
+        {/* Another invalid control on the page (the shell, a dialog) does
+            not take the focus meant for the account field. */}
+        <input aria-label="Elsewhere" aria-invalid="true" />
+      </nav>,
+    );
+
+    fireEvent.change(await screen.findByLabelText(/Email/i), {
+      target: { value: "mock@" },
+    });
+    fireEvent.click(screen.getByRole("link", { name: "To preferences" }));
+    await screen.findByLabelText(/Default Cloud Provider/i);
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    const email = await screen.findByLabelText(/Email/i);
+    expect(email).toHaveAccessibleDescription("Enter a valid email address.");
+    await waitFor(() => expect(email).toHaveFocus());
+    expect(puts).toEqual([]);
+  });
+
+  it("saves preferences next to an untouched profile without names", async () => {
+    server.use(
+      http.get("*/users/me", () =>
+        HttpResponse.json({ email: "mock@openprime.dev" }),
+      ),
+    );
+    renderSettingsPage("/settings/preferences");
+
+    fireEvent.change(await screen.findByLabelText(/Default Region/i), {
+      target: { value: "eu-central-1" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+  });
+
+  // The region select can only show a region of the chosen provider; a
+  // provider change used to leave the old one in the draft, so Save sent a
+  // region the select did not show.
+  it("saves the region the select shows after a provider change", async () => {
+    const puts = {};
+    server.use(
+      http.put("*/users/me/preferences", async ({ request }) => {
+        puts.preferences = await request.json();
+        return HttpResponse.json(puts.preferences);
+      }),
+    );
+    renderSettingsPage("/settings/preferences");
+
+    fireEvent.change(await screen.findByLabelText(/Default Cloud Provider/i), {
+      target: { value: "onpremise" },
+    });
+    const region = screen.getByLabelText(/Default Region/i);
+    expect(region).toHaveValue("datacenter-1");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+    expect(puts.preferences).toMatchObject({
+      defaultProvider: "onpremise",
+      defaultRegion: region.value,
+    });
+  });
+
+  it("restores the saved region when the saved provider is picked again", async () => {
+    renderSettingsPage("/settings/preferences");
+
+    const provider = await screen.findByLabelText(/Default Cloud Provider/i);
+    fireEvent.change(provider, { target: { value: "onpremise" } });
+    fireEvent.change(provider, { target: { value: "aws" } });
+
+    expect(screen.getByLabelText(/Default Region/i)).toHaveValue("eu-west-1");
+    expect(
+      screen.queryByRole("button", { name: "Save" }),
+    ).not.toBeInTheDocument();
+  });
+
+  // Rows saved by the old select ("on-premise", OP-271) or by the old
+  // provider-change bug hold a region their provider does not list; the select
+  // shows that provider's default region, and that is what Save sends.
+  it.each([
+    ["onpremise", "eu-west-1"],
+    ["on-premise", "us-east-1"],
+  ])(
+    "saves the shown region for a stored %s with %s",
+    async (storedProvider, storedRegion) => {
+      const puts = {};
+      server.use(
+        http.get("*/users/me/preferences", () =>
+          HttpResponse.json({
+            preferences: {
+              defaultProvider: storedProvider,
+              defaultRegion: storedRegion,
+            },
+          }),
+        ),
+        http.put("*/users/me/*", async ({ request }) => {
+          const key = new URL(request.url).pathname.split("/").pop();
+          puts[key] = await request.json();
+          return HttpResponse.json(puts[key]);
+        }),
+      );
+      renderSettingsPage(
+        "/settings/preferences",
+        undefined,
+        <nav>
+          <Link to="/settings/account">To account</Link>
+        </nav>,
+      );
+
+      const provider = await screen.findByLabelText(/Default Cloud Provider/i);
+      const region = screen.getByLabelText(/Default Region/i);
+      expect(region).toHaveValue("datacenter-1");
+      // Nothing was edited yet.
+      expect(
+        screen.queryByRole("region", { name: "Unsaved changes" }),
+      ).not.toBeInTheDocument();
+      const shown = { provider: provider.value, region: region.value };
+
+      fireEvent.click(screen.getByRole("link", { name: "To account" }));
+      fireEvent.change(await screen.findByLabelText(/Last Name/i), {
+        target: { value: "Person" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+      expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+      expect(puts.preferences).toMatchObject({
+        defaultProvider: shown.provider,
+        defaultRegion: shown.region,
+      });
+    },
+  );
+
+  // A roadmap provider cannot be picked any more, but a stored one is kept.
+  it.each([
+    ["azure", "East US", "West Europe"],
+    ["gcp", "us-central1", "europe-west1"],
+  ])(
+    "keeps a stored %s provider when other preferences are saved",
+    async (stored, savedRegion, newRegion) => {
+      const puts = {};
+      server.use(
+        http.get("*/users/me/preferences", () =>
+          HttpResponse.json({
+            preferences: {
+              defaultProvider: stored,
+              defaultRegion: savedRegion,
+            },
+          }),
+        ),
+        http.put("*/users/me/preferences", async ({ request }) => {
+          puts.preferences = await request.json();
+          return HttpResponse.json(puts.preferences);
+        }),
+      );
+      renderSettingsPage("/settings/preferences");
+
+      expect(
+        await screen.findByLabelText(/Default Cloud Provider/i),
+      ).toHaveValue(stored);
+      fireEvent.change(screen.getByLabelText(/Default Region/i), {
+        target: { value: newRegion },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+      expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+      expect(puts.preferences).toMatchObject({
+        defaultProvider: stored,
+        defaultRegion: newRegion,
+      });
+    },
+  );
+
+  it("discards unsaved changes", async () => {
+    renderSettingsPage("/settings/account");
+
+    const firstName = await screen.findByLabelText(/First Name/i);
+    fireEvent.change(firstName, { target: { value: "Mocka" } });
+    fireEvent.click(screen.getByRole("button", { name: "Discard" }));
+
+    expect(firstName).toHaveValue("Mock");
+    expect(
+      screen.queryByRole("button", { name: "Save" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("asks before leaving with unsaved changes and drops them on discard", async () => {
+    renderSettingsPage(
+      "/settings/account",
+      undefined,
+      <nav>
+        <Link to="/environments">To environments</Link>
+        <Link to="/settings/account">To account</Link>
+      </nav>,
+    );
+
+    fireEvent.change(await screen.findByLabelText(/First Name/i), {
+      target: { value: "Mocka" },
+    });
+    fireEvent.click(screen.getByRole("link", { name: "To environments" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Discard changes" }),
+    );
+
+    expect(await screen.findByText("Environments")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("link", { name: "To account" }));
+    expect(await screen.findByLabelText(/First Name/i)).toHaveValue("Mock");
+    expect(
+      screen.queryByRole("button", { name: "Save" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps both drafts across the settings tabs and saves them together", async () => {
+    const puts = {};
+    server.use(
+      http.put("*/users/me/profile", async ({ request }) => {
+        puts.profile = await request.json();
+        return HttpResponse.json(puts.profile);
+      }),
+      http.put("*/users/me/preferences", async ({ request }) => {
+        puts.preferences = await request.json();
+        return HttpResponse.json(puts.preferences);
+      }),
+    );
+    renderSettingsPage(
+      "/settings/account",
+      undefined,
+      <nav>
+        <Link to="/settings/preferences">To preferences</Link>
+        <Link to="/settings/account">To account</Link>
+      </nav>,
+    );
+
+    fireEvent.change(await screen.findByLabelText(/Last Name/i), {
+      target: { value: "Person" },
+    });
+    // No prompt between settings tabs: the account edit stays.
+    fireEvent.click(screen.getByRole("link", { name: "To preferences" }));
+    fireEvent.change(await screen.findByLabelText(/Default Region/i), {
+      target: { value: "eu-central-1" },
+    });
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+    expect(puts.profile).toEqual({
+      firstName: "Mock",
+      lastName: "Person",
+      email: "mock@openprime.dev",
+    });
+    expect(puts.preferences).toMatchObject({ defaultRegion: "eu-central-1" });
+    expect(
+      screen.queryByRole("region", { name: "Unsaved changes" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("link", { name: "To account" }));
+    expect(await screen.findByLabelText(/Last Name/i)).toHaveValue("Person");
+    expect(
+      screen.queryByRole("region", { name: "Unsaved changes" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the save bar and the leave guard on the credentials tab", async () => {
+    renderSettingsPage(
+      "/settings/account",
+      undefined,
+      <nav>
+        <Link to="/settings/cloud-credentials">To credentials</Link>
+        <Link to="/environments">To environments</Link>
+      </nav>,
+    );
+
+    fireEvent.change(await screen.findByLabelText(/First Name/i), {
+      target: { value: "Mocka" },
+    });
+    fireEvent.click(screen.getByRole("link", { name: "To credentials" }));
+
+    expect(await screen.findByText("aws-sandbox")).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Unsaved changes" }),
+    ).toHaveTextContent("Unsaved changes in Account");
+    fireEvent.click(screen.getByRole("link", { name: "To environments" }));
+    expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+  });
+
+  // On the tab that holds them the edits are in sight; elsewhere the bar
+  // names the tabs that hold them.
+  it("names the tabs with edits when they are not the one shown", async () => {
+    renderSettingsPage(
+      "/settings/account",
+      undefined,
+      <nav>
+        <Link to="/settings/preferences">To preferences</Link>
+        <Link to="/settings/cloud-credentials">To credentials</Link>
+      </nav>,
+    );
+    const bar = () => screen.getByRole("region", { name: "Unsaved changes" });
+
+    fireEvent.change(await screen.findByLabelText(/First Name/i), {
+      target: { value: "Mocka" },
+    });
+    expect(bar()).toHaveTextContent(/^Unsaved changesDiscardSave$/);
+
+    fireEvent.click(screen.getByRole("link", { name: "To preferences" }));
+    fireEvent.change(await screen.findByLabelText(/Default Region/i), {
+      target: { value: "eu-central-1" },
+    });
+    expect(bar()).toHaveTextContent(
+      "Unsaved changes in Account and Preferences",
+    );
+
+    fireEvent.click(screen.getByRole("link", { name: "To credentials" }));
+    expect(await screen.findByText("aws-sandbox")).toBeInTheDocument();
+    expect(bar()).toHaveTextContent(
+      "Unsaved changes in Account and Preferences",
+    );
+  });
+
+  it("does not ask when the palette moves between settings tabs", async () => {
+    function PaletteJump({ to }) {
+      const navigate = useNavigate();
+      return (
+        <button
+          type="button"
+          onClick={() => guardedNavigate(() => navigate(to), to)}
+        >
+          {`Jump to ${to}`}
+        </button>
+      );
+    }
+    renderSettingsPage(
+      "/settings/account",
+      undefined,
+      <nav>
+        <PaletteJump to="/settings/preferences" />
+        <PaletteJump to="/environments" />
+      </nav>,
+    );
+
+    fireEvent.change(await screen.findByLabelText(/First Name/i), {
+      target: { value: "Mocka" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Jump to /settings/preferences" }),
+    );
+
+    expect(
+      await screen.findByLabelText(/Default Cloud Provider/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Unsaved changes" }),
+    ).toBeInTheDocument();
+    // Leaving settings still asks.
+    fireEvent.click(
+      screen.getByRole("button", { name: "Jump to /environments" }),
+    );
+    expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+  });
+
+  it("shows the saved values after a tab change while saving", async () => {
+    let release;
+    server.use(
+      http.put("*/users/me/profile", async ({ request }) => {
+        const body = await request.json();
+        await new Promise((resolve) => {
+          release = resolve;
+        });
+        return HttpResponse.json(body);
+      }),
+    );
+    renderSettingsPage(
+      "/settings/account",
+      undefined,
+      <nav>
+        <Link to="/settings/preferences">To preferences</Link>
+        <Link to="/settings/account">To account</Link>
+      </nav>,
+    );
+
+    fireEvent.change(await screen.findByLabelText(/First Name/i), {
+      target: { value: "Mocka" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(release).toBeDefined());
+    // Away and back while the PUT is still in flight.
+    fireEvent.click(screen.getByRole("link", { name: "To preferences" }));
+    await screen.findByLabelText(/Default Cloud Provider/i);
+    fireEvent.click(screen.getByRole("link", { name: "To account" }));
+    await screen.findByLabelText(/First Name/i);
+    release();
+
+    expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+    expect(screen.getByLabelText(/First Name/i)).toHaveValue("Mocka");
+    expect(
+      screen.queryByRole("region", { name: "Unsaved changes" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps what is typed while the save is in flight", async () => {
+    let release;
+    server.use(
+      http.put("*/users/me/profile", async ({ request }) => {
+        const body = await request.json();
+        await new Promise((resolve) => {
+          release = resolve;
+        });
+        return HttpResponse.json(body);
+      }),
+    );
+    renderSettingsPage("/settings/account");
+
+    const firstName = await screen.findByLabelText(/First Name/i);
+    fireEvent.change(firstName, { target: { value: "Mocka" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(release).toBeDefined());
+    fireEvent.change(firstName, { target: { value: "Mockab" } });
+    release();
+
+    expect(await screen.findByText("Changes saved")).toBeInTheDocument();
+    expect(firstName).toHaveValue("Mockab");
+    expect(
+      screen.getByRole("region", { name: "Unsaved changes" }),
+    ).toBeInTheDocument();
+  });
+
+  // The header is static: it shows at once, the rows wait in one busy region.
+  it.each([
+    ["/settings/account", "*/users/me", "Account", "Loading account"],
+    [
+      "/settings/cloud-credentials",
+      "*/cloud-credentials",
+      "Cloud credentials",
+      "Loading cloud credentials",
+    ],
+  ])(
+    "shows the header of %s and one busy region until it loads",
+    async (path, endpoint, heading, busy) => {
+      let answer;
+      server.use(
+        http.get(endpoint, () => new Promise((resolve) => (answer = resolve))),
+      );
+      renderSettingsPage(path);
+
+      expect(
+        await screen.findByRole("heading", { level: 1, name: heading }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("status", { name: busy })).toHaveAttribute(
+        "aria-busy",
+        "true",
+      );
+      expect(document.querySelectorAll('[aria-busy="true"]')).toHaveLength(1);
+
+      await waitFor(() => expect(answer).toBeDefined());
+      answer(
+        HttpResponse.json(
+          endpoint === "*/users/me" ? currentUser : { credentials },
+        ),
+      );
+      await waitFor(() =>
+        expect(document.querySelector('[aria-busy="true"]')).toBeNull(),
+      );
+      expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    },
+  );
+
+  it("shows a retry when the settings fail to load", async () => {
+    server.use(
+      http.get("*/users/me", () => new HttpResponse(null, { status: 500 })),
+    );
+    renderSettingsPage("/settings/account");
+
+    expect(
+      await screen.findByText("Couldn't load your settings."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Try again" }),
+    ).toBeInTheDocument();
+  });
+
+  // Like the list and the detail page: the server's message and the error ID.
+  it.each([
+    ["/settings/account", "*/users/me", "Couldn't load your settings."],
+    [
+      "/settings/cloud-credentials",
+      "*/cloud-credentials",
+      "Couldn't load your cloud credentials.",
+    ],
+  ])(
+    "shows the server message and the error ID when %s fails to load",
+    async (path, endpoint, title) => {
+      server.use(
+        http.get(endpoint, () =>
+          HttpResponse.json(
+            { error: "Database unavailable" },
+            { status: 503, headers: { "X-Request-ID": "req-9" } },
+          ),
+        ),
+      );
+      renderSettingsPage(path);
+
+      expect(await screen.findByText(title)).toBeInTheDocument();
+      expect(screen.getByText("Database unavailable")).toBeInTheDocument();
+      expect(screen.getByText("req-9")).toBeInTheDocument();
+    },
+  );
+
+  it("shows the preferences tab at /settings/preferences", async () => {
+    renderSettingsPage("/settings/preferences");
 
     expect(
       await screen.findByLabelText(/Default Cloud Provider/i),
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/Default Region/i)).toBeInTheDocument();
 
-    // Save button still visible
+    // Save appears once a preference changed
+    fireEvent.change(screen.getByLabelText(/Default Region/i), {
+      target: { value: "eu-central-1" },
+    });
+    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+  });
+
+  it("shows the credentials tab at /settings/cloud-credentials", async () => {
+    renderSettingsPage("/settings/cloud-credentials");
+
+    expect(await screen.findByText("AWS credentials")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Save Changes/i }),
+      screen.getByRole("button", { name: /Add credentials/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("aws-sandbox")).toBeInTheDocument();
+
+    // No save bar on the credentials tab
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Save" }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  // The shared copy button: in-view "Copied" feedback, like everywhere else.
+  it("copies a credential's account ID with the shared copy button", async () => {
+    const writeText = vi.fn(() => Promise.resolve());
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    renderSettingsPage("/settings/cloud-credentials");
+
+    const [copy] = await screen.findAllByRole("button", {
+      name: "Copy account ID",
+    });
+    fireEvent.click(copy);
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("123456789012"));
+    expect(
+      await screen.findByRole("button", { name: "Copied" }),
     ).toBeInTheDocument();
   });
 
-  it("switches to the credentials tab and lists AWS credentials", async () => {
-    renderSettingsPage();
-
-    await screen.findByText("Settings");
-    fireEvent.click(screen.getByRole("button", { name: /Cloud Credentials/i }));
-
-    expect(await screen.findByText("AWS Credentials")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Add/i })).toBeInTheDocument();
-    expect(screen.getByText("aws-sandbox")).toBeInTheDocument();
-
-    // Save button hidden on credentials tab
-    await waitFor(() =>
-      expect(
-        screen.queryByRole("button", { name: /Save Changes/i }),
-      ).not.toBeInTheDocument(),
+  it("shows one add action in the empty state when there are no credentials", async () => {
+    server.use(
+      http.get("*/cloud-credentials", () =>
+        HttpResponse.json({ credentials: [] }),
+      ),
     );
+    renderSettingsPage("/settings/cloud-credentials");
+
+    expect(await screen.findByText("No AWS credentials")).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { name: /Add credentials/i }),
+    ).toHaveLength(1);
+  });
+
+  it("opens the add credential dialog when navigated to with addCredential", async () => {
+    renderSettingsPage("/settings/cloud-credentials", { addCredential: true });
+
+    expect(await screen.findByText("AWS credentials")).toBeInTheDocument();
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("deletes a credential after the usage check and confirmation", async () => {
+    let deleted = null;
+    server.use(
+      http.delete("*/cloud-credentials/:id", ({ params }) => {
+        deleted = params.id;
+        return HttpResponse.json({ success: true });
+      }),
+    );
+    renderSettingsPage("/settings/cloud-credentials");
+
+    fireEvent.pointerDown(
+      await screen.findByRole("button", {
+        name: "More actions for aws-sandbox",
+      }),
+      { button: 0, ctrlKey: false },
+    );
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
+
+    const dialog = await screen.findByRole("alertdialog");
+    expect(
+      within(dialog).getByText(/This credential is used by 1 environment\./),
+    ).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByText("Deleted aws-sandbox.")).toBeInTheDocument();
+    expect(deleted).toBe("cred-001");
+  });
+
+  const openCredentialMenu = async (name) =>
+    fireEvent.pointerDown(
+      await screen.findByRole("button", { name: `More actions for ${name}` }),
+      { button: 0, ctrlKey: false },
+    );
+
+  it("toasts a failed credential delete and keeps the credential", async () => {
+    server.use(
+      http.delete("*/cloud-credentials/:id", () =>
+        HttpResponse.json({ error: "Credential is locked" }, { status: 409 }),
+      ),
+    );
+    renderSettingsPage("/settings/cloud-credentials");
+
+    await openCredentialMenu("aws-sandbox");
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
+    const dialog = await screen.findByRole("alertdialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    expect(
+      await screen.findByText(
+        "Couldn't delete aws-sandbox: Credential is locked",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Credential is locked/)).toBeInTheDocument();
+    expect(screen.getByText("aws-sandbox")).toBeInTheDocument();
+  });
+
+  it("retries loading the credentials after a failure", async () => {
+    server.use(
+      http.get(
+        "*/cloud-credentials",
+        () => new HttpResponse(null, { status: 500 }),
+        { once: true },
+      ),
+    );
+    renderSettingsPage("/settings/cloud-credentials");
+
+    expect(
+      await screen.findByText("Couldn't load your cloud credentials."),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByText("aws-sandbox")).toBeInTheDocument();
+  });
+
+  it("toasts when a credential cannot be loaded for editing", async () => {
+    server.use(
+      http.get(
+        "*/cloud-credentials/:id",
+        () => new HttpResponse(null, { status: 500 }),
+      ),
+    );
+    renderSettingsPage("/settings/cloud-credentials");
+
+    await openCredentialMenu("aws-sandbox");
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Edit" }));
+
+    expect(
+      await screen.findByText("Couldn't load aws-sandbox. Try again."),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

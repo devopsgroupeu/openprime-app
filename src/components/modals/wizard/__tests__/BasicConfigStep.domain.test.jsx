@@ -1,7 +1,17 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { useState } from "react";
+import { MemoryRouter } from "react-router";
 import BasicConfigStep from "../BasicConfigStep";
 import { ToastProvider } from "../../../../contexts/ToastContext";
+import { TooltipProvider } from "@/components/ui/tooltip";
+
+const Providers = ({ children }) => (
+  <MemoryRouter>
+    <TooltipProvider>
+      <ToastProvider>{children}</ToastProvider>
+    </TooltipProvider>
+  </MemoryRouter>
+);
 
 // OP-244: generated environments used to publish openprime.io — our domain in
 // the customer's account, which left ArgoCD without a certificate and therefore
@@ -10,14 +20,14 @@ import { ToastProvider } from "../../../../contexts/ToastContext";
 function Harness({ initial, isEditMode = false }) {
   const [newEnv, setNewEnv] = useState(initial);
   return (
-    <ToastProvider>
+    <Providers>
       <BasicConfigStep
         newEnv={newEnv}
         setNewEnv={setNewEnv}
         isEditMode={isEditMode}
         validationErrors={[]}
       />
-    </ToastProvider>
+    </Providers>
   );
 }
 
@@ -32,12 +42,12 @@ const awsEnv = {
   gitRepository: { enabled: false },
 };
 
-const domainInput = () => screen.getByPlaceholderText("e.g., example.com");
+const domainInput = () => screen.getByPlaceholderText("e.g. example.com");
 
 describe("BasicConfigStep — domain (OP-244)", () => {
   it("renders the domain field", () => {
     render(<Harness initial={awsEnv} />);
-    expect(screen.getByText("Domain (Optional)")).toBeInTheDocument();
+    expect(screen.getByLabelText("Domain (optional)")).toBe(domainInput());
     expect(domainInput()).toHaveValue("");
   });
 
@@ -53,8 +63,8 @@ describe("BasicConfigStep — domain (OP-244)", () => {
     );
 
     // The two locked fields, for contrast — this is the whole point of the test.
-    expect(screen.getByPlaceholderText(/e\.g\., production/)).toBeDisabled();
-    expect(screen.getByPlaceholderText(/e\.g\., myapp-/)).toBeDisabled();
+    expect(screen.getByPlaceholderText("e.g. production")).toBeDisabled();
+    expect(screen.getByPlaceholderText("e.g. myapp-")).toBeDisabled();
 
     const input = domainInput();
     expect(input).not.toBeDisabled();
@@ -64,7 +74,7 @@ describe("BasicConfigStep — domain (OP-244)", () => {
 
   it("surfaces a validation error against the field", () => {
     render(
-      <ToastProvider>
+      <Providers>
         <BasicConfigStep
           newEnv={{ ...awsEnv, domain: "localhost" }}
           setNewEnv={() => {}}
@@ -72,8 +82,12 @@ describe("BasicConfigStep — domain (OP-244)", () => {
             { field: "domain", message: "Domain must be a hostname" },
           ]}
         />
-      </ToastProvider>,
+      </Providers>,
     );
     expect(screen.getByText("Domain must be a hostname")).toBeInTheDocument();
+    expect(domainInput()).toHaveAttribute("aria-invalid", "true");
+    expect(domainInput()).toHaveAccessibleDescription(
+      "Domain must be a hostname",
+    );
   });
 });

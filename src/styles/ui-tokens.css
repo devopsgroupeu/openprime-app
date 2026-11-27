@@ -1,0 +1,260 @@
+/* UI tokens (openprime-ai-aws/apps/web/app/ui-tokens.css): warning and info
+   pairs, the non-color scales, the logo tile and the template gradient (as
+   .cover-gradient); imported after motion.css (src/index.jsx). Left out: the
+   chat home widths. */
+
+/* This file is its own, isolated Tailwind root: it reads the default theme by
+   reference, never scans the app (source(none)) and emits ONLY the utilities
+   listed in the @source inline lines below into the shared `utilities` cascade
+   layer, after the utilities of index.css. Scanning the app here would
+   duplicate every utility and break their order. When a new variant or
+   opacity of text-md, warning or info is needed, add it to the inline lists. */
+
+/* = `@import "tailwindcss/theme" theme(reference)` and
+   `@import "tailwindcss/utilities" layer(utilities) source(none)` in a form
+   the @eslint/css parser reads. */
+@reference "tailwindcss/theme.css";
+@layer utilities {
+  @tailwind utilities source(none);
+}
+
+/* Block form of `@custom-variant dark (&:where(.dark, .dark *))`: the
+   @eslint/css parser cannot read the shorthand. */
+@custom-variant dark {
+  &:where(.dark, .dark *) {
+    @slot;
+  }
+}
+
+@theme inline reference {
+  --text-md: var(--text-md);
+  --text-md--line-height: var(--text-md--line-height);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+}
+
+@source inline("{,sm:,md:,lg:,max-md:,max-sm:}text-md");
+@source inline("{,hover:,dark:,group-hover:}{bg,text,border,ring}-{warning,info}{,-foreground}");
+@source inline("{,hover:,dark:}{bg,text,border,ring}-{warning,info}/{5,10,15,20,30,40,50,60,80}");
+/* Badge attention / info icons (DESIGN.md 5.11). */
+@source inline("[&>svg]:text-{warning,info}");
+
+/* Light values: warning = amber, info = blue-indigo; AA pairs in
+   src/styles/__tests__/tokens-contrast.test.js. */
+:root {
+  --warning: oklch(0.52 0.125 60);
+  --warning-foreground: oklch(0.99 0.01 85);
+  --info: oklch(0.51 0.2 268);
+  --info-foreground: oklch(0.99 0.01 268);
+
+  /* Type scale: 13 px UI body, new 14 px step. */
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.125rem;
+  --text-md: 0.875rem;
+  --text-md--line-height: 1.25rem;
+
+  /* Content widths, consumed as max-w-(--content-settings) etc. */
+  --content-settings: 53.125rem;
+  --content-detail: 52rem;
+  --palette-width: 38.75rem;
+  /* DataTable scroll box: the header stays sticky inside it. */
+  --table-max-height: 70dvh;
+  /* Logo tile (LogoTile): white in both themes, so black and dark brand
+     logos stay visible on the charcoal page without a recolor or a dark
+     variant. */
+  --logo-tile: oklch(1 0 0);
+
+  /* Elevation and rings, built only from existing tokens. */
+  --shadow-ring-xs:
+    0 1px 2px color-mix(in oklab, var(--foreground) 4%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--foreground) 6%, transparent);
+  --shadow-ring-sm:
+    0 1px 2px color-mix(in oklab, var(--foreground) 4%, transparent),
+    0 2px 6px color-mix(in oklab, var(--foreground) 5%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--foreground) 8%, transparent);
+  --shadow-button-primary:
+    inset 0 0 0 1px
+      color-mix(in oklab, var(--primary-foreground) 10%, transparent),
+    inset 0 1px 0.5px
+      color-mix(in oklab, var(--primary-foreground) 8%, transparent);
+  --shadow-button-secondary:
+    inset 0 0 0 1px var(--border),
+    inset 0 -1px 1px color-mix(in oklab, var(--foreground) 6%, transparent);
+}
+
+.dark {
+  --warning: oklch(0.85 0.135 82);
+  --warning-foreground: oklch(0.25 0.06 70);
+  /* Saturated blue: bg-info/10 stays visibly blue, text-info stays >= 4.5:1 on that tint. */
+  --info: oklch(0.7 0.17 265);
+  --info-foreground: oklch(0.2 0.06 265);
+
+  --shadow-ring-xs: 0 0 0 1px
+    color-mix(in oklab, var(--foreground) 9%, transparent);
+  --shadow-ring-sm: 0 0 0 1px
+    color-mix(in oklab, var(--foreground) 11%, transparent);
+  --shadow-button-secondary:
+    inset 0 0 0 1px color-mix(in oklab, var(--foreground) 10%, transparent),
+    inset 0 -1px 1px color-mix(in oklab, var(--background) 40%, transparent);
+}
+
+/* Chat messages (Aura) keep 14 px / 24 px. */
+[data-slot="chat-thread"] {
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.5rem;
+}
+
+/* Tooltips enter from 0.96; after motion.css, so this wins over its scale reset. */
+[data-slot="tooltip-content"] {
+  --tw-enter-scale: 0.96;
+}
+
+/* Cover gradient bands (src/components/shared/cover-gradient.jsx): the
+   decorative blob mesh of openprime-ai's .template-gradient, renamed, picked
+   by data attrs. The one sanctioned gradient. */
+@layer components {
+  /* eslint-disable css/no-invalid-properties -- --tg-base and --tg-1..3 come
+     from the [data-gradient] palettes below, which the linter cannot see. */
+  .cover-gradient {
+    --tg-at-1: 0% 0%;
+    --tg-at-2: 100% 0%;
+    --tg-at-3: 50% 100%;
+    --tg-veil: transparent;
+    background-color: var(--tg-base);
+    background-image:
+      linear-gradient(var(--tg-veil), var(--tg-veil)),
+      radial-gradient(70% 130% at var(--tg-at-1), var(--tg-1), transparent),
+      radial-gradient(60% 120% at var(--tg-at-2), var(--tg-2), transparent),
+      radial-gradient(80% 130% at var(--tg-at-3), var(--tg-3), transparent);
+  }
+  /* eslint-enable css/no-invalid-properties */
+  .dark .cover-gradient {
+    --tg-veil: color-mix(in oklab, var(--background) 22%, transparent);
+  }
+  .cover-gradient::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.45;
+    mix-blend-mode: soft-light;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .cover-gradient[data-layout="1"] {
+    --tg-at-1: 100% 100%;
+    --tg-at-2: 0% 50%;
+    --tg-at-3: 70% 0%;
+  }
+  .cover-gradient[data-layout="2"] {
+    --tg-at-1: 20% 100%;
+    --tg-at-2: 90% 30%;
+    --tg-at-3: 0% 0%;
+  }
+  .cover-gradient[data-layout="3"] {
+    --tg-at-1: 60% 0%;
+    --tg-at-2: 0% 100%;
+    --tg-at-3: 100% 80%;
+  }
+
+  /* Palettes: base, then the three blobs. */
+  .cover-gradient[data-gradient="0"] {
+    --tg-base: oklch(0.74 0.05 120);
+    --tg-1: oklch(0.72 0.17 50);
+    --tg-2: oklch(0.86 0.06 80);
+    --tg-3: oklch(0.68 0.07 150);
+  }
+  .cover-gradient[data-gradient="1"] {
+    --tg-base: oklch(0.86 0.02 80);
+    --tg-1: oklch(0.8 0.05 70);
+    --tg-2: oklch(0.9 0.01 250);
+    --tg-3: oklch(0.76 0.06 60);
+  }
+  .cover-gradient[data-gradient="2"] {
+    --tg-base: oklch(0.55 0.08 190);
+    --tg-1: oklch(0.8 0.12 135);
+    --tg-2: oklch(0.42 0.06 200);
+    --tg-3: oklch(0.72 0.1 170);
+  }
+  .cover-gradient[data-gradient="3"] {
+    --tg-base: oklch(0.72 0.08 230);
+    --tg-1: oklch(0.78 0.12 30);
+    --tg-2: oklch(0.65 0.12 200);
+    --tg-3: oklch(0.85 0.05 60);
+  }
+  .cover-gradient[data-gradient="4"] {
+    --tg-base: oklch(0.55 0.05 250);
+    --tg-1: oklch(0.8 0.02 250);
+    --tg-2: oklch(0.45 0.07 255);
+    --tg-3: oklch(0.72 0.1 40);
+  }
+  .cover-gradient[data-gradient="5"] {
+    --tg-base: oklch(0.42 0.06 20);
+    --tg-1: oklch(0.66 0.15 45);
+    --tg-2: oklch(0.35 0.05 330);
+    --tg-3: oklch(0.55 0.12 40);
+  }
+  .cover-gradient[data-gradient="6"] {
+    --tg-base: oklch(0.84 0.05 350);
+    --tg-1: oklch(0.75 0.12 0);
+    --tg-2: oklch(0.62 0.06 250);
+    --tg-3: oklch(0.9 0.02 20);
+  }
+  .cover-gradient[data-gradient="7"] {
+    --tg-base: oklch(0.7 0.1 200);
+    --tg-1: oklch(0.7 0.15 20);
+    --tg-2: oklch(0.62 0.11 210);
+    --tg-3: oklch(0.8 0.06 300);
+  }
+  .cover-gradient[data-gradient="8"] {
+    --tg-base: oklch(0.7 0.1 125);
+    --tg-1: oklch(0.88 0.06 110);
+    --tg-2: oklch(0.45 0.07 140);
+    --tg-3: oklch(0.8 0.03 100);
+  }
+  .cover-gradient[data-gradient="9"] {
+    --tg-base: oklch(0.5 0.14 260);
+    --tg-1: oklch(0.7 0.12 230);
+    --tg-2: oklch(0.35 0.1 265);
+    --tg-3: oklch(0.85 0.04 240);
+  }
+  .cover-gradient[data-gradient="10"] {
+    --tg-base: oklch(0.55 0.04 260);
+    --tg-1: oklch(0.62 0.2 30);
+    --tg-2: oklch(0.8 0.02 250);
+    --tg-3: oklch(0.7 0.17 45);
+  }
+  .cover-gradient[data-gradient="11"] {
+    --tg-base: oklch(0.7 0.08 310);
+    --tg-1: oklch(0.78 0.1 350);
+    --tg-2: oklch(0.55 0.1 290);
+    --tg-3: oklch(0.88 0.04 320);
+  }
+  .cover-gradient[data-gradient="12"] {
+    --tg-base: oklch(0.45 0.07 165);
+    --tg-1: oklch(0.78 0.12 85);
+    --tg-2: oklch(0.35 0.05 180);
+    --tg-3: oklch(0.65 0.1 150);
+  }
+  .cover-gradient[data-gradient="13"] {
+    --tg-base: oklch(0.82 0.06 70);
+    --tg-1: oklch(0.75 0.13 40);
+    --tg-2: oklch(0.78 0.08 220);
+    --tg-3: oklch(0.9 0.03 90);
+  }
+  .cover-gradient[data-gradient="14"] {
+    --tg-base: oklch(0.62 0.03 240);
+    --tg-1: oklch(0.78 0.04 220);
+    --tg-2: oklch(0.48 0.04 250);
+    --tg-3: oklch(0.7 0.08 200);
+  }
+  .cover-gradient[data-gradient="15"] {
+    --tg-base: oklch(0.48 0.11 245);
+    --tg-1: oklch(0.68 0.14 220);
+    --tg-2: oklch(0.32 0.08 255);
+    --tg-3: oklch(0.82 0.05 210);
+  }
+}

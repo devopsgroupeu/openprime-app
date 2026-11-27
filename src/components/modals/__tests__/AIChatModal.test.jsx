@@ -6,6 +6,7 @@ import AIChatModal from "../AIChatModal";
 // welcome-message effect needs a real state owner to render into.
 function Harness(props) {
   const [messages, setMessages] = useState([]);
+  const [draft, setDraft] = useState("");
   return (
     <AIChatModal
       isOpen
@@ -14,6 +15,8 @@ function Harness(props) {
       wizardValues={{}}
       messages={messages}
       setMessages={setMessages}
+      draft={draft}
+      setDraft={setDraft}
       setNewEnv={() => {}}
       onClose={() => {}}
       {...props}
@@ -30,9 +33,9 @@ describe("AIChatModal", () => {
   it("renders the modal shell (header + input) when open", () => {
     render(<Harness />);
     expect(
-      screen.getByRole("dialog", { name: /AI assistant/i }),
+      screen.getByRole("dialog", { name: "Ask Aura about EKS" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Ask AI about EKS")).toBeInTheDocument();
+    expect(screen.getByText("Ask Aura about EKS")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Ask about EKS...")).toBeInTheDocument();
   });
 

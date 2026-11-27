@@ -10,7 +10,8 @@ import { http, HttpResponse } from "msw";
 import { server } from "../../mocks/server";
 import keycloak from "../../config/keycloak";
 import AIChatModal from "../modals/AIChatModal";
-import AuraChatWindow, { INITIAL_MESSAGES } from "../AuraChatWindow";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import AuraChatButton from "../AuraChatButton";
 import WizardAssistant from "../WizardAssistant";
 
 // Mirrors toTurns() in openprime-app-backend src/services/aiChatRequest.js
@@ -40,6 +41,7 @@ function backendRejection(body) {
 
 function ModalHarness() {
   const [messages, setMessages] = useState([]);
+  const [draft, setDraft] = useState("");
   return (
     <AIChatModal
       isOpen
@@ -48,22 +50,41 @@ function ModalHarness() {
       wizardValues={{}}
       messages={messages}
       setMessages={setMessages}
+      draft={draft}
+      setDraft={setDraft}
       setNewEnv={() => {}}
       onClose={() => {}}
     />
   );
 }
 
-function AuraHarness() {
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+// The wizard owns the Aura messages, as WizardPage does.
+function WizardHarness() {
+  const [messages, setMessages] = useState([]);
+  const [draft, setDraft] = useState("");
   return (
-    <AuraChatWindow
-      onClose={() => {}}
+    <WizardAssistant
+      context={{ name: "staging", provider: "aws" }}
       messages={messages}
       setMessages={setMessages}
+      draft={draft}
+      setDraft={setDraft}
     />
   );
 }
+
+// The floating Aura as the app shell renders it, opened.
+function AuraHarness() {
+  return (
+    <TooltipProvider>
+      <AuraChatButton />
+    </TooltipProvider>
+  );
+}
+const openAura = () => {
+  render(<AuraHarness />);
+  fireEvent.click(screen.getByRole("button", { name: "Ask Aura" }));
+};
 
 const ask = (input, question, send) => {
   fireEvent.change(input, { target: { value: question } });
@@ -79,17 +100,14 @@ const components = [
   ],
   [
     "AuraChatWindow",
-    () => render(<AuraHarness />),
+    openAura,
     () => screen.getByPlaceholderText(/Ask Aura anything/),
     (input) => fireEvent.keyDown(input, { key: "Enter" }),
   ],
   [
     "WizardAssistant",
-    () =>
-      render(
-        <WizardAssistant context={{ name: "staging", provider: "aws" }} />,
-      ),
-    () => screen.getByPlaceholderText("Ask Aura…"),
+    () => render(<WizardHarness />),
+    () => screen.getByPlaceholderText("Ask Aura anything..."),
     () => fireEvent.click(screen.getByRole("button", { name: "Send message" })),
   ],
 ];
@@ -132,11 +150,11 @@ describe("AI chat request contract (OP-263)", () => {
       mount();
 
       ask(input(), "Which node size?", send);
-      expect(await screen.findByText(/Answer 1\./)).toBeInTheDocument();
+      expect(await screen.findByText("Answer 1.")).toBeInTheDocument();
 
       // The follow-up carries the model's own answer in the history.
       ask(input(), "And for production?", send);
-      expect(await screen.findByText(/Answer 2\./)).toBeInTheDocument();
+      expect(await screen.findByText("Answer 2.")).toBeInTheDocument();
 
       expect(rejections).toEqual([]);
     },

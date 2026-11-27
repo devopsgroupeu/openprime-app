@@ -2,7 +2,6 @@ import {
   validateField,
   validateServiceConfig,
   validateEnvironmentConfig,
-  getValidationSummary,
   ConfigValidationError,
 } from "../configValidator";
 import { FIELD_TYPES, SERVICES_CONFIG } from "../../config/servicesConfig";
@@ -637,48 +636,97 @@ describe("configValidator", () => {
     });
   });
 
-  describe("getValidationSummary", () => {
-    test("returns validation summary", () => {
-      const errors = [
-        new ConfigValidationError("Name is required", "name"),
-        new ConfigValidationError("Recommended setting", "setting"),
-      ];
-
-      const summary = getValidationSummary(errors);
-      expect(summary.isValid).toBe(false);
-      expect(summary.totalErrors).toBe(2);
-      expect(summary.hasBlockingErrors).toBe(true);
+  // The wizard lists these on Review, so a false error is a visible one.
+  describe("service errors", () => {
+    const env = (services) => ({
+      name: "test",
+      provider: "aws",
+      region: "us-east-1",
+      services,
     });
 
-    test("returns valid summary for no errors", () => {
-      const summary = getValidationSummary([]);
-      expect(summary.isValid).toBe(true);
-      expect(summary.totalErrors).toBe(0);
-      expect(summary.hasBlockingErrors).toBe(false);
+    test("skips disabled services, which are not generated", () => {
+      const errors = validateEnvironmentConfig(
+        env({ vpc: { enabled: false, cidr: "invalid-cidr", azCount: 9 } }),
+      );
+      expect(errors).toHaveLength(0);
     });
 
-    test("identifies critical errors", () => {
-      const errors = [
-        new ConfigValidationError("Invalid provider", "provider"),
-        new ConfigValidationError("Invalid setting", "someSetting"),
-      ];
-
-      const summary = getValidationSummary(errors);
-      expect(summary.criticalErrors).toHaveLength(1);
-      expect(summary.criticalErrors[0].field).toBe("provider");
-    });
-
-    test("identifies warnings", () => {
-      const errors = [
-        new ConfigValidationError(
-          "This is recommended for production",
-          "setting",
+    test("accepts a numeric option the select hands over as text", () => {
+      const errors = validateEnvironmentConfig(
+        env({ vpc: { enabled: true, cidr: "10.0.0.0/16", azCount: "3" } }),
+      );
+      expect(errors).toHaveLength(0);
+      expect(
+        validateField(
+          {
+            type: FIELD_TYPES.DROPDOWN,
+            displayName: "Availability Zones",
+            options: [{ value: 2 }, { value: 3 }],
+          },
+          "4",
+          "azCount",
         ),
-        new ConfigValidationError("You should enable this feature", "feature"),
-      ];
+      ).toHaveLength(1);
+    });
 
-      const summary = getValidationSummary(errors);
-      expect(summary.warnings).toHaveLength(2);
+    test("accepts true and false text in a toggle whose variable is a string", () => {
+      const fieldConfig = {
+        type: FIELD_TYPES.TOGGLE,
+        displayName: "Allow Explicit Index",
+        valueType: "string",
+      };
+      expect(validateField(fieldConfig, "true", "x")).toHaveLength(0);
+      expect(validateField(fieldConfig, "false", "x")).toHaveLength(0);
+      expect(validateField(fieldConfig, false, "x")).toHaveLength(0);
+      expect(validateField(fieldConfig, "yes", "x")).toHaveLength(1);
+    });
+
+    test("an enabled service with its catalog defaults has no errors", () => {
+      const services = Object.fromEntries(
+        Object.entries(SERVICES_CONFIG)
+          .filter(([, service]) => service.provider === "aws")
+          .map(([name, service]) => [
+            name,
+            {
+              ...Object.fromEntries(
+                Object.entries(service.fields).map(([field, config]) => [
+                  field,
+                  config.defaultValue,
+                ]),
+              ),
+              enabled: true,
+            },
+          ]),
+      );
+      expect(validateEnvironmentConfig(env(services))).toEqual([]);
+    });
+
+    test("names the service and marks the error as one of it", () => {
+      const [error] = validateEnvironmentConfig(
+        env({ vpc: { enabled: true, cidr: "invalid-cidr", azCount: 2 } }),
+      );
+      expect(error.message).toBe(
+        "Virtual Private Cloud (VPC): CIDR Block format is invalid",
+      );
+      expect(error.field).toBe("cidr");
+      expect(error.service).toBe("vpc");
+    });
+
+    test("marks a missing prerequisite as an error of the service that needs it", () => {
+      const errors = validateEnvironmentConfig(
+        env({ eks: { enabled: true, kubernetesVersion: "1.36" } }),
+      );
+      expect(errors.find((e) => e.field === "eks").service).toBe("eks");
+    });
+
+    test("leaves environment errors without a service", () => {
+      const errors = validateEnvironmentConfig({
+        ...env({}),
+        domain: "localhost",
+      });
+      expect(errors).toHaveLength(1);
+      expect(errors[0].service).toBeNull();
     });
   });
 

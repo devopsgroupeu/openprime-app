@@ -53,7 +53,10 @@ describe("Application Smoke Tests", () => {
   test("should display create environment button", async (ctx) => {
     await navigateAndAuth(ctx);
 
-    const createButton = ctx.page.getByRole("button", { name: /new environment/i });
+    const createButton = ctx.page
+      .getByRole("main")
+      .getByRole("link", { name: /new environment/i })
+      .first();
     expect(await createButton.isVisible()).toBe(true);
     expect(await createButton.isEnabled()).toBe(true);
   });
@@ -61,30 +64,33 @@ describe("Application Smoke Tests", () => {
   test("should open and close environment wizard", async (ctx) => {
     await navigateAndAuth(ctx);
 
-    const createButton = ctx.page.getByRole("button", { name: /new environment/i });
+    const createButton = ctx.page
+      .getByRole("main")
+      .getByRole("link", { name: /new environment/i })
+      .first();
     await createButton.click();
     await ctx.page.waitForTimeout(500);
 
     // Verify wizard modal opened
-    const wizardHeading = ctx.page.getByText(/basic configuration/i).first();
+    const wizardHeading = ctx.page.getByRole("heading", { level: 1, name: "Basics" });
     expect(await wizardHeading.isVisible()).toBe(true);
 
-    // Close the wizard
-    const closeButton = ctx.page
-      .locator('button[aria-label="Close"]')
-      .or(ctx.page.getByRole("button").filter({ hasText: /×|close/i }));
-    if ((await closeButton.count()) > 0) {
-      await closeButton.first().click();
-    }
-
-    await ctx.page.waitForTimeout(500);
+    // Close it with Cancel: an untouched wizard goes straight back to the list.
+    await ctx.page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await ctx.page.waitForURL((url) => url.pathname === "/environments");
+    const listHeading = ctx.page.getByRole("heading", { level: 1, name: "Environments" });
+    await listHeading.waitFor({ state: "visible" });
+    expect(await listHeading.isVisible()).toBe(true);
   });
 
   test("should navigate through wizard steps", async (ctx) => {
     await navigateAndAuth(ctx);
 
     // Open wizard
-    const createButton = ctx.page.getByRole("button", { name: /new environment/i });
+    const createButton = ctx.page
+      .getByRole("main")
+      .getByRole("link", { name: /new environment/i })
+      .first();
     await createButton.click();
     await ctx.page.waitForTimeout(500);
 
@@ -103,7 +109,7 @@ describe("Application Smoke Tests", () => {
     const allSelects = await ctx.page.locator("select").all();
     for (const select of allSelects) {
       const options = await select.locator("option").allTextContents();
-      if (options.some((opt) => opt.includes("EU (Ireland)") || opt.includes("US East"))) {
+      if (options.some((opt) => opt.includes("Europe (Ireland)") || opt.includes("US East"))) {
         await select.selectOption("eu-west-1");
         break;
       }
@@ -122,7 +128,7 @@ describe("Application Smoke Tests", () => {
     await ctx.page.waitForTimeout(500);
 
     // Verify we advanced to the services step
-    const servicesHeading = ctx.page.getByText(/services configuration/i).first();
+    const servicesHeading = ctx.page.getByRole("heading", { level: 1, name: "Services" });
     expect(await servicesHeading.isVisible()).toBe(true);
   });
 });

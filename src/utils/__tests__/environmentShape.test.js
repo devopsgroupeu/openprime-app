@@ -55,6 +55,21 @@ describe("normalizeEnvironment", () => {
     expect(normalized.services.eks.enabled).toBe(true);
   });
 
+  it("keeps the custom values of the charts it keeps", () => {
+    const prometheusStack = {
+      enabled: true,
+      customValues: true,
+      values: "grafana:\n  replicas: 2",
+    };
+    const normalized = normalizeEnvironment({
+      services: {
+        eks: { enabled: true, helmCharts: { prometheusStack, thanos: {} } },
+      },
+    });
+
+    expect(normalized.services.eks.helmCharts).toEqual({ prometheusStack });
+  });
+
   it("leaves services without charts and non-object input untouched", () => {
     expect(
       normalizeEnvironment({ services: { rds: { enabled: true } } }).services

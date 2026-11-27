@@ -1,17 +1,23 @@
 import { useState } from "react";
-import { Cloud, Edit2, Loader2, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { KeyRound, Pencil, Plus, Trash2 } from "lucide-react";
+
 import authService from "../../services/authService";
 import { useToast } from "../../contexts/ToastContext";
-
-const formatLastValidated = (timestamp) => {
-  if (!timestamp) return null;
-  const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-};
+import AwsIcon from "../icons/AwsIcon";
+import { CopyButton } from "@/components/shared/copy-button";
+import { RelativeTime } from "@/components/shared/format";
+import { IconTile } from "@/components/shared/icon-tile";
+import { ResourceActionsMenu } from "@/components/shared/resource-actions-menu";
+import {
+  SettingsRow,
+  SettingsRowGroup,
+  SettingsSection,
+} from "@/components/shared/settings";
+import { EmptyState } from "@/components/shared/states";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { describeError } from "@/lib/describe-error";
 
 const CloudCredentialsTab = ({
   credentials,
@@ -40,11 +46,11 @@ const CloudCredentialsTab = ({
 
         if (result.accountIdMismatch) {
           toast.warning(
-            `Credentials are valid, but they belong to account ${result.accountId} — this credential is stored under ${credential.identifier}. Update the Account ID to match.`,
+            `Credentials are valid, but they belong to account ${result.accountId}. This credential is stored under ${credential.identifier}. Update the account ID to match.`,
           );
         } else {
           toast.success(
-            `Credentials valid — Account: ${result.accountId || credential.identifier}`,
+            `Credentials valid for account ${result.accountId || credential.identifier}`,
           );
         }
       } else {
@@ -61,115 +67,119 @@ const CloudCredentialsTab = ({
     } catch (error) {
       if (error.status === 404) {
         toast.warning(
-          "Credential testing isn't available yet — the backend needs to be updated first.",
+          "Credential testing isn't available yet. The backend needs an update first.",
         );
         return;
       }
-      toast.error(error.message || "Failed to test credentials");
+      toast.error(describeError(error, `test ${credential.name}`));
     } finally {
       setTestingId(null);
     }
   };
 
-  const getLastValidated = (credential) =>
-    lastValidatedMap[credential.id] || credential.last_validated;
+  const addButton = (size) => (
+    <Button size={size} onClick={() => onAddCredential("aws")}>
+      <Plus aria-hidden />
+      Add credentials
+    </Button>
+  );
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <p className="section-label">AWS Credentials</p>
-        <button
-          onClick={() => onAddCredential("aws")}
-          className="btn-op-primary transition-all"
-        >
-          <Plus className="w-4 h-4 mr-1" />
-          Add
-        </button>
-      </div>
-      <div className="space-y-3">
-        {awsCredentials.length === 0 ? (
-          <div className="text-center py-8 transition-colors text-secondary">
-            <Cloud className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>No AWS credentials configured</p>
-            <p className="text-sm mt-1">
-              Add your first credential to get started
-            </p>
-          </div>
-        ) : (
-          awsCredentials.map((credential) => {
-            const lastValidated = getLastValidated(credential);
-            const formatted = formatLastValidated(lastValidated);
-
+    <SettingsSection
+      title="AWS credentials"
+      // One "Add credentials" at a time: the empty state carries its own.
+      action={awsCredentials.length > 0 ? addButton("default") : null}
+    >
+      {awsCredentials.length === 0 ? (
+        <EmptyState
+          icon={KeyRound}
+          title="No AWS credentials"
+          description="Add an access key so OpenPrime can create the Terraform state bucket for you."
+          action={addButton("sm")}
+        />
+      ) : (
+        <SettingsRowGroup>
+          {awsCredentials.map((credential) => {
+            const lastValidated =
+              lastValidatedMap[credential.id] || credential.lastValidated;
+            const testing = testingId === credential.id;
             return (
-              <div
+              <SettingsRow
                 key={credential.id}
-                className="flex items-center justify-between p-4 rounded-lg transition-colors bg-background border border-border"
-              >
-                <div className="flex items-center flex-1 gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-primary-muted flex items-center justify-center shrink-0">
-                    <Cloud className="w-5 h-5 text-accent" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-semibold transition-colors text-primary truncate">
-                      {credential.name}
-                      {credential.isDefault && (
-                        <span className="ml-2 px-2 py-1 bg-primary/20 text-primary rounded text-xs">
-                          Default
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-sm transition-colors text-secondary">
-                      Account: {credential.identifier}
-                    </div>
-                    <div className="text-xs transition-colors text-tertiary mt-0.5">
-                      {formatted ? (
-                        <>Last checked: {formatted}</>
+                title={
+                  <span className="flex flex-wrap items-center gap-2">
+                    <IconTile size="menu" className="text-foreground">
+                      <AwsIcon />
+                    </IconTile>
+                    <span className="min-w-0 break-all">{credential.name}</span>
+                    {credential.isDefault ? (
+                      <Badge variant="tag">Default</Badge>
+                    ) : null}
+                  </span>
+                }
+                description={
+                  <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="inline-flex items-center gap-1">
+                      Account
+                      <span className="font-mono text-foreground">
+                        {credential.identifier}
+                      </span>
+                      <CopyButton
+                        text={credential.identifier}
+                        label="Copy account ID"
+                        size="icon-xs"
+                      />
+                    </span>
+                    <span>
+                      {lastValidated ? (
+                        <>
+                          Checked <RelativeTime iso={lastValidated} />
+                        </>
                       ) : (
-                        <>Not yet validated</>
+                        "Not checked yet"
                       )}
-                    </div>
+                    </span>
+                  </span>
+                }
+                control={
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      aria-label={`Test ${credential.name}`}
+                      onClick={() => handleTest(credential)}
+                      disabled={testing}
+                    >
+                      {testing ? <Spinner aria-hidden /> : null}
+                      Test
+                    </Button>
+                    <ResourceActionsMenu
+                      label={`More actions for ${credential.name}`}
+                      actions={[
+                        {
+                          label: "Edit",
+                          icon: Pencil,
+                          onSelect: () => onEditCredential(credential),
+                        },
+                        {
+                          label: "Delete",
+                          icon: Trash2,
+                          destructive: true,
+                          onSelect: () => onDeleteCredential(credential),
+                        },
+                      ]}
+                    />
                   </div>
-                </div>
-                <div className="flex items-center space-x-2 shrink-0">
-                  <button
-                    onClick={() => handleTest(credential)}
-                    disabled={testingId === credential.id}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated disabled:opacity-60"
-                    title="Test credentials"
-                  >
-                    {testingId === credential.id ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="text-sm">Testing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="w-4 h-4" />
-                        <span className="text-sm">Test</span>
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => onEditCredential(credential)}
-                    className="p-2 rounded-lg transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated"
-                    title="Edit"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => onDeleteCredential(credential)}
-                    className="p-2 rounded-lg transition-colors text-tertiary hover:text-danger hover:bg-danger-muted"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+                }
+              />
             );
-          })
-        )}
-      </div>
-    </div>
+          })}
+        </SettingsRowGroup>
+      )}
+      <p className="text-xs text-muted-foreground">
+        Azure and Google Cloud credentials are on the roadmap.
+      </p>
+    </SettingsSection>
   );
 };
 

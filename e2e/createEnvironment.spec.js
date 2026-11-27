@@ -57,15 +57,16 @@ describe("Create Environment with All Helm Charts", () => {
 
     // Step 2: Open environment creation wizard
     await test.step("Open environment creation wizard", async () => {
-      const createButton = ctx.page.getByRole("button", {
-        name: /new environment/i,
-      });
+      const createButton = ctx.page
+        .getByRole("main")
+        .getByRole("link", { name: /new environment/i })
+        .first();
       expect(await createButton.isVisible()).toBe(true);
       await createButton.click();
       await ctx.page.waitForTimeout(500);
 
       // Wait for wizard modal to appear
-      const wizardHeading = ctx.page.getByText(/basic configuration/i).first();
+      const wizardHeading = ctx.page.getByRole("heading", { level: 1, name: "Basics" });
       expect(await wizardHeading.isVisible()).toBe(true);
       console.log("✓ Wizard opened");
     });
@@ -89,13 +90,14 @@ describe("Create Environment with All Helm Charts", () => {
       // Wait for regions to load
       await ctx.page.waitForTimeout(500);
 
-      // Select eu-west-1 region
+      // Select eu-west-1 region (options show the region name, the code
+      // sits next to it)
       const regionSelect = ctx.page
         .locator("select")
-        .filter({ hasText: /us-east-1|eu-west-1|region/i })
+        .filter({ hasText: /Europe \(Ireland\)|region/i })
         .or(ctx.page.getByLabel(/region/i));
       if ((await regionSelect.count()) > 0) {
-        await regionSelect.first().selectOption({ label: "eu-west-1" });
+        await regionSelect.first().selectOption({ label: "Europe (Ireland)" });
         await ctx.page.waitForTimeout(300);
         console.log("✓ Region set to: eu-west-1");
       } else {
@@ -110,38 +112,31 @@ describe("Create Environment with All Helm Charts", () => {
     // Step 4: Enable Terraform Backend
     await test.step("Enable Terraform backend", async () => {
       // Find and click the Terraform Backend toggle
-      const backendSection = ctx.page
-        .locator("text=Terraform Backend (Optional)")
-        .locator("..")
-        .locator("..");
-      const backendCheckbox = backendSection.locator('input[type="checkbox"]');
+      const backendSwitch = ctx.page.getByRole("switch", { name: /state backend/i });
 
-      const isChecked = await backendCheckbox.isChecked().catch(() => false);
+      const isChecked = (await backendSwitch.getAttribute("aria-checked")) === "true";
       if (!isChecked) {
-        await backendCheckbox.check({ force: true });
+        await backendSwitch.click();
         await ctx.page.waitForTimeout(500);
         console.log("✓ Terraform backend enabled");
       } else {
         console.log("✓ Terraform backend already enabled");
       }
 
-      // Note: S3 bucket name is auto-generated in the current UI
-      // The UI shows format: <AWS_ACCOUNT_ID>-terraform-<environment-name>
-      // In a production implementation, this would need to be customizable
-      console.log(`Note: S3 bucket will be auto-generated (target: ${s3BucketName})`);
+      // A switched-on backend needs a bucket before Continue: point it at an
+      // existing one (creating one needs AWS credentials).
+      await ctx.page.getByRole("radio", { name: /existing bucket/i }).click();
+      await ctx.page.getByLabel("Bucket name").fill(s3BucketName);
+      console.log(`✓ State bucket set: ${s3BucketName}`);
     });
 
     // Step 4b: Enable Git Repository with URL and branch
     await test.step("Configure Git repository", async () => {
-      const gitSection = ctx.page
-        .locator("text=Git Repository (Optional)")
-        .locator("..")
-        .locator("..");
-      const gitToggle = gitSection.locator('input[type="checkbox"]');
+      const gitSwitch = ctx.page.getByRole("switch", { name: /git repository/i });
 
-      const isChecked = await gitToggle.isChecked().catch(() => false);
+      const isChecked = (await gitSwitch.getAttribute("aria-checked")) === "true";
       if (!isChecked) {
-        await gitToggle.check({ force: true });
+        await gitSwitch.click();
         await ctx.page.waitForTimeout(300);
       }
 
@@ -166,44 +161,42 @@ describe("Create Environment with All Helm Charts", () => {
       await continueButton.click();
       await ctx.page.waitForTimeout(500);
 
-      const servicesHeading = ctx.page.getByText(/services configuration/i).first();
+      const servicesHeading = ctx.page.getByRole("heading", { level: 1, name: "Services" });
       expect(await servicesHeading.isVisible()).toBe(true);
       console.log("✓ Navigated to Services Configuration");
     });
 
     // Step 6: Enable all services
     await test.step("Enable all services", async () => {
-      await ctx.page.waitForTimeout(1000);
+      const enabledCount = ctx.page.getByText(/\d+ of \d+ enabled/);
+      await enabledCount.waitFor({ state: "visible", timeout: 10000 });
 
-      const enableAllButton = ctx.page.getByTestId("toggle-all-services");
-      await enableAllButton.waitFor({ state: "visible", timeout: 10000 });
-
-      const buttonText = await enableAllButton.textContent();
-      if (buttonText && buttonText.toLowerCase().includes("enable all")) {
-        await enableAllButton.click();
-        await ctx.page.waitForTimeout(1500);
-        console.log("✓ All 15 AWS services enabled");
-      } else {
+      // Bulk actions live in the "Service actions" menu next to the count.
+      await ctx.page.getByRole("button", { name: "Service actions" }).click();
+      const enableAll = ctx.page.getByRole("menuitem", { name: "Enable all" });
+      if (await enableAll.isDisabled()) {
+        await ctx.page.keyboard.press("Escape");
         console.log("✓ All services already enabled");
+      } else {
+        await enableAll.click();
+        await ctx.page.waitForTimeout(1500);
+        console.log("✓ All AWS services enabled");
       }
 
-      // Verify button text changed
-      const updatedButtonText = await enableAllButton.textContent();
-      expect(updatedButtonText && updatedButtonText.toLowerCase()).toContain("disable all");
+      // Verify every service is now enabled
+      const [, enabled, total] = (await enabledCount.textContent()).match(/(\d+) of (\d+) enabled/);
+      expect(enabled).toBe(total);
     });
 
     // Step 7: Configure VPC CIDR
     await test.step("Configure VPC CIDR", async () => {
-      // Click on the VPC service card to expand configuration
-      const vpcCard = ctx.page
-        .locator("text=Virtual Private Cloud (VPC)")
-        .locator("..")
-        .locator("..");
-      await vpcCard.click();
+      // The service name opens its configuration
+      await ctx.page
+        .getByRole("button", { name: "Virtual Private Cloud (VPC)", exact: true })
+        .click();
       await ctx.page.waitForTimeout(500);
 
-      // Find the CIDR Block input field
-      const cidrInput = ctx.page.locator('input[type="text"]').first();
+      const cidrInput = ctx.page.getByLabel("CIDR Block");
       await cidrInput.fill(vpcCidr);
       await ctx.page.waitForTimeout(300);
       console.log(`✓ VPC CIDR set to: ${vpcCidr}`);
@@ -215,7 +208,7 @@ describe("Create Environment with All Helm Charts", () => {
       await continueButton.click();
       await ctx.page.waitForTimeout(1000);
 
-      const helmChartsHeading = ctx.page.getByText(/helm charts configuration/i).first();
+      const helmChartsHeading = ctx.page.getByRole("heading", { level: 1, name: "Helm charts" });
       expect(await helmChartsHeading.isVisible()).toBe(true);
       console.log("✓ Navigated to Helm Charts step");
     });
@@ -243,47 +236,35 @@ describe("Create Environment with All Helm Charts", () => {
         console.log("No charts selected by default, enabling charts manually...");
         await ctx.page.waitForTimeout(500);
 
-        // Step 1: Find and expand all category dropdowns
-        // Categories have ChevronDown/ChevronRight icons and are clickable
-        const categoryHeaders = ctx.page.locator('div[class*="cursor-pointer"]').filter({
-          has: ctx.page
-            .locator("span")
-            .filter({ hasText: /Monitoring|Networking|Security|Infrastructure|CI\/CD/i }),
-        });
-
-        const categoryCount = await categoryHeaders.count();
+        // Step 1: Open every closed category (its heading is the toggle)
+        const categoryToggles = ctx.page.getByRole("heading", { level: 2 }).getByRole("button");
+        const categoryCount = await categoryToggles.count();
         console.log(`Found ${categoryCount} helm chart categories`);
 
-        // Expand each category
         for (let i = 0; i < categoryCount; i++) {
-          const category = categoryHeaders.nth(i);
-          const categoryName = await category.locator("span").first().textContent();
-          console.log(`  Expanding category: ${categoryName}`);
-          await category.click();
-          await ctx.page.waitForTimeout(300);
+          const category = categoryToggles.nth(i);
+          if ((await category.getAttribute("aria-expanded")) === "false") {
+            console.log(`  Expanding category: ${await category.textContent()}`);
+            await category.click();
+            await ctx.page.waitForTimeout(300);
+          }
         }
 
-        // Step 2: Find all chart checkboxes (now visible after expanding categories)
+        // Step 2: Turn on every chart switch that is off and available
         await ctx.page.waitForTimeout(500);
-
-        // Find all checkboxes within the helm charts section
-        // Each checkbox is within a label that has a peer-checked class structure
-        const chartToggles = ctx.page.locator('input[type="checkbox"].sr-only');
+        const chartToggles = ctx.page.getByRole("switch", { name: /^Install / });
 
         const toggleCount = await chartToggles.count();
         console.log(`Found ${toggleCount} chart toggles`);
 
-        // Enable each chart that is not already enabled
         let enabledCount = 0;
         for (let i = 0; i < toggleCount; i++) {
           const toggle = chartToggles.nth(i);
-          const isChecked = await toggle.isChecked().catch(() => false);
+          const isChecked = (await toggle.getAttribute("aria-checked")) === "true";
           const isDisabled = await toggle.isDisabled().catch(() => false);
 
           if (!isChecked && !isDisabled) {
-            // Click the parent label to toggle the checkbox
-            const label = toggle.locator("..");
-            await label.click({ force: true });
+            await toggle.click();
             enabledCount++;
             await ctx.page.waitForTimeout(150);
           }
@@ -303,6 +284,16 @@ describe("Create Environment with All Helm Charts", () => {
       } else {
         console.log(`✓ Helm charts already enabled by default: ${initialCount} charts`);
       }
+    });
+
+    // Step 9b: Continue to Review, where Create lives
+    await test.step("Navigate to Review", async () => {
+      await ctx.page.getByRole("button", { name: /continue/i }).click();
+      await ctx.page.waitForTimeout(500);
+
+      const reviewHeading = ctx.page.getByRole("heading", { level: 1, name: "Review" });
+      expect(await reviewHeading.isVisible()).toBe(true);
+      console.log("✓ Navigated to Review step");
     });
 
     // Step 10: Create the environment

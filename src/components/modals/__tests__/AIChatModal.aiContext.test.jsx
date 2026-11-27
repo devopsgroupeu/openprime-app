@@ -36,23 +36,26 @@ const wizardValues = {
   services,
 };
 
-function Harness() {
+function Harness({ values }) {
   const [messages, setMessages] = useState([]);
+  const [draft, setDraft] = useState("");
   return (
     <AIChatModal
       isOpen
       service="eks"
       serviceTitle="EKS"
-      wizardValues={wizardValues}
+      wizardValues={values}
       messages={messages}
       setMessages={setMessages}
+      draft={draft}
+      setDraft={setDraft}
       setNewEnv={() => {}}
       onClose={() => {}}
     />
   );
 }
 
-async function sendAndCapture() {
+async function sendAndCapture(values = wizardValues) {
   let body = null;
   server.use(
     http.post("*/ai/chat", async ({ request }) => {
@@ -66,7 +69,7 @@ async function sendAndCapture() {
     }),
   );
 
-  render(<Harness />);
+  render(<Harness values={values} />);
   fireEvent.change(screen.getByPlaceholderText("Ask about EKS..."), {
     target: { value: "Is this node size right?" },
   });
@@ -98,5 +101,57 @@ describe("AIChatModal request context (OP-263)", () => {
       services,
     });
     expect(payload.currentService).toBe("eks");
+  });
+
+  // Saved Helm custom values (P10) are customer config the backend never
+  // reads: it only needs which charts are on.
+  const withCharts = (helmCharts) => ({
+    ...wizardValues,
+    services: { ...services, eks: { ...services.eks, helmCharts } },
+  });
+
+  it("sends which charts are on, never their custom values text", async () => {
+    const body = await sendAndCapture(
+      withCharts({
+        prometheusStack: {
+          enabled: true,
+          customValues: true,
+          values: "grafana:\n  adminPassword: hunter2",
+        },
+        loki: { enabled: false, customValues: true },
+      }),
+    );
+
+    expect(body).not.toContain("hunter2");
+    expect(body).not.toContain("adminPassword");
+    // No values key anywhere, the system messages' JSON included.
+    expect(body).not.toMatch(/\\?"values\\?"/);
+    expect(JSON.parse(body).wizardValues.services.eks.helmCharts).toEqual({
+      prometheusStack: { enabled: true, customValues: true },
+      loki: { enabled: false, customValues: true },
+    });
+  });
+
+  it("sends charts without custom values exactly as before", async () => {
+    const values = withCharts({
+      prometheusStack: { enabled: true, customValues: false },
+      loki: { enabled: false, customValues: true },
+    });
+    const payload = JSON.parse(await sendAndCapture(values));
+
+    const context = {
+      name: "staging",
+      provider: "aws",
+      region: "eu-central-1",
+      services: values.services,
+    };
+    expect(JSON.stringify(payload.wizardValues)).toBe(JSON.stringify(context));
+    const texts = payload.messages.map((m) => m.message);
+    expect(texts).toContain(
+      `The current environment configuration is: ${JSON.stringify(context)}`,
+    );
+    expect(texts).toContain(
+      `Current eks configuration: ${JSON.stringify(values.services.eks)}`,
+    );
   });
 });

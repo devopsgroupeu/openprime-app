@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { FullScreenState } from "@/components/shared/states";
 import keycloak from "../config/keycloak";
 import { isMockMode } from "../utils/mockMode";
 import { clearAllDrafts } from "../utils/wizardDraft";
@@ -198,14 +199,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
-          <p className="text-white text-lg">Initializing authentication...</p>
-        </div>
-      </div>
-    );
+    return <FullScreenState logo loading title="Signing you in..." />;
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

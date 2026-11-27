@@ -1,61 +1,60 @@
-import { ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
-// Sticky footer of the environment wizard: back/cancel, step counter, next/create.
-// Presentational — navigation handlers live in WizardPage.
+// Footer of the wizard's content column: Back, "Step N of M" (beside the
+// stepper; without it the compact progress above the h1 says it) and the one
+// primary action.
+// Presentational: navigation and validation live in WizardPage.
 const WizardFooter = ({
   currentStep,
   totalSteps,
-  progressPercent,
   isEditMode,
   isLoading,
-  canGoNext,
-  onCancel,
   onPrevious,
   onNext,
   onSubmit,
 }) => {
+  const last = currentStep === totalSteps;
+  // Until when (Date.now() ms) a click on Create is ignored.
+  const createFrom = useRef(0);
   return (
-    <div className="sticky bottom-0 z-20 shrink-0 flex items-center justify-between border-t border-border bg-surface px-8 py-4">
-      <button
-        onClick={() => (currentStep === 1 ? onCancel() : onPrevious())}
-        className="btn-op-secondary"
-      >
-        <ChevronLeft className="h-4 w-4" />
-        <span>{currentStep === 1 ? "Cancel" : "Previous"}</span>
-      </button>
-
-      <div className="hidden items-center gap-4 sm:flex">
-        <span className="section-label">
+    <footer className="shrink-0 border-t bg-background">
+      <div className="mx-auto flex w-full max-w-(--content-settings) items-center gap-3 px-4 py-3 md:px-8">
+        <div className="flex flex-1">
+          {currentStep > 1 ? (
+            <Button variant="secondary" onClick={onPrevious}>
+              Back
+            </Button>
+          ) : null}
+        </div>
+        <p className="hidden text-sm text-muted-foreground tabular-nums @4xl/wizard:block">
           Step {currentStep} of {totalSteps}
-        </span>
-        <div className="h-1.5 w-32 overflow-hidden rounded-full bg-surface-elevated">
-          <div
-            className="progress-glow h-full"
-            style={{ width: `${progressPercent}%` }}
-          />
+        </p>
+        <div className="flex flex-1 justify-end">
+          <Button
+            onClick={(e) => {
+              if (!last) {
+                // Continue can turn into Create under the pointer: a click
+                // in the next 400 ms is the rest of a double click, not a
+                // submit. Keys (detail 0) start no wait.
+                if (e.detail > 0) createFrom.current = Date.now() + 400;
+                return onNext();
+              }
+              if (Date.now() >= createFrom.current) onSubmit();
+            }}
+            disabled={isLoading}
+          >
+            {isLoading ? <Spinner aria-hidden /> : null}
+            {last
+              ? isEditMode
+                ? "Save changes"
+                : "Create environment"
+              : "Continue"}
+          </Button>
         </div>
       </div>
-
-      <button
-        onClick={currentStep < totalSteps ? onNext : onSubmit}
-        disabled={!canGoNext || isLoading}
-        className="btn-op-primary"
-      >
-        {isLoading ? (
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        ) : currentStep < totalSteps ? (
-          <>
-            <span>Continue</span>
-            <ChevronRight className="h-4 w-4" />
-          </>
-        ) : (
-          <>
-            <Check className="h-4 w-4" />
-            <span>{isEditMode ? "Save Changes" : "Create Environment"}</span>
-          </>
-        )}
-      </button>
-    </div>
+    </footer>
   );
 };
 

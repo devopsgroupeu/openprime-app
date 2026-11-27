@@ -20,18 +20,20 @@ const CatalogContext = createContext({
 export const useCatalog = () => useContext(CatalogContext);
 
 /**
- * Loads the wizard catalog before anything renders a wizard.
+ * Loads the wizard catalog into SERVICES_CONFIG.
  *
- * Children are blocked until SERVICES_CONFIG is hydrated, because the wizard
- * builds its initial state from it synchronously — a card rendered against a
- * half-filled config shows an empty service list rather than an error, and an
- * empty service list looks like a product with no services.
+ * Children render at once, so the shell and the page stay mounted when the
+ * catalog arrives. A page that reads SERVICES_CONFIG counts
+ * `status === "loading"` as its own loading state; the wizard opens only after
+ * it, because it builds its initial state from it synchronously: a card
+ * rendered against a half-filled config shows an empty service list rather
+ * than an error, and an empty service list looks like a product with no
+ * services.
  *
  * With the flag off this is inert: SERVICES_CONFIG is already populated from
- * the static files at module load and this provider renders its children
- * immediately.
+ * the static files at module load and `status` starts "ready".
  */
-export function CatalogProvider({ children, fallback = null }) {
+export function CatalogProvider({ children }) {
   const [status, setStatus] = useState(
     USE_RUNTIME_CATALOG ? "loading" : "ready",
   );
@@ -55,8 +57,6 @@ export function CatalogProvider({ children, fallback = null }) {
   useEffect(() => {
     if (USE_RUNTIME_CATALOG) fetchCatalog();
   }, [fetchCatalog]);
-
-  if (status === "loading") return fallback;
 
   // A failed catalog fetch is NOT a failed app. SERVICES_CONFIG is seeded with
   // the static AWS config at module load, so nothing hydrating leaves the

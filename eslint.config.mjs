@@ -167,7 +167,16 @@ export default defineConfig([
       // Allow Tailwind directives
       "css/no-invalid-at-rules": "off",
       // Warn for non-baseline features instead of error
-      "css/use-baseline": "warn",
+      // Allowed: features Tailwind v4's own browser floor (Safari 16.4,
+      // Chrome 111, Firefox 128) already requires.
+      "css/use-baseline": [
+        "warn",
+        {
+          allowFunctions: ["color-mix"],
+          allowProperties: ["scrollbar-width", "scrollbar-color"],
+          allowSelectors: ["nesting"],
+        },
+      ],
     },
   },
 ]);

@@ -1,141 +1,334 @@
-import { useNavigate } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { Copy, Download, GitBranch, Link2, Pencil, Trash2 } from "lucide-react";
+import { EnvironmentCover } from "../EnvironmentCard";
 import {
-  ArrowLeft,
-  Edit2,
-  Trash2,
-  MapPin,
-  Package,
-  GitBranch,
-} from "lucide-react";
-import ProviderIcon, { isBrandedProvider } from "../icons/ProviderIcon";
+  getEffectiveStatus,
+  modifiedAt,
+  prefixOf,
+  regionName,
+  regionOf,
+  statusDisplay,
+} from "../../utils/environmentStats";
+import { Callout } from "@/components/shared/callout";
+import { CopyButton } from "@/components/shared/copy-button";
+import { RelativeTime } from "@/components/shared/format";
+import { PageHeader } from "@/components/shared/page-header";
+import { ResourceActionsMenu } from "@/components/shared/resource-actions-menu";
+import { usePaletteActions } from "@/components/layout/CommandPalette";
+import { guardedNavigate } from "@/components/shared/save-bar";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusBadge } from "@/components/ui/status-badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-// Status pill — maps environment.status (and job outcomes) to the app's
-// semantic status colors.
-const STATUS_STYLES = {
-  pending: "bg-surface-elevated text-tertiary",
-  deploying: "bg-warning-muted text-warning",
-  running: "bg-success-muted text-success",
-  failed: "bg-danger-muted text-danger",
-  queued: "bg-surface-elevated text-tertiary",
-  cancelled: "bg-surface-elevated text-tertiary",
-  succeeded: "bg-success-muted text-success",
-};
+export const NO_GIT = "Add a git repository in Edit > Basics to push.";
 
-// The badge reflects the most recent async job outcome (generate/push) when
-// one exists, falling back to the lifecycle status. When both jobs have run,
-// the more recent one (by last_*_at) wins.
-export const getEffectiveStatus = (environment) => {
-  const genAt = environment.last_generate_at;
-  const pushAt = environment.last_push_at;
-  const gen = environment.last_generate_status;
-  const push = environment.last_push_status;
-  if (genAt && pushAt) return pushAt > genAt ? push : gen;
-  if (genAt) return gen;
-  if (pushAt) return push;
-  return environment.status || "pending";
-};
+// Statuses whose next step is generating (the primary button).
+const GENERATE_FIRST = new Set(["not-generated", "failed"]);
 
-export const StatusBadge = ({ status }) => (
-  <span
-    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-      STATUS_STYLES[status] || STATUS_STYLES.pending
-    }`}
-  >
-    <span className="w-1.5 h-1.5 rounded-full bg-current" />
-    {status}
+// Facts divided by hairlines. Each fact draws the hairline before it; the row
+// is shifted left and clipped, so a fact that wraps to a new line starts clean.
+const Facts = ({ children }) => (
+  <span className="block overflow-x-clip">
+    <span className="-ml-4 flex flex-wrap items-center gap-y-1">
+      {children}
+    </span>
+  </span>
+);
+const Fact = ({ children }) => (
+  <span className="relative ml-2 inline-flex items-center gap-1 pl-2 whitespace-nowrap before:absolute before:top-1/2 before:left-0 before:h-3 before:w-px before:-translate-y-1/2 before:bg-border">
+    {children}
   </span>
 );
 
+/**
+ * Name, status, region / prefix / modified, the two job actions, Edit and the
+ * menu. `running` is the job in flight ("generate" | "push" | "download" |
+ * null). The primary follows the stored status: Generate repository until the
+ * environment is generated or after a failure, Edit otherwise. Below lg (a
+ * tablet with the sidebar open, a phone) only the primary stays a button; the
+ * other actions move into the menu so the title keeps its room.
+ */
 const EnvironmentHeader = ({
   environment,
-  providerConfig,
-  onEdit,
-  onDelete,
+  status,
+  running,
+  canPush,
   onGenerate,
   onPush,
-  isGenerating,
-  isPushing,
-  canPush,
+  onCopyId,
+  onCopyLink,
+  onDelete,
 }) => {
+  const region = regionOf(environment);
+  const prefix = prefixOf(environment);
+  const modified = modifiedAt(environment);
+  const busy = Boolean(running);
   const navigate = useNavigate();
-  const branded = isBrandedProvider(environment.provider);
+  const editHref = `/environments/${environment.id}/edit`;
+  const generateFirst = GENERATE_FIRST.has(
+    statusDisplay(getEffectiveStatus(environment)).key,
+  );
+
+  // The same next steps from Cmd+K.
+  usePaletteActions({
+    heading: "This environment",
+    actions: [
+      { label: "Edit environment", icon: Pencil, to: editHref },
+      {
+        label: "Generate repository",
+        icon: Download,
+        onSelect: onGenerate,
+        disabled: busy,
+      },
+      { label: "Copy environment ID", icon: Copy, onSelect: onCopyId },
+    ],
+  });
+
+  const pushButton = (
+    <Button variant="secondary" onClick={onPush} disabled={busy || !canPush}>
+      {running === "push" ? <Spinner aria-hidden /> : <GitBranch aria-hidden />}
+      {running === "push" ? "Pushing..." : "Push to git"}
+    </Button>
+  );
+
+  const actions = [
+    ...(generateFirst
+      ? []
+      : [
+          {
+            label: "Generate repository",
+            icon: Download,
+            onSelect: onGenerate,
+            disabled: busy,
+            className: "lg:hidden",
+          },
+        ]),
+    {
+      label: "Push to git",
+      icon: GitBranch,
+      onSelect: onPush,
+      disabled: busy || !canPush,
+      hint: canPush ? undefined : NO_GIT,
+      className: "lg:hidden",
+    },
+    ...(generateFirst
+      ? [
+          {
+            label: "Edit",
+            icon: Pencil,
+            // Through the leave guard, like a link: a generate may run.
+            onSelect: () => guardedNavigate(() => navigate(editHref)),
+            className: "lg:hidden",
+          },
+        ]
+      : []),
+    { label: "Copy environment ID", icon: Copy, onSelect: onCopyId },
+    { label: "Copy link", icon: Link2, onSelect: onCopyLink },
+    {
+      label: "Delete environment",
+      icon: Trash2,
+      destructive: true,
+      onSelect: onDelete,
+      disabled: busy,
+    },
+  ];
 
   return (
-    <div className="border-b border-border">
-      <div className="px-8 py-6">
-        <button
-          onClick={() => navigate("/environments")}
-          className="flex items-center gap-1.5 mb-3 text-[10px] font-bold uppercase tracking-wider text-tertiary hover:text-primary transition-colors"
-        >
-          <ArrowLeft className="w-3 h-3" />
-          Back to Environments
-        </button>
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-4xl font-extrabold text-primary">
-                {environment.name}
-              </h1>
-              <StatusBadge status={getEffectiveStatus(environment)} />
-            </div>
-            <div className="flex items-center space-x-4 mt-1">
-              <span className="flex items-center gap-1.5 text-sm text-secondary">
-                <ProviderIcon
-                  provider={environment.provider}
-                  className={`w-4 h-4 ${branded ? "text-[#FF9900]" : "text-accent"}`}
+    // The card's band and avatar, so the page and the card read as one
+    // object; the avatar on the band stands in for the header tile.
+    <div className="flex flex-col gap-4">
+      <EnvironmentCover
+        environment={environment}
+        className="h-20 shrink-0 rounded-xl sm:h-24"
+      />
+      <PageHeader
+        title={environment.name}
+        status={<StatusBadge status={status} />}
+        description={
+          <Facts>
+            {region ? (
+              <Fact>
+                <span className="font-mono text-xs">{region}</span>
+                {regionName(environment)}
+              </Fact>
+            ) : null}
+            {prefix ? (
+              <Fact>
+                Resource prefix{" "}
+                <span className="font-mono text-xs">{prefix}</span>
+                <CopyButton
+                  text={prefix}
+                  label="Copy resource prefix"
+                  size="icon-xs"
                 />
-                {providerConfig?.name || environment.provider}
-              </span>
-              <div className="flex items-center space-x-1">
-                <MapPin className="w-4 h-4 text-tertiary" />
-                <span className="text-sm text-secondary">
-                  {environment.region}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap justify-end">
-            <button
+              </Fact>
+            ) : null}
+            {modified ? (
+              <Fact>
+                Modified <RelativeTime iso={modified} />
+              </Fact>
+            ) : null}
+          </Facts>
+        }
+        actions={
+          <>
+            <Button
+              variant={generateFirst ? "default" : "secondary"}
               onClick={onGenerate}
-              disabled={isGenerating}
-              className="btn-op-secondary space-x-2"
+              disabled={busy}
+              className={generateFirst ? undefined : "max-lg:hidden"}
             >
-              <Package
-                className={`w-4 h-4 ${isGenerating ? "animate-spin" : ""}`}
-              />
-              <span>
-                {isGenerating ? "Generating..." : "Generate Repository"}
-              </span>
-            </button>
-
-            <button
-              onClick={onPush}
-              disabled={isPushing || !canPush}
-              className="btn-op-secondary space-x-2"
+              {running === "generate" ? (
+                <Spinner aria-hidden />
+              ) : (
+                <Download aria-hidden />
+              )}
+              {running === "generate" ? "Generating..." : "Generate repository"}
+            </Button>
+            <span className="flex max-lg:hidden">
+              {canPush ? (
+                pushButton
+              ) : (
+                // A disabled button gets no pointer events: the wrapper
+                // carries the tooltip (and keyboard focus).
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      tabIndex={0}
+                      className="rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {pushButton}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{NO_GIT}</TooltipContent>
+                </Tooltip>
+              )}
+            </span>
+            <Button
+              variant={generateFirst ? "secondary" : "default"}
+              asChild
+              className={generateFirst ? "max-lg:hidden" : undefined}
             >
-              <GitBranch
-                className={`w-4 h-4 ${isPushing ? "animate-spin" : ""}`}
-              />
-              <span>{isPushing ? "Pushing..." : "Push to Git"}</span>
-            </button>
-
-            <button
-              onClick={() => onEdit(environment)}
-              className="btn-op-primary space-x-2"
-            >
-              <Edit2 className="w-4 h-4" />
-              <span>Edit</span>
-            </button>
-
-            <button onClick={onDelete} className="btn-op-danger space-x-2">
-              <Trash2 className="w-4 h-4" />
-              <span>Delete</span>
-            </button>
-          </div>
-        </div>
-      </div>
+              <Link to={editHref}>
+                <Pencil aria-hidden />
+                Edit
+              </Link>
+            </Button>
+          </>
+        }
+        menu={
+          <ResourceActionsMenu
+            label={`More actions for ${environment.name}`}
+            actions={actions}
+          />
+        }
+      />
     </div>
   );
 };
+
+const VERB = {
+  generate: {
+    running: "Generating repository. This can take a few minutes.",
+    failed: "Couldn't generate the repository.",
+    retry: "Try again",
+  },
+  push: {
+    running: "Pushing to git. This can take a few minutes.",
+    failed: "Couldn't push to git.",
+    retry: "Try again",
+  },
+  download: {
+    running: "Downloading the repository.",
+    failed: "Couldn't download the repository.",
+    retry: "Download again",
+  },
+};
+
+// The backend wraps job errors in its own "Failed to ...:" prefix; the
+// callout title already says what failed.
+const BACKEND_PREFIX = /^Failed to (generate infrastructure|push to Git):\s*/i;
+
+const pad = (n) => String(n).padStart(2, "0");
+
+// m:ss since `since`, ticking every second.
+function Elapsed({ since }) {
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const seconds = Math.max(0, Math.floor((now - since) / 1000));
+  return (
+    <span className="block pt-1.25 text-xs text-muted-foreground tabular-nums">
+      {Math.floor(seconds / 60)}:{pad(seconds % 60)}
+    </span>
+  );
+}
+
+/**
+ * Under the header: the job in flight with its elapsed time, or the last
+ * failure (`error`: message, optional request ID) with Try again (Download
+ * again for a failed ZIP download; no `onRetry`: no button, a `note` says
+ * why). `announce` only for a failure of this visit, not one stored before the
+ * page opened.
+ */
+export function JobCallout({
+  kind,
+  startedAt,
+  error,
+  onRetry,
+  note,
+  announce,
+}) {
+  if (!error) {
+    return (
+      <Callout
+        variant="info"
+        icon={Spinner}
+        action={<Elapsed since={startedAt} />}
+      >
+        {VERB[kind].running}
+      </Callout>
+    );
+  }
+  return (
+    <Callout
+      variant="error"
+      announce={announce}
+      title={VERB[kind].failed}
+      action={
+        onRetry ? (
+          <Button variant="secondary" size="sm" onClick={onRetry}>
+            {VERB[kind].retry}
+          </Button>
+        ) : null
+      }
+    >
+      {error.message ? (
+        <span className="wrap-break-word">
+          {error.message.replace(BACKEND_PREFIX, "")}
+        </span>
+      ) : null}
+      {note ? <span className="mt-1 block">{note}</span> : null}
+      {error.requestId ? (
+        <span className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+          Error ID <span className="font-mono">{error.requestId}</span>
+          <CopyButton
+            text={error.requestId}
+            label="Copy error ID"
+            size="icon-xs"
+          />
+        </span>
+      ) : null}
+    </Callout>
+  );
+}
 
 export default EnvironmentHeader;

@@ -3,6 +3,7 @@ import { http, HttpResponse } from "msw";
 import { server } from "../../../mocks/server";
 import { ThemeProvider } from "../../../contexts/ThemeContext";
 import { ToastProvider } from "../../../contexts/ToastContext";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import CloudCredentialsTab from "../CloudCredentialsTab";
 
 const credential = {
@@ -16,13 +17,16 @@ function renderTab(props = {}) {
   return render(
     <ThemeProvider>
       <ToastProvider>
-        <CloudCredentialsTab
-          credentials={[credential]}
-          onAddCredential={() => {}}
-          onEditCredential={() => {}}
-          onDeleteCredential={() => {}}
-          {...props}
-        />
+        {/* The app shell provides the tooltips. */}
+        <TooltipProvider>
+          <CloudCredentialsTab
+            credentials={[credential]}
+            onAddCredential={() => {}}
+            onEditCredential={() => {}}
+            onDeleteCredential={() => {}}
+            {...props}
+          />
+        </TooltipProvider>
       </ToastProvider>
     </ThemeProvider>,
   );
@@ -47,7 +51,7 @@ describe("CloudCredentialsTab", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(/Credentials valid — Account: 123456789012/),
+        screen.getByText(/Credentials valid for account 123456789012/),
       ).toBeInTheDocument(),
     );
   });
@@ -115,6 +119,21 @@ describe("CloudCredentialsTab", () => {
       expect(screen.getByText(/Credentials invalid/i)).toBeInTheDocument(),
     );
     expect(screen.getByText(/Access denied/)).toBeInTheDocument();
+  });
+
+  it("asks to check the connection when the test request fails", async () => {
+    server.use(
+      http.post("*/cloud-credentials/:id/test", () => HttpResponse.error()),
+    );
+
+    renderTab();
+    fireEvent.click(screen.getByRole("button", { name: /Test/i }));
+
+    expect(
+      await screen.findByText(
+        "Couldn't test aws-sandbox. Check your connection and try again.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("shows a warning toast for temporary failures", async () => {

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import GitRepositorySection from "../basic-config/GitRepositorySection";
 
 // OP-265: Argo CD only pulls the repository, so TF_VAR_git_repo_ssh_key must
@@ -28,6 +28,10 @@ describe.each([
         setNewEnv={() => {}}
         sshKeys={sshKeys}
       />,
+    );
+    // The CI prerequisites sit in a closed "What your CI needs" disclosure.
+    fireEvent.click(
+      screen.getByRole("button", { name: /what your ci needs/i }),
     );
   });
 

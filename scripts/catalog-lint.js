@@ -8,11 +8,11 @@
  * every compared attribute and still be unrenderable, and a field the static
  * config never had — every EKS addon flag — is not compared at all.
  *
- * The rule that motivated this: FIELD_TYPES has no DYNAMIC_LIST, so the
- * renderer's `case FIELD_TYPES.DYNAMIC_LIST` is `case undefined`, which
- * catches every field with no type and then dereferences fieldConfig
- * .itemSchema. A missing control is not a cosmetic gap; it takes the service
- * card down.
+ * The rule that motivated this: the renderer once had a
+ * `case FIELD_TYPES.DYNAMIC_LIST`, which was `case undefined` (FIELD_TYPES
+ * has no DYNAMIC_LIST), so it caught every field with no type and then
+ * dereferenced fieldConfig.itemSchema. A missing control is not a cosmetic
+ * gap; it can take the service card down.
  *
  *   node scripts/catalog-lint.js --catalog catalog.json
  *

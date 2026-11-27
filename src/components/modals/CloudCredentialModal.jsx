@@ -1,5 +1,34 @@
-import { useState, useEffect, useRef } from "react";
-import { X, Key, Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import { Spinner } from "@/components/ui/spinner";
+
+const ACCOUNT_ID_REGEX = /^\d{12}$/;
 
 const CloudCredentialModal = ({
   credential,
@@ -8,54 +37,17 @@ const CloudCredentialModal = ({
   onSave,
   isOpen,
 }) => {
-  const [formData, setFormData] = useState({
-    name: "",
-    identifier: "",
-    accessKey: "",
-    secretKey: "",
-    isDefault: false,
-  });
+  const [formData, setFormData] = useState(() => ({
+    name: credential?.name || "",
+    identifier: credential?.identifier || "",
+    accessKey: credential?.credentials?.accessKey || "",
+    secretKey: credential?.credentials?.secretKey || "",
+    isDefault: credential?.isDefault || false,
+  }));
   const [showSecretKey, setShowSecretKey] = useState(false);
   const [errors, setErrors] = useState({});
-  const closeButtonRef = useRef(null);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (credential) {
-      setFormData({
-        name: credential.name || "",
-        identifier: credential.identifier || "",
-        accessKey: credential.credentials?.accessKey || "",
-        secretKey: credential.credentials?.secretKey || "",
-        isDefault: credential.isDefault || false,
-      });
-    } else {
-      setFormData({
-        name: "",
-        identifier: "",
-        accessKey: "",
-        secretKey: "",
-        isDefault: false,
-      });
-    }
-  }, [credential]);
-
-  // Close on Escape key
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
-  // Initial focus on the close button
-  useEffect(() => {
-    closeButtonRef.current?.focus();
-  }, []);
-
-  const ACCOUNT_ID_REGEX = /^\d{12}$/;
   const originalIdentifier = credential?.identifier;
   const identifierChanged =
     formData.identifier.trim() !== (originalIdentifier || "").trim();
@@ -65,31 +57,30 @@ const CloudCredentialModal = ({
     const newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
+      newErrors.name = "Enter a name.";
     }
 
-    if (!formData.identifier.trim()) {
-      newErrors.identifier = "Account ID is required";
-    } else if (
-      shouldValidateIdentifierFormat &&
-      !ACCOUNT_ID_REGEX.test(formData.identifier.trim())
+    if (
+      !formData.identifier.trim() ||
+      (shouldValidateIdentifierFormat &&
+        !ACCOUNT_ID_REGEX.test(formData.identifier.trim()))
     ) {
-      newErrors.identifier = "Account ID must be exactly 12 digits";
+      newErrors.identifier = "Enter the 12-digit account ID.";
     }
 
     if (!credential && !formData.accessKey.trim()) {
-      newErrors.accessKey = "Access Key is required";
+      newErrors.accessKey = "Enter the access key ID.";
     }
 
     if (!credential && !formData.secretKey.trim()) {
-      newErrors.secretKey = "Secret Key is required";
+      newErrors.secretKey = "Enter the secret access key.";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -113,7 +104,12 @@ const CloudCredentialModal = ({
       };
     }
 
-    onSave(credentialData);
+    setSaving(true);
+    try {
+      await onSave(credentialData);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleChange = (field, value) => {
@@ -123,157 +119,161 @@ const CloudCredentialModal = ({
     }
   };
 
-  if (!isOpen) return null;
+  // Label, control and help or error of one text field, linked for screen
+  // readers. The error takes the help line's place; the label keeps its
+  // colour (border and message mark the field, like the wizard).
+  const field = (key, label, input, help) => {
+    const id = `credential-${key}`;
+    const error = errors[key];
+    const describedBy = error ? `${id}-error` : help ? `${id}-help` : undefined;
+    return (
+      <Field>
+        <FieldLabel htmlFor={id}>{label}</FieldLabel>
+        {input({
+          id,
+          value: formData[key],
+          onChange: (e) => handleChange(key, e.target.value),
+          "aria-invalid": error ? true : undefined,
+          "aria-describedby": describedBy,
+        })}
+        {error ? (
+          <FieldError id={`${id}-error`}>{error}</FieldError>
+        ) : help ? (
+          <FieldDescription id={`${id}-help`}>{help}</FieldDescription>
+        ) : null}
+      </Field>
+    );
+  };
+
+  const keyPlaceholder = credential ? "Unchanged" : undefined;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Cloud credential"
-        className="w-full max-w-md mx-4 rounded-2xl border border-border bg-surface shadow-xl transition-colors"
-      >
-        <div className="flex justify-between items-center p-6 border-b border-border">
-          <h2 className="text-xl font-bold flex items-center text-primary transition-colors">
-            <Key className="w-6 h-6 text-accent mr-2" />
-            {credential ? "Edit" : "Add"} AWS Credentials
-          </h2>
-          <button
-            ref={closeButtonRef}
-            onClick={onClose}
-            aria-label="Close"
-            className="p-2 rounded-lg transition-colors text-tertiary hover:text-primary hover:bg-surface-elevated"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && !saving) onClose();
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {credential ? `Edit ${credential.name}` : "Add AWS credentials"}
+          </DialogTitle>
+          <DialogDescription>
+            OpenPrime uses these keys to create the Terraform state bucket in
+            your account.
+          </DialogDescription>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2 text-secondary transition-colors">
-              Name
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleChange("name", e.target.value)}
-              className={`w-full px-4 py-2 rounded-lg border bg-background border-border text-primary transition-colors ${
-                errors.name ? "border-danger" : ""
-              }`}
-              placeholder="e.g., Production Account"
-            />
-            {errors.name && (
-              <p className="text-danger text-sm mt-1">{errors.name}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2 text-secondary transition-colors">
-              AWS Account ID
-            </label>
-            <input
-              type="text"
-              value={formData.identifier}
-              onChange={(e) => handleChange("identifier", e.target.value)}
-              className={`w-full px-4 py-2 rounded-lg border bg-background border-border text-primary transition-colors ${
-                errors.identifier ? "border-danger" : ""
-              }`}
-              placeholder="123456789012"
-            />
-            {errors.identifier && (
-              <p className="text-danger text-sm mt-1">{errors.identifier}</p>
-            )}
-            <p className="text-xs text-tertiary mt-1.5">
-              Your 12-digit AWS Account ID (e.g., 123456789012)
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2 text-secondary transition-colors">
-              Access Key
-            </label>
-            <input
-              type="text"
-              value={formData.accessKey}
-              onChange={(e) => handleChange("accessKey", e.target.value)}
-              className={`w-full px-4 py-2 rounded-lg border bg-background border-border text-primary transition-colors ${
-                errors.accessKey ? "border-danger" : ""
-              }`}
-              placeholder={
-                credential ? "••••••••••••••••" : "AKIAIOSFODNN7EXAMPLE"
-              }
-            />
-            {errors.accessKey && (
-              <p className="text-danger text-sm mt-1">{errors.accessKey}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2 text-secondary transition-colors">
-              Secret Key
-            </label>
-            <div className="relative">
-              <input
-                type={showSecretKey ? "text" : "password"}
-                value={formData.secretKey}
-                onChange={(e) => handleChange("secretKey", e.target.value)}
-                className={`w-full px-4 py-2 rounded-lg border bg-background border-border text-primary transition-colors ${
-                  errors.secretKey ? "border-danger" : ""
-                }`}
-                placeholder={
-                  credential
-                    ? "••••••••••••••••"
-                    : "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-                }
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          <FieldGroup className="gap-4">
+            {field("name", "Name", (props) => (
+              <Input
+                {...props}
+                autoComplete="off"
+                placeholder="e.g. Production account"
               />
-              <button
-                type="button"
-                onClick={() => setShowSecretKey(!showSecretKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors text-tertiary hover:text-primary"
-              >
-                {showSecretKey ? (
-                  <EyeOff className="w-5 h-5" />
-                ) : (
-                  <Eye className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-            {errors.secretKey && (
-              <p className="text-danger text-sm mt-1">{errors.secretKey}</p>
+            ))}
+            {field(
+              "identifier",
+              "AWS account ID",
+              (props) => (
+                <Input
+                  {...props}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  className="font-mono"
+                  placeholder="123456789012"
+                />
+              ),
+              "The 12-digit ID of your AWS account.",
             )}
-          </div>
+            {field("accessKey", "Access key ID", (props) => (
+              <Input
+                {...props}
+                autoComplete="off"
+                spellCheck={false}
+                className="font-mono"
+                placeholder={keyPlaceholder ?? "AKIAIOSFODNN7EXAMPLE"}
+              />
+            ))}
+            {field(
+              "secretKey",
+              "Secret access key",
+              (props) => (
+                <InputGroup>
+                  <InputGroupInput
+                    {...props}
+                    type={showSecretKey ? "text" : "password"}
+                    autoComplete="off"
+                    spellCheck={false}
+                    className="font-mono"
+                    placeholder={
+                      keyPlaceholder ??
+                      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+                    }
+                  />
+                  <InputGroupAddon align="inline-end">
+                    <InputGroupButton
+                      size="icon-xs"
+                      aria-label={
+                        showSecretKey
+                          ? "Hide secret access key"
+                          : "Show secret access key"
+                      }
+                      aria-pressed={showSecretKey}
+                      onClick={() => setShowSecretKey((v) => !v)}
+                    >
+                      {showSecretKey ? (
+                        <EyeOff aria-hidden />
+                      ) : (
+                        <Eye aria-hidden />
+                      )}
+                    </InputGroupButton>
+                  </InputGroupAddon>
+                </InputGroup>
+              ),
+              credential
+                ? "Leave both keys blank to keep the stored ones."
+                : undefined,
+            )}
+            <Field orientation="horizontal">
+              <Checkbox
+                id="credential-default"
+                checked={formData.isDefault}
+                onCheckedChange={(checked) =>
+                  handleChange("isDefault", checked === true)
+                }
+                aria-describedby="credential-default-help"
+              />
+              <FieldContent>
+                <FieldLabel htmlFor="credential-default">
+                  Mark as default
+                </FieldLabel>
+                <FieldDescription id="credential-default-help">
+                  Shown as Default when you pick credentials for an environment.
+                </FieldDescription>
+              </FieldContent>
+            </Field>
+          </FieldGroup>
 
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="isDefault"
-              checked={formData.isDefault}
-              onChange={(e) => handleChange("isDefault", e.target.checked)}
-              className="w-4 h-4 text-primary rounded focus:ring-primary"
-            />
-            <label
-              htmlFor="isDefault"
-              className="ml-2 text-sm text-secondary transition-colors"
-            >
-              Set as default credentials
-            </label>
-          </div>
-
-          <div className="flex space-x-3 pt-4">
-            <button
+          <DialogFooter>
+            <Button
               type="button"
+              variant="ghost"
               onClick={onClose}
-              className="btn-op-secondary flex-1"
+              disabled={saving}
             >
               Cancel
-            </button>
-            <button type="submit" className="btn-op-primary flex-1">
-              {credential ? "Update" : "Add"}
-            </button>
-          </div>
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? <Spinner aria-hidden /> : null}
+              {credential ? "Save changes" : "Add credentials"}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

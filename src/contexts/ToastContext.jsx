@@ -1,7 +1,16 @@
-// src/contexts/ToastContext.js
-import { createContext, useContext, useState, useCallback } from "react";
-import { CheckCircle, XCircle, AlertCircle, Info, X } from "lucide-react";
-import { useTheme } from "./ThemeContext";
+// src/contexts/ToastContext.jsx
+// useToast() and the toasts, drawn like openprime-ai's Sonner toaster:
+// bottom-right, popover surface, one icon per tone.
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
+import { CircleAlert, CircleCheck, Info, TriangleAlert, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const ToastContext = createContext();
 
@@ -13,118 +22,157 @@ export const useToast = () => {
   return context;
 };
 
-const ToastItem = ({ toast, onRemove }) => {
-  const { isDark } = useTheme();
+const TONES = {
+  success: { Icon: CircleCheck, color: "text-primary" },
+  error: { Icon: CircleAlert, color: "text-destructive" },
+  warning: { Icon: TriangleAlert, color: "text-warning" },
+  info: { Icon: Info, color: "text-info" },
+};
 
-  const getIcon = () => {
-    switch (toast.type) {
-      case "success":
-        return <CheckCircle className="w-5 h-5 text-success" />;
-      case "error":
-        return <XCircle className="w-5 h-5 text-danger" />;
-      case "warning":
-        return <AlertCircle className="w-5 h-5 text-warning" />;
-      case "info":
-      default:
-        return <Info className="w-5 h-5 text-info" />;
-    }
-  };
-
-  const getBorderColor = () => {
-    switch (toast.type) {
-      case "success":
-        return "border-l-success";
-      case "error":
-        return "border-l-danger";
-      case "warning":
-        return "border-l-warning";
-      case "info":
-      default:
-        return "border-l-info";
-    }
-  };
-
+const ToastItem = ({ toast, onRemove, onHold, onRelease }) => {
+  const { Icon, color } = TONES[toast.type] ?? TONES.info;
   return (
     <div
-      className={`w-full border-l-4 rounded-lg shadow-lg pointer-events-auto transform transition-all duration-300 ease-in-out ${getBorderColor()} ${
-        isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-      }`}
-      role="alert"
-      aria-live="polite"
+      data-slot="toast"
+      data-type={toast.type}
+      // The pointer or focus on a toast holds it; once both left, its time
+      // starts again.
+      onPointerEnter={() => onHold(toast.id)}
+      onPointerLeave={(e) => {
+        if (!e.currentTarget.contains(document.activeElement))
+          onRelease(toast.id);
+      }}
+      onFocus={() => onHold(toast.id)}
+      onBlur={(e) => {
+        if (
+          !e.currentTarget.contains(e.relatedTarget) &&
+          !e.currentTarget.matches(":hover")
+        )
+          onRelease(toast.id);
+      }}
+      className="motion-enter pointer-events-auto flex w-full items-start gap-2.5 rounded-lg border bg-popover p-4 text-sm text-popover-foreground shadow-lg"
     >
-      <div className="p-4">
-        <div className="flex items-start">
-          <div className="shrink-0">{getIcon()}</div>
-          <div className="ml-3 w-0 flex-1 pt-0.5">
-            {toast.title && (
-              <p
-                className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-900"}`}
-              >
-                {toast.title}
-              </p>
-            )}
-            <p
-              className={`text-sm ${
-                isDark ? "text-gray-300" : "text-gray-600"
-              } ${toast.title ? "mt-1" : ""}`}
-            >
-              {toast.message}
-            </p>
-          </div>
-          <div className="ml-4 shrink-0 flex">
-            <button
-              onClick={() => onRemove(toast.id)}
-              className={`inline-flex rounded-md transition-colors ${
-                isDark
-                  ? "text-gray-400 hover:text-gray-200"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-              aria-label="Close notification"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+      <Icon aria-hidden className={`mt-px size-4 shrink-0 ${color}`} />
+      <div className="min-w-0 flex-1 break-words">
+        {toast.title && <p className="font-medium">{toast.title}</p>}
+        <p
+          className={
+            toast.title ? "mt-0.5 text-muted-foreground" : "font-medium"
+          }
+        >
+          {toast.message}
+        </p>
+        {toast.action ? (
+          <Button
+            variant="secondary"
+            size="xs"
+            className="mt-2"
+            onClick={() => {
+              onRemove(toast.id);
+              toast.action.onClick();
+            }}
+          >
+            {toast.action.label}
+          </Button>
+        ) : null}
       </div>
+      <button
+        type="button"
+        onClick={() => onRemove(toast.id)}
+        aria-label="Close notification"
+        className="-mt-1 -mr-1.5 inline-flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-(--dur-fast) outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <X aria-hidden className="size-3.5" />
+      </button>
     </div>
   );
 };
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
+  // The shown toasts as of the last change (addToast reads them between
+  // renders) and each toast's auto-remove timer.
+  const shown = useRef([]);
+  const timers = useRef(new Map());
 
-  const removeToast = useCallback((id) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  const show = useCallback((next) => {
+    shown.current = next;
+    setToasts(next);
   }, []);
+
+  const removeToast = useCallback(
+    (id) => {
+      clearTimeout(timers.current.get(id));
+      timers.current.delete(id);
+      show(shown.current.filter((toast) => toast.id !== id));
+    },
+    [show],
+  );
+
+  // Removes the toast after its duration, counted from now.
+  const schedule = useCallback(
+    (toast) => {
+      clearTimeout(timers.current.get(toast.id));
+      if (toast.duration > 0) {
+        timers.current.set(
+          toast.id,
+          setTimeout(() => removeToast(toast.id), toast.duration),
+        );
+      }
+    },
+    [removeToast],
+  );
+
+  const hold = useCallback((id) => clearTimeout(timers.current.get(id)), []);
+  const release = useCallback(
+    (id) => {
+      const toast = shown.current.find((t) => t.id === id);
+      if (toast) schedule(toast);
+    },
+    [schedule],
+  );
 
   const addToast = useCallback(
     (message, type = "info", options = {}) => {
-      const id = Date.now() + Math.random();
+      // An identical toast already on screen is refreshed, not stacked; it is
+      // drawn anew (`shows` is in its key), so the live region reads it out
+      // again and it enters again as a cue.
+      const same = shown.current.find(
+        (t) =>
+          t.message === message && t.type === type && t.title === options.title,
+      );
+      const id = same ? same.id : Date.now() + Math.random();
       const toast = {
         id,
         message,
         type,
         title: options.title,
-        duration: options.duration || 5000,
+        shows: (same?.shows ?? 0) + 1,
+        // { label, onClick }: one follow-up, e.g. "Open repository"; such a
+        // toast stays longer, so there is time to reach the button.
+        action: options.action,
+        duration: options.duration || (options.action ? 10000 : 5000),
       };
 
-      setToasts((prev) => [...prev, toast]);
+      show(
+        same
+          ? shown.current.map((t) => (t.id === id ? toast : t))
+          : [...shown.current, toast],
+      );
 
-      // Auto remove after duration
-      if (toast.duration > 0) {
-        setTimeout(() => {
-          removeToast(id);
-        }, toast.duration);
-      }
+      // Auto remove after duration, counted from the latest show
+      schedule(toast);
 
       return id;
     },
-    [removeToast],
+    [schedule, show],
   );
 
   const clearAllToasts = useCallback(() => {
-    setToasts([]);
-  }, []);
+    timers.current.forEach(clearTimeout);
+    timers.current.clear();
+    show([]);
+  }, [show]);
 
   // Convenience methods
   const success = useCallback(
@@ -170,17 +218,30 @@ export const ToastProvider = ({ children }) => {
     >
       {children}
 
-      {/* Toast Container */}
-      <div
-        className="fixed top-4 right-4 z-70 space-y-3 pointer-events-none"
+      {/* Above dialogs. Bottom right, clear of the Aura launcher and the wizard
+          footer; left of the wizard's Aura column. On phones and while Aura
+          is open in a dialog (its composer sits at the bottom) they drop from
+          the top, under the top bar and off dialog footers. */}
+      <section
         aria-live="polite"
         aria-label="Notifications"
-        style={{ width: "min(400px, calc(100vw - 2rem))" }}
+        className={cn(
+          "pointer-events-none fixed right-4 bottom-20 z-70 flex w-[min(22.5rem,calc(100vw-2rem))] flex-col gap-2 sm:right-6",
+          "max-sm:top-15 max-sm:bottom-auto",
+          "2xl:[body:has(aside_[data-slot=prompt-input])_&]:right-86",
+          "[body:has([role=dialog]_[data-slot=prompt-input])_&]:top-15 [body:has([role=dialog]_[data-slot=prompt-input])_&]:right-1/2 [body:has([role=dialog]_[data-slot=prompt-input])_&]:bottom-auto [body:has([role=dialog]_[data-slot=prompt-input])_&]:translate-x-1/2",
+        )}
       >
         {toasts.map((toast) => (
-          <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
+          <ToastItem
+            key={`${toast.id}-${toast.shows}`}
+            toast={toast}
+            onRemove={removeToast}
+            onHold={hold}
+            onRelease={release}
+          />
         ))}
-      </div>
+      </section>
     </ToastContext.Provider>
   );
 };
