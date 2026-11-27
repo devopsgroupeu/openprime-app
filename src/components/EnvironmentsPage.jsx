@@ -7,6 +7,7 @@ import EnvironmentCard from "./EnvironmentCard";
 import EnvironmentStatStrip from "./EnvironmentStatStrip";
 import ProviderIcon from "./icons/ProviderIcon";
 import PrerequisitesChecklist from "./PrerequisitesChecklist";
+import { useAuraGreeting } from "./AuraChatButton";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
 import authService from "../services/authService";
 import { useCatalog } from "../contexts/CatalogContext";
@@ -89,6 +90,9 @@ const EnvironmentsPage = ({
 }) => {
   const toast = useToast();
   const catalog = useCatalog();
+  const busy = loading || catalog.status === "loading";
+  // Aura greets once the list shows its data, never over the skeleton.
+  useAuraGreeting(!busy);
   const [query, setQuery] = useState("");
   // The provider and status filters are shareable and survive Back: they
   // live in ?provider= and ?status=.
@@ -154,7 +158,7 @@ const EnvironmentsPage = ({
     }
   }, [loading, hasEnvironments, loadError]);
 
-  if (loading || catalog.status === "loading") return loadingList;
+  if (busy) return loadingList;
 
   const changeSort = (value) => {
     setSort(value);

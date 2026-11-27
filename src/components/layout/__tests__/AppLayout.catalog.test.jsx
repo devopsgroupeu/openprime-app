@@ -78,7 +78,10 @@ const pendingCatalog = () => {
 const busyRegions = () => document.querySelectorAll('[aria-busy="true"]');
 
 describe("AppLayout while the service catalog loads", () => {
-  afterEach(() => vi.clearAllMocks());
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
 
   // One skeleton that the page replaces in place: the header is not
   // remounted (no replayed entrance) and focus in it stays.
@@ -105,6 +108,27 @@ describe("AppLayout while the service catalog loads", () => {
     ).toBeInTheDocument();
     expect(within(main).getByRole("heading", { level: 1 })).toBe(heading);
     expect(create).toHaveFocus();
+  });
+
+  // Aura's greeting is about the list: it waits for the list's data.
+  it("greets a second after the list shows its data, not over its skeleton", async () => {
+    vi.useFakeTimers();
+    const greeting = () =>
+      screen.queryByRole("button", { name: /Hi, I'm Aura/ });
+    const wait = (ms) => act(() => vi.advanceTimersByTime(ms));
+    const answer = pendingCatalog();
+    renderLayout("/environments");
+
+    wait(2000);
+    expect(busyRegions()).toHaveLength(1);
+    expect(greeting()).toBeNull();
+
+    await answer();
+    expect(busyRegions()).toHaveLength(0);
+    wait(999);
+    expect(greeting()).toBeNull();
+    wait(1);
+    expect(greeting()).toBeVisible();
   });
 
   it("keeps a detail page in its skeleton until the catalog is there", async () => {

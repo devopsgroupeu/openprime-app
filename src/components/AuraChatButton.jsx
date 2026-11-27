@@ -6,7 +6,14 @@
 // full screen instead. `hidden` (the wizard, which has its own Aura) closes
 // the window and takes both out of sight and reach; the conversation stays.
 // `greet` (the environments list) shows a greeting above the launcher once.
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 
@@ -29,6 +36,19 @@ const subscribe = (onChange) => {
 };
 const floats = () => window.matchMedia(SM_UP).matches;
 
+// AppLayout's setter for whether the environments list shows its data: the
+// greeting waits for that, not only for the route.
+export const AuraGreeting = createContext(() => {});
+
+/** The list calls this with `ready` once its data (not a skeleton) is shown. */
+export function useAuraGreeting(ready) {
+  const setReady = useContext(AuraGreeting);
+  useEffect(() => {
+    setReady(ready);
+    return () => setReady(false);
+  }, [ready, setReady]);
+}
+
 const AuraChatButton = ({ hidden = false, greet = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [auraMessages, setAuraMessages] = useState(INITIAL_MESSAGES);
@@ -45,7 +65,7 @@ const AuraChatButton = ({ hidden = false, greet = false }) => {
   const launcherRef = useRef(null);
   if (greeting === "shown" && (!greet || isOpen)) setGreeting("done");
 
-  // About a second after the list renders. Leaving it sooner keeps it
+  // About a second after the list shows its data. Leaving it sooner keeps it
   // waiting for the next visit.
   useEffect(() => {
     if (!greet || greeting !== "waiting") return;

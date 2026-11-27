@@ -219,7 +219,7 @@ the page, below the card) with the white-wordmark logo, the logo tile stays whit
 | User menu         | `UserMenu.jsx`, opens upward, `w-60`, non-modal: name and email, Theme (Light, Dark), Settings, Help (Documentation, Keyboard shortcuts), Sign out.                                                                                                                                                             |
 | Shortcuts         | `src/lib/shortcuts.js`: Cmd/Ctrl+K palette, Cmd/Ctrl+B sidebar, Cmd/Ctrl+/ shortcuts dialog (`KeyboardShortcutsDialog.jsx`).                                                                                                                                                                                    |
 | Waits and crashes | While the catalog loads, the list and detail pages show their loading state, the wizard `WizardPageSkeleton`; other pages do not wait. `ErrorBoundary resetKey={pathname} fallback={PageCrash}` keeps the shell when a page crashes; a route change clears it. The root boundary in `App.jsx` is full screen.   |
-| Floating Aura     | `AuraChatButton hidden={wizard} greet={list}`: on every page but the wizard, where it stays mounted so its conversation survives; `greet` (`/environments`) shows the greeting once per page load (6.4).                                                                                                        |
+| Floating Aura     | `AuraChatButton hidden={wizard} greet={list}`: on every page but the wizard, where it stays mounted so its conversation survives; `greet` (`/environments` once the list shows its data, `useAuraGreeting`) shows the greeting once per page load (6.4).                                                        |
 | Skip link, title  | `SkipLink` ("Skip to content" to `#main`); tab title "<page> - OpenPrime" via `PageHeader` or `useDocumentTitle`.                                                                                                                                                                                               |
 
 ### 4.2 Pages: width, header, list, detail, settings
@@ -662,10 +662,10 @@ Skeletons: `ListPageSkeleton`, `DetailPageSkeleton`, `SettingsPageSkeleton tab` 
   launcher (`mb-3`, right-aligned, `motion-enter`): "Hi, I'm Aura" (`font-semibold`) and "Ask me
   about your environments, services or the configurations." (`text-balance`, muted); a round
   `icon-xs` "Dismiss" (`border bg-popover shadow-sm`) on its top-right corner. Once per page load
-  (while the shell is mounted), 1 s after `/environments` renders; never on another page or while
-  the window is open. Clicking it opens the window; Dismiss and Escape (focus in it) close it and
-  send keyboard focus to the launcher. Gone after 10 s unless hovered or focused. No live region,
-  never focused by script.
+  (while the shell is mounted), 1 s after the environments list shows its data (never over its
+  skeleton); never on another page or while the window is open. Clicking it opens the window;
+  Dismiss and Escape (focus in it) close it and send keyboard focus to the launcher. Gone after
+  10 s unless hovered or focused. No live region, never focused by script.
 - Empty: "Ask about AWS services, Terraform or Helm charts." and suggested questions
   (`h-8 rounded-full border px-3 text-xs`) that fill the composer, never send, and hide once there is
   text.

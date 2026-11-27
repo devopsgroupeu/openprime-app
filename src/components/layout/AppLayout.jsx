@@ -5,7 +5,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { matches, shortcut } from "@/lib/shortcuts";
 import { wizardRoute } from "../../config/nav";
 import { CatalogProvider } from "../../contexts/CatalogContext";
-import AuraChatButton from "../AuraChatButton";
+import AuraChatButton, { AuraGreeting } from "../AuraChatButton";
 import ErrorBoundary, { PageCrash } from "../ErrorBoundary";
 import AppSidebar from "./AppSidebar";
 import AppTopBar, { TopBarSlot } from "./AppTopBar";
@@ -51,6 +51,8 @@ const AppLayout = ({ environments }) => {
   // The top bar's slot for the page's own controls (TopBarActions).
   const [actionsSlot, setActionsSlot] = useState(null);
   const [scrolled, setScrolled] = useState(false);
+  // The environments list shows its data (useAuraGreeting).
+  const [listShown, setListShown] = useState(false);
   const scrollerRef = useRef(null);
 
   // A new page starts at the top; the scroller outlives the route.
@@ -111,7 +113,9 @@ const AppLayout = ({ environments }) => {
                   tab switch keeps the form's edits. */}
               <ErrorBoundary resetKey={pathname} fallback={PageCrash}>
                 <TopBarSlot.Provider value={actionsSlot}>
-                  <Outlet context={setPageActions} />
+                  <AuraGreeting.Provider value={setListShown}>
+                    <Outlet context={setPageActions} />
+                  </AuraGreeting.Provider>
                 </TopBarSlot.Provider>
               </ErrorBoundary>
             </CatalogProvider>
@@ -133,7 +137,7 @@ const AppLayout = ({ environments }) => {
           there, so its conversation survives a wizard visit. */}
       <AuraChatButton
         hidden={wizard}
-        greet={Boolean(matchPath("/environments", pathname))}
+        greet={listShown && Boolean(matchPath("/environments", pathname))}
       />
     </SidebarProvider>
   );

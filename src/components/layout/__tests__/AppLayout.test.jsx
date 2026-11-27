@@ -13,6 +13,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "../../../contexts/AuthContext";
 import { ThemeProvider } from "../../../contexts/ThemeContext";
 import { server } from "../../../mocks/server";
+import { useAuraGreeting } from "../../AuraChatButton";
 import AppLayout, { breadcrumbsFor } from "../AppLayout";
 import AppTopBar from "../AppTopBar";
 
@@ -85,6 +86,17 @@ describe("AppTopBar", () => {
   });
 });
 
+// The list, its data shown at once (for Aura's greeting).
+function List() {
+  useAuraGreeting(true);
+  return (
+    <>
+      <Link to="/settings/account">Go to settings</Link>
+      <Link to="/environments/env-1">Open demo-prod</Link>
+    </>
+  );
+}
+
 // A page that fails to render.
 function Crash() {
   throw new Error("page bug");
@@ -111,15 +123,7 @@ describe("AppLayout", () => {
             <MemoryRouter initialEntries={[path]}>
               <Routes>
                 <Route element={<AppLayout environments={environments} />}>
-                  <Route
-                    path="/environments"
-                    element={
-                      <>
-                        <Link to="/settings/account">Go to settings</Link>
-                        <Link to="/environments/env-1">Open demo-prod</Link>
-                      </>
-                    }
-                  />
+                  <Route path="/environments" element={<List />} />
                   <Route path="/environments/create" element={<p>Wizard</p>} />
                   <Route
                     path="/environments/:id/edit"
@@ -364,7 +368,7 @@ describe("AppLayout", () => {
       screen.queryByRole("button", { name: /Hi, I'm Aura/ });
     const wait = (ms) => act(() => vi.advanceTimersByTime(ms));
 
-    it("greets on the environments list once it has settled", () => {
+    it("greets a second after the environments list shows its data", () => {
       renderLayout();
       expect(greeting()).toBeNull();
 
