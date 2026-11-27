@@ -7,7 +7,7 @@ describe("ListToolbar", () => {
   // wraps, so where tabs, search and sort do not fit side by side (768 to
   // 1024 with the sidebar open) search and sort move under the tabs instead
   // of squeezing them until labels break and overlap the search field.
-  it("wraps search and sort under the filter tabs on a narrow row", () => {
+  it("is a row that wraps from md (its classes; jsdom has no layout)", () => {
     const { container } = render(
       <ListToolbar
         search=""

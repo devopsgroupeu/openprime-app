@@ -579,7 +579,8 @@ describe("Aura greeting", () => {
     expect(greeting()).toBeNull();
   });
 
-  it("closes from its Dismiss button", () => {
+  // fireEvent.click is detail 0, as a key press on the button is.
+  it("closes from Dismiss pressed with the keyboard, focus to the launcher", () => {
     greeted();
 
     fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
@@ -587,6 +588,18 @@ describe("Aura greeting", () => {
     expect(auraWindow()).toBeNull();
     // A keyboard press of Dismiss goes on from the launcher.
     expect(launcher()).toHaveFocus();
+  });
+
+  it("closes from a mouse click on Dismiss without moving focus", () => {
+    greeted();
+
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }), {
+      detail: 1,
+    });
+    expect(greeting()).toBeNull();
+    expect(auraWindow()).toBeNull();
+    expect(launcher()).not.toHaveFocus();
+    expect(document.body).toHaveFocus();
   });
 
   it("closes on Escape while focus is in it", () => {
