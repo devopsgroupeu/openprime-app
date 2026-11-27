@@ -647,7 +647,7 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
   SaveBar.
 - Greeting: a `w-72 rounded-xl border bg-popover px-4 py-3 text-sm shadow-lg` button above the
   launcher (`mb-3`, right-aligned, `motion-enter`): "Hi, I'm Aura" (`font-semibold`) and "Ask me
-  about your environments, AWS services or the generated code." (`text-balance`, muted); a round
+  about your environments, services or the configurations." (`text-balance`, muted); a round
   `icon-xs` "Dismiss" (`border bg-popover shadow-sm`) on its top-right corner. Once per page load
   (while the shell is mounted), 1 s after `/environments` renders; never on another page or while
   the window is open. Clicking it opens the window; Dismiss and Escape (focus in it) close it and

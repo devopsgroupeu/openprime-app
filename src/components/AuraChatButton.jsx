@@ -104,8 +104,7 @@ const AuraChatButton = ({ hidden = false, greet = false }) => {
             >
               <span className="block font-semibold">Hi, I&apos;m Aura</span>
               <span className="mt-0.5 block text-balance text-muted-foreground">
-                Ask me about your environments, AWS services or the generated
-                code.
+                Ask me about your environments, services or the configurations.
               </span>
             </button>
             <Button

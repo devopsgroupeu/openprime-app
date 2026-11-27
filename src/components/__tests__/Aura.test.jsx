@@ -550,7 +550,7 @@ describe("Aura greeting", () => {
     wait(1);
     expect(greeting()).toHaveTextContent(
       "Hi, I'm Aura" +
-        "Ask me about your environments, AWS services or the generated code.",
+        "Ask me about your environments, services or the configurations.",
     );
     expect(document.body).toHaveFocus();
   });
