@@ -560,7 +560,9 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
   supported)". Never hard-code a service form.
 - Basics (`modals/wizard/BasicConfigStep.jsx`): Environment (Name, Resource prefix), Cloud (provider
   cards per D-9, Region, Credentials (optional)), Domain, Terraform state backend and Git repository
-  (each with a `Switch` as its section action), and the disabled presets ("They do not change the
+  (each with a `Switch` as its section action; switched on, Git repository opens with `GitFlow`:
+  OpenPrime, push, the repository's logo, and pull, Argo CD only with EKS, as `LogoTile`s on a
+  `bg-muted/60` band with one text alternative), and the disabled presets ("They do not change the
   generated infrastructure yet."). One error list (`wizard-page/basicErrors.js`) shows under the
   fields, gates Continue and Create, marks the stepper and is listed on Review.
 - Services (`modals/wizard/ServicesConfigStep.jsx`, `DynamicServiceConfig.jsx`): search, "N of M

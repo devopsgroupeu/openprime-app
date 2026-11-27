@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/input-group";
 import { Switch } from "@/components/ui/switch";
 import { FieldControl, invalidProps } from "./FieldControl";
+import GitFlow from "./GitFlow";
 import SshKeyTabs from "./SshKeyTabs";
 
 const Code = ({ children }) => (
@@ -131,56 +132,62 @@ const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys, urlError }) => {
       }
     >
       {git?.enabled && (
-        <SettingsRowGroup>
-          <SettingsRow
-            title="Repository URL"
-            controlId={`${id}-url`}
-            description="The SSH URL OpenPrime pushes to."
-            control={
-              <FieldControl id={`${id}-url`} error={urlError}>
-                {/* The provider's logo once the host is GitHub or GitLab. */}
-                <InputGroup>
-                  <InputGroupAddon>
-                    <LogoTile {...gitLogo(git?.url)} size="xs" />
-                  </InputGroupAddon>
-                  <InputGroupInput
-                    id={`${id}-url`}
-                    className="font-mono"
-                    placeholder="git@github.com:org/repo.git"
-                    value={git?.url || ""}
-                    {...invalidProps(`${id}-url`, urlError)}
-                    onChange={(e) => setGit({ url: e.target.value })}
-                  />
-                </InputGroup>
-              </FieldControl>
-            }
+        <>
+          <GitFlow
+            url={git.url}
+            argoCd={Boolean(newEnv.services?.eks?.enabled)}
           />
-          <SettingsRow
-            title="Branch or revision"
-            controlId={`${id}-branch`}
-            description="What Argo CD tracks, e.g. main, HEAD or v1.2.0."
-            control={
-              <Input
-                id={`${id}-branch`}
-                className="font-mono sm:w-72"
-                placeholder="main"
-                value={git?.branch || ""}
-                onChange={(e) => setGit({ branch: e.target.value })}
-              />
-            }
-          />
-          <SettingsRow
-            fullWidth
-            title="Deploy key"
-            description="OpenPrime pushes with this SSH key, so it needs write access."
-            control={
-              <div className="w-full">
-                <SshKeyTabs sshKeys={sshKeys} gitRepository={git} />
-              </div>
-            }
-          />
-          <CiRequirements isGitLab={isGitLab} isGitLabCom={isGitLabCom} />
-        </SettingsRowGroup>
+          <SettingsRowGroup>
+            <SettingsRow
+              title="Repository URL"
+              controlId={`${id}-url`}
+              description="The SSH URL OpenPrime pushes to."
+              control={
+                <FieldControl id={`${id}-url`} error={urlError}>
+                  {/* The provider's logo once the host is GitHub or GitLab. */}
+                  <InputGroup>
+                    <InputGroupAddon>
+                      <LogoTile {...gitLogo(git?.url)} size="xs" />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      id={`${id}-url`}
+                      className="font-mono"
+                      placeholder="git@github.com:org/repo.git"
+                      value={git?.url || ""}
+                      {...invalidProps(`${id}-url`, urlError)}
+                      onChange={(e) => setGit({ url: e.target.value })}
+                    />
+                  </InputGroup>
+                </FieldControl>
+              }
+            />
+            <SettingsRow
+              title="Branch or revision"
+              controlId={`${id}-branch`}
+              description="What Argo CD tracks, e.g. main, HEAD or v1.2.0."
+              control={
+                <Input
+                  id={`${id}-branch`}
+                  className="font-mono sm:w-72"
+                  placeholder="main"
+                  value={git?.branch || ""}
+                  onChange={(e) => setGit({ branch: e.target.value })}
+                />
+              }
+            />
+            <SettingsRow
+              fullWidth
+              title="Deploy key"
+              description="OpenPrime pushes with this SSH key, so it needs write access."
+              control={
+                <div className="w-full">
+                  <SshKeyTabs sshKeys={sshKeys} gitRepository={git} />
+                </div>
+              }
+            />
+            <CiRequirements isGitLab={isGitLab} isGitLabCom={isGitLabCom} />
+          </SettingsRowGroup>
+        </>
       )}
     </SettingsSection>
   );

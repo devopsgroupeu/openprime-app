@@ -90,7 +90,9 @@ describe("GitRepositorySection — GitLab prerequisites", () => {
     renderWith("git@github-gitlab-mirror.example.com:acme/infra.git");
     expect(protectedNote()).not.toBeInTheDocument();
     expect(
-      document.querySelector('[data-slot="logo-tile"] img'),
+      document.querySelector(
+        '[data-slot="input-group"] [data-slot="logo-tile"] img',
+      ),
     ).toHaveAttribute("src", "/assets/chart-logos/github.svg");
   });
 
