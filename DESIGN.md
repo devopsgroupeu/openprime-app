@@ -115,7 +115,8 @@ Inter (`font-sans`) for UI, JetBrains Mono (`font-mono`) for ids, regions, URLs,
 | Aura messages                                                              | `text-sm` inside `[data-slot="chat-thread"]`, remapped to 14 / 24 |
 | Inputs below md (no iOS zoom)                                              | `text-base md:text-sm` (Aura composer `md:text-md`)               |
 
-`font-medium` for buttons, labels and titles, `font-semibold` for H1, card names and stat values.
+`font-medium` for buttons, labels and titles, `font-semibold` for H1, card names, stat values and
+the Aura greeting's "Hi, I'm Aura".
 Sentence case, no uppercase labels, `tabular-nums` for counts, times and step numbers.
 
 ### 3.4 Spacing and sizes
@@ -144,9 +145,9 @@ buttons, switches, checkboxes, radios and tab triggers.
 | `rounded-sm`   | Kbd, checkbox, `xs` icon and logo tiles                                                                                                            |
 | `rounded-md`   | Menu, select and command items, `sm` / `xs` / `icon-sm` / `icon-xs` buttons, tooltips, skeleton bars, tab triggers, tag badges                     |
 | `rounded-lg`   | Default buttons, inputs, select triggers, menus, cards, stat cards, callouts, filter tabs, toasts, nav rows, radio and template cards, code blocks |
-| `rounded-xl`   | Dialogs, row groups, empty boxes and their 44 px tile, SaveBar, detail cover band, Aura window, user message bubble                                |
+| `rounded-xl`   | Dialogs, row groups, empty boxes and their 44 px tile, SaveBar, detail cover band, Aura window and greeting, user message bubble                   |
 | `rounded-2xl`  | Aura composer                                                                                                                                      |
-| `rounded-full` | Badges, switches, avatars, Aura launcher, Send and Stop, suggested prompts, stepper markers, the provider avatar on a cover                        |
+| `rounded-full` | Badges, switches, avatars, Aura launcher and greeting Dismiss, Send and Stop, suggested prompts, stepper markers, the provider avatar on a cover   |
 
 ### 3.6 Elevation, borders, z-index
 
@@ -156,7 +157,7 @@ buttons, switches, checkboxes, radios and tab triggers.
 | Row group (settings rows, detail list, service and chart lists) | `rounded-xl bg-card ring-1 ring-border ring-inset divide-y divide-border`        |
 | Radio, checkbox and template cards                              | `rounded-lg border bg-card`                                                      |
 | Primary / secondary button, select trigger                      | `shadow-(--shadow-button-primary)` / `shadow-(--shadow-button-secondary)`        |
-| Menus, select lists, toasts, Aura launcher and window           | `border shadow-lg`                                                               |
+| Menus, select lists, toasts, Aura launcher, greeting and window | `border shadow-lg`                                                               |
 | Dialogs, sheets, SaveBar / tooltips                             | `border shadow-xl` / `shadow-sm`                                                 |
 
 No side-stripe borders, glows or nested cards. Z-index: `z-70` toasts (above dialogs), `z-50`
@@ -218,7 +219,7 @@ the page, below the card) with the white-wordmark logo, the logo tile stays whit
 | User menu         | `UserMenu.jsx`, opens upward, `w-60`, non-modal: name and email, Theme (Light, Dark), Settings, Help (Documentation, Keyboard shortcuts), Sign out.                                                                                                                                                             |
 | Shortcuts         | `src/lib/shortcuts.js`: Cmd/Ctrl+K palette, Cmd/Ctrl+B sidebar, Cmd/Ctrl+/ shortcuts dialog (`KeyboardShortcutsDialog.jsx`).                                                                                                                                                                                    |
 | Waits and crashes | `CatalogProvider` shows "Loading the service catalog..." in the content area. `ErrorBoundary resetKey={pathname} fallback={PageCrash}` keeps the shell when a page crashes; a route change clears it. The root boundary in `App.jsx` is full screen.                                                            |
-| Floating Aura     | `AuraChatButton hidden={wizard}`: on every page but the wizard, where it stays mounted so its conversation survives.                                                                                                                                                                                            |
+| Floating Aura     | `AuraChatButton hidden={wizard} greet={list}`: on every page but the wizard, where it stays mounted so its conversation survives; `greet` (`/environments`) shows the greeting once per page load (6.4).                                                                                                        |
 | Skip link, title  | `SkipLink` ("Skip to content" to `#main`); tab title "<page> - OpenPrime" via `PageHeader` or `useDocumentTitle`.                                                                                                                                                                                               |
 
 ### 4.2 Pages: width, header, list, detail, settings
@@ -638,6 +639,14 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
   `sm:w-100 sm:h-[min(35rem,calc(100dvh-7rem))]`, non-modal from sm, a full-screen modal below; header
   `h-13` with the mark, "Aura", "AI assistant for OpenPrime", "Close Aura". Both move up above a
   SaveBar.
+- Greeting: a `w-72 rounded-xl border bg-popover px-4 py-3 text-sm shadow-lg` button above the
+  launcher (`mb-3`, right-aligned, `motion-enter`): "Hi, I'm Aura" (`font-semibold`) and "Ask me
+  about your environments, AWS services or the generated code." (`text-balance`, muted); a round
+  `icon-xs` "Dismiss" (`border bg-popover shadow-sm`) on its top-right corner. Once per page load
+  (while the shell is mounted), 1 s after `/environments` renders; never on another page or while
+  the window is open. Clicking it opens the window; Dismiss and Escape (focus in it) close it and
+  send keyboard focus to the launcher. Gone after 10 s unless hovered or focused. No live region,
+  never focused by script.
 - Empty: "Ask about AWS services, Terraform or Helm charts." and suggested questions
   (`h-8 rounded-full border px-3 text-xs`) that fill the composer, never send, and hide once there is
   text.

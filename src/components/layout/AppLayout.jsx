@@ -132,7 +132,10 @@ const AppLayout = ({ environments }) => {
       />
       {/* One Aura per screen: the wizard has its own panel. Kept mounted
           there, so its conversation survives a wizard visit. */}
-      <AuraChatButton hidden={wizard} />
+      <AuraChatButton
+        hidden={wizard}
+        greet={Boolean(matchPath("/environments", pathname))}
+      />
     </SidebarProvider>
   );
 };

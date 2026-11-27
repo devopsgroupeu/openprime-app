@@ -398,12 +398,12 @@ describe("Aura for screen readers", () => {
 });
 
 // The app shell's floating Aura next to a page with its own button.
-function Shell() {
+function Shell({ greet = false }) {
   return (
     <ToastProvider>
       <TooltipProvider>
         <button type="button">Page action</button>
-        <AuraChatButton />
+        <AuraChatButton greet={greet} />
       </TooltipProvider>
     </ToastProvider>
   );
@@ -527,6 +527,108 @@ describe("Aura window", () => {
     fireEvent.keyDown(copy, { key: "Escape" });
     await waitFor(() => expect(auraWindow()).toBeNull());
     await waitFor(() => expect(launcher()).toHaveFocus());
+  });
+});
+
+// The greeting next to the launcher; AppLayout sets `greet` on the
+// environments list (its route tests cover once per load and other pages).
+describe("Aura greeting", () => {
+  beforeEach(() => vi.useFakeTimers());
+  const greeting = () => screen.queryByRole("button", { name: /Hi, I'm Aura/ });
+  const wait = (ms) => act(() => vi.advanceTimersByTime(ms));
+  const greeted = () => {
+    render(<Shell greet />);
+    wait(1000);
+    expect(greeting()).toBeVisible();
+  };
+
+  it("appears about a second after the list renders, without taking focus", () => {
+    render(<Shell greet />);
+    wait(999);
+    expect(greeting()).toBeNull();
+
+    wait(1);
+    expect(greeting()).toHaveTextContent(
+      "Hi, I'm Aura" +
+        "Ask me about your environments, AWS services or the generated code.",
+    );
+    expect(document.body).toHaveFocus();
+  });
+
+  it("opens Aura when clicked, and is gone for good", () => {
+    greeted();
+
+    fireEvent.click(greeting());
+    expect(auraWindow()).toBeInTheDocument();
+    expect(composer()).toHaveFocus();
+    expect(greeting()).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close Aura" }));
+    wait(20000);
+    expect(greeting()).toBeNull();
+  });
+
+  it("does not appear while the window is open", () => {
+    render(<Shell greet />);
+    fireEvent.click(launcher());
+
+    wait(1000);
+    expect(greeting()).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Close Aura" }));
+    wait(20000);
+    expect(greeting()).toBeNull();
+  });
+
+  it("closes from its Dismiss button", () => {
+    greeted();
+
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(greeting()).toBeNull();
+    expect(auraWindow()).toBeNull();
+    // A keyboard press of Dismiss goes on from the launcher.
+    expect(launcher()).toHaveFocus();
+  });
+
+  it("closes on Escape while focus is in it", () => {
+    greeted();
+    fireEvent.keyDown(screen.getByRole("button", { name: "Page action" }), {
+      key: "Escape",
+    });
+    expect(greeting()).toBeVisible();
+
+    act(() => greeting().focus());
+    fireEvent.keyDown(greeting(), { key: "Escape" });
+    expect(greeting()).toBeNull();
+    expect(launcher()).toHaveFocus();
+  });
+
+  it("hides itself after 10 s", () => {
+    greeted();
+
+    wait(9999);
+    expect(greeting()).toBeVisible();
+    wait(1);
+    expect(greeting()).toBeNull();
+  });
+
+  it("stays while hovered or focused", () => {
+    greeted();
+
+    fireEvent.pointerEnter(greeting());
+    wait(20000);
+    expect(greeting()).toBeVisible();
+    fireEvent.pointerLeave(greeting());
+    wait(9999);
+    expect(greeting()).toBeVisible();
+
+    act(() => greeting().focus());
+    // Moving focus inside it still holds it.
+    act(() => screen.getByRole("button", { name: "Dismiss" }).focus());
+    wait(20000);
+    expect(greeting()).toBeVisible();
+    act(() => screen.getByRole("button", { name: "Page action" }).focus());
+    wait(10000);
+    expect(greeting()).toBeNull();
   });
 });
 

@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -353,5 +354,47 @@ describe("AppLayout", () => {
     togglePalette();
 
     expect(paletteInput()).toHaveValue("");
+  });
+
+  // Aura says hello once per page load, on the environments list only.
+  describe("Aura greeting", () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+    const greeting = () =>
+      screen.queryByRole("button", { name: /Hi, I'm Aura/ });
+    const wait = (ms) => act(() => vi.advanceTimersByTime(ms));
+
+    it("greets on the environments list once it has settled", () => {
+      renderLayout();
+      expect(greeting()).toBeNull();
+
+      wait(1000);
+      expect(greeting()).toBeVisible();
+    });
+
+    it("does not greet again after going to another page and back", () => {
+      renderLayout();
+      wait(1000);
+
+      fireEvent.click(screen.getByRole("link", { name: "Go to settings" }));
+      expect(greeting()).toBeNull();
+      fireEvent.click(
+        within(sidebar()).getByRole("link", { name: "Back to app" }),
+      );
+      expect(
+        screen.getByRole("link", { name: "Go to settings" }),
+      ).toBeVisible();
+      wait(20000);
+      expect(greeting()).toBeNull();
+    });
+
+    it.each(["/settings/account", "/environments/create"])(
+      "does not greet on %s",
+      (path) => {
+        renderLayout(path);
+        wait(20000);
+        expect(greeting()).toBeNull();
+      },
+    );
   });
 });
