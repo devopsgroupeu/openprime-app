@@ -1,3 +1,4 @@
+import { CircleAlert, CircleCheck, CircleDashed, Loader } from "lucide-react";
 import {
   foldCategories,
   generations,
@@ -20,13 +21,19 @@ import { cn } from "@/lib/utils";
 // a picture drawn only from the environments themselves. Pictures are hidden
 // below sm, where the tiles shrink to one line.
 
+// A status's color and icon; the icons are the StatusPill ones where it has one.
 const TONE = {
-  success: { fill: "bg-primary", stroke: "stroke-primary" },
-  destructive: { fill: "bg-destructive", stroke: "stroke-destructive" },
-  warning: { fill: "bg-warning", stroke: "stroke-warning" },
+  success: { fill: "bg-primary", text: "text-primary", Icon: CircleCheck },
+  destructive: {
+    fill: "bg-destructive",
+    text: "text-destructive",
+    Icon: CircleAlert,
+  },
+  warning: { fill: "bg-warning", text: "text-warning", Icon: Loader },
   neutral: {
     fill: "bg-muted-foreground/40",
-    stroke: "stroke-muted-foreground/40",
+    text: "text-muted-foreground",
+    Icon: CircleDashed,
   },
 };
 
@@ -37,69 +44,42 @@ const Swatch = ({ className }) => (
   <span aria-hidden className={cn("size-2 shrink-0 rounded-full", className)} />
 );
 
-// The ring's circle has a circumference of 100, so a part's share is its
-// length; round caps add STROKE to each part, so they come off it.
-const R = 50 / Math.PI;
-const STROKE = 4.5;
-const GAP = 3;
+const share = (count, total) => `${Math.round((count / total) * 100)}%`;
 
 /**
- * One whole split by status as a ring with the Ready share in its middle,
- * and its legend: beside it from a 15rem tile, else a smaller ring with the
- * legend wrapping under it.
+ * A row per status that occurs: its icon, label, count and share of all
+ * environments (from a 12rem tile), over a thin meter of that share.
+ * Statuses are few, so the tile keeps its height.
  */
-function StatusRing({ parts, total }) {
-  const ready = parts.find((part) => part.key === "ready")?.count ?? 0;
-  const whole = parts.length === 1;
-  let start = 0;
+function StatusRows({ parts, total }) {
   return (
-    <div className="flex flex-col items-start gap-3 @[15rem]:flex-row @[15rem]:items-center @[15rem]:gap-5">
-      <div className="relative size-16 shrink-0 @[15rem]:size-20">
-        <svg aria-hidden viewBox="0 0 40 40" className="size-full -rotate-90">
-          {parts.map((part) => {
-            const share = (part.count / total) * 100;
-            const length = whole ? 100 : Math.max(share - GAP - STROKE, 0.01);
-            const offset = whole ? 0 : start + (GAP + STROKE) / 2;
-            start += share;
-            return (
-              <Tooltip key={part.key}>
-                <TooltipTrigger asChild>
-                  <circle
-                    cx="20"
-                    cy="20"
-                    r={R}
-                    fill="none"
-                    strokeWidth={STROKE}
-                    strokeLinecap={whole ? "butt" : "round"}
-                    strokeDasharray={`${length} ${100 - length}`}
-                    strokeDashoffset={-offset}
-                    className={TONE[part.tone].stroke}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  {part.label}: {part.count} of {total}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </svg>
-        <p className="absolute inset-0 flex flex-col items-center justify-center leading-tight">
-          <span className="text-sm font-semibold tabular-nums">
-            {Math.round((ready / total) * 100)}%
-          </span>
-          <span className="text-xs text-muted-foreground">ready</span>
-        </p>
-      </div>
-      <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs @[15rem]:flex-col @[15rem]:gap-1.5">
-        {parts.map((part) => (
-          <li key={part.key} className="flex items-center gap-2">
-            <Swatch className={TONE[part.tone].fill} />
-            <span className="text-muted-foreground">{part.label}</span>
-            <span className="font-medium tabular-nums">{part.count}</span>
+    <ul className="flex flex-col gap-2.5 text-xs">
+      {parts.map(({ key, label, tone, count }) => {
+        const { Icon, fill, text } = TONE[tone];
+        return (
+          <li key={key} className="flex flex-col gap-1.5">
+            <span className="flex items-center gap-1.5">
+              <Icon aria-hidden className={cn("size-3.5 shrink-0", text)} />
+              <span className="truncate text-muted-foreground">{label}</span>
+              <span className="ml-auto font-medium tabular-nums">{count}</span>
+              {/* A narrow tile keeps the name whole; the meter still shows the share. */}
+              <span className="hidden w-8 shrink-0 text-right text-muted-foreground tabular-nums @[12rem]:block">
+                {share(count, total)}
+              </span>
+            </span>
+            <span
+              aria-hidden
+              className="h-1 overflow-hidden rounded-full bg-muted"
+            >
+              <span
+                className={cn("block h-full rounded-full", fill)}
+                style={{ width: share(count, total) }}
+              />
+            </span>
           </li>
-        ))}
-      </ul>
-    </div>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -233,7 +213,7 @@ export default function EnvironmentStatStrip({ environments }) {
     <div className="@container">
       <div className="grid grid-cols-2 gap-2 sm:gap-4 @2xl:grid-cols-4">
         <StatCard compact label="Environments" value={stats.total}>
-          <StatusRing
+          <StatusRows
             parts={statusBreakdown(environments)}
             total={stats.total}
           />

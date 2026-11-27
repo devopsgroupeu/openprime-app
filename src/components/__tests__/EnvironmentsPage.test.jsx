@@ -138,10 +138,13 @@ describe("EnvironmentsPage", () => {
     expect(
       stats.slice(0, 3).map((card) => card.children[1].textContent),
     ).toEqual(["3", "13", "3"]);
-    // Each tile's picture: statuses around the Ready share, every category,
-    // the regions.
-    expect(within(stats[0]).getByText("Not generated")).toBeInTheDocument();
-    expect(stats[0]).toHaveTextContent("33%ready");
+    // Each tile's picture: a row per status with its count and share, every
+    // category, the regions.
+    expect(
+      within(stats[0])
+        .getAllByRole("listitem")
+        .map((li) => li.textContent),
+    ).toEqual(["Ready133%", "Not generated133%", "Failed133%"]);
     expect(
       within(stats[1])
         .getAllByRole("listitem")

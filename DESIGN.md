@@ -520,10 +520,10 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
 - Stat strip, always (`EnvironmentStatStrip.jsx`): Environments, Services enabled, Regions, Last
   generated (relative or "Never"), four in a row from a 42rem content column (`@2xl`), else two.
   Each tile has a picture drawn only from the environments (no invented trend), hidden below sm;
-  tooltips on ring parts only repeat the legend; region and generate dots name their point:
-  - Environments: a status ring (round parts, 3-unit gaps, status colors) with the Ready share in
-    its middle and its legend: beside it from a 15rem tile, else a 64 px ring with the legend
-    wrapping under it.
+  region and generate dots name their point in a tooltip:
+  - Environments: a row per status that occurs (filter-tab order): the `StatusPill` icon in the
+    status color (Not generated `CircleDashed`), label, count and share (from a 12rem tile), over a
+    4 px meter of that share. Statuses are few, so the tile keeps its height.
   - Services enabled: the catalog categories as `bg-chart-1` bars, the count at the tip; past six
     rows the rest fold into "Other" (`foldCategories`), so the tile never grows.
   - Regions: `RegionMap` (`environments/RegionMap.jsx`), an Equal Earth map framed to the regions
