@@ -207,6 +207,7 @@ const TerraformBackendSection = ({
                 <button
                   onClick={onCreateBackend}
                   disabled={!newEnv.cloudCredentialId || creatingBackend}
+                  data-guide="wizard-create-backend"
                   className="btn-op-primary w-full"
                 >
                   {creatingBackend ? (

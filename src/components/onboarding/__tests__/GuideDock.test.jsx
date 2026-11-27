@@ -319,6 +319,7 @@ describe("GuideDock", () => {
             partCount: 3,
             partTitle: "Basic Configuration",
             name: "prod",
+            backendReady: true,
             repoUrl: "",
           }}
         />
@@ -350,6 +351,7 @@ describe("GuideDock", () => {
             partCount: 3,
             partTitle: "Basic Configuration",
             name: "prod",
+            backendReady: true,
             repoUrl: REPO,
             keyCopied: true,
           }}

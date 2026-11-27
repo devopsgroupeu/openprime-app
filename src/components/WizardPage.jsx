@@ -158,9 +158,9 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
 
   // Setup guide (OP-283). Opened while the guide is at "Describe your
   // environment", the wizard fills in what a new user cannot be expected to
-  // know: the repository section is switched on with the address given in the
-  // guide's step 2, and the deploy key generated (Auto), so the user only
-  // copies one key. It also tells the guide how far the form is, so the guide
+  // know: the state storage section is switched on, the repository section too
+  // with the address given in the guide's step 2, and the deploy key generated
+  // (Auto), so the user clicks one button and copies one key. It also tells the guide how far the form is, so the guide
   // can point at the next field.
   const guide = useOnboarding();
   // Any step before an environment exists: someone who skipped ahead to the
@@ -190,6 +190,18 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       }));
     }
     if (!git?.sshKey) sshKeys.setMode("automatic");
+    // The pipeline needs remote state; the user only has to click Create.
+    if (!newEnv.terraformBackend?.enabled) {
+      setNewEnv((prev) => ({
+        ...prev,
+        terraformBackend: {
+          ...prev.terraformBackend,
+          enabled: true,
+          bucketName: prev.terraformBackend?.bucketName || "",
+          lockingMechanism: prev.terraformBackend?.lockingMechanism || "s3",
+        },
+      }));
+    }
     // Once per wizard visit (the ref), so sshKeys, a new object every render,
     // is deliberately not a dependency.
   }, [guided, newEnv]);
@@ -212,6 +224,10 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     : "";
   const keyEntered =
     sshKeys.mode === "manual" && Boolean(newEnv?.gitRepository?.sshKey);
+  const backendReady = Boolean(
+    newEnv?.terraformBackend?.enabled &&
+    newEnv.terraformBackend.bucketName?.trim(),
+  );
   useEffect(() => {
     if (isEditMode || !setGuideWizard || !newEnv) return;
     setGuideWizard((prev) => ({
@@ -222,6 +238,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
       name: newEnv.name,
       repoUrl,
       keyEntered,
+      backendReady,
     }));
   }, [
     isEditMode,
@@ -232,6 +249,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     newEnv?.name,
     repoUrl,
     keyEntered,
+    backendReady,
   ]);
   useEffect(() => () => setGuideWizard?.(null), [setGuideWizard]);
 

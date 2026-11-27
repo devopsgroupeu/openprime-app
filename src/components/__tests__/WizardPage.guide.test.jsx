@@ -92,6 +92,10 @@ describe("WizardPage in the setup guide", () => {
     expect(
       await screen.findByText("This generated key is selected for saving."),
     ).toBeInTheDocument();
+    // The pipeline needs remote state: the section is on, one click away.
+    expect(
+      screen.getByRole("button", { name: /Create Backend Resources/ }),
+    ).toBeInTheDocument();
     // The guide sits where the wizard's own progress box was.
     expect(screen.queryByText("Overall Progress")).not.toBeInTheDocument();
   });
@@ -177,6 +181,23 @@ describe("WizardPage in the setup guide", () => {
       await screen.findByDisplayValue(
         "AWS 123456789012 - AKIA****9999 (Default)",
       ),
+    ).toBeInTheDocument();
+  });
+
+  it("creates the state storage with one click, named after the environment", async () => {
+    renderWizard({ onCreateEnvironment: vi.fn(), guided: true });
+    fireEvent.change(await screen.findByPlaceholderText(/e\.g\., production/), {
+      target: { value: "guided" },
+    });
+    // The AWS key is chosen on its own (only one saved).
+    await screen.findByDisplayValue("aws-sandbox - AKIA****MOCK");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Create Backend Resources/ }),
+    );
+
+    expect(
+      await screen.findByText("S3 Bucket: 123456789012-terraform-guided"),
     ).toBeInTheDocument();
   });
 

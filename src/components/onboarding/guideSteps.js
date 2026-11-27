@@ -79,8 +79,8 @@ export const awsPoints = ({ opened, copied, parsed } = {}) => [
       },
 ];
 
-// What matters in the wizard, in the order it is done. Name, repository and
-// key are all in its first part.
+// What matters in the wizard, in the order it is done. Name, state storage,
+// repository and key are all in its first part.
 export const wizardPoints = (wizard) => {
   const deployKeys = deployKeysLink(wizard.repoUrl);
   return [
@@ -90,6 +90,16 @@ export const wizardPoints = (wizard) => {
       target: "wizard-name",
       text: "Type a short name, for example production.",
       done: Boolean(wizard.name?.trim()),
+    },
+    // The pipeline refuses to run without a remote state backend
+    // (templates/.github/scripts/check-backend.sh). The bucket is named after
+    // the environment, so it comes right after the name.
+    {
+      label: "Create the state storage",
+      part: 1,
+      target: "wizard-create-backend",
+      text: "Click Create Backend Resources. OpenPrime makes a private S3 bucket in your AWS account where Terraform keeps track of what it built. The pipeline cannot run without it.",
+      done: Boolean(wizard.backendReady),
     },
     {
       label: "Paste your repository address",

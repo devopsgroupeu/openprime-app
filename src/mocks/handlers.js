@@ -166,13 +166,29 @@ export const handlers = [
     }
     return HttpResponse.json({ success: true });
   }),
-  http.post("*/environments/terraform-backend/create", () =>
-    HttpResponse.json({
-      success: true,
-      bucket: "mock-tf-state",
-      dynamodb_table: "mock-tf-lock",
-    }),
-  ),
+  // Shaped like the API's answer: the wizard reads data.bucketName, named
+  // <account id>-terraform-<environment> (backend environmentController).
+  http.post("*/environments/terraform-backend/create", async ({ request }) => {
+    const body = await request.json();
+    const cred = credList().find((c) => c.id === body.cloudCredentialId);
+    const account = /^\d{12}$/.test(cred?.identifier || "")
+      ? cred.identifier
+      : "123456789012";
+    const name = String(body.environmentName || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "-");
+    return HttpResponse.json(
+      {
+        success: true,
+        message: "Terraform backend resources created successfully",
+        data: {
+          bucketName: `${account}-terraform-${name}`,
+          region: body.region,
+        },
+      },
+      { status: 201 },
+    );
+  }),
   // Async job model: enqueue returns 202 + jobId, UI polls /jobs/:jobId,
   // then downloads the artifact for generate jobs.
   http.post("*/environments/:id/generate", () =>
@@ -242,7 +258,9 @@ export const handlers = [
       id: `cred-${++walkthrough.seq}`,
       name: body.name,
       provider: body.provider || "aws",
-      identifier: "AKIA****MOCK",
+      // The account ID for a guided connect (not a secret); kept so the
+      // wizard's bucket preview reads like the real one.
+      identifier: body.identifier || "AKIA****MOCK",
       isDefault: Boolean(body.isDefault),
       created_at: now(),
     };

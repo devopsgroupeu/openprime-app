@@ -29,41 +29,43 @@ describe("awsPoints", () => {
 });
 
 describe("wizardPoints", () => {
-  it("goes name, repository, key, create", () => {
-    expect(currentLabel(wizardPoints(wizard({})))).toBe("Name it");
-    expect(currentLabel(wizardPoints(wizard({ name: "prod" })))).toBe(
+  it("goes name, state storage, repository, key, create", () => {
+    const after = (fields) => currentLabel(wizardPoints(wizard(fields)));
+    const repo = "git@github.com:acme/infra.git";
+
+    expect(after({})).toBe("Name it");
+    expect(after({ name: "prod" })).toBe("Create the state storage");
+    expect(after({ name: "prod", backendReady: true })).toBe(
       "Paste your repository address",
     );
+    expect(after({ name: "prod", backendReady: true, repoUrl: repo })).toBe(
+      "Copy the key",
+    );
     expect(
-      currentLabel(
-        wizardPoints(
-          wizard({ name: "prod", repoUrl: "git@github.com:acme/infra.git" }),
-        ),
-      ),
-    ).toBe("Copy the key");
-    expect(
-      currentLabel(
-        wizardPoints(
-          wizard({
-            name: "prod",
-            repoUrl: "git@github.com:acme/infra.git",
-            keyCopied: true,
-          }),
-        ),
-      ),
+      after({
+        name: "prod",
+        backendReady: true,
+        repoUrl: repo,
+        keyCopied: true,
+      }),
     ).toBe("Add it on GitHub");
     expect(
-      currentLabel(
-        wizardPoints(
-          wizard({
-            name: "prod",
-            repoUrl: "git@github.com:acme/infra.git",
-            keyCopied: true,
-            deployKeysOpened: true,
-          }),
-        ),
-      ),
+      after({
+        name: "prod",
+        backendReady: true,
+        repoUrl: repo,
+        keyCopied: true,
+        deployKeysOpened: true,
+      }),
     ).toBe("Click Create Environment");
+  });
+
+  // The pipeline refuses to run without remote state (check-backend.sh), and
+  // the guide used to skip it.
+  it("points at Create Backend Resources until a bucket is set", () => {
+    const storage = wizardPoints(wizard({ name: "prod" }))[1];
+    expect(storage.target).toBe("wizard-create-backend");
+    expect(storage.done).toBe(false);
   });
 
   // Copying the key used to finish the step and take the link away before
@@ -72,6 +74,7 @@ describe("wizardPoints", () => {
     const points = wizardPoints(
       wizard({
         name: "prod",
+        backendReady: true,
         repoUrl: "git@github.com:acme/infra.git",
         keyCopied: true,
       }),
@@ -92,6 +95,7 @@ describe("wizardPoints", () => {
     const points = wizardPoints(
       wizard({
         name: "prod",
+        backendReady: true,
         repoUrl: "git@github.com:acme/infra.git",
         keyEntered: true,
       }),
