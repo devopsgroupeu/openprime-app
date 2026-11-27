@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { Cloud, MapPin, Type, Key, Tag, Globe } from "lucide-react";
 import ProviderIcon from "../../icons/ProviderIcon";
 import { useToast } from "../../../contexts/ToastContext";
+import { useOnboarding } from "../../../contexts/OnboardingContext";
 import {
   PROVIDERS,
   createEmptyEnvironment,
@@ -53,6 +54,9 @@ const BasicConfigStep = ({
   isEditMode = false,
 }) => {
   const toast = useToast();
+  // Setup guide (OP-283): the AWS key can be connected from the guide while
+  // this form is open, so the list is read again when that happens.
+  const awsConnected = Boolean(useOnboarding()?.steps?.[0]?.done);
   const [credentials, setCredentials] = useState([]);
   const [loadingCredentials, setLoadingCredentials] = useState(false);
   const [creatingBackend, setCreatingBackend] = useState(false);
@@ -71,7 +75,7 @@ const BasicConfigStep = ({
     if (newEnv.provider) {
       loadCredentials(newEnv.provider);
     }
-  }, [newEnv.provider]);
+  }, [newEnv.provider, awsConnected]);
 
   const loadCredentials = async (provider) => {
     try {
@@ -79,7 +83,22 @@ const BasicConfigStep = ({
       const response = await authService.get(
         `/cloud-credentials?provider=${provider}`,
       );
-      setCredentials(response.credentials || []);
+      const list = response.credentials || [];
+      setCredentials(list);
+      // A new environment starts with the default key (the setup guide saves
+      // the one it connects as default), else the only one. With several and
+      // none default it is the user's choice, not a guess. An environment being
+      // edited keeps what it has.
+      const pick =
+        list.find((cred) => cred.isDefault) ||
+        (list.length === 1 ? list[0] : null);
+      if (!isEditMode && pick) {
+        setNewEnv((prev) =>
+          prev.cloudCredentialId
+            ? prev
+            : { ...prev, cloudCredentialId: pick.id },
+        );
+      }
     } catch (error) {
       console.error("Failed to load credentials:", error);
       setCredentials([]);
@@ -188,6 +207,7 @@ const BasicConfigStep = ({
           }`}
           placeholder="e.g., production, staging, development"
           value={newEnv.name}
+          data-guide="wizard-name"
           readOnly={isEditMode}
           disabled={isEditMode}
           onChange={(e) => {

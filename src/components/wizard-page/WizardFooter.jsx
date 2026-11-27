@@ -39,6 +39,7 @@ const WizardFooter = ({
       <button
         onClick={currentStep < totalSteps ? onNext : onSubmit}
         disabled={!canGoNext || isLoading}
+        data-guide="wizard-next"
         className="btn-op-primary"
       >
         {isLoading ? (

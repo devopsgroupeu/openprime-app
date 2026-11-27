@@ -1,26 +1,18 @@
 // src/components/EnvironmentsPage.jsx
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Plus, Server, AlertCircle, RefreshCw } from "lucide-react";
 import EnvironmentCard from "./EnvironmentCard";
-import PrerequisitesChecklist from "./PrerequisitesChecklist";
-import authService from "../services/authService";
 
-const EnvironmentsPage = ({ environments, loadError, onRetry }) => {
+const EnvironmentsPage = ({ environments, loadError, onRetry, onRefresh }) => {
   const navigate = useNavigate();
   const hasEnvironments = environments.length > 0;
-  const [hasCredentials, setHasCredentials] = useState(false);
 
   useEffect(() => {
-    if (!hasEnvironments && !loadError) {
-      authService
-        .get("/cloud-credentials")
-        .then((res) => {
-          setHasCredentials((res.credentials || []).length > 0);
-        })
-        .catch(() => setHasCredentials(false));
-    }
-  }, [hasEnvironments, loadError]);
+    onRefresh?.();
+    // Once per visit: onRefresh is a new function on every App render, so it
+    // is deliberately not a dependency.
+  }, []);
 
   return (
     <div className="transition-colors duration-200 bg-transparent">
@@ -90,7 +82,6 @@ const EnvironmentsPage = ({ environments, loadError, onRetry }) => {
                 Create your first environment to get started.
               </p>
             </div>
-            <PrerequisitesChecklist hasCredentials={hasCredentials} />
           </div>
         )}
       </div>

@@ -8,6 +8,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { useToast } from "../contexts/ToastContext";
+import { useOnboarding } from "../contexts/OnboardingContext";
 import authService from "../services/authService";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
 import EnvironmentHeader from "./environment-detail/EnvironmentHeader";
@@ -59,6 +60,8 @@ const EnvironmentDetailPage = ({ onDelete }) => {
   const [isPushing, setIsPushing] = useState(false);
   const [expandedServices, setExpandedServices] = useState({});
   const { success, error } = useToast();
+  // The setup guide ticks its push step from the environment list.
+  const refreshGuide = useOnboarding()?.refresh;
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -256,6 +259,7 @@ const EnvironmentDetailPage = ({ onDelete }) => {
       success(
         job.result?.message || "Infrastructure pushed to Git successfully",
       );
+      refreshGuide?.();
     } catch (err) {
       console.error("Error pushing to Git:", err);
       if (mountedRef.current) {

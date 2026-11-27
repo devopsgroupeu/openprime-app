@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Cloud, User, Save, Settings } from "lucide-react";
 import { useToast } from "../contexts/ToastContext";
+import { useOnboarding } from "../contexts/OnboardingContext";
 import authService from "../services/authService";
 import CloudCredentialModal from "./modals/CloudCredentialModal";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
@@ -11,6 +12,10 @@ import PreferencesTab from "./settings-page/PreferencesTab";
 import SettingsTabNav from "./settings-page/SettingsTabNav";
 
 const SettingsPage = () => {
+  // The setup guide's first step ticks from the saved AWS keys, and its last
+  // step fills in GitHub secrets from a key entered here.
+  const guide = useOnboarding();
+  const refreshGuide = guide?.refresh;
   const toast = useToast();
   const [userPreferences, setUserPreferences] = useState({
     theme: "light",
@@ -150,6 +155,7 @@ const SettingsPage = () => {
     try {
       await authService.delete(`/cloud-credentials/${credentialToDelete.id}`);
       await loadCloudCredentials();
+      refreshGuide?.();
       setShowDeleteModal(false);
       toast.success("Credential deleted successfully");
       setCredentialToDelete(null);
@@ -176,6 +182,12 @@ const SettingsPage = () => {
         toast.success("Credential created successfully");
       }
       await loadCloudCredentials();
+      refreshGuide?.();
+      // An edit with blank key fields keeps the stored key and sends none;
+      // that must not forget the one remembered from step 1.
+      if (credentialData.provider === "aws" && credentialData.credentials) {
+        guide?.rememberAwsKey(credentialData.credentials);
+      }
       setShowCredentialModal(false);
       setSelectedCredential(null);
     } catch (error) {

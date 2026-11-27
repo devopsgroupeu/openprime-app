@@ -89,12 +89,14 @@ export const environments = [
       lockingMechanism: "DynamoDB",
       tableName: "op-demo-tf-locks",
     },
+    // As the API sends it: never the deploy key itself, only that one is set
+    // and its fingerprint (backend utils/sshKey.js redactGitRepository).
     git_repository: {
       enabled: true,
       url: "git@github.com:openprime/demo-infra.git",
       branch: "main",
-      sshKey:
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEMOkeyForOpenPrimeDemoEnvironmentNotARealKey deploy@openprime",
+      sshKeyConfigured: true,
+      sshKeyFingerprint: "SHA256:mockDemoInfraDeployKey",
     },
     created_at: "2026-06-01T10:00:00Z",
     updated_at: "2026-06-20T12:00:00Z",

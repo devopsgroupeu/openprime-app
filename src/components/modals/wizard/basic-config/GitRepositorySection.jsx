@@ -72,6 +72,7 @@ const GitRepositorySection = ({ newEnv, setNewEnv, sshKeys }) => {
               className="w-full px-4 py-2 transition-colors"
               placeholder="git@github.com:organization/repository.git"
               value={newEnv.gitRepository?.url || ""}
+              data-guide="wizard-repo-url"
               onChange={(e) =>
                 setNewEnv({
                   ...newEnv,

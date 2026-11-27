@@ -1,6 +1,16 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Check, Copy, Download, Eye, EyeOff, X } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Download,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  X,
+} from "lucide-react";
 import { strToU8, zipSync } from "fflate";
+import { useOnboarding } from "../../../../contexts/OnboardingContext";
+import { deployKeysLink } from "../../../../utils/repoAddress";
 
 function downloadKeys(pair) {
   const archive = zipSync(
@@ -29,6 +39,9 @@ function downloadKeys(pair) {
 // the tabs would render and silently do nothing.
 export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
   const id = useId();
+  const setGuideWizard = useOnboarding()?.setWizard;
+  // The page on GitHub that takes the key, built from the repository address.
+  const deployKeys = deployKeysLink(gitRepository?.url);
   const tabs = useRef([]);
   const [privateKeyVisible, setPrivateKeyVisible] = useState(false);
   const [downloadError, setDownloadError] = useState("");
@@ -72,6 +85,10 @@ export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
     try {
       await navigator.clipboard.writeText(text);
       setCopyFeedback({ label, success: true });
+      // The setup guide's "Add the key on GitHub" counts a copied public key.
+      if (label === "Public") {
+        setGuideWizard?.((prev) => prev && { ...prev, keyCopied: true });
+      }
     } catch {
       setCopyFeedback({ label, success: false });
     } finally {
@@ -162,6 +179,9 @@ export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
               ].map(({ field, label, suffix }) => (
                 <div
                   key={field}
+                  data-guide={
+                    field === "publicKey" ? "wizard-public-key" : undefined
+                  }
                   className="min-w-0 overflow-hidden rounded-xl border border-border bg-background"
                 >
                   <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2">
@@ -282,9 +302,39 @@ export default function SshKeyTabs({ sshKeys: keyState, gitRepository }) {
         {downloadError && <p role="alert">{downloadError}</p>}
         <div className="space-y-1 text-xs leading-relaxed text-tertiary">
           <p>
-            Add the public key to your repository&apos;s deploy keys with write
-            access.
+            Add the public key to your repository&apos;s deploy keys and tick{" "}
+            <strong className="text-warning">Allow write access</strong>;
+            without it the push is refused.{" "}
+            {deployKeys && (
+              <a
+                href={deployKeys.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-guide="wizard-deploy-keys-link"
+                onClick={() =>
+                  setGuideWizard?.(
+                    (prev) => prev && { ...prev, deployKeysOpened: true },
+                  )
+                }
+                className="inline-flex items-center gap-1 font-semibold text-accent hover:underline"
+              >
+                {deployKeys.label}
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+              </a>
+            )}
           </p>
+          {/* Rotating: the new key only takes over on save, and the old one
+              stays valid on GitHub until it is removed there. */}
+          {configured && keyState.pair && (
+            <p className="rounded-md bg-warning-muted px-2 py-1.5 text-primary">
+              This key replaces the current one
+              {gitRepository.sshKeyFingerprint
+                ? ` (${gitRepository.sshKeyFingerprint})`
+                : ""}{" "}
+              once you save the environment. After saving, delete the old key on
+              the same GitHub page.
+            </p>
+          )}
           <p>
             Generated in your browser; the selected private key is sent to
             OpenPrime on save. Download a backup — private keys are not included

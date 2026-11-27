@@ -11,6 +11,10 @@ const baseProps = {
 describe("CloudCredentialModal", () => {
   it("rejects a non-12-digit account ID when creating a new credential", () => {
     render(<CloudCredentialModal {...baseProps} />);
+    // Adding opens the guided connect; the key form is one click away.
+    fireEvent.click(
+      screen.getByRole("button", { name: "I already have an access key" }),
+    );
 
     fireEvent.change(screen.getByPlaceholderText("e.g., Production Account"), {
       target: { value: "New Credential" },
@@ -38,6 +42,10 @@ describe("CloudCredentialModal", () => {
   it("accepts a 12-digit account ID when creating a new credential", () => {
     const onSave = vi.fn();
     render(<CloudCredentialModal {...baseProps} onSave={onSave} />);
+    // Adding opens the guided connect; the key form is one click away.
+    fireEvent.click(
+      screen.getByRole("button", { name: "I already have an access key" }),
+    );
 
     fireEvent.change(screen.getByPlaceholderText("e.g., Production Account"), {
       target: { value: "New Credential" },
