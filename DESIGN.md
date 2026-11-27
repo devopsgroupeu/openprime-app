@@ -562,15 +562,16 @@ Skeletons: `ListPageSkeleton`, `DetailPageSkeleton`, `SettingsPageSkeleton tab` 
     Failed's), name the provider in the tooltip and add a one-line legend under the map: a 6 px dot
     and the provider's short name (`providerLegendName`: AWS, Azure, GCP, On-prem; only here is
     Google Cloud "GCP", its `legendName`), no counts, `aria-hidden` (a color key; the sr-only list
-    names each region's provider). All four need a 198 px tile; a narrower one (1024 with the
-    sidebar, 148 px) wraps between names, never inside one. Regions within 1.5 degrees (Frankfurt on
-    AWS and Google Cloud) sit side by side 12 px apart. On-premise datacenters have no place: the
-    legend gives them a hollow dot.
+    names each region's provider). All four need 198 px, which every tile has from sm up (204 px at
+    the narrowest); a narrower one would wrap between names, never inside one. Regions within 1.5
+    degrees (Frankfurt on AWS and Google Cloud) sit side by side 12 px apart. On-premise datacenters
+    have no place: the legend gives them a hollow dot.
   - Last generated: the value is the last successful generate. Under it, like a CI run list, a
     row per environment's last generate (`generations`), newest first, never generated last by
     name: the outcome icon (generated `CircleCheck` in `text-primary`, failed `CircleAlert` in
-    `text-destructive`, never `CircleDashed`), the name (truncated) and a short age (`formatAge`:
-    "2h", "1d", "5mo", or "Never"). Screen readers hear the outcome, the long age and the exact UTC
+    `text-destructive`, never generated `CircleDashed` in `text-muted-foreground`), the name
+    (truncated) and a short age (`formatAge`: "now", "2h", "1d", "5mo"; "Never" without a
+    generate). Screen readers hear the outcome, the long age and the exact UTC
     time ("failed 2 days ago, Nov 25, 2026, 8:05 AM UTC"); the tooltip gives the whole name and the
     exact UTC time, on a 20 px row whose hit area reaches 24 px. Pushes do not count. Same 20 px
     rows, 8 px gaps and scroll as Services: past four rows the list scrolls in a focusable "Recent
