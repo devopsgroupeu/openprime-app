@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 
 import {
   RelativeTime,
+  formatAge,
   formatDateTime,
   formatRelative,
 } from "@/components/shared/format";
@@ -26,6 +27,21 @@ describe("formatRelative", () => {
     [400 * 86_400, "last year"],
   ])("reads %s seconds ago as %s", (seconds, text) => {
     expect(formatRelative(ago(seconds), NOW)).toBe(text);
+  });
+});
+
+// The same steps as formatRelative, in short for a narrow column.
+describe("formatAge", () => {
+  it.each([
+    [30, "now"],
+    [5 * 60, "5m"],
+    [2 * 3600, "2h"],
+    [86_400, "1d"],
+    [9 * 86_400, "1w"],
+    [160 * 86_400, "5mo"],
+    [400 * 86_400, "1y"],
+  ])("reads %s seconds ago as %s", (seconds, text) => {
+    expect(formatAge(ago(seconds), NOW)).toBe(text);
   });
 });
 

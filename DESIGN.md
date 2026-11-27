@@ -529,7 +529,7 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
   generated (relative or "Never"), four in a row from a 59rem content column (`@[59rem]`, 204 px of
   content per tile; the four-provider region legend needs 198 px on one line), else 2 x 2.
   Each tile has a picture drawn only from the environments (no invented trend), hidden below sm;
-  region and generate dots name their point in a tooltip:
+  region dots and generate rows name their point in a tooltip:
   - Environments: a row per status that occurs (filter-tab order): the `StatusPill` icon in the
     status color (Not generated `CircleDashed`), label, count and share (from a 12rem tile), over a
     4 px meter of that share. Statuses are few, so the tile keeps its height.
@@ -552,9 +552,15 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
     between names, never inside one. Regions within 1.5 degrees (Frankfurt on AWS and Google Cloud)
     sit side by side 12 px apart. On-premise datacenters have no place: the legend gives them a
     hollow dot.
-  - Last generated: one dot per environment's last generate (`bg-primary`, failed
-    `bg-destructive`, `ring-card`, 24 px hover target) on a line from the oldest (at least 30 days
-    back) to Now, then the three most recent by name.
+  - Last generated: the value is the last successful generate. Under it, like a CI run list, a
+    row per environment's last generate (`generations`), newest first, never generated last by
+    name: the outcome icon (generated `CircleCheck` in `text-primary`, failed `CircleAlert` in
+    `text-destructive`, never `CircleDashed`), the name (truncated) and a short age (`formatAge`:
+    "2h", "1d", "5mo", or "Never"). Screen readers hear the outcome and the long age ("failed 2
+    days ago"); the tooltip gives the whole name and the exact UTC time, on a 20 px row whose hit
+    area reaches 24 px. Pushes do not count. Same 20 px rows, 8 px gaps and scroll as Services:
+    past four rows the list scrolls in a focusable "Recent generates" region with the edge fade
+    (`ScrollRows`, shared with Services), so the tile never grows.
 - `ListToolbar`: status `FilterTabs` "All" + only the statuses that occur (Ready, Not generated,
   Failed first) with counts, a live "N environments", a search field reading "Search environments"
   that matches name, resource prefix or region, and the sort (Recently modified, Name A to Z, Most

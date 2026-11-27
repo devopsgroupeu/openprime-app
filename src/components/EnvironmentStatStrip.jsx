@@ -13,7 +13,12 @@ import {
 import { RegionMap, regionTone } from "./environments/RegionMap";
 import ProviderIcon from "./icons/ProviderIcon";
 import ServiceIcon from "./icons/ServiceIcon";
-import { RelativeTime, formatRelative } from "@/components/shared/format";
+import {
+  RelativeTime,
+  formatAge,
+  formatDateTime,
+  formatRelative,
+} from "@/components/shared/format";
 import { StatCard } from "@/components/shared/settings";
 import {
   Tooltip,
@@ -41,13 +46,6 @@ const TONE = {
     Icon: CircleDashed,
   },
 };
-
-const DAY = 86_400_000;
-const RECENT = 3;
-
-const Swatch = ({ className }) => (
-  <span aria-hidden className={cn("size-2 shrink-0 rounded-full", className)} />
-);
 
 const share = (count, total) => `${Math.round((count / total) * 100)}%`;
 
@@ -89,7 +87,44 @@ function StatusRows({ parts, total }) {
 }
 
 // Rows in view at once (20 px each, 8 px apart); more scroll inside the tile.
-const VISIBLE_SERVICES = 4;
+const VISIBLE_ROWS = 4;
+
+/**
+ * Rows that scroll inside the tile once `scrolls`, so the tile keeps its
+ * height, and fade at an edge with more rows behind it; the scrolling box is
+ * a focusable region named `label` so the keyboard can scroll it. Keyed by
+ * its rows where used: a list that starts to scroll starts faded.
+ */
+function ScrollRows({ label, scrolls, children }) {
+  const [fade, setFade] = useState({ top: false, bottom: scrolls });
+  const onScroll = (event) => {
+    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+    setFade({
+      top: scrollTop > 0,
+      bottom: scrollTop + clientHeight < scrollHeight - 1,
+    });
+  };
+  return (
+    <div className="rounded-sm has-focus-visible:ring-2 has-focus-visible:ring-ring/50">
+      <div
+        {...(scrolls && {
+          role: "region",
+          "aria-label": label,
+          tabIndex: 0,
+          onScroll,
+        })}
+        className={cn(
+          scrolls &&
+            "max-h-[6.5rem] overflow-y-auto overscroll-contain outline-none [scrollbar-width:thin]",
+          scrolls && fade.top && "mask-t-from-85%",
+          scrolls && fade.bottom && "mask-b-from-85%",
+        )}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
 
 const environmentsWord = (n) => (n === 1 ? "environment" : "environments");
 
@@ -107,105 +142,80 @@ const groupByProvider = (rows) =>
  * provider's environments that use it (from a 12rem tile) and "used/all",
  * the full name in a tooltip. Services of several providers come as a list
  * per provider under its logo and name. Past four rows (headings count) the
- * lists scroll inside the tile, which keeps its height, and fade at an edge
- * with more rows behind it; the scrolling box is a focusable region so the
- * keyboard can scroll it.
+ * lists scroll (`ScrollRows`).
  */
 function ServiceBars({ services }) {
   const groups = groupByProvider(services);
   const grouped = groups.length > 1;
   const scrolls =
-    services.length + (grouped ? groups.length : 0) > VISIBLE_SERVICES;
-  const [fade, setFade] = useState({ top: false, bottom: scrolls });
-  const onScroll = (event) => {
-    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    setFade({
-      top: scrollTop > 0,
-      bottom: scrollTop + clientHeight < scrollHeight - 1,
-    });
-  };
+    services.length + (grouped ? groups.length : 0) > VISIBLE_ROWS;
   return (
-    <div className="rounded-sm has-focus-visible:ring-2 has-focus-visible:ring-ring/50">
-      <div
-        {...(scrolls && {
-          role: "region",
-          "aria-label": "Services in use",
-          tabIndex: 0,
-          onScroll,
-        })}
-        className={cn(
-          scrolls &&
-            "max-h-[6.5rem] overflow-y-auto overscroll-contain outline-none [scrollbar-width:thin]",
-          scrolls && fade.top && "mask-t-from-85%",
-          scrolls && fade.bottom && "mask-b-from-85%",
-        )}
-      >
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-x-2 gap-y-2 text-xs @[12rem]:grid-cols-[auto_auto_1fr_auto]">
-          {groups.map(({ provider, rows }) => {
-            const who = providerName(provider);
-            return (
-              <Fragment key={provider}>
-                {grouped ? (
-                  // The list's label says it to screen readers.
-                  <p
-                    aria-hidden
-                    className="col-span-full flex h-5 items-center gap-1.5 font-medium text-muted-foreground"
-                  >
-                    <ProviderIcon
-                      provider={provider}
-                      className="size-3.5 text-muted-foreground"
-                    />
-                    {who}
-                  </p>
-                ) : null}
-                <ul
-                  aria-label={grouped ? `${who} services` : undefined}
-                  className="col-span-full grid grid-cols-subgrid gap-y-2"
+    <ScrollRows label="Services in use" scrolls={scrolls}>
+      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-x-2 gap-y-2 text-xs @[12rem]:grid-cols-[auto_auto_1fr_auto]">
+        {groups.map(({ provider, rows }) => {
+          const who = providerName(provider);
+          return (
+            <Fragment key={provider}>
+              {grouped ? (
+                // The list's label says it to screen readers.
+                <p
+                  aria-hidden
+                  className="col-span-full flex h-5 items-center gap-1.5 font-medium text-muted-foreground"
                 >
-                  {rows.map(({ key, name, title, count, of }) => (
-                    <Tooltip key={key}>
-                      <TooltipTrigger asChild>
-                        <li className="col-span-full grid h-5 grid-cols-subgrid items-center">
-                          <ServiceIcon
-                            service={key}
-                            className="size-4 rounded-[3px] text-muted-foreground"
-                          />
-                          <span className="text-muted-foreground">{name}</span>
+                  <ProviderIcon
+                    provider={provider}
+                    className="size-3.5 text-muted-foreground"
+                  />
+                  {who}
+                </p>
+              ) : null}
+              <ul
+                aria-label={grouped ? `${who} services` : undefined}
+                className="col-span-full grid grid-cols-subgrid gap-y-2"
+              >
+                {rows.map(({ key, name, title, count, of }) => (
+                  <Tooltip key={key}>
+                    <TooltipTrigger asChild>
+                      <li className="col-span-full grid h-5 grid-cols-subgrid items-center">
+                        <ServiceIcon
+                          service={key}
+                          className="size-4 rounded-[3px] text-muted-foreground"
+                        />
+                        <span className="text-muted-foreground">{name}</span>
+                        <span
+                          aria-hidden
+                          className="hidden h-1.5 overflow-hidden rounded-full bg-muted @[12rem]:block"
+                        >
                           <span
-                            aria-hidden
-                            className="hidden h-1.5 overflow-hidden rounded-full bg-muted @[12rem]:block"
-                          >
-                            <span
-                              className="block h-full rounded-full bg-chart-1"
-                              style={{ width: `${(count / of) * 100}%` }}
-                            />
-                          </span>
-                          <span className="text-muted-foreground tabular-nums">
-                            <span aria-hidden>
-                              <span className="font-medium text-foreground">
-                                {count}
-                              </span>
-                              /{of}
+                            className="block h-full rounded-full bg-chart-1"
+                            style={{ width: `${(count / of) * 100}%` }}
+                          />
+                        </span>
+                        <span className="text-muted-foreground tabular-nums">
+                          <span aria-hidden>
+                            <span className="font-medium text-foreground">
+                              {count}
                             </span>
-                            <span className="sr-only">
-                              : {count} of {of} {environmentsWord(of)}
-                            </span>
+                            /{of}
                           </span>
-                        </li>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {title}: {count} of {of}
-                        {grouped ? ` ${who}` : ""} {environmentsWord(of)}
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-                </ul>
-              </Fragment>
-            );
-          })}
-        </div>
+                          <span className="sr-only">
+                            : {count} of {of} {environmentsWord(of)}
+                          </span>
+                        </span>
+                      </li>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {title}: {count} of {of}
+                      {grouped ? ` ${who}` : ""} {environmentsWord(of)}
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </ul>
+            </Fragment>
+          );
+        })}
       </div>
-    </div>
+    </ScrollRows>
   );
 }
 
@@ -260,80 +270,56 @@ function Regions({ regions }) {
   );
 }
 
-const outcomeLabel = (item) =>
-  item.status === "failed" ? "failed" : "generated";
-const outcomeFill = (item) =>
-  item.status === "failed" ? "bg-destructive" : "bg-primary";
-
 /**
- * Every environment's last generate as a dot on a line from the oldest (at
- * least 30 days back) to now, then the most recent ones by name.
+ * Every environment's last generate (`generations`) like a CI run list: the
+ * outcome icon, name and short age; the tooltip gives the whole name and
+ * the exact time. Screen readers hear the outcome and the long age. Past
+ * four rows the list scrolls (`ScrollRows`).
  */
-function Freshness({ items, now }) {
-  if (items.length === 0) {
-    return (
-      <p className="text-xs text-muted-foreground">
-        No environment generated yet.
-      </p>
-    );
-  }
-  const start = Math.min(Date.parse(items[0].at), now - 30 * DAY);
-  const left = (at) =>
-    `${Math.min(100, Math.max(0, ((Date.parse(at) - start) / (now - start)) * 100))}%`;
-  const recent = items.slice(-RECENT).reverse();
+function GenerateFeed({ items, now }) {
   return (
-    <div className="flex flex-col gap-2">
-      <div aria-hidden>
-        <div className="relative mx-1.5 h-6">
-          <span className="absolute inset-x-0 top-1/2 h-px bg-border" />
-          {items.map((item) => (
-            <Tooltip key={item.id}>
+    <ScrollRows label="Recent generates" scrolls={items.length > VISIBLE_ROWS}>
+      <ul className="flex flex-col gap-2 text-xs">
+        {items.map(({ id, name, at, status }) => {
+          const failed = status === "failed";
+          const { Icon, text } =
+            TONE[!at ? "neutral" : failed ? "destructive" : "success"];
+          return (
+            <Tooltip key={id}>
               <TooltipTrigger asChild>
-                {/* A 24 px hit area around the 10 px dot. */}
-                <span
-                  className="absolute top-1/2 flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
-                  style={{ left: left(item.at) }}
-                >
-                  <span
-                    className={cn(
-                      "size-2.5 rounded-full ring-2 ring-card",
-                      outcomeFill(item),
-                    )}
-                  />
-                </span>
+                {/* A 20 px row as in Services; its hit area reaches 24 px. */}
+                <li className="relative flex h-5 items-center gap-1.5 before:absolute before:inset-x-0 before:-inset-y-0.5">
+                  <Icon aria-hidden className={cn("size-3.5 shrink-0", text)} />
+                  <span className="min-w-0 flex-1 truncate">{name}</span>
+                  <span className="shrink-0 text-muted-foreground tabular-nums">
+                    <span aria-hidden>{at ? formatAge(at, now) : "Never"}</span>
+                    <span className="sr-only">
+                      :{" "}
+                      {at
+                        ? `${failed ? "failed" : "generated"} ${formatRelative(at, now)}`
+                        : "never generated"}
+                    </span>
+                  </span>
+                </li>
               </TooltipTrigger>
               <TooltipContent>
-                {item.name}: {outcomeLabel(item)} {formatRelative(item.at, now)}
+                {name}:{" "}
+                {at
+                  ? `${failed ? "generate failed" : "generated"} ${formatDateTime(at)}`
+                  : "never generated"}
               </TooltipContent>
             </Tooltip>
-          ))}
-        </div>
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{formatRelative(new Date(start).toISOString(), now)}</span>
-          <span>Now</span>
-        </div>
-      </div>
-      <ul className="flex flex-col gap-1 text-xs">
-        {recent.map((item) => (
-          <li key={item.id} className="flex items-center gap-2">
-            <Swatch className={outcomeFill(item)} />
-            <span className="min-w-0 flex-1 truncate font-medium">
-              {item.name}
-              <span className="sr-only">: {outcomeLabel(item)}</span>
-            </span>
-            <span className="shrink-0 text-muted-foreground">
-              {formatRelative(item.at, now)}
-            </span>
-          </li>
-        ))}
+          );
+        })}
       </ul>
-    </div>
+    </ScrollRows>
   );
 }
 
 export default function EnvironmentStatStrip({ environments }) {
   const stats = summarizeEnvironments(environments);
   const services = servicesInUse(environments);
+  const generates = generations(environments);
   const now = Date.now();
   return (
     // Compact below sm so the first card stays above the fold. 2 x 2 until the
@@ -368,7 +354,11 @@ export default function EnvironmentStatStrip({ environments }) {
             )
           }
         >
-          <Freshness items={generations(environments)} now={now} />
+          <GenerateFeed
+            key={generates.map((g) => g.id).join()}
+            items={generates}
+            now={now}
+          />
         </StatCard>
       </div>
     </div>

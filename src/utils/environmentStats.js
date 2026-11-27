@@ -268,17 +268,22 @@ export const regionsInUse = (environments) => {
   );
 };
 
-/** Each environment's last generate `{ id, name, at, status }`, oldest first. */
+/**
+ * Each environment's last generate `{ id, name, at, status }`, newest first;
+ * the never generated (`at` and `status` null) last, by name.
+ */
 export const generations = (environments) =>
   environments
-    .filter((env) => env.last_generate_at)
     .map((env) => ({
       id: env.id,
       name: env.name,
-      at: env.last_generate_at,
-      status: env.last_generate_status,
+      at: env.last_generate_at ?? null,
+      status: env.last_generate_at ? env.last_generate_status : null,
     }))
-    .sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+    .sort(
+      (a, b) =>
+        (Date.parse(b.at) || 0) - (Date.parse(a.at) || 0) || byName(a, b),
+    );
 
 const FIRST = ["ready", "not-generated", "failed"];
 const rank = (key) => (FIRST.includes(key) ? FIRST.indexOf(key) : FIRST.length);

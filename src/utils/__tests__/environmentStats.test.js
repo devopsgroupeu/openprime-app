@@ -510,34 +510,44 @@ describe("regionsInUse across providers", () => {
 });
 
 describe("generations", () => {
-  it("lists each environment's last generate, oldest first", () => {
+  it("lists each environment's last generate, newest first, never generated last", () => {
     expect(
       generations([
-        {
-          ...prod,
-          last_generate_at: "2026-08-01T10:00:00Z",
-          last_generate_status: "failed",
-        },
-        staging,
+        { ...prod, id: "env-3", name: "zeta-sandbox" },
         {
           ...staging,
           last_generate_at: "2026-07-01T10:00:00Z",
           last_generate_status: "succeeded",
         },
+        prod,
+        {
+          ...prod,
+          id: "env-4",
+          name: "analytics-dev",
+          last_generate_at: "2026-08-01T10:00:00Z",
+          last_generate_status: "failed",
+        },
       ]),
     ).toEqual([
+      {
+        id: "env-4",
+        name: "analytics-dev",
+        at: "2026-08-01T10:00:00Z",
+        status: "failed",
+      },
       {
         id: "env-2",
         name: "demo-staging",
         at: "2026-07-01T10:00:00Z",
         status: "succeeded",
       },
-      {
-        id: "env-1",
-        name: "demo-prod",
-        at: "2026-08-01T10:00:00Z",
-        status: "failed",
-      },
+      // Never generated, by name.
+      { id: "env-1", name: "demo-prod", at: null, status: null },
+      { id: "env-3", name: "zeta-sandbox", at: null, status: null },
     ]);
+  });
+
+  it("lists nothing without environments", () => {
+    expect(generations([])).toEqual([]);
   });
 });

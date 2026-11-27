@@ -13,7 +13,11 @@ import { ToastProvider } from "../../contexts/ToastContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import EnvironmentsPage from "../EnvironmentsPage";
 import { coverGradient } from "@/components/shared/cover-gradient";
-import { formatDateTime, formatRelative } from "@/components/shared/format";
+import {
+  formatAge,
+  formatDateTime,
+  formatRelative,
+} from "@/components/shared/format";
 
 const prod = {
   id: "env-1",
@@ -170,7 +174,7 @@ describe("EnvironmentsPage", () => {
       within(stats[2]).getByText("Europe (Ireland): 1 environment"),
     ).toBeInTheDocument();
     // The value is the last successful generate; the picture under it lists
-    // the recent ones too.
+    // every environment's last generate.
     expect(stats[3].children[1]).toHaveTextContent(
       formatRelative(prod.last_generate_at),
     );
@@ -257,6 +261,77 @@ describe("EnvironmentsPage", () => {
     const tile = document.querySelectorAll('[data-slot="stat-card"]')[1];
     expect(within(tile).queryByRole("region")).not.toBeInTheDocument();
     expect(within(tile).getAllByRole("listitem")).toHaveLength(2);
+  });
+
+  const lastGeneratedTile = () =>
+    document.querySelectorAll('[data-slot="stat-card"]')[3];
+  const generateRows = () =>
+    within(lastGeneratedTile())
+      .getAllByRole("listitem")
+      .map((li) => li.textContent);
+
+  // Like a CI run list: outcome icon, name and short age; the outcome is in
+  // words for screen readers, which hear the long age instead of the short.
+  it("lists each environment's last generate, newest first, never generated last", () => {
+    renderPage();
+    expect(generateRows()).toEqual([
+      `demo-prod${formatAge(prod.last_generate_at)}: generated ${formatRelative(prod.last_generate_at)}`,
+      `zeta-sandbox${formatAge(sandbox.last_generate_at)}: failed ${formatRelative(sandbox.last_generate_at)}`,
+      "demo-stagingNever: never generated",
+    ]);
+    const failed = within(lastGeneratedTile()).getAllByRole("listitem")[1];
+    expect(
+      within(failed).getByText(formatAge(sandbox.last_generate_at)),
+    ).toHaveAttribute("aria-hidden", "true");
+    expect(
+      within(failed).getByText(
+        `: failed ${formatRelative(sandbox.last_generate_at)}`,
+      ),
+    ).toHaveClass("sr-only");
+  });
+
+  // The tooltip also has the whole name, which a narrow tile truncates.
+  it("gives a generate's exact time in its row's tooltip", async () => {
+    renderPage();
+    const [row] = within(lastGeneratedTile()).getAllByRole("listitem");
+    fireEvent.pointerMove(row, { pointerType: "mouse" });
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      `demo-prod: generated ${formatDateTime(prod.last_generate_at)}`,
+    );
+  });
+
+  it("scrolls the generates past four rows in a region the keyboard can reach", () => {
+    const more = (n) => ({
+      ...prod,
+      id: `env-x${n}`,
+      name: `extra-${n}`,
+      last_generate_at: `2026-05-0${n}T10:00:00Z`,
+    });
+    const { unmount } = renderPage({ environments: [...ALL, more(1)] });
+    expect(
+      within(lastGeneratedTile()).queryByRole("region"),
+    ).not.toBeInTheDocument();
+    expect(generateRows()).toHaveLength(4);
+    unmount();
+
+    renderPage({ environments: [...ALL, more(1), more(2)] });
+    const feed = within(lastGeneratedTile()).getByRole("region", {
+      name: "Recent generates",
+    });
+    expect(feed).toHaveAttribute("tabindex", "0");
+    expect(within(feed).getAllByRole("listitem")).toHaveLength(5);
+    expect(generateRows().at(-1)).toBe("demo-stagingNever: never generated");
+  });
+
+  it("reads Never with no generate yet and lists every environment as never generated", () => {
+    renderPage({
+      environments: [staging, { ...staging, id: "env-9", name: "alpha-dev" }],
+    });
+    expect(lastGeneratedTile().children[1]).toHaveTextContent("Never");
+    expect(generateRows()).toEqual([
+      "alpha-devNever: never generated",
+      "demo-stagingNever: never generated",
+    ]);
   });
 
   it("offers no tab for a status that does not occur", () => {
