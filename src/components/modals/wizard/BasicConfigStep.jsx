@@ -427,11 +427,13 @@ const BasicConfigStep = ({
               art={
                 <ProviderIcon
                   provider={provider.value}
+                  // Brand logos keep their full official colors even on
+                  // Roadmap cards; only the neutral Server icon is muted.
                   className={cn(
                     "size-8",
                     provider.enabled
                       ? "text-foreground"
-                      : "text-muted-foreground opacity-60",
+                      : "text-muted-foreground",
                   )}
                 />
               }

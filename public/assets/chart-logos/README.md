@@ -1,4 +1,4 @@
-# Chart and git provider logos
+# Chart, git and cloud provider logos
 
 Official logos of the Helm charts OpenPrime installs and of the git providers it pushes to. They
 are trademarks of their owners and are not covered by this repository's licence. They are used
@@ -54,6 +54,20 @@ which never runs SVG script.
 - `gitlab.svg`: `illustrations/gitlab_logo.svg` in https://gitlab.com/gitlab-org/gitlab-svgs,
   GitLab's own SVG library. Terms: https://design.gitlab.com/brand-logo/core-logo and
   https://handbook.gitlab.com/handbook/marketing/brand-and-product-marketing/brand/brand-activation/trademark-guidelines/
+
+## Cloud providers
+
+`ProviderIcon` draws these inline (no file here), retrieved on 2026-11-27, paths and colors
+unchanged:
+
+- AWS (`AwsIcon.jsx`): https://commons.wikimedia.org/wiki/File:Amazon_Web_Services_Logo.svg. Its
+  squid-ink wordmark is white on dark surfaces, as in AWS's reverse logo. Terms:
+  https://aws.amazon.com/trademark-guidelines/
+- Azure (`AzureIcon.jsx`): https://commons.wikimedia.org/wiki/File:Microsoft_Azure.svg. Terms:
+  https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks
+- Google Cloud (`GcpIcon.jsx`): the four colored paths of
+  https://commons.wikimedia.org/wiki/File:Google_Cloud_logo.svg, without its wordmark. Terms:
+  https://about.google/brand-resource-center/trademark-list/
 
 ## No logo
 

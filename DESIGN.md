@@ -448,8 +448,9 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
   `menu` 24, `md` 28, `lg` 32, `row` 36, `xl` 40, `2xl` 56. Never hand-roll one.
 - `ServiceIcon` (`icons/ServiceIcon.jsx`): official AWS icons for vpc, eks, msk, rds, aurora,
   opensearch, elasticache, ecr, waf, s3, lambda, sqs, sns, cloudfront and route53, else the lucide
-  icon of `src/config/serviceIcons.js`; `size-8` in rows, `size-5` on cards. `ProviderIcon`: the AWS,
-  Azure and GCP marks, `Server` for on-premises.
+  icon of `src/config/serviceIcons.js`; `size-8` in rows, `size-5` on cards. `ProviderIcon`: the official AWS,
+  Azure and Google Cloud logos in their own colors (the AWS wordmark white in dark, AWS's reverse
+  logo), `Server` for on-premises.
 - `LogoTile` (`shared/logo-tile.jsx`) takes `chartLogo(key)`, `chartLogos(keys)` or `gitLogo(url)`
   from `src/config/logos.js`: the file on `bg-(--logo-tile)` at about 70 %,
   `shadow-(--shadow-ring-xs)`; no file or a failed load shows `Package` or `GitBranch` on `bg-muted`.
