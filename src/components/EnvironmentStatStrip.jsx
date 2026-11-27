@@ -236,7 +236,11 @@ function Regions({ regions }) {
     <>
       <RegionMap regions={regions} />
       {legend ? (
-        <ul className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs whitespace-nowrap text-muted-foreground">
+        // A color key; the sr-only list below names each region's provider.
+        <ul
+          aria-hidden
+          className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs whitespace-nowrap text-muted-foreground"
+        >
           {providers.map((provider) => (
             <li
               key={provider}
@@ -273,8 +277,9 @@ function Regions({ regions }) {
 /**
  * Every environment's last generate (`generations`) like a CI run list: the
  * outcome icon, name and short age; the tooltip gives the whole name and
- * the exact time. Screen readers hear the outcome and the long age. Past
- * four rows the list scrolls (`ScrollRows`).
+ * the exact time. Screen readers hear the outcome, the long age and the
+ * exact time (the tooltip is hover only). Past four rows the list scrolls
+ * (`ScrollRows`).
  */
 function GenerateFeed({ items, now }) {
   return (
@@ -296,7 +301,7 @@ function GenerateFeed({ items, now }) {
                     <span className="sr-only">
                       :{" "}
                       {at
-                        ? `${failed ? "failed" : "generated"} ${formatRelative(at, now)}`
+                        ? `${failed ? "failed" : "generated"} ${formatRelative(at, now)}, ${formatDateTime(at)}`
                         : "never generated"}
                     </span>
                   </span>

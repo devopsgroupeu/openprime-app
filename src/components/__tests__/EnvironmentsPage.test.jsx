@@ -271,12 +271,13 @@ describe("EnvironmentsPage", () => {
       .map((li) => li.textContent);
 
   // Like a CI run list: outcome icon, name and short age; the outcome is in
-  // words for screen readers, which hear the long age instead of the short.
+  // words for screen readers, which hear the long age and the exact time
+  // (the tooltip's, which keyboard and touch cannot open) instead of the short.
   it("lists each environment's last generate, newest first, never generated last", () => {
     renderPage();
     expect(generateRows()).toEqual([
-      `demo-prod${formatAge(prod.last_generate_at)}: generated ${formatRelative(prod.last_generate_at)}`,
-      `zeta-sandbox${formatAge(sandbox.last_generate_at)}: failed ${formatRelative(sandbox.last_generate_at)}`,
+      `demo-prod${formatAge(prod.last_generate_at)}: generated ${formatRelative(prod.last_generate_at)}, ${formatDateTime(prod.last_generate_at)}`,
+      `zeta-sandbox${formatAge(sandbox.last_generate_at)}: failed ${formatRelative(sandbox.last_generate_at)}, ${formatDateTime(sandbox.last_generate_at)}`,
       "demo-stagingNever: never generated",
     ]);
     const failed = within(lastGeneratedTile()).getAllByRole("listitem")[1];
@@ -285,7 +286,7 @@ describe("EnvironmentsPage", () => {
     ).toHaveAttribute("aria-hidden", "true");
     expect(
       within(failed).getByText(
-        `: failed ${formatRelative(sandbox.last_generate_at)}`,
+        `: failed ${formatRelative(sandbox.last_generate_at)}, ${formatDateTime(sandbox.last_generate_at)}`,
       ),
     ).toHaveClass("sr-only");
   });
@@ -719,7 +720,7 @@ describe("EnvironmentsPage across providers", () => {
     Array.from(document.querySelectorAll('[data-slot="stat-card"]'));
   const legend = () =>
     within(tiles()[2])
-      .getAllByRole("listitem")
+      .getAllByRole("listitem", { hidden: true })
       .filter((li) => li.dataset.provider)
       .map((li) => li.textContent);
 
@@ -749,6 +750,22 @@ describe("EnvironmentsPage across providers", () => {
     // Regions: a legend of the providers by name only; on-prem has no place
     // on the map.
     expect(legend()).toEqual(["AWS", "Azure", "On-prem"]);
+  });
+
+  // A color key only: the sr-only region list names each region's provider.
+  it("keeps the region legend from screen readers", () => {
+    renderPage({ environments: MIXED });
+    expect(legend()).toEqual(["AWS", "Azure", "On-prem"]);
+    expect(
+      within(tiles()[2])
+        .getAllByRole("listitem")
+        .filter((li) => li.dataset.provider),
+    ).toEqual([]);
+    expect(
+      within(tiles()[2])
+        .getAllByRole("listitem")
+        .map((li) => li.textContent),
+    ).toContainEqual(expect.stringContaining("(Azure): 1 environment"));
   });
 
   it("names Google Cloud GCP in the region legend only", () => {
