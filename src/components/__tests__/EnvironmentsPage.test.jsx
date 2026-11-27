@@ -131,25 +131,40 @@ describe("EnvironmentsPage", () => {
     );
     expect(stats.map((card) => card.firstChild.textContent)).toEqual([
       "Environments",
-      "Services enabled",
+      "Services",
       "Regions",
       "Last generated",
     ]);
     expect(
       stats.slice(0, 3).map((card) => card.children[1].textContent),
     ).toEqual(["3", "13", "3"]);
-    // Each tile's picture: a row per status with its count and share, every
-    // category, the regions.
+    // Each tile's picture: a row per status with its count and share, the
+    // services, the regions.
     expect(
       within(stats[0])
         .getAllByRole("listitem")
         .map((li) => li.textContent),
     ).toEqual(["Ready133%", "Not generated133%", "Failed133%"]);
+    // Every service in use, most used first; past four rows the list scrolls
+    // in a region the keyboard can reach.
+    const services = within(stats[1]).getByRole("region", {
+      name: "Services in use",
+    });
+    expect(services).toHaveAttribute("tabindex", "0");
     expect(
-      within(stats[1])
+      within(services)
         .getAllByRole("listitem")
-        .map((li) => li.firstChild.textContent),
-    ).toEqual(["Compute", "Networking", "Storage", "Database", "Integration"]);
+        .map((li) => li.textContent),
+    ).toEqual([
+      "VPC3/3: 3 of 3 environments",
+      "EKS2/3: 2 of 3 environments",
+      "RDS2/3: 2 of 3 environments",
+      "S32/3: 2 of 3 environments",
+      "ECR1/3: 1 of 3 environments",
+      "Lambda1/3: 1 of 3 environments",
+      "SNS1/3: 1 of 3 environments",
+      "SQS1/3: 1 of 3 environments",
+    ]);
     // Regions are dots on the map, named for screen readers.
     expect(
       within(stats[2]).getByText("Europe (Ireland): 1 environment"),
@@ -235,6 +250,13 @@ describe("EnvironmentsPage", () => {
       "Not generated 1",
       "Failed 1",
     ]);
+  });
+
+  it("lists up to four services in the tile without a scrolling region", () => {
+    renderPage({ environments: [staging] });
+    const tile = document.querySelectorAll('[data-slot="stat-card"]')[1];
+    expect(within(tile).queryByRole("region")).not.toBeInTheDocument();
+    expect(within(tile).getAllByRole("listitem")).toHaveLength(2);
   });
 
   it("offers no tab for a status that does not occur", () => {

@@ -1,13 +1,14 @@
 import { CircleAlert, CircleCheck, CircleDashed, Loader } from "lucide-react";
+import { useState } from "react";
 import {
-  foldCategories,
   generations,
   regionsInUse,
-  servicesByCategory,
+  servicesInUse,
   statusBreakdown,
   summarizeEnvironments,
 } from "../utils/environmentStats";
 import { RegionMap } from "./environments/RegionMap";
+import ServiceIcon from "./icons/ServiceIcon";
 import { RelativeTime, formatRelative } from "@/components/shared/format";
 import { StatCard } from "@/components/shared/settings";
 import {
@@ -83,37 +84,80 @@ function StatusRows({ parts, total }) {
   );
 }
 
-// At most this many rows; more categories fold into "Other".
-const MAX_CATEGORIES = 6;
+// Rows in view at once (20 px each, 8 px apart); more scroll inside the tile.
+const VISIBLE_SERVICES = 4;
 
-/** The categories as one-color bars from a common start, the count at the tip. */
-function CategoryBars({ rows: all }) {
-  const rows = foldCategories(all, MAX_CATEGORIES);
-  const max = Math.max(1, ...rows.map((row) => row.count));
+/**
+ * Every service in use: its AWS icon, short name, a bar of the environments
+ * that use it (from a 12rem tile) and "used/all", the full name in a tooltip.
+ * Past four rows the list scrolls inside the tile, which keeps its height,
+ * and fades at an edge with more rows behind it. The scrolling list is a
+ * focusable region so the keyboard can scroll it.
+ */
+function ServiceBars({ services, total }) {
+  const scrolls = services.length > VISIBLE_SERVICES;
+  const of = `of ${total} ${total === 1 ? "environment" : "environments"}`;
+  const [fade, setFade] = useState({ top: false, bottom: scrolls });
+  const onScroll = (event) => {
+    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+    setFade({
+      top: scrollTop > 0,
+      bottom: scrollTop + clientHeight < scrollHeight - 1,
+    });
+  };
   return (
-    <ul className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 text-xs">
-      {rows.map(({ category, count, other }) => (
-        <li
-          key={category}
-          className="col-span-2 grid grid-cols-subgrid items-center"
-        >
-          <span className="text-muted-foreground">{category}</span>
-          <span className="flex items-center gap-1.5">
-            <span
-              aria-hidden
-              className={cn(
-                "h-2 rounded-r-sm",
-                other ? "bg-muted-foreground/40" : "bg-chart-1",
-              )}
-              style={{
-                width: `max(0.25rem, calc((100% - 2rem) * ${count / max}))`,
-              }}
-            />
-            <span className="font-medium tabular-nums">{count}</span>
-          </span>
-        </li>
-      ))}
-    </ul>
+    <div className="rounded-sm has-focus-visible:ring-2 has-focus-visible:ring-ring/50">
+      <div
+        {...(scrolls && {
+          role: "region",
+          "aria-label": "Services in use",
+          tabIndex: 0,
+          onScroll,
+        })}
+        className={cn(
+          scrolls &&
+            "max-h-[6.5rem] overflow-y-auto overscroll-contain outline-none [scrollbar-width:thin]",
+          scrolls && fade.top && "mask-t-from-85%",
+          scrolls && fade.bottom && "mask-b-from-85%",
+        )}
+      >
+        <ul className="grid grid-cols-[auto_1fr_auto] items-center gap-x-2 gap-y-2 text-xs @[12rem]:grid-cols-[auto_auto_1fr_auto]">
+          {services.map(({ key, name, title, count }) => (
+            <Tooltip key={key}>
+              <TooltipTrigger asChild>
+                <li className="col-span-3 grid h-5 grid-cols-subgrid items-center @[12rem]:col-span-4">
+                  <ServiceIcon service={key} className="size-4 rounded-[3px]" />
+                  <span className="text-muted-foreground">{name}</span>
+                  <span
+                    aria-hidden
+                    className="hidden h-1.5 overflow-hidden rounded-full bg-muted @[12rem]:block"
+                  >
+                    <span
+                      className="block h-full rounded-full bg-chart-1"
+                      style={{ width: `${(count / total) * 100}%` }}
+                    />
+                  </span>
+                  <span className="text-muted-foreground tabular-nums">
+                    <span aria-hidden>
+                      <span className="font-medium text-foreground">
+                        {count}
+                      </span>
+                      /{total}
+                    </span>
+                    <span className="sr-only">
+                      : {count} {of}
+                    </span>
+                  </span>
+                </li>
+              </TooltipTrigger>
+              <TooltipContent>
+                {title}: {count} {of}
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </ul>
+      </div>
+    </div>
   );
 }
 
@@ -206,6 +250,7 @@ function Freshness({ items, now }) {
 
 export default function EnvironmentStatStrip({ environments }) {
   const stats = summarizeEnvironments(environments);
+  const services = servicesInUse(environments);
   const now = Date.now();
   return (
     // Compact below sm so the first card stays above the fold; four in a row
@@ -218,8 +263,13 @@ export default function EnvironmentStatStrip({ environments }) {
             total={stats.total}
           />
         </StatCard>
-        <StatCard compact label="Services enabled" value={stats.services}>
-          <CategoryBars rows={servicesByCategory(environments)} />
+        <StatCard compact label="Services" value={stats.services}>
+          {/* Keyed by length: a list that starts to scroll starts faded. */}
+          <ServiceBars
+            key={services.length}
+            services={services}
+            total={stats.total}
+          />
         </StatCard>
         <StatCard compact label="Regions" value={stats.regions}>
           <Regions regions={regionsInUse(environments)} />

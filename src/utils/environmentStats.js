@@ -147,35 +147,33 @@ export const statusBreakdown = (environments) =>
     count,
   }));
 
-/** Enabled services per catalog category over all environments, most first. */
-export const servicesByCategory = (environments) => {
+/**
+ * A catalog name in short: the acronym in its trailing parentheses, else the
+ * name without "AWS " and " Service" ("OpenSearch Service" reads OpenSearch).
+ */
+export const shortServiceName = (name) =>
+  /\(([^)]+)\)$/.exec(name)?.[1] ??
+  name.replace(/^AWS /, "").replace(/ Service$/, "");
+
+/**
+ * Enabled services `{ key, name, title, count }` over all environments: `count`
+ * environments use it, `name` is short and `title` the catalog name (a key the
+ * catalog does not know reads in capitals). Most used first, then by name.
+ */
+export const servicesInUse = (environments) => {
   const counts = new Map();
   for (const env of environments) {
     for (const key of enabledServices(env)) {
-      const category = getServiceConfig(key)?.category ?? "Other";
-      counts.set(category, (counts.get(category) ?? 0) + 1);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
     }
   }
   return [...counts]
-    .map(([category, count]) => ({ category, count }))
-    .sort((a, b) => b.count - a.count || a.category.localeCompare(b.category));
+    .map(([key, count]) => {
+      const title = getServiceConfig(key)?.displayName ?? key.toUpperCase();
+      return { key, name: shortServiceName(title), title, count };
+    })
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 };
-
-/**
- * `rows` ({ category, count }, most first) cut to at most `max` rows: past that,
- * the last row is "Other" with the rest summed and `other: true`.
- */
-export const foldCategories = (rows, max) =>
-  rows.length > max
-    ? [
-        ...rows.slice(0, max - 1),
-        {
-          category: "Other",
-          count: rows.slice(max - 1).reduce((sum, row) => sum + row.count, 0),
-          other: true,
-        },
-      ]
-    : rows;
 
 /**
  * Regions in use `{ region, name, city, at, count }`, most environments first. `at` is the

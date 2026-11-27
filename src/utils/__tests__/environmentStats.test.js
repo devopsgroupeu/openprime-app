@@ -1,9 +1,9 @@
 import {
   enabledServices,
-  foldCategories,
   generations,
   regionsInUse,
-  servicesByCategory,
+  servicesInUse,
+  shortServiceName,
   statusBreakdown,
   filterAndSortEnvironments,
   getEffectiveStatus,
@@ -312,18 +312,53 @@ describe("statusBreakdown", () => {
   });
 });
 
-describe("servicesByCategory", () => {
-  it("counts enabled services per category over all environments, most first", () => {
-    expect(servicesByCategory([prod, staging])).toEqual([
-      { category: "Networking", count: 2 },
-      { category: "Compute", count: 1 },
-      { category: "Database", count: 1 },
-      { category: "Storage", count: 1 },
+describe("servicesInUse", () => {
+  it("counts the environments per enabled service, most first, then by name", () => {
+    expect(servicesInUse([prod, staging])).toEqual([
+      {
+        key: "vpc",
+        name: "VPC",
+        title: "Virtual Private Cloud (VPC)",
+        count: 2,
+      },
+      {
+        key: "eks",
+        name: "EKS",
+        title: "Elastic Kubernetes Service (EKS)",
+        count: 1,
+      },
+      {
+        key: "rds",
+        name: "RDS",
+        title: "Relational Database Service (RDS)",
+        count: 1,
+      },
+      { key: "s3", name: "S3", title: "Simple Storage Service (S3)", count: 1 },
+    ]);
+  });
+
+  it("names a service the catalog does not know by its key", () => {
+    const env = { ...prod, services: { pulsar: { enabled: true } } };
+    expect(servicesInUse([env])).toEqual([
+      { key: "pulsar", name: "PULSAR", title: "PULSAR", count: 1 },
     ]);
   });
 
   it("is empty without enabled services", () => {
-    expect(servicesByCategory([])).toEqual([]);
+    expect(servicesInUse([])).toEqual([]);
+  });
+});
+
+describe("shortServiceName", () => {
+  it.each([
+    ["Virtual Private Cloud (VPC)", "VPC"],
+    ["Managed Streaming for Apache Kafka (MSK)", "MSK"],
+    ["OpenSearch Service", "OpenSearch"],
+    ["AWS Lambda", "Lambda"],
+    ["Aurora Serverless", "Aurora Serverless"],
+    ["Route 53", "Route 53"],
+  ])("reads %s as %s", (full, short) => {
+    expect(shortServiceName(full)).toBe(short);
   });
 });
 
@@ -391,25 +426,6 @@ describe("generations", () => {
         at: "2026-08-01T10:00:00Z",
         status: "failed",
       },
-    ]);
-  });
-});
-
-describe("foldCategories", () => {
-  const rows = ["A", "B", "C", "D"].map((category, i) => ({
-    category,
-    count: 4 - i,
-  }));
-
-  it("keeps up to `max` rows as they are", () => {
-    expect(foldCategories(rows, 4)).toBe(rows);
-  });
-
-  it("sums the rest into Other so the tile never grows", () => {
-    expect(foldCategories(rows, 3)).toEqual([
-      { category: "A", count: 4 },
-      { category: "B", count: 3 },
-      { category: "Other", count: 3, other: true },
     ]);
   });
 });

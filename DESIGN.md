@@ -517,15 +517,18 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
 
 ### 6.1 Environments list (`EnvironmentsPage.jsx`, `EnvironmentCard.jsx`)
 
-- Stat strip, always (`EnvironmentStatStrip.jsx`): Environments, Services enabled, Regions, Last
+- Stat strip, always (`EnvironmentStatStrip.jsx`): Environments, Services, Regions, Last
   generated (relative or "Never"), four in a row from a 42rem content column (`@2xl`), else two.
   Each tile has a picture drawn only from the environments (no invented trend), hidden below sm;
   region and generate dots name their point in a tooltip:
   - Environments: a row per status that occurs (filter-tab order): the `StatusPill` icon in the
     status color (Not generated `CircleDashed`), label, count and share (from a 12rem tile), over a
     4 px meter of that share. Statuses are few, so the tile keeps its height.
-  - Services enabled: the catalog categories as `bg-chart-1` bars, the count at the tip; past six
-    rows the rest fold into "Other" (`foldCategories`), so the tile never grows.
+  - Services: every service in use (`servicesInUse`, most used first): `ServiceIcon`, short name
+    (`shortServiceName`: VPC, EKS, Lambda), a `bg-chart-1` bar of the environments using it (from
+    a 12rem tile) and "used/all", the catalog name in a tooltip. Four 20 px rows show; more scroll
+    inside the tile (a focusable "Services in use" region) with a mask fade at the edge that has
+    rows behind it, so the tile never grows.
   - Regions: `RegionMap` (`environments/RegionMap.jsx`), an Equal Earth map framed to the regions
     in use (land from `environments/worldLand.js`, generated once from Natural Earth; region
     `city` and `at` in `providersConfig.js`, a test fails without them), a `bg-chart-1` dot with a
