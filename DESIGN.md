@@ -556,7 +556,9 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
 - `ListToolbar`: status `FilterTabs` "All" + only the statuses that occur (Ready, Not generated,
   Failed first) with counts, a live "N environments", a search field reading "Search environments"
   that matches name, resource prefix or region, and the sort (Recently modified, Name A to Z, Most
-  services).
+  services). Tabs and count left, search and sort right on one row; where that row does not fit
+  (tablet widths with the sidebar open) search and sort wrap under the tabs instead of squeezing
+  them.
 - Card: cover with provider avatar, name, `StatusBadge`, region and "Resource prefix" (the prefix
   in mono), up to six `ServiceIcon`s with tooltips and "+N", "Modified 3 days ago" (exact UTC time
   for screen readers only), menu Open, Edit, Copy environment ID, Delete. Opening the list re-reads
