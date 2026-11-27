@@ -167,7 +167,7 @@ const EnvironmentsPage = ({
     <PageShell>
       <PageHeader
         title="Environments"
-        description="AWS environments that OpenPrime turns into Terraform, Helm and Argo CD code."
+        description="Manage and deploy your cloud infrastructure environments."
         // First run: the empty state carries the one way forward.
         actions={hasEnvironments || loadError ? <NewEnvironmentButton /> : null}
       />
