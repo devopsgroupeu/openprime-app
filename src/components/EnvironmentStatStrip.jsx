@@ -336,10 +336,11 @@ export default function EnvironmentStatStrip({ environments }) {
   const services = servicesInUse(environments);
   const now = Date.now();
   return (
-    // Compact below sm so the first card stays above the fold; four in a row
-    // once the content column is 42rem wide, with or without the sidebar.
+    // Compact below sm so the first card stays above the fold. 2 x 2 until the
+    // content column is 59rem wide, where each tile gets 204 px of content: the
+    // widest picture, the four-provider region legend, needs 198 px.
     <div className="@container">
-      <div className="grid grid-cols-2 gap-2 sm:gap-4 @2xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-4 @[59rem]:grid-cols-4">
         <StatCard compact label="Environments" value={stats.total}>
           <StatusRows
             parts={statusBreakdown(environments)}

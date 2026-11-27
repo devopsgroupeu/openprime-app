@@ -60,7 +60,7 @@ export function ListPageSkeleton({ stats = 0 }) {
       {stats > 0 ? (
         // Same container switch as EnvironmentStatStrip.
         <div className="@container">
-          <div className="grid grid-cols-2 gap-2 sm:gap-4 @2xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4 @[59rem]:grid-cols-4">
             {Array.from({ length: stats }, (_, i) => (
               <Skeleton
                 key={i}

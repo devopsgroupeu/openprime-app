@@ -525,7 +525,8 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
   scopes the whole page: the stat strip, the status tabs and the list. One filter row above the
   charts, not a filter per tile, so the tiles never disagree.
 - Stat strip, always (`EnvironmentStatStrip.jsx`): Environments, Services, Regions, Last
-  generated (relative or "Never"), four in a row from a 42rem content column (`@2xl`), else two.
+  generated (relative or "Never"), four in a row from a 59rem content column (`@[59rem]`, 204 px of
+  content per tile; the four-provider region legend needs 198 px on one line), else 2 x 2.
   Each tile has a picture drawn only from the environments (no invented trend), hidden below sm;
   region and generate dots name their point in a tooltip:
   - Environments: a row per status that occurs (filter-tab order): the `StatusPill` icon in the
