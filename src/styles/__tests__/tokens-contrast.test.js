@@ -119,6 +119,10 @@ describe.each(Object.entries(themes))("%s theme tokens", (theme, t) => {
       [`chart-${n}`, "background", NON_TEXT],
       [`chart-${n}`, "card", NON_TEXT],
     ]),
+    ...["aws", "azure", "gcp"].flatMap((p) => [
+      [`provider-${p}`, "background", NON_TEXT],
+      [`provider-${p}`, "card", NON_TEXT],
+    ]),
   ];
   if (theme === "light")
     pairs.push(["destructive-foreground", "destructive", TEXT]);

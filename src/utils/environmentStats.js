@@ -1,4 +1,7 @@
-import { getProviderRegions } from "../config/providersConfig";
+import {
+  PROVIDERS_CONFIG,
+  getProviderRegions,
+} from "../config/providersConfig";
 import { getServiceConfig } from "../config/servicesConfig";
 
 // Derived views of the environments list: effective status and how it reads,
@@ -104,8 +107,42 @@ export const enabledServices = (environment) =>
 export const prefixOf = (env) => env.global_prefix || env.globalPrefix || "";
 export const regionOf = (env) => env.region || env.location || "";
 
+/** The provider of an environment; older ones without one are AWS. */
+export const providerOf = (env) => env.provider || "aws";
+
+/** "AWS", "Azure", "Google Cloud", "On-prem"; an unknown provider reads as itself. */
+export const providerName = (provider) =>
+  PROVIDERS_CONFIG[provider]?.shortName ?? provider;
+
+// Providers in the catalog order (AWS first), unknown ones after.
+const PROVIDER_ORDER = Object.keys(PROVIDERS_CONFIG);
+export const byProviderOrder = (a, b) => {
+  const rank = (p) =>
+    PROVIDER_ORDER.includes(p)
+      ? PROVIDER_ORDER.indexOf(p)
+      : PROVIDER_ORDER.length;
+  return rank(a) - rank(b) || a.localeCompare(b);
+};
+
+/** Provider filter tabs `{ value, label, count }` for the providers that occur. */
+export const providerFilters = (environments) => {
+  const counts = new Map();
+  for (const env of environments) {
+    counts.set(providerOf(env), (counts.get(providerOf(env)) ?? 0) + 1);
+  }
+  return [...counts]
+    .map(([value, count]) => ({ value, label: providerName(value), count }))
+    .sort((a, b) => byProviderOrder(a.value, b.value));
+};
+
+/** The environments of one provider, or all of them for "all". */
+export const byProvider = (environments, provider) =>
+  provider === "all"
+    ? environments
+    : environments.filter((env) => providerOf(env) === provider);
+
 const regionConfig = (env) =>
-  getProviderRegions(env.provider)?.find((r) => r.value === regionOf(env));
+  getProviderRegions(providerOf(env))?.find((r) => r.value === regionOf(env));
 
 /** "Europe (Ireland)" for a listed region of the provider, else undefined. */
 export const regionName = (env) => regionConfig(env)?.label;
@@ -123,7 +160,11 @@ export const summarizeEnvironments = (environments) => ({
     (sum, env) => sum + enabledServices(env).length,
     0,
   ),
-  regions: new Set(environments.map(regionOf).filter(Boolean)).size,
+  regions: new Set(
+    environments
+      .filter(regionOf)
+      .map((env) => `${providerOf(env)}:${regionOf(env)}`),
+  ).size,
   lastGenerated:
     environments
       .filter((env) => env.last_generate_status === "succeeded")
@@ -156,45 +197,67 @@ export const shortServiceName = (name) =>
   name.replace(/^AWS /, "").replace(/ Service$/, "");
 
 /**
- * Enabled services `{ key, name, title, count }` over all environments: `count`
- * environments use it, `name` is short and `title` the catalog name (a key the
- * catalog does not know reads in capitals). Most used first, then by name.
+ * Enabled services `{ key, provider, name, title, count, of }`: `count` of the
+ * `of` environments of its provider use it, `name` is short and `title` the
+ * catalog name (a key the catalog does not know reads in capitals). Grouped
+ * by provider (AWS first), then most used, then by name.
  */
 export const servicesInUse = (environments) => {
+  const totals = new Map();
   const counts = new Map();
   for (const env of environments) {
+    const provider = providerOf(env);
+    totals.set(provider, (totals.get(provider) ?? 0) + 1);
     for (const key of enabledServices(env)) {
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+      const id = `${provider}:${key}`;
+      const entry = counts.get(id) ?? { key, provider, count: 0 };
+      entry.count += 1;
+      counts.set(id, entry);
     }
   }
-  return [...counts]
-    .map(([key, count]) => {
+  return [...counts.values()]
+    .map(({ key, provider, count }) => {
       const title = getServiceConfig(key)?.displayName ?? key.toUpperCase();
-      return { key, name: shortServiceName(title), title, count };
+      return {
+        key,
+        provider,
+        name: shortServiceName(title),
+        title,
+        count,
+        of: totals.get(provider),
+      };
     })
-    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    .sort(
+      (a, b) =>
+        byProviderOrder(a.provider, b.provider) ||
+        b.count - a.count ||
+        a.name.localeCompare(b.name),
+    );
 };
 
 /**
- * Regions in use `{ region, name, city, at, count }`, most environments first. `at` is the
- * listed region's [longitude, latitude], else null; an unlisted region's name and city are its
- * code.
+ * Regions in use `{ region, provider, name, city, at, count }` (one per provider and region),
+ * most environments first. `at` is the listed region's [longitude, latitude], else null (an
+ * on-premise datacenter too); an unlisted region's name and city are its code.
  */
 export const regionsInUse = (environments) => {
   const regions = new Map();
   for (const env of environments) {
     const region = regionOf(env);
     if (!region) continue;
+    const provider = providerOf(env);
+    const id = `${provider}:${region}`;
     const listed = regionConfig(env);
-    const entry = regions.get(region) ?? {
+    const entry = regions.get(id) ?? {
       region,
+      provider,
       name: listed?.label ?? region,
       city: listed?.city ?? region,
       at: listed?.at ?? null,
       count: 0,
     };
     entry.count += 1;
-    regions.set(region, entry);
+    regions.set(id, entry);
   }
   return [...regions.values()].sort(
     (a, b) => b.count - a.count || a.city.localeCompare(b.city),

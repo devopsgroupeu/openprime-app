@@ -5,16 +5,19 @@ import { Layers, Plus } from "lucide-react";
 
 import EnvironmentCard from "./EnvironmentCard";
 import EnvironmentStatStrip from "./EnvironmentStatStrip";
+import ProviderIcon from "./icons/ProviderIcon";
 import PrerequisitesChecklist from "./PrerequisitesChecklist";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
 import authService from "../services/authService";
 import { useToast } from "../contexts/ToastContext";
 import {
   SORTS,
+  byProvider,
   filterAndSortEnvironments,
+  providerFilters,
   statusFilters,
 } from "../utils/environmentStats";
-import { ListToolbar } from "@/components/shared/list-toolbar";
+import { FilterTabs, ListToolbar } from "@/components/shared/list-toolbar";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageShell } from "@/components/shared/page-shell";
 import { ResourceCardGrid } from "@/components/shared/resource-card";
@@ -66,8 +69,10 @@ const EnvironmentsPage = ({
 }) => {
   const toast = useToast();
   const [query, setQuery] = useState("");
-  // The status filter is shareable and survives Back: it lives in ?status=.
+  // The provider and status filters are shareable and survive Back: they
+  // live in ?provider= and ?status=.
   const [params, setParams] = useSearchParams();
+  const provider = params.get("provider") ?? "all";
   const status = params.get("status") ?? "all";
   const [sort, setSort] = useState(readSort);
   const [deleting, setDeleting] = useState(null);
@@ -75,24 +80,38 @@ const EnvironmentsPage = ({
   const [hasCredentials, setHasCredentials] = useState(null);
   const hasEnvironments = environments.length > 0;
 
-  const setStatus = (value) =>
+  const setFilter = (key) => (value) =>
     setParams(
       (prev) => {
         const next = new URLSearchParams(prev);
-        if (value === "all") next.delete("status");
-        else next.set("status", value);
+        if (value === "all") next.delete(key);
+        else next.set(key, value);
         return next;
       },
       { replace: true },
     );
+  const setProvider = setFilter("provider");
+  const setStatus = setFilter("status");
 
-  // A status no environment has (an old link, the last one deleted) is All,
-  // in the URL too.
+  // Environments on several clouds get a provider filter over the whole page:
+  // the stat strip, the status tabs and the list show the chosen provider's.
+  const providers = providerFilters(environments);
+  const activeProvider = providers.some((o) => o.value === provider)
+    ? provider
+    : "all";
+  const scoped = byProvider(environments, activeProvider);
+
+  // A provider or status no environment has (an old link, the last one
+  // deleted) is All, in the URL too.
+  const loaded = !loading && !loadError;
+  const staleProvider = loaded && provider !== activeProvider;
   const staleStatus =
-    !loading &&
-    !loadError &&
+    loaded &&
     status !== "all" &&
-    !statusFilters(environments).some((o) => o.value === status);
+    !statusFilters(scoped).some((o) => o.value === status);
+  useEffect(() => {
+    if (staleProvider) setProvider("all");
+  }, [staleProvider]);
   useEffect(() => {
     if (staleStatus) setStatus("all");
   }, [staleStatus]);
@@ -132,11 +151,11 @@ const EnvironmentsPage = ({
   };
 
   const options = [
-    { value: "all", label: "All", count: environments.length },
-    ...statusFilters(environments),
+    { value: "all", label: "All", count: scoped.length },
+    ...statusFilters(scoped),
   ];
   const activeStatus = options.some((o) => o.value === status) ? status : "all";
-  const visible = filterAndSortEnvironments(environments, {
+  const visible = filterAndSortEnvironments(scoped, {
     query,
     status: activeStatus,
     sort,
@@ -192,7 +211,29 @@ const EnvironmentsPage = ({
         </>
       ) : (
         <>
-          <EnvironmentStatStrip environments={environments} />
+          {providers.length > 1 ? (
+            <FilterTabs
+              label="Provider"
+              value={activeProvider}
+              onChange={setProvider}
+              options={[
+                { value: "all", label: "All", count: environments.length },
+                ...providers.map((o) => ({
+                  ...o,
+                  label: (
+                    <>
+                      <ProviderIcon
+                        provider={o.value}
+                        className="h-3.5 w-auto max-w-5"
+                      />
+                      {o.label}
+                    </>
+                  ),
+                })),
+              ]}
+            />
+          ) : null}
+          <EnvironmentStatStrip environments={scoped} />
           <ListToolbar
             search={query}
             onSearchChange={setQuery}

@@ -88,6 +88,7 @@ One cool neutral ramp (OKLCH hue 264); elevation background < card < popover < a
 | `--sidebar` / `-accent` / `-border` | `oklch(0.945 0.003 264)` / L `0.88` / L `0.912`    | `oklch(0.24 0.005 264)` / L `0.32` / L `0.28`      | Sidebar surface / hover and active row / separators   |
 | `--sidebar-foreground` / `-ring`    | `--foreground` / #1e7366                           | `--foreground` / #35b0a0                           | Rows at `/80`, labels at `/70`; sidebar focus         |
 | `--logo-tile`                       | `oklch(1 0 0)`                                     | `oklch(1 0 0)`                                     | Logo tiles, white in both themes                      |
+| `--provider-{aws,azure,gcp}`        | #d97706 / #0078d4 / #1e8e3e                        | same                                               | Region map dots when environments span providers      |
 
 Recipes: hover `bg-accent` (cards `hover:bg-accent/40`, rows `hover:bg-muted/40`); quiet fills
 `bg-muted`, `bg-muted/30` (open rows), `bg-muted/40` (code), `bg-muted/60` (previews); success
@@ -517,6 +518,12 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
 
 ### 6.1 Environments list (`EnvironmentsPage.jsx`, `EnvironmentCard.jsx`)
 
+- Provider filter, only while the environments span two or more providers (`providerFilters`;
+  OpenPrime is AWS-only until Azure, Google Cloud or on-prem is enabled in `providersConfig.js`):
+  `FilterTabs` "Provider" above the stat strip, "All" + each provider that occurs with its
+  `ProviderIcon`, short name and count, kept in `?provider=` (an unknown one resets to All). It
+  scopes the whole page: the stat strip, the status tabs and the list. One filter row above the
+  charts, not a filter per tile, so the tiles never disagree.
 - Stat strip, always (`EnvironmentStatStrip.jsx`): Environments, Services, Regions, Last
   generated (relative or "Never"), four in a row from a 42rem content column (`@2xl`), else two.
   Each tile has a picture drawn only from the environments (no invented trend), hidden below sm;
@@ -526,13 +533,20 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
     4 px meter of that share. Statuses are few, so the tile keeps its height.
   - Services: every service in use (`servicesInUse`, most used first): `ServiceIcon`, short name
     (`shortServiceName`: VPC, EKS, Lambda), a `bg-chart-1` bar of the environments using it (from
-    a 12rem tile) and "used/all", the catalog name in a tooltip. Four 20 px rows show; more scroll
-    inside the tile (a focusable "Services in use" region) with a mask fade at the edge that has
-    rows behind it, so the tile never grows.
+    a 12rem tile) and "used/all", the catalog name in a tooltip. Services of several providers come
+    as a list per provider ("Azure services") under its logo and short name, each counted against
+    its own provider's environments. Four 20 px rows show (headings count); more scroll inside the
+    tile (a focusable "Services in use" region) with a mask fade at the edge that has rows behind
+    it, so the tile never grows.
   - Regions: `RegionMap` (`environments/RegionMap.jsx`), an Equal Earth map framed to the regions
     in use (land from `environments/worldLand.js`, generated once from Natural Earth; region
-    `city` and `at` in `providersConfig.js`, a test fails without them), a `bg-chart-1` dot with a
-    halo that grows with its environments. Names are in the dots' tooltips and an sr-only list.
+    `city` and `at` in `providersConfig.js` for AWS, Azure and Google Cloud, a test fails without
+    them), a `bg-chart-1` dot with a halo that grows with its environments. Names are in the dots'
+    tooltips and an sr-only list. Regions of several providers take the `--provider-*` colors
+    (brand hues moved into the categorical band and checked for colorblind separation; red stays
+    Failed's), name the provider in the tooltip and add a legend under the map (dot, short name,
+    region count). Regions within 1.5 degrees (Frankfurt on AWS and Google Cloud) sit side by side
+    12 px apart. On-premise datacenters have no place: the legend lists them with a server icon.
   - Last generated: one dot per environment's last generate (`bg-primary`, failed
     `bg-destructive`, `ring-card`, 24 px hover target) on a line from the oldest (at least 30 days
     back) to Now, then the three most recent by name.

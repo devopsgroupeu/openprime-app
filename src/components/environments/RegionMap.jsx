@@ -3,6 +3,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { providerName } from "../../utils/environmentStats";
 import { LAND_PATH } from "./worldLand";
 
 // Equal Earth (Savric, Patterson and Jenny 2018) at scale 100, centered, y down: the units of
@@ -85,15 +87,55 @@ export function frameFor(points) {
   };
 }
 
+// Dot and halo per cloud once the regions span providers (tokens in index.css);
+// a single provider keeps the brand teal.
+const ONE = { dot: "bg-chart-1", halo: "bg-chart-1/20" };
+const BY_PROVIDER = {
+  aws: { dot: "bg-provider-aws", halo: "bg-provider-aws/20" },
+  azure: { dot: "bg-provider-azure", halo: "bg-provider-azure/20" },
+  gcp: { dot: "bg-provider-gcp", halo: "bg-provider-gcp/20" },
+};
+export const regionTone = (provider, multi) =>
+  (multi && BY_PROVIDER[provider]) || ONE;
+
+// Regions this close (degrees) share a place, like Frankfurt on AWS and Google
+// Cloud: their dots sit side by side, SPREAD px apart, instead of on top.
+const NEAR = 1.5;
+const SPREAD = 12;
+
+/** Each region's horizontal shift in px off its place, 0 when it has the place alone. */
+function shifts(regions) {
+  const places = [];
+  for (const r of regions) {
+    const place = places.find(
+      ([first]) =>
+        Math.abs(first.at[0] - r.at[0]) < NEAR &&
+        Math.abs(first.at[1] - r.at[1]) < NEAR,
+    );
+    if (place) place.push(r);
+    else places.push([r]);
+  }
+  const shift = new Map();
+  for (const place of places) {
+    place.forEach((r, i) =>
+      shift.set(r, (i - (place.length - 1) / 2) * SPREAD),
+    );
+  }
+  return shift;
+}
+
 /**
  * The regions in use as dots on an Equal Earth map, framed to where they are. A dot grows
- * with its environments; hover names it. Decorative: the caller lists the regions as text.
+ * with its environments; hover names it (and its provider when there are several, each in
+ * its own color). Decorative: the caller lists the regions as text.
  */
 export function RegionMap({ regions }) {
   const placed = regions
     .filter((r) => r.at)
     .map((r) => ({ ...r, point: projectEqualEarth(r.at) }));
   const frame = frameFor(placed.map((r) => r.point));
+  const multi = new Set(regions.map((r) => r.provider)).size > 1;
+  const shift = shifts(placed);
   return (
     <div
       aria-hidden
@@ -115,28 +157,38 @@ export function RegionMap({ regions }) {
       </svg>
       {placed.map((r) => {
         const halo = 12 + 6 * Math.min(r.count - 1, 3);
+        const tone = regionTone(r.provider, multi);
         return (
-          <Tooltip key={r.region}>
+          <Tooltip key={`${r.provider}:${r.region}`}>
             <TooltipTrigger asChild>
               <span
                 data-region={r.region}
+                data-provider={r.provider}
                 className="absolute flex -translate-x-1/2 -translate-y-1/2 items-center justify-center"
                 style={{
                   left: `${((r.point[0] - frame.x) / frame.w) * 100}%`,
                   top: `${((r.point[1] - frame.y) / frame.h) * 100}%`,
+                  marginLeft: shift.get(r) || undefined,
                   width: Math.max(halo, 24),
                   height: Math.max(halo, 24),
                 }}
               >
                 <span
-                  className="absolute rounded-full bg-chart-1/20"
+                  className={cn("absolute rounded-full", tone.halo)}
                   style={{ width: halo, height: halo }}
                 />
-                <span className="relative size-2 rounded-full bg-chart-1 ring-2 ring-card" />
+                <span
+                  data-dot
+                  className={cn(
+                    "relative size-2 rounded-full ring-2 ring-card",
+                    tone.dot,
+                  )}
+                />
               </span>
             </TooltipTrigger>
             <TooltipContent>
-              {r.name}: {r.count}{" "}
+              {r.name}
+              {multi ? ` (${providerName(r.provider)})` : ""}: {r.count}{" "}
               {r.count === 1 ? "environment" : "environments"}
             </TooltipContent>
           </Tooltip>

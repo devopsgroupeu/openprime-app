@@ -596,3 +596,97 @@ describe("EnvironmentsPage", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+describe("EnvironmentsPage across providers", () => {
+  const azure = {
+    id: "env-4",
+    name: "azure-dev",
+    global_prefix: "az-",
+    provider: "azure",
+    region: "West Europe",
+    status: "pending",
+    last_generate_at: "2026-06-18T10:00:00Z",
+    last_generate_status: "failed",
+    services: { aks: { enabled: true }, vnet: { enabled: true } },
+    updated_at: "2026-06-21T00:00:00Z",
+  };
+  const onprem = {
+    id: "env-5",
+    name: "dc-lab",
+    global_prefix: "dc-",
+    provider: "onpremise",
+    region: "datacenter-1",
+    status: "pending",
+    services: { kubernetes: { enabled: true } },
+    updated_at: "2026-06-02T00:00:00Z",
+  };
+  const MIXED = [...ALL, azure, onprem];
+  const providerTabs = () =>
+    within(screen.getByRole("group", { name: "Provider" }))
+      .getAllByRole("button")
+      .map((b) => b.textContent);
+  const tiles = () =>
+    Array.from(document.querySelectorAll('[data-slot="stat-card"]'));
+
+  it("offers no provider filter while every environment is on one provider", () => {
+    renderPage();
+    expect(
+      screen.queryByRole("group", { name: "Provider" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers All and the providers that occur, and groups the tiles by provider", () => {
+    renderPage({ environments: MIXED });
+    expect(providerTabs()).toEqual(["All 5", "AWS 3", "Azure 1", "On-prem 1"]);
+    // Services: a list per provider, each counted against its provider's
+    // environments.
+    const services = tiles()[1];
+    expect(
+      within(services)
+        .getAllByRole("list")
+        .map((list) => list.getAttribute("aria-label")),
+    ).toEqual(["AWS services", "Azure services", "On-prem services"]);
+    expect(
+      within(
+        within(services).getByRole("list", { name: "Azure services" }),
+      ).getAllByRole("listitem")[0],
+    ).toHaveTextContent("1 of 1 environment");
+    // Regions: a legend of the providers; on-prem has no place on the map.
+    expect(
+      within(tiles()[2])
+        .getAllByRole("listitem")
+        .filter((li) => li.dataset.provider)
+        .map((li) => li.textContent),
+    ).toEqual(["AWS3", "Azure1", "On-prem1"]);
+  });
+
+  it("narrows the whole page to one provider, in the URL", () => {
+    renderPage({ environments: MIXED });
+    fireEvent.click(screen.getByRole("button", { name: /^Azure/ }));
+    expect(screen.getByRole("status", { name: "Query" })).toHaveTextContent(
+      "?provider=azure",
+    );
+    expect(cardNames()).toEqual(["azure-dev"]);
+    expect(tiles()[0].children[1]).toHaveTextContent("1");
+    // The status tabs count this provider's environments only.
+    expect(
+      within(screen.getByRole("group", { name: "Show" }))
+        .getAllByRole("button")
+        .map((b) => b.textContent),
+    ).toEqual(["All 1", "Failed 1"]);
+    // One provider in view: no groups.
+    expect(
+      within(tiles()[1]).queryByRole("list", { name: "Azure services" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("reads a provider no environment has as All", async () => {
+    renderPage({ environments: MIXED }, "/environments?provider=gcp");
+    expect(cardNames()).toHaveLength(5);
+    await waitFor(() =>
+      expect(
+        screen.getByRole("status", { name: "Query" }),
+      ).toBeEmptyDOMElement(),
+    );
+  });
+});

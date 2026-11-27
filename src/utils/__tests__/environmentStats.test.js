@@ -1,6 +1,9 @@
 import {
+  byProvider,
   enabledServices,
   generations,
+  providerFilters,
+  providerOf,
   regionsInUse,
   servicesInUse,
   shortServiceName,
@@ -50,6 +53,16 @@ describe("summarizeEnvironments", () => {
       regions: 2,
       lastGenerated: null,
     });
+  });
+
+  it("counts a region per provider, as the region map does", () => {
+    const twin = {
+      ...staging,
+      id: "env-9",
+      provider: "gcp",
+      region: "eu-west-3",
+    };
+    expect(summarizeEnvironments([staging, twin]).regions).toBe(2);
   });
 
   it("returns zeros for no environments", () => {
@@ -314,38 +327,106 @@ describe("statusBreakdown", () => {
 
 describe("servicesInUse", () => {
   it("counts the environments per enabled service, most first, then by name", () => {
+    const aws = { provider: "aws", of: 2 };
     expect(servicesInUse([prod, staging])).toEqual([
       {
         key: "vpc",
         name: "VPC",
         title: "Virtual Private Cloud (VPC)",
         count: 2,
+        ...aws,
       },
       {
         key: "eks",
         name: "EKS",
         title: "Elastic Kubernetes Service (EKS)",
         count: 1,
+        ...aws,
       },
       {
         key: "rds",
         name: "RDS",
         title: "Relational Database Service (RDS)",
         count: 1,
+        ...aws,
       },
-      { key: "s3", name: "S3", title: "Simple Storage Service (S3)", count: 1 },
+      {
+        key: "s3",
+        name: "S3",
+        title: "Simple Storage Service (S3)",
+        count: 1,
+        ...aws,
+      },
+    ]);
+  });
+
+  it("groups the services by provider and counts each against its provider's environments", () => {
+    const azure = {
+      ...staging,
+      id: "env-7",
+      provider: "azure",
+      services: { aks: { enabled: true }, vnet: { enabled: true } },
+    };
+    const gcp = {
+      ...staging,
+      id: "env-8",
+      provider: "gcp",
+      services: { gke: { enabled: true } },
+    };
+    expect(
+      servicesInUse([gcp, azure, prod, staging]).map(
+        ({ provider, key, count, of }) => [provider, key, count, of],
+      ),
+    ).toEqual([
+      ["aws", "vpc", 2, 2],
+      ["aws", "eks", 1, 2],
+      ["aws", "rds", 1, 2],
+      ["aws", "s3", 1, 2],
+      ["azure", "aks", 1, 1],
+      ["azure", "vnet", 1, 1],
+      ["gcp", "gke", 1, 1],
     ]);
   });
 
   it("names a service the catalog does not know by its key", () => {
     const env = { ...prod, services: { pulsar: { enabled: true } } };
     expect(servicesInUse([env])).toEqual([
-      { key: "pulsar", name: "PULSAR", title: "PULSAR", count: 1 },
+      {
+        key: "pulsar",
+        name: "PULSAR",
+        title: "PULSAR",
+        count: 1,
+        provider: "aws",
+        of: 1,
+      },
     ]);
   });
 
   it("is empty without enabled services", () => {
     expect(servicesInUse([])).toEqual([]);
+  });
+});
+
+describe("providers", () => {
+  const azure = { ...staging, id: "env-7", provider: "azure" };
+  const onprem = { ...staging, id: "env-9", provider: "onpremise" };
+
+  it("reads an environment without a provider as AWS", () => {
+    expect(providerOf(prod)).toBe("aws");
+    expect(providerOf(azure)).toBe("azure");
+  });
+
+  it("offers a tab per provider that occurs, in the catalog order", () => {
+    expect(providerFilters([onprem, azure, prod, staging])).toEqual([
+      { value: "aws", label: "AWS", count: 2 },
+      { value: "azure", label: "Azure", count: 1 },
+      { value: "onpremise", label: "On-prem", count: 1 },
+    ]);
+  });
+
+  it("keeps the environments of one provider, or all", () => {
+    expect(byProvider([prod, azure, staging], "azure")).toEqual([azure]);
+    expect(byProvider([prod, azure], "all")).toEqual([prod, azure]);
   });
 });
 
@@ -374,6 +455,7 @@ describe("regionsInUse", () => {
     ).toEqual([
       {
         region: "eu-west-1",
+        provider: "aws",
         name: "Europe (Ireland)",
         city: "Ireland",
         at: [-6.26, 53.35],
@@ -381,6 +463,7 @@ describe("regionsInUse", () => {
       },
       {
         region: "us-east-1",
+        provider: "aws",
         name: "US East (N. Virginia)",
         city: "N. Virginia",
         at: [-77.49, 39.04],
@@ -388,11 +471,40 @@ describe("regionsInUse", () => {
       },
       {
         region: "xx-test-9",
+        provider: "aws",
         name: "xx-test-9",
         city: "xx-test-9",
         at: null,
         count: 1,
       },
+    ]);
+  });
+});
+
+describe("regionsInUse across providers", () => {
+  it("tells the providers' regions apart and places a listed cloud region", () => {
+    const gcp = {
+      ...staging,
+      id: "env-8",
+      provider: "gcp",
+      region: "europe-west3",
+    };
+    const onprem = {
+      ...staging,
+      id: "env-9",
+      provider: "onpremise",
+      region: "datacenter-1",
+    };
+    expect(
+      regionsInUse([gcp, onprem]).map(({ provider, region, city, at }) => [
+        provider,
+        region,
+        city,
+        at,
+      ]),
+    ).toEqual([
+      ["onpremise", "datacenter-1", "datacenter-1", null],
+      ["gcp", "europe-west3", "Frankfurt", [8.68, 50.11]],
     ]);
   });
 });

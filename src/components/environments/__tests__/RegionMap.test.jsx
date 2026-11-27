@@ -84,3 +84,45 @@ describe("RegionMap", () => {
     ).toEqual(["eu-west-1"]);
   });
 });
+
+describe("RegionMap across providers", () => {
+  const frankfurt = (provider, region) => ({
+    region,
+    provider,
+    name: region,
+    city: "Frankfurt",
+    at: [8.68, 50.11],
+    count: 1,
+  });
+  const dots = (container) =>
+    [...container.querySelectorAll("[data-region]")].map((el) => ({
+      provider: el.dataset.provider,
+      fill: el.querySelector("[data-dot]").className,
+      shift: el.style.marginLeft,
+    }));
+  const draw = (regions) =>
+    render(
+      <TooltipProvider>
+        <RegionMap regions={regions} />
+      </TooltipProvider>,
+    ).container;
+
+  it("keeps the brand teal while every region is of one provider", () => {
+    const [dot] = dots(draw([frankfurt("aws", "eu-central-1")]));
+    expect(dot.fill).toContain("bg-chart-1");
+    expect(dot.shift).toBe("");
+  });
+
+  it("colors each dot by its provider and sets dots at one place side by side", () => {
+    const placed = dots(
+      draw([
+        frankfurt("aws", "eu-central-1"),
+        frankfurt("gcp", "europe-west3"),
+      ]),
+    );
+    expect(placed.map((d) => d.provider)).toEqual(["aws", "gcp"]);
+    expect(placed[0].fill).toContain("bg-provider-aws");
+    expect(placed[1].fill).toContain("bg-provider-gcp");
+    expect(placed.map((d) => d.shift)).toEqual(["-6px", "6px"]);
+  });
+});

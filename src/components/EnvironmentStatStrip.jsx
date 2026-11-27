@@ -1,13 +1,22 @@
-import { CircleAlert, CircleCheck, CircleDashed, Loader } from "lucide-react";
-import { useState } from "react";
 import {
+  CircleAlert,
+  CircleCheck,
+  CircleDashed,
+  Loader,
+  Server,
+} from "lucide-react";
+import { Fragment, useState } from "react";
+import {
+  byProviderOrder,
   generations,
+  providerName,
   regionsInUse,
   servicesInUse,
   statusBreakdown,
   summarizeEnvironments,
 } from "../utils/environmentStats";
-import { RegionMap } from "./environments/RegionMap";
+import { RegionMap, regionTone } from "./environments/RegionMap";
+import ProviderIcon from "./icons/ProviderIcon";
 import ServiceIcon from "./icons/ServiceIcon";
 import { RelativeTime, formatRelative } from "@/components/shared/format";
 import { StatCard } from "@/components/shared/settings";
@@ -87,16 +96,31 @@ function StatusRows({ parts, total }) {
 // Rows in view at once (20 px each, 8 px apart); more scroll inside the tile.
 const VISIBLE_SERVICES = 4;
 
+const environmentsWord = (n) => (n === 1 ? "environment" : "environments");
+
+/** `rows` (each with a `provider`, already in provider order) split per provider. */
+const groupByProvider = (rows) =>
+  rows.reduce((groups, row) => {
+    const last = groups.at(-1);
+    if (last?.provider === row.provider) last.rows.push(row);
+    else groups.push({ provider: row.provider, rows: [row] });
+    return groups;
+  }, []);
+
 /**
- * Every service in use: its AWS icon, short name, a bar of the environments
- * that use it (from a 12rem tile) and "used/all", the full name in a tooltip.
- * Past four rows the list scrolls inside the tile, which keeps its height,
- * and fades at an edge with more rows behind it. The scrolling list is a
- * focusable region so the keyboard can scroll it.
+ * Every service in use (`servicesInUse`): its icon, short name, a bar of its
+ * provider's environments that use it (from a 12rem tile) and "used/all",
+ * the full name in a tooltip. Services of several providers come as a list
+ * per provider under its logo and name. Past four rows (headings count) the
+ * lists scroll inside the tile, which keeps its height, and fade at an edge
+ * with more rows behind it; the scrolling box is a focusable region so the
+ * keyboard can scroll it.
  */
-function ServiceBars({ services, total }) {
-  const scrolls = services.length > VISIBLE_SERVICES;
-  const of = `of ${total} ${total === 1 ? "environment" : "environments"}`;
+function ServiceBars({ services }) {
+  const groups = groupByProvider(services);
+  const grouped = groups.length > 1;
+  const scrolls =
+    services.length + (grouped ? groups.length : 0) > VISIBLE_SERVICES;
   const [fade, setFade] = useState({ top: false, bottom: scrolls });
   const onScroll = (event) => {
     const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
@@ -121,55 +145,129 @@ function ServiceBars({ services, total }) {
           scrolls && fade.bottom && "mask-b-from-85%",
         )}
       >
-        <ul className="grid grid-cols-[auto_1fr_auto] items-center gap-x-2 gap-y-2 text-xs @[12rem]:grid-cols-[auto_auto_1fr_auto]">
-          {services.map(({ key, name, title, count }) => (
-            <Tooltip key={key}>
-              <TooltipTrigger asChild>
-                <li className="col-span-3 grid h-5 grid-cols-subgrid items-center @[12rem]:col-span-4">
-                  <ServiceIcon service={key} className="size-4 rounded-[3px]" />
-                  <span className="text-muted-foreground">{name}</span>
-                  <span
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-x-2 gap-y-2 text-xs @[12rem]:grid-cols-[auto_auto_1fr_auto]">
+          {groups.map(({ provider, rows }) => {
+            const who = providerName(provider);
+            return (
+              <Fragment key={provider}>
+                {grouped ? (
+                  // The list's label says it to screen readers.
+                  <p
                     aria-hidden
-                    className="hidden h-1.5 overflow-hidden rounded-full bg-muted @[12rem]:block"
+                    className="col-span-full flex h-5 items-center gap-1.5 font-medium text-muted-foreground"
                   >
-                    <span
-                      className="block h-full rounded-full bg-chart-1"
-                      style={{ width: `${(count / total) * 100}%` }}
+                    <ProviderIcon
+                      provider={provider}
+                      className="size-3.5 text-muted-foreground"
                     />
-                  </span>
-                  <span className="text-muted-foreground tabular-nums">
-                    <span aria-hidden>
-                      <span className="font-medium text-foreground">
-                        {count}
-                      </span>
-                      /{total}
-                    </span>
-                    <span className="sr-only">
-                      : {count} {of}
-                    </span>
-                  </span>
-                </li>
-              </TooltipTrigger>
-              <TooltipContent>
-                {title}: {count} {of}
-              </TooltipContent>
-            </Tooltip>
-          ))}
-        </ul>
+                    {who}
+                  </p>
+                ) : null}
+                <ul
+                  aria-label={grouped ? `${who} services` : undefined}
+                  className="col-span-full grid grid-cols-subgrid gap-y-2"
+                >
+                  {rows.map(({ key, name, title, count, of }) => (
+                    <Tooltip key={key}>
+                      <TooltipTrigger asChild>
+                        <li className="col-span-full grid h-5 grid-cols-subgrid items-center">
+                          <ServiceIcon
+                            service={key}
+                            className="size-4 rounded-[3px] text-muted-foreground"
+                          />
+                          <span className="text-muted-foreground">{name}</span>
+                          <span
+                            aria-hidden
+                            className="hidden h-1.5 overflow-hidden rounded-full bg-muted @[12rem]:block"
+                          >
+                            <span
+                              className="block h-full rounded-full bg-chart-1"
+                              style={{ width: `${(count / of) * 100}%` }}
+                            />
+                          </span>
+                          <span className="text-muted-foreground tabular-nums">
+                            <span aria-hidden>
+                              <span className="font-medium text-foreground">
+                                {count}
+                              </span>
+                              /{of}
+                            </span>
+                            <span className="sr-only">
+                              : {count} of {of} {environmentsWord(of)}
+                            </span>
+                          </span>
+                        </li>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {title}: {count} of {of}
+                        {grouped ? ` ${who}` : ""} {environmentsWord(of)}
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                </ul>
+              </Fragment>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
 }
 
-/** The regions on a map; their names are in the dots' tooltips and, as text, for screen readers. */
+/**
+ * The regions on a map; their names are in the dots' tooltips and, as text,
+ * for screen readers. Regions of several providers, or on-premise datacenters
+ * (which have no place on the map), add a legend of the providers with their
+ * region counts: a dot in the map's color, a server for on-prem.
+ */
 function Regions({ regions }) {
+  const providers = [
+    ...regions
+      .reduce(
+        (counts, r) =>
+          counts.set(r.provider, (counts.get(r.provider) ?? 0) + 1),
+        new Map(),
+      )
+      .entries(),
+  ].sort(([a], [b]) => byProviderOrder(a, b));
+  const multi = providers.length > 1;
+  const legend = multi || regions.some((r) => r.provider === "onpremise");
   return (
     <>
       <RegionMap regions={regions} />
+      {legend ? (
+        <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+          {providers.map(([provider, count]) => (
+            <li
+              key={provider}
+              data-provider={provider}
+              className="flex items-center gap-1.5"
+            >
+              {provider === "onpremise" ? (
+                <Server aria-hidden className="size-3 text-muted-foreground" />
+              ) : (
+                <span
+                  aria-hidden
+                  className={cn(
+                    "size-2 rounded-full",
+                    regionTone(provider, multi).dot,
+                  )}
+                />
+              )}
+              <span className="text-muted-foreground">
+                {providerName(provider)}
+              </span>
+              <span className="font-medium tabular-nums">{count}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <ul className="sr-only">
-        {regions.map(({ region, name, count }) => (
-          <li key={region}>
-            {name}: {count} {count === 1 ? "environment" : "environments"}
+        {regions.map(({ region, provider, name, count }) => (
+          <li key={`${provider}:${region}`}>
+            {name}
+            {multi ? ` (${providerName(provider)})` : ""}: {count}{" "}
+            {environmentsWord(count)}
           </li>
         ))}
       </ul>
@@ -264,11 +362,10 @@ export default function EnvironmentStatStrip({ environments }) {
           />
         </StatCard>
         <StatCard compact label="Services" value={stats.services}>
-          {/* Keyed by length: a list that starts to scroll starts faded. */}
+          {/* Keyed by its rows: a list that starts to scroll starts faded. */}
           <ServiceBars
-            key={services.length}
+            key={services.map((s) => `${s.provider}:${s.key}`).join()}
             services={services}
-            total={stats.total}
           />
         </StatCard>
         <StatCard compact label="Regions" value={stats.regions}>

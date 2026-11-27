@@ -61,6 +61,12 @@
   --chart-3: #0369a1;
   --chart-4: #6d28d9;
   --chart-5: #c2410c;
+  /* Region map dots per cloud when environments span providers: the brand hue darkened into
+     the categorical band (raw AWS #ff9900 is under 3:1 on white; red reads as Failed, so
+     Google Cloud is its green). Same in both themes; checked for colorblind separation. */
+  --provider-aws: #d97706;
+  --provider-azure: #0078d4;
+  --provider-gcp: #1e8e3e;
   /* Sidebar = a neutral grey from the page ramp, one step darker than the page; the brand
      stays in the logo, the primary action and focus. */
   --sidebar: oklch(0.945 0.003 264);
@@ -123,6 +129,9 @@
   --chart-3: #38bdf8;
   --chart-4: #a78bfa;
   --chart-5: #fb923c;
+  --provider-aws: #d97706;
+  --provider-azure: #0078d4;
+  --provider-gcp: #1e8e3e;
   /* Charcoal a step above the page and below the card, with a quiet divider. */
   --sidebar: oklch(0.24 0.005 264);
   --sidebar-foreground: oklch(0.945 0.003 264);
@@ -172,6 +181,9 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-provider-aws: var(--provider-aws);
+  --color-provider-azure: var(--provider-azure);
+  --color-provider-gcp: var(--provider-gcp);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
