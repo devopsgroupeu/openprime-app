@@ -4,6 +4,7 @@ import { Link, useSearchParams } from "react-router";
 import { Layers, Plus } from "lucide-react";
 
 import EnvironmentCard from "./EnvironmentCard";
+import EnvironmentStatStrip from "./EnvironmentStatStrip";
 import PrerequisitesChecklist from "./PrerequisitesChecklist";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
 import authService from "../services/authService";
@@ -12,14 +13,11 @@ import {
   SORTS,
   filterAndSortEnvironments,
   statusFilters,
-  summarizeEnvironments,
 } from "../utils/environmentStats";
-import { RelativeTime } from "@/components/shared/format";
 import { ListToolbar } from "@/components/shared/list-toolbar";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageShell } from "@/components/shared/page-shell";
 import { ResourceCardGrid } from "@/components/shared/resource-card";
-import { StatCard } from "@/components/shared/settings";
 import { ListPageSkeleton } from "@/components/shared/skeletons";
 import { EmptyState, ErrorState } from "@/components/shared/states";
 import { Button } from "@/components/ui/button";
@@ -144,7 +142,6 @@ const EnvironmentsPage = ({
     sort,
   });
   const searchOnly = query.trim() !== "" && activeStatus === "all";
-  const stats = summarizeEnvironments(environments);
 
   const copyId = async (environment) => {
     try {
@@ -195,23 +192,7 @@ const EnvironmentsPage = ({
         </>
       ) : (
         <>
-          {/* Compact below sm so the first card stays above the fold. */}
-          <div className="grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-4">
-            <StatCard compact label="Environments" value={stats.total} />
-            <StatCard compact label="Services enabled" value={stats.services} />
-            <StatCard compact label="Regions" value={stats.regions} />
-            <StatCard
-              compact
-              label="Last generated"
-              value={
-                stats.lastGenerated ? (
-                  <RelativeTime iso={stats.lastGenerated} />
-                ) : (
-                  "Never"
-                )
-              }
-            />
-          </div>
+          <EnvironmentStatStrip environments={environments} />
           <ListToolbar
             search={query}
             onSearchChange={setQuery}

@@ -135,9 +135,13 @@ describe("EnvironmentsPage", () => {
       "Regions",
       "Last generated",
     ]);
-    expect(stats.slice(0, 3).map((card) => card.lastChild.textContent)).toEqual(
-      ["3", "13", "3"],
-    );
+    expect(
+      stats.slice(0, 3).map((card) => card.children[1].textContent),
+    ).toEqual(["3", "13", "3"]);
+    // Each tile's picture: statuses, top categories, regions by city.
+    expect(within(stats[0]).getByText("Not generated")).toBeInTheDocument();
+    expect(within(stats[1]).getAllByRole("listitem")).toHaveLength(3);
+    expect(within(stats[2]).getByText("Ireland")).toBeInTheDocument();
     expect(
       within(stats[3]).getByText(formatRelative(prod.last_generate_at)),
     ).toBeInTheDocument();

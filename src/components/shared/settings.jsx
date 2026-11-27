@@ -153,10 +153,11 @@ export function SettingToggleRow({
 }
 
 /**
- * KPI tile: label `text-xs`, value `text-lg font-semibold`, optional hint. `compact`: below sm
- * one line, value (`text-md`) then label ("2 Environments"), smaller padding and no hint.
+ * KPI tile: label `text-xs`, value `text-lg font-semibold`, optional hint, and `children`: a small
+ * picture under the value. `compact`: below sm one line, value (`text-md`) then label
+ * ("2 Environments"), smaller padding, no hint and no picture.
  */
-export function StatCard({ label, value, hint, compact = false }) {
+export function StatCard({ label, value, hint, compact = false, children }) {
   return (
     <div
       data-slot="stat-card"
@@ -193,6 +194,11 @@ export function StatCard({ label, value, hint, compact = false }) {
         >
           {hint}
         </p>
+      ) : null}
+      {children ? (
+        <div className={cn("mt-2.5", compact && "max-sm:hidden")}>
+          {children}
+        </div>
       ) : null}
     </div>
   );

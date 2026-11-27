@@ -1,4 +1,5 @@
 import { getProviderRegions } from "../config/providersConfig";
+import { getServiceConfig } from "../config/servicesConfig";
 
 // Derived views of the environments list: effective status and how it reads,
 // enabled services, the stat strip, the status filter tabs and the client-side
@@ -129,6 +130,69 @@ export const summarizeEnvironments = (environments) => ({
       .filter(Boolean)
       .sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? null,
 });
+
+// The stat strip's pictures: status shares, services per category, the
+// regions by city and each environment's last generate.
+
+const toneOf = (key) =>
+  Object.values(STATUSES).find((s) => s.key === key)?.tone ?? "neutral";
+
+/** `{ key, label, tone, count }` per status that occurs, in the filter-tab order. */
+export const statusBreakdown = (environments) =>
+  statusFilters(environments).map(({ value, label, count }) => ({
+    key: value,
+    label,
+    tone: toneOf(value),
+    count,
+  }));
+
+/** Enabled services per catalog category over all environments, most first. */
+export const servicesByCategory = (environments) => {
+  const counts = new Map();
+  for (const env of environments) {
+    for (const key of enabledServices(env)) {
+      const category = getServiceConfig(key)?.category ?? "Other";
+      counts.set(category, (counts.get(category) ?? 0) + 1);
+    }
+  }
+  return [...counts]
+    .map(([category, count]) => ({ category, count }))
+    .sort((a, b) => b.count - a.count || a.category.localeCompare(b.category));
+};
+
+/**
+ * Regions in use `{ region, city, count }`, most environments first; the city
+ * comes from "Europe (Ireland)", an unlisted region reads as its code.
+ */
+export const regionsInUse = (environments) => {
+  const regions = new Map();
+  for (const env of environments) {
+    const region = regionOf(env);
+    if (!region) continue;
+    const entry = regions.get(region) ?? {
+      region,
+      city: regionName(env)?.match(/\(([^)]+)\)/)?.[1] ?? region,
+      count: 0,
+    };
+    entry.count += 1;
+    regions.set(region, entry);
+  }
+  return [...regions.values()].sort(
+    (a, b) => b.count - a.count || a.city.localeCompare(b.city),
+  );
+};
+
+/** Each environment's last generate `{ id, name, at, status }`, oldest first. */
+export const generations = (environments) =>
+  environments
+    .filter((env) => env.last_generate_at)
+    .map((env) => ({
+      id: env.id,
+      name: env.name,
+      at: env.last_generate_at,
+      status: env.last_generate_status,
+    }))
+    .sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
 
 const FIRST = ["ready", "not-generated", "failed"];
 const rank = (key) => (FIRST.includes(key) ? FIRST.indexOf(key) : FIRST.length);

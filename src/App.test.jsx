@@ -25,13 +25,13 @@ test("renders the authenticated app with mocked environments", async () => {
 
   // The app reaches the authenticated state and renders the mocked environments.
   expect(
-    await screen.findByText(/demo-prod/i, {}, { timeout: 3000 }),
+    await screen.findByRole("link", { name: "demo-prod" }, { timeout: 3000 }),
   ).toBeInTheDocument();
 });
 
 test("renders the shell and opens the command palette with Cmd+K", async () => {
   render(<App />);
-  await screen.findByText(/demo-prod/i, {}, { timeout: 3000 });
+  await screen.findByRole("link", { name: "demo-prod" }, { timeout: 3000 });
 
   // Shell: sidebar nav; a list page has no breadcrumb (crumbs start at
   // depth 2, see AppLayout.test.jsx)
@@ -360,7 +360,7 @@ describe("palette on an environment page", () => {
 
   test("has no environment actions elsewhere", async () => {
     render(<App />);
-    await screen.findByText(/demo-prod/i, {}, { timeout: 3000 });
+    await screen.findByRole("link", { name: "demo-prod" }, { timeout: 3000 });
     fireEvent.keyDown(document, { key: "k", metaKey: true });
     const palette = await screen.findByRole("dialog");
     expect(

@@ -374,9 +374,9 @@ header buttons into the menu on small screens.
   and while their menu is open. `ResourceCardGrid`:
   `motion-stagger grid grid-cols-[repeat(auto-fill,minmax(min(18rem,100%),1fr))] gap-4`. Controls
   inside a card sit above the link (`relative z-10`), never with `stopPropagation`.
-- `StatCard` (`shared/settings.jsx`; `label`, `value`, `hint`, `compact`):
-  `rounded-lg bg-card p-2.5 shadow-(--shadow-ring-xs)`, label `text-xs`, value `text-lg font-semibold`;
-  `compact` is one line below sm.
+- `StatCard` (`shared/settings.jsx`; `label`, `value`, `hint`, `compact`, `children`):
+  `rounded-lg bg-card p-2.5 shadow-(--shadow-ring-xs)`, label `text-xs`, value `text-lg font-semibold`,
+  then `children`, a small picture (`mt-2.5`); `compact` is one line below sm, without the picture.
 - `SettingsSection` (h2 `text-base font-medium`, `description`, `action` beside the heading),
   `SettingsRowGroup`, `SettingsRow` (`title` `text-sm font-medium`, `description` `text-xs`, one
   `control` on the right, stacked below sm; `controlId`, `fullWidth`, `lockedReason`) and
@@ -517,7 +517,15 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
 
 ### 6.1 Environments list (`EnvironmentsPage.jsx`, `EnvironmentCard.jsx`)
 
-- Stat strip, always: Environments, Services enabled, Regions, Last generated (relative or "Never").
+- Stat strip, always (`EnvironmentStatStrip.jsx`): Environments, Services enabled, Regions, Last
+  generated (relative or "Never"), four in a row from a 42rem content column (`@2xl`), else two.
+  Each tile has a picture drawn only from the environments (no invented trend): an 8 px status bar
+  (`rounded-full` parts, 2 px gaps, status colors) with its legend; the top three service categories
+  as `bg-chart-1` bars with the count at the tip; the regions by city (`MapPin` chips, at most four,
+  then "+N"); the last successful environment and a line from the oldest last generate (at least
+  30 days back) to Now with one dot per environment (`bg-primary`, failed `bg-destructive`, a
+  `ring-card` ring, a 24 px hover target, an sr-only list). Bar parts and dots have tooltips that
+  only repeat the legend or the list.
 - `ListToolbar`: status `FilterTabs` "All" + only the statuses that occur (Ready, Not generated,
   Failed first) with counts, a live "N environments", a search field reading "Search environments"
   that matches name, resource prefix or region, and the sort (Recently modified, Name A to Z, Most

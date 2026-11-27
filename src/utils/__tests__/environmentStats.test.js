@@ -1,5 +1,9 @@
 import {
   enabledServices,
+  generations,
+  regionsInUse,
+  servicesByCategory,
+  statusBreakdown,
   filterAndSortEnvironments,
   getEffectiveStatus,
   lastJob,
@@ -287,5 +291,87 @@ describe("filterAndSortEnvironments", () => {
       sort: "name",
     });
     expect(names(input)).toEqual(["Sandbox", "demo-prod"]);
+  });
+});
+
+describe("statusBreakdown", () => {
+  it("counts each status with its tone, in the filter-tab order", () => {
+    const failed = { ...prod, id: "env-3", status: "failed" };
+    const pending = { ...prod, id: "env-4", status: "pending" };
+    expect(statusBreakdown([failed, prod, pending, prod])).toEqual([
+      { key: "ready", label: "Ready", tone: "success", count: 2 },
+      {
+        key: "not-generated",
+        label: "Not generated",
+        tone: "neutral",
+        count: 1,
+      },
+      { key: "failed", label: "Failed", tone: "destructive", count: 1 },
+    ]);
+  });
+});
+
+describe("servicesByCategory", () => {
+  it("counts enabled services per category over all environments, most first", () => {
+    expect(servicesByCategory([prod, staging])).toEqual([
+      { category: "Networking", count: 2 },
+      { category: "Compute", count: 1 },
+      { category: "Database", count: 1 },
+      { category: "Storage", count: 1 },
+    ]);
+  });
+
+  it("is empty without enabled services", () => {
+    expect(servicesByCategory([])).toEqual([]);
+  });
+});
+
+describe("regionsInUse", () => {
+  it("names each region by its city, most environments first", () => {
+    expect(
+      regionsInUse([
+        prod,
+        { ...staging, region: "eu-west-1" },
+        { ...staging, id: "env-5", region: "us-east-1" },
+        { ...staging, id: "env-6", region: "xx-test-9" },
+      ]),
+    ).toEqual([
+      { region: "eu-west-1", city: "Ireland", count: 2 },
+      { region: "us-east-1", city: "N. Virginia", count: 1 },
+      { region: "xx-test-9", city: "xx-test-9", count: 1 },
+    ]);
+  });
+});
+
+describe("generations", () => {
+  it("lists each environment's last generate, oldest first", () => {
+    expect(
+      generations([
+        {
+          ...prod,
+          last_generate_at: "2026-08-01T10:00:00Z",
+          last_generate_status: "failed",
+        },
+        staging,
+        {
+          ...staging,
+          last_generate_at: "2026-07-01T10:00:00Z",
+          last_generate_status: "succeeded",
+        },
+      ]),
+    ).toEqual([
+      {
+        id: "env-2",
+        name: "demo-staging",
+        at: "2026-07-01T10:00:00Z",
+        status: "succeeded",
+      },
+      {
+        id: "env-1",
+        name: "demo-prod",
+        at: "2026-08-01T10:00:00Z",
+        status: "failed",
+      },
+    ]);
   });
 });

@@ -58,14 +58,17 @@ export function ListPageSkeleton({ stats = 0 }) {
     <Busy>
       <HeaderSkeleton />
       {stats > 0 ? (
-        <div className="grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-4">
-          {Array.from({ length: stats }, (_, i) => (
-            <Skeleton
-              key={i}
-              data-slot="stat-card-skeleton"
-              className="h-9 rounded-lg sm:h-16.5"
-            />
-          ))}
+        // Same container switch as EnvironmentStatStrip.
+        <div className="@container">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4 @2xl:grid-cols-4">
+            {Array.from({ length: stats }, (_, i) => (
+              <Skeleton
+                key={i}
+                data-slot="stat-card-skeleton"
+                className="h-9 rounded-lg sm:h-36.5"
+              />
+            ))}
+          </div>
         </div>
       ) : null}
       <div className="flex items-center justify-between gap-3">
