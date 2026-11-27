@@ -336,9 +336,27 @@ describe("regionsInUse", () => {
         { ...staging, id: "env-6", region: "xx-test-9" },
       ]),
     ).toEqual([
-      { region: "eu-west-1", city: "Ireland", count: 2 },
-      { region: "us-east-1", city: "N. Virginia", count: 1 },
-      { region: "xx-test-9", city: "xx-test-9", count: 1 },
+      {
+        region: "eu-west-1",
+        name: "Europe (Ireland)",
+        city: "Ireland",
+        at: [-6.26, 53.35],
+        count: 2,
+      },
+      {
+        region: "us-east-1",
+        name: "US East (N. Virginia)",
+        city: "N. Virginia",
+        at: [-77.49, 39.04],
+        count: 1,
+      },
+      {
+        region: "xx-test-9",
+        name: "xx-test-9",
+        city: "xx-test-9",
+        at: null,
+        count: 1,
+      },
     ]);
   });
 });

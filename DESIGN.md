@@ -519,13 +519,18 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
 
 - Stat strip, always (`EnvironmentStatStrip.jsx`): Environments, Services enabled, Regions, Last
   generated (relative or "Never"), four in a row from a 42rem content column (`@2xl`), else two.
-  Each tile has a picture drawn only from the environments (no invented trend): an 8 px status bar
-  (`rounded-full` parts, 2 px gaps, status colors) with its legend; the top three service categories
-  as `bg-chart-1` bars with the count at the tip; the regions by city (`MapPin` chips, at most four,
-  then "+N"); the last successful environment and a line from the oldest last generate (at least
-  30 days back) to Now with one dot per environment (`bg-primary`, failed `bg-destructive`, a
-  `ring-card` ring, a 24 px hover target, an sr-only list). Bar parts and dots have tooltips that
-  only repeat the legend or the list.
+  Each tile has a picture drawn only from the environments (no invented trend), hidden below sm;
+  tooltips on donut parts and dots only repeat the legend or the text:
+  - Environments: a status donut (2-unit gaps, status colors) and its legend, beside it from a
+    15rem tile, else under it.
+  - Services enabled: every catalog category as a `bg-chart-1` bar, the count at the tip.
+  - Regions: `RegionMap` (`environments/RegionMap.jsx`), an Equal Earth map framed to the regions
+    in use (land from `environments/worldLand.js`, generated once from Natural Earth; region
+    `city` and `at` in `providersConfig.js`), a `bg-chart-1` dot with a halo that grows with its
+    environments, then the cities as text.
+  - Last generated: one dot per environment's last generate (`bg-primary`, failed
+    `bg-destructive`, `ring-card`, 24 px hover target) on a line from the oldest (at least 30 days
+    back) to Now, then the three most recent by name.
 - `ListToolbar`: status `FilterTabs` "All" + only the statuses that occur (Ready, Not generated,
   Failed first) with counts, a live "N environments", a search field reading "Search environments"
   that matches name, resource prefix or region, and the sort (Recently modified, Name A to Z, Most

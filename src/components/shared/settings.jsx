@@ -196,7 +196,7 @@ export function StatCard({ label, value, hint, compact = false, children }) {
         </p>
       ) : null}
       {children ? (
-        <div className={cn("mt-2.5", compact && "max-sm:hidden")}>
+        <div className={cn("@container mt-2.5", compact && "max-sm:hidden")}>
           {children}
         </div>
       ) : null}

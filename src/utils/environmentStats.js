@@ -104,10 +104,11 @@ export const enabledServices = (environment) =>
 export const prefixOf = (env) => env.global_prefix || env.globalPrefix || "";
 export const regionOf = (env) => env.region || env.location || "";
 
+const regionConfig = (env) =>
+  getProviderRegions(env.provider)?.find((r) => r.value === regionOf(env));
+
 /** "Europe (Ireland)" for a listed region of the provider, else undefined. */
-export const regionName = (env) =>
-  getProviderRegions(env.provider)?.find((r) => r.value === regionOf(env))
-    ?.label;
+export const regionName = (env) => regionConfig(env)?.label;
 export const modifiedAt = (env) =>
   env.updated_at || env.updatedAt || env.created_at || env.createdAt;
 
@@ -161,17 +162,21 @@ export const servicesByCategory = (environments) => {
 };
 
 /**
- * Regions in use `{ region, city, count }`, most environments first; the city
- * comes from "Europe (Ireland)", an unlisted region reads as its code.
+ * Regions in use `{ region, name, city, at, count }`, most environments first. `at` is the
+ * listed region's [longitude, latitude], else null; an unlisted region's name and city are its
+ * code.
  */
 export const regionsInUse = (environments) => {
   const regions = new Map();
   for (const env of environments) {
     const region = regionOf(env);
     if (!region) continue;
+    const listed = regionConfig(env);
     const entry = regions.get(region) ?? {
       region,
-      city: regionName(env)?.match(/\(([^)]+)\)/)?.[1] ?? region,
+      name: listed?.label ?? region,
+      city: listed?.city ?? region,
+      at: listed?.at ?? null,
       count: 0,
     };
     entry.count += 1;

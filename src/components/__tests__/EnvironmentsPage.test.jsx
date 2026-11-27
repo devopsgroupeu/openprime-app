@@ -138,13 +138,19 @@ describe("EnvironmentsPage", () => {
     expect(
       stats.slice(0, 3).map((card) => card.children[1].textContent),
     ).toEqual(["3", "13", "3"]);
-    // Each tile's picture: statuses, top categories, regions by city.
+    // Each tile's picture: statuses, every category, regions by city.
     expect(within(stats[0]).getByText("Not generated")).toBeInTheDocument();
-    expect(within(stats[1]).getAllByRole("listitem")).toHaveLength(3);
-    expect(within(stats[2]).getByText("Ireland")).toBeInTheDocument();
     expect(
-      within(stats[3]).getByText(formatRelative(prod.last_generate_at)),
-    ).toBeInTheDocument();
+      within(stats[1])
+        .getAllByRole("listitem")
+        .map((li) => li.firstChild.textContent),
+    ).toEqual(["Compute", "Networking", "Storage", "Database", "Integration"]);
+    expect(within(stats[2]).getByText("Ireland")).toBeInTheDocument();
+    // The value is the last successful generate; the picture under it lists
+    // the recent ones too.
+    expect(stats[3].children[1]).toHaveTextContent(
+      formatRelative(prod.last_generate_at),
+    );
     // Recently modified first by default.
     expect(cardNames()).toEqual(["demo-staging", "demo-prod", "zeta-sandbox"]);
     expect(screen.getByRole("link", { name: "demo-prod" })).toHaveAttribute(

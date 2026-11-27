@@ -1,4 +1,3 @@
-import { CircleCheck, MapPin } from "lucide-react";
 import {
   generations,
   regionsInUse,
@@ -6,6 +5,7 @@ import {
   statusBreakdown,
   summarizeEnvironments,
 } from "../utils/environmentStats";
+import { RegionMap } from "./environments/RegionMap";
 import { RelativeTime, formatRelative } from "@/components/shared/format";
 import { StatCard } from "@/components/shared/settings";
 import {
@@ -16,53 +16,75 @@ import {
 import { cn } from "@/lib/utils";
 
 // The stat strip of the environments list (DESIGN 6.1): four tiles, each with
-// a small picture drawn only from the environments themselves. Pictures are
-// hidden below sm, where the tiles shrink to one line.
+// a picture drawn only from the environments themselves. Pictures are hidden
+// below sm, where the tiles shrink to one line.
 
-const TONE_BG = {
-  success: "bg-primary",
-  destructive: "bg-destructive",
-  warning: "bg-warning",
-  neutral: "bg-muted-foreground/40",
+const TONE = {
+  success: { fill: "bg-primary", stroke: "stroke-primary" },
+  destructive: { fill: "bg-destructive", stroke: "stroke-destructive" },
+  warning: { fill: "bg-warning", stroke: "stroke-warning" },
+  neutral: {
+    fill: "bg-muted-foreground/40",
+    stroke: "stroke-muted-foreground/40",
+  },
 };
 
 const DAY = 86_400_000;
-const TOP_CATEGORIES = 3;
-const MAX_REGIONS = 4;
+const RECENT = 3;
 
-/** One whole split by status: an 8 px bar with 2 px gaps, then its legend. */
-function StatusBar({ parts, total }) {
+const Swatch = ({ className }) => (
+  <span aria-hidden className={cn("size-2 shrink-0 rounded-full", className)} />
+);
+
+// The donut's circle has a circumference of 100, so a part's share is its length.
+const R = 50 / Math.PI;
+const GAP = 2;
+
+/** One whole split by status as a donut (2-unit gaps) and its legend. */
+function StatusDonut({ parts, total }) {
+  let start = 0;
   return (
-    <div className="flex flex-col gap-2">
-      <div aria-hidden className="flex h-2 gap-0.5">
+    // Side by side once the tile is 15rem wide, else the legend goes under it.
+    <div className="flex flex-col gap-3 @[15rem]:flex-row @[15rem]:items-center @[15rem]:gap-4">
+      <svg
+        aria-hidden
+        viewBox="0 0 40 40"
+        className="size-16 shrink-0 -rotate-90"
+      >
+        {parts.map((part) => {
+          const share = (part.count / total) * 100;
+          const length = parts.length > 1 ? Math.max(share - GAP, 1) : 100;
+          const offset = start;
+          start += share;
+          return (
+            <Tooltip key={part.key}>
+              <TooltipTrigger asChild>
+                <circle
+                  cx="20"
+                  cy="20"
+                  r={R}
+                  fill="none"
+                  strokeWidth="5"
+                  strokeDasharray={`${length} ${100 - length}`}
+                  strokeDashoffset={-offset}
+                  className={TONE[part.tone].stroke}
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                {part.label}: {part.count} of {total}
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
+      </svg>
+      <ul className="flex min-w-0 flex-1 flex-col gap-1.5 text-xs">
         {parts.map((part) => (
-          <Tooltip key={part.key}>
-            <TooltipTrigger asChild>
-              <span
-                className={cn(
-                  "min-w-2 basis-0 rounded-full",
-                  TONE_BG[part.tone],
-                )}
-                style={{ flexGrow: part.count }}
-              />
-            </TooltipTrigger>
-            <TooltipContent>
-              {part.label}: {part.count} of {total}
-            </TooltipContent>
-          </Tooltip>
-        ))}
-      </div>
-      <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-        {parts.map((part) => (
-          <li key={part.key} className="flex items-center gap-1.5">
-            <span
-              aria-hidden
-              className={cn("size-2 rounded-full", TONE_BG[part.tone])}
-            />
-            {part.label}
-            <span className="font-medium text-foreground tabular-nums">
-              {part.count}
+          <li key={part.key} className="flex items-center gap-2">
+            <Swatch className={TONE[part.tone].fill} />
+            <span className="min-w-0 flex-1 truncate text-muted-foreground">
+              {part.label}
             </span>
+            <span className="font-medium tabular-nums">{part.count}</span>
           </li>
         ))}
       </ul>
@@ -70,13 +92,12 @@ function StatusBar({ parts, total }) {
   );
 }
 
-/** The largest categories as one-color bars, the count at each tip. */
+/** Every category as a one-color bar from a common start, its count at the tip. */
 function CategoryBars({ rows }) {
-  const top = rows.slice(0, TOP_CATEGORIES);
-  const max = top[0]?.count ?? 1;
+  const max = rows[0]?.count ?? 1;
   return (
     <ul className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 text-xs">
-      {top.map(({ category, count }) => (
+      {rows.map(({ category, count }) => (
         <li
           key={category}
           className="col-span-2 grid grid-cols-subgrid items-center"
@@ -85,7 +106,7 @@ function CategoryBars({ rows }) {
           <span className="flex items-center gap-1.5">
             <span
               aria-hidden
-              className="h-1.5 rounded-r-full bg-chart-1"
+              className="h-2 rounded-r-sm bg-chart-1"
               style={{
                 width: `max(0.25rem, calc((100% - 2rem) * ${count / max}))`,
               }}
@@ -98,42 +119,37 @@ function CategoryBars({ rows }) {
   );
 }
 
-/** The regions by city, most environments first. */
-function RegionChips({ regions }) {
-  const shown = regions.slice(0, MAX_REGIONS);
-  const rest = regions.length - shown.length;
-  const chip =
-    "inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-xs";
+/** The regions on a map, then their names, most environments first. */
+function Regions({ regions }) {
   return (
-    <ul className="flex flex-wrap gap-1.5">
-      {shown.map(({ region, city, count }) => (
-        <li key={region} className={chip}>
-          <MapPin aria-hidden className="size-3 text-muted-foreground" />
-          {city}
-          {count > 1 ? (
-            <span className="text-muted-foreground tabular-nums">
-              {count}
-              <span className="sr-only"> environments</span>
-            </span>
-          ) : null}
-        </li>
-      ))}
-      {rest > 0 ? (
-        <li className={cn(chip, "text-muted-foreground")}>
-          +{rest}
-          <span className="sr-only"> more</span>
-        </li>
-      ) : null}
-    </ul>
+    <div className="flex flex-col gap-2">
+      <RegionMap regions={regions} />
+      <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        {regions.map(({ region, city, count }) => (
+          <li key={region} className="flex items-center gap-1.5">
+            <Swatch className="bg-chart-1" />
+            {city}
+            {count > 1 ? (
+              <span className="font-medium text-foreground tabular-nums">
+                {count}
+                <span className="sr-only"> environments</span>
+              </span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
-const outcome = (item) =>
-  `${item.name}: ${item.status === "failed" ? "failed" : "generated"} ${formatRelative(item.at)}`;
+const outcomeLabel = (item) =>
+  item.status === "failed" ? "failed" : "generated";
+const outcomeFill = (item) =>
+  item.status === "failed" ? "bg-destructive" : "bg-primary";
 
 /**
- * The last successful environment, then every environment's last generate as
- * a dot on a line from the oldest (at least 30 days back) to now.
+ * Every environment's last generate as a dot on a line from the oldest (at
+ * least 30 days back) to now, then the most recent ones by name.
  */
 function Freshness({ items, now }) {
   if (items.length === 0) {
@@ -143,51 +159,54 @@ function Freshness({ items, now }) {
       </p>
     );
   }
-  const last = items.findLast((item) => item.status === "succeeded");
   const start = Math.min(Date.parse(items[0].at), now - 30 * DAY);
   const left = (at) =>
     `${Math.min(100, Math.max(0, ((Date.parse(at) - start) / (now - start)) * 100))}%`;
+  const recent = items.slice(-RECENT).reverse();
   return (
-    <div className="flex flex-col gap-1.5">
-      {last ? (
-        // Plain text: the environment's own card below is its link.
-        <p className="flex min-w-0 items-center gap-1.5 text-xs">
-          <CircleCheck aria-hidden className="size-3.5 shrink-0 text-primary" />
-          <span className="truncate font-medium">{last.name}</span>
-        </p>
-      ) : null}
-      <div aria-hidden className="relative mx-1.5 h-6">
-        <span className="absolute inset-x-0 top-1/2 h-px bg-border" />
-        {items.map((item) => (
-          <Tooltip key={item.id}>
-            <TooltipTrigger asChild>
-              {/* A 24 px hit area around the 10 px dot. */}
-              <span
-                className="absolute top-1/2 flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
-                style={{ left: left(item.at) }}
-              >
+    <div className="flex flex-col gap-2">
+      <div aria-hidden>
+        <div className="relative mx-1.5 h-6">
+          <span className="absolute inset-x-0 top-1/2 h-px bg-border" />
+          {items.map((item) => (
+            <Tooltip key={item.id}>
+              <TooltipTrigger asChild>
+                {/* A 24 px hit area around the 10 px dot. */}
                 <span
-                  className={cn(
-                    "size-2.5 rounded-full ring-2 ring-card",
-                    item.status === "failed" ? "bg-destructive" : "bg-primary",
-                  )}
-                />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>{outcome(item)}</TooltipContent>
-          </Tooltip>
-        ))}
+                  className="absolute top-1/2 flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+                  style={{ left: left(item.at) }}
+                >
+                  <span
+                    className={cn(
+                      "size-2.5 rounded-full ring-2 ring-card",
+                      outcomeFill(item),
+                    )}
+                  />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {item.name}: {outcomeLabel(item)} {formatRelative(item.at, now)}
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>{formatRelative(new Date(start).toISOString(), now)}</span>
+          <span>Now</span>
+        </div>
       </div>
-      <div
-        aria-hidden
-        className="flex justify-between text-xs text-muted-foreground"
-      >
-        <span>{formatRelative(new Date(start).toISOString(), now)}</span>
-        <span>Now</span>
-      </div>
-      <ul className="sr-only">
-        {items.map((item) => (
-          <li key={item.id}>{outcome(item)}</li>
+      <ul className="flex flex-col gap-1 text-xs">
+        {recent.map((item) => (
+          <li key={item.id} className="flex items-center gap-2">
+            <Swatch className={outcomeFill(item)} />
+            <span className="min-w-0 flex-1 truncate font-medium">
+              {item.name}
+              <span className="sr-only">: {outcomeLabel(item)}</span>
+            </span>
+            <span className="shrink-0 text-muted-foreground">
+              {formatRelative(item.at, now)}
+            </span>
+          </li>
         ))}
       </ul>
     </div>
@@ -203,7 +222,7 @@ export default function EnvironmentStatStrip({ environments }) {
     <div className="@container">
       <div className="grid grid-cols-2 gap-2 sm:gap-4 @2xl:grid-cols-4">
         <StatCard compact label="Environments" value={stats.total}>
-          <StatusBar
+          <StatusDonut
             parts={statusBreakdown(environments)}
             total={stats.total}
           />
@@ -212,7 +231,7 @@ export default function EnvironmentStatStrip({ environments }) {
           <CategoryBars rows={servicesByCategory(environments)} />
         </StatCard>
         <StatCard compact label="Regions" value={stats.regions}>
-          <RegionChips regions={regionsInUse(environments)} />
+          <Regions regions={regionsInUse(environments)} />
         </StatCard>
         <StatCard
           compact
