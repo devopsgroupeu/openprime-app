@@ -1,14 +1,9 @@
-import {
-  CircleAlert,
-  CircleCheck,
-  CircleDashed,
-  Loader,
-  Server,
-} from "lucide-react";
+import { CircleAlert, CircleCheck, CircleDashed, Loader } from "lucide-react";
 import { Fragment, useState } from "react";
 import {
   byProviderOrder,
   generations,
+  providerLegendName,
   providerName,
   regionsInUse,
   servicesInUse,
@@ -217,47 +212,37 @@ function ServiceBars({ services }) {
 /**
  * The regions on a map; their names are in the dots' tooltips and, as text,
  * for screen readers. Regions of several providers, or on-premise datacenters
- * (which have no place on the map), add a legend of the providers with their
- * region counts: a dot in the map's color, a server for on-prem.
+ * (which have no place on the map), add a one-line legend of the providers by
+ * name: a dot in the map's color, a hollow one for on-prem. All four need a
+ * 198 px tile; a narrower one wraps between names, never inside one.
  */
 function Regions({ regions }) {
-  const providers = [
-    ...regions
-      .reduce(
-        (counts, r) =>
-          counts.set(r.provider, (counts.get(r.provider) ?? 0) + 1),
-        new Map(),
-      )
-      .entries(),
-  ].sort(([a], [b]) => byProviderOrder(a, b));
+  const providers = [...new Set(regions.map((r) => r.provider))].sort(
+    byProviderOrder,
+  );
   const multi = providers.length > 1;
-  const legend = multi || regions.some((r) => r.provider === "onpremise");
+  const legend = multi || providers.includes("onpremise");
   return (
     <>
       <RegionMap regions={regions} />
       {legend ? (
-        <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">
-          {providers.map(([provider, count]) => (
+        <ul className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs whitespace-nowrap text-muted-foreground">
+          {providers.map((provider) => (
             <li
               key={provider}
               data-provider={provider}
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-1"
             >
-              {provider === "onpremise" ? (
-                <Server aria-hidden className="size-3 text-muted-foreground" />
-              ) : (
-                <span
-                  aria-hidden
-                  className={cn(
-                    "size-2 rounded-full",
-                    regionTone(provider, multi).dot,
-                  )}
-                />
-              )}
-              <span className="text-muted-foreground">
-                {providerName(provider)}
-              </span>
-              <span className="font-medium tabular-nums">{count}</span>
+              <span
+                aria-hidden
+                className={cn(
+                  "size-1.5 shrink-0 rounded-full",
+                  provider === "onpremise"
+                    ? "border border-muted-foreground"
+                    : regionTone(provider, multi).dot,
+                )}
+              />
+              {providerLegendName(provider)}
             </li>
           ))}
         </ul>

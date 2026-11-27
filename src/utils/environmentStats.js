@@ -114,6 +114,10 @@ export const providerOf = (env) => env.provider || "aws";
 export const providerName = (provider) =>
   PROVIDERS_CONFIG[provider]?.shortName ?? provider;
 
+/** "AWS", "Azure", "GCP", "On-prem" for the region map legend. */
+export const providerLegendName = (provider) =>
+  PROVIDERS_CONFIG[provider]?.legendName ?? provider;
+
 // Providers in the catalog order (AWS first), unknown ones after.
 const PROVIDER_ORDER = Object.keys(PROVIDERS_CONFIG);
 export const byProviderOrder = (a, b) => {

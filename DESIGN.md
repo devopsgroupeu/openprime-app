@@ -544,9 +544,12 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
     them), a `bg-chart-1` dot with a halo that grows with its environments. Names are in the dots'
     tooltips and an sr-only list. Regions of several providers take the `--provider-*` colors
     (brand hues moved into the categorical band and checked for colorblind separation; red stays
-    Failed's), name the provider in the tooltip and add a legend under the map (dot, short name,
-    region count). Regions within 1.5 degrees (Frankfurt on AWS and Google Cloud) sit side by side
-    12 px apart. On-premise datacenters have no place: the legend lists them with a server icon.
+    Failed's), name the provider in the tooltip and add a one-line legend under the map: a 6 px dot
+    and the provider's `legendName` (AWS, Azure, GCP, On-prem; only here is Google Cloud "GCP"), no
+    counts. All four need a 198 px tile; a narrower one (1024 with the sidebar, 148 px) wraps
+    between names, never inside one. Regions within 1.5 degrees (Frankfurt on AWS and Google Cloud)
+    sit side by side 12 px apart. On-premise datacenters have no place: the legend gives them a
+    hollow dot.
   - Last generated: one dot per environment's last generate (`bg-primary`, failed
     `bg-destructive`, `ring-card`, 24 px hover target) on a line from the oldest (at least 30 days
     back) to Now, then the three most recent by name.

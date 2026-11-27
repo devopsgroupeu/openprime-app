@@ -23,10 +23,17 @@ it("leaves on-premise datacenters off the map", () => {
   }
 });
 
-// Filter tabs, the map legend and the services groups name a provider in short.
+// Filter tabs and the services groups name a provider in short.
 it.each(Object.entries(PROVIDERS_CONFIG))(
   "%s has a short name",
   (_, provider) => {
     expect(provider.shortName).toEqual(expect.any(String));
   },
 );
+
+// The region map legend names every provider on one line, so even shorter.
+it("names the providers in the region legend", () => {
+  expect(
+    Object.values(PROVIDERS_CONFIG).map((provider) => provider.legendName),
+  ).toEqual(["AWS", "Azure", "GCP", "On-prem"]);
+});

@@ -627,6 +627,11 @@ describe("EnvironmentsPage across providers", () => {
       .map((b) => b.textContent);
   const tiles = () =>
     Array.from(document.querySelectorAll('[data-slot="stat-card"]'));
+  const legend = () =>
+    within(tiles()[2])
+      .getAllByRole("listitem")
+      .filter((li) => li.dataset.provider)
+      .map((li) => li.textContent);
 
   it("offers no provider filter while every environment is on one provider", () => {
     renderPage();
@@ -651,13 +656,25 @@ describe("EnvironmentsPage across providers", () => {
         within(services).getByRole("list", { name: "Azure services" }),
       ).getAllByRole("listitem")[0],
     ).toHaveTextContent("1 of 1 environment");
-    // Regions: a legend of the providers; on-prem has no place on the map.
-    expect(
-      within(tiles()[2])
-        .getAllByRole("listitem")
-        .filter((li) => li.dataset.provider)
-        .map((li) => li.textContent),
-    ).toEqual(["AWS3", "Azure1", "On-prem1"]);
+    // Regions: a legend of the providers by name only; on-prem has no place
+    // on the map.
+    expect(legend()).toEqual(["AWS", "Azure", "On-prem"]);
+  });
+
+  it("names Google Cloud GCP in the region legend only", () => {
+    const gcp = {
+      id: "env-6",
+      name: "gcp-dev",
+      global_prefix: "gc-",
+      provider: "gcp",
+      region: "europe-west3",
+      status: "pending",
+      services: { gke: { enabled: true } },
+      updated_at: "2026-06-03T00:00:00Z",
+    };
+    renderPage({ environments: [...MIXED, gcp] });
+    expect(legend()).toEqual(["AWS", "Azure", "GCP", "On-prem"]);
+    expect(providerTabs()).toContain("Google Cloud 1");
   });
 
   it("narrows the whole page to one provider, in the URL", () => {
