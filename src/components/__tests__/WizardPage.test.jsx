@@ -180,6 +180,31 @@ describe("WizardPage", () => {
     expect(screen.getAllByRole("main")).toHaveLength(1);
   });
 
+  // The wizard's own frame (stepper, step column, footer), not a page's: the
+  // columns do not move when the environment arrives.
+  it("shows the wizard frame in one busy region while an edit loads", async () => {
+    let answer;
+    server.use(
+      http.get(
+        "*/environments/env-001",
+        () => new Promise((resolve) => (answer = resolve)),
+      ),
+    );
+    renderWizardEdit(vi.fn());
+
+    const skeleton = await screen.findByRole("status", {
+      name: "Loading environment",
+    });
+    expect(skeleton).toHaveAttribute("aria-busy", "true");
+    expect(document.querySelectorAll('[aria-busy="true"]')).toHaveLength(1);
+    expect(skeleton.querySelector("footer")).not.toBeNull();
+
+    await waitFor(() => expect(answer).toBeDefined());
+    answer(HttpResponse.json(environments[0]));
+    await stepHeading("Services");
+    expect(document.querySelector('[aria-busy="true"]')).toBeNull();
+  });
+
   it("names the environment it edits in the shell's breadcrumbs", async () => {
     renderWizardEdit(vi.fn());
     await stepHeading("Services");

@@ -57,6 +57,22 @@ const shownPreferences = (preferences) => {
   };
 };
 
+/**
+ * A settings tab while the shell waits for the service catalog: the page's
+ * static header, then the tab's skeleton, as the page shows them while the
+ * tab loads. An unknown tab is Account, where the page sends it.
+ */
+export const SettingsPageLoading = ({ tab: id }) => {
+  const tab = SETTINGS_TABS.find((t) => t.id === id) ?? SETTINGS_TABS[0];
+  return (
+    <PageShell width="settings" className="grow">
+      <PageHeader title={tab.label} description={tab.description} />
+      <Separator />
+      <SettingsPageSkeleton tab={tab.id} />
+    </PageShell>
+  );
+};
+
 const SettingsPage = () => {
   const toast = useToast();
   const { tab: activeTab } = useParams();
@@ -319,54 +335,53 @@ const SettingsPage = () => {
     <>
       {/* Grows to the screen's height with the save bar, which rests at its end. */}
       <PageShell width="settings" className="grow">
+        {/* Static: there at once; only the tab's data waits. */}
+        <PageHeader title={tab.label} description={tab.description} />
+        <Separator />
         {status === "loading" ? (
-          <SettingsPageSkeleton />
+          <SettingsPageSkeleton tab={activeTab} />
         ) : (
-          <>
-            <PageHeader title={tab.label} description={tab.description} />
-            <Separator />
-            <div className="flex flex-col gap-8">
-              {status === "error" ? (
-                <ErrorState
-                  thing={
-                    onCredentials ? "your cloud credentials" : "your settings"
+          <div className="flex flex-col gap-8">
+            {status === "error" ? (
+              <ErrorState
+                thing={
+                  onCredentials ? "your cloud credentials" : "your settings"
+                }
+                message={serverMessage(loadError)}
+                requestId={loadError?.requestId}
+                onRetry={() => {
+                  if (onCredentials) {
+                    setCredentialsStatus("loading");
+                    loadCloudCredentials();
+                  } else {
+                    loadUserData();
                   }
-                  message={serverMessage(loadError)}
-                  requestId={loadError?.requestId}
-                  onRetry={() => {
-                    if (onCredentials) {
-                      setCredentialsStatus("loading");
-                      loadCloudCredentials();
-                    } else {
-                      loadUserData();
-                    }
-                  }}
-                />
-              ) : null}
-              {status === "ready" && activeTab === "account" ? (
-                <AccountTab
-                  profile={profile}
-                  errors={showAccountErrors ? accountProblems() : {}}
-                  onProfileChange={handleProfileChange}
-                />
-              ) : null}
-              {status === "ready" && activeTab === "preferences" ? (
-                <PreferencesTab
-                  userPreferences={userPreferences}
-                  savedPreferences={saved.preferences}
-                  onPreferenceChange={handlePreferenceChange}
-                />
-              ) : null}
-              {status === "ready" && onCredentials ? (
-                <CloudCredentialsTab
-                  credentials={cloudCredentials}
-                  onAddCredential={handleAddCredential}
-                  onEditCredential={handleEditCredential}
-                  onDeleteCredential={handleDeleteCredential}
-                />
-              ) : null}
-            </div>
-          </>
+                }}
+              />
+            ) : null}
+            {status === "ready" && activeTab === "account" ? (
+              <AccountTab
+                profile={profile}
+                errors={showAccountErrors ? accountProblems() : {}}
+                onProfileChange={handleProfileChange}
+              />
+            ) : null}
+            {status === "ready" && activeTab === "preferences" ? (
+              <PreferencesTab
+                userPreferences={userPreferences}
+                savedPreferences={saved.preferences}
+                onPreferenceChange={handlePreferenceChange}
+              />
+            ) : null}
+            {status === "ready" && onCredentials ? (
+              <CloudCredentialsTab
+                credentials={cloudCredentials}
+                onAddCredential={handleAddCredential}
+                onEditCredential={handleEditCredential}
+                onDeleteCredential={handleDeleteCredential}
+              />
+            ) : null}
+          </div>
         )}
         <SaveBar
           dirty={dirty}

@@ -984,9 +984,14 @@ describe("EnvironmentDetailPage identity", () => {
   // jump when the environment arrives.
   it("previews the cover band while loading, at the band's size", async () => {
     renderDetailPage();
-    const skeleton = screen.getByRole("status", { name: "Loading" });
+    const skeleton = screen.getByRole("status", {
+      name: "Loading environment",
+    });
+    expect(skeleton).toHaveAttribute("aria-busy", "true");
+    expect(document.querySelectorAll('[aria-busy="true"]')).toHaveLength(1);
     const placeholder = skeleton.querySelector('[data-slot="cover-skeleton"]');
     await screen.findByRole("heading", { level: 1, name: "demo-prod" });
+    expect(document.querySelector('[aria-busy="true"]')).toBeNull();
     const band = document.querySelector('[data-slot="cover-gradient"]');
     for (const size of ["h-20", "sm:h-24", "rounded-xl"]) {
       expect(placeholder).toHaveClass(size);

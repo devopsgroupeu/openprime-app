@@ -7,6 +7,7 @@ import {
 } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { Link, MemoryRouter, Route, Routes, useNavigate } from "react-router";
+import { credentials, currentUser } from "../../mocks/fixtures";
 import { server } from "../../mocks/server";
 import { ThemeProvider } from "../../contexts/ThemeContext";
 import { ToastProvider } from "../../contexts/ToastContext";
@@ -603,6 +604,46 @@ describe("SettingsPage", () => {
       screen.getByRole("region", { name: "Unsaved changes" }),
     ).toBeInTheDocument();
   });
+
+  // The header is static: it shows at once, the rows wait in one busy region.
+  it.each([
+    ["/settings/account", "*/users/me", "Account", "Loading account"],
+    [
+      "/settings/cloud-credentials",
+      "*/cloud-credentials",
+      "Cloud credentials",
+      "Loading cloud credentials",
+    ],
+  ])(
+    "shows the header of %s and one busy region until it loads",
+    async (path, endpoint, heading, busy) => {
+      let answer;
+      server.use(
+        http.get(endpoint, () => new Promise((resolve) => (answer = resolve))),
+      );
+      renderSettingsPage(path);
+
+      expect(
+        await screen.findByRole("heading", { level: 1, name: heading }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("status", { name: busy })).toHaveAttribute(
+        "aria-busy",
+        "true",
+      );
+      expect(document.querySelectorAll('[aria-busy="true"]')).toHaveLength(1);
+
+      await waitFor(() => expect(answer).toBeDefined());
+      answer(
+        HttpResponse.json(
+          endpoint === "*/users/me" ? currentUser : { credentials },
+        ),
+      );
+      await waitFor(() =>
+        expect(document.querySelector('[aria-busy="true"]')).toBeNull(),
+      );
+      expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    },
+  );
 
   it("shows a retry when the settings fail to load", async () => {
     server.use(

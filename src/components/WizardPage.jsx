@@ -18,7 +18,7 @@ import { AuraMark } from "@/components/shared/aura-mark";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageShell } from "@/components/shared/page-shell";
 import { guardedNavigate, useUnsavedGuard } from "@/components/shared/save-bar";
-import { SettingsPageSkeleton } from "@/components/shared/skeletons";
+import { WizardPageSkeleton } from "@/components/shared/skeletons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -528,9 +528,7 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
     return (
       <>
         <TopBarActions>{actions}</TopBarActions>
-        <PageShell width="settings">
-          <SettingsPageSkeleton />
-        </PageShell>
+        <WizardPageSkeleton />
       </>
     );
   }

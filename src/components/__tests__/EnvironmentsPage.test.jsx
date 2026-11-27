@@ -555,15 +555,30 @@ describe("EnvironmentsPage", () => {
     expect(onRefresh).not.toHaveBeenCalled();
   });
 
-  it("shows a skeleton while loading, stat strip included", () => {
+  it("shows the header and one busy skeleton while loading, stat strip included", () => {
     renderPage({ environments: [], loading: true });
-    const skeleton = screen.getByRole("status", { name: "Loading" });
+    // The header is static, so it is there at once, with the way forward.
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Environments" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "New environment" }),
+    ).toBeInTheDocument();
+    const skeleton = screen.getByRole("status", {
+      name: "Loading environments",
+    });
     expect(skeleton).toHaveAttribute("aria-busy", "true");
+    expect(document.querySelectorAll('[aria-busy="true"]')).toHaveLength(1);
     // The cards do not jump when the strip arrives.
     expect(
       skeleton.querySelectorAll('[data-slot="stat-card-skeleton"]'),
     ).toHaveLength(4);
     expect(screen.queryByText("No environments yet")).not.toBeInTheDocument();
+  });
+
+  it("shows no busy region once the environments are there", () => {
+    renderPage();
+    expect(document.querySelector('[aria-busy="true"]')).toBeNull();
   });
 
   it("opens the wizard from Edit", async () => {

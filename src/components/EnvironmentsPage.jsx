@@ -59,6 +59,26 @@ const NewEnvironmentButton = ({ size }) => (
   </Button>
 );
 
+const ListHeader = ({ actions }) => (
+  <PageHeader
+    title="Environments"
+    description="Manage and deploy your cloud infrastructure environments."
+    actions={actions}
+  />
+);
+
+// The list while it loads: the static header at once (New environment works
+// before the data), then the skeleton. One element for the page and for the
+// shell's catalog wait. The page returns it as it is, so its PageShell and
+// header stay mounted (no replayed entrance) when the environments arrive.
+const loadingList = (
+  <PageShell>
+    <ListHeader actions={<NewEnvironmentButton />} />
+    <ListPageSkeleton />
+  </PageShell>
+);
+export const EnvironmentsPageLoading = () => loadingList;
+
 const EnvironmentsPage = ({
   environments,
   loading = false,
@@ -133,13 +153,7 @@ const EnvironmentsPage = ({
     }
   }, [loading, hasEnvironments, loadError]);
 
-  if (loading) {
-    return (
-      <PageShell>
-        <ListPageSkeleton stats={4} />
-      </PageShell>
-    );
-  }
+  if (loading) return loadingList;
 
   const changeSort = (value) => {
     setSort(value);
@@ -184,9 +198,7 @@ const EnvironmentsPage = ({
 
   return (
     <PageShell>
-      <PageHeader
-        title="Environments"
-        description="Manage and deploy your cloud infrastructure environments."
+      <ListHeader
         // First run: the empty state carries the one way forward.
         actions={hasEnvironments || loadError ? <NewEnvironmentButton /> : null}
       />
