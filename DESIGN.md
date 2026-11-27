@@ -560,11 +560,12 @@ Skeletons: `ListPageSkeleton`, `DetailPageSkeleton`, `SettingsPageSkeleton tab` 
     tooltips and an sr-only list. Regions of several providers take the `--provider-*` colors
     (brand hues moved into the categorical band and checked for colorblind separation; red stays
     Failed's), name the provider in the tooltip and add a one-line legend under the map: a 6 px dot
-    and the provider's `legendName` (AWS, Azure, GCP, On-prem; only here is Google Cloud "GCP"), no
-    counts, `aria-hidden` (a color key; the sr-only list names each region's provider). All four
-    need a 198 px tile; a narrower one (1024 with the sidebar, 148 px) wraps between names, never
-    inside one. Regions within 1.5 degrees (Frankfurt on AWS and Google Cloud) sit side by side
-    12 px apart. On-premise datacenters have no place: the legend gives them a hollow dot.
+    and the provider's short name (`providerLegendName`: AWS, Azure, GCP, On-prem; only here is
+    Google Cloud "GCP", its `legendName`), no counts, `aria-hidden` (a color key; the sr-only list
+    names each region's provider). All four need a 198 px tile; a narrower one (1024 with the
+    sidebar, 148 px) wraps between names, never inside one. Regions within 1.5 degrees (Frankfurt on
+    AWS and Google Cloud) sit side by side 12 px apart. On-premise datacenters have no place: the
+    legend gives them a hollow dot.
   - Last generated: the value is the last successful generate. Under it, like a CI run list, a
     row per environment's last generate (`generations`), newest first, never generated last by
     name: the outcome icon (generated `CircleCheck` in `text-primary`, failed `CircleAlert` in

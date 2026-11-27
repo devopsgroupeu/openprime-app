@@ -6,8 +6,6 @@ export const PROVIDERS_CONFIG = {
     name: "Amazon Web Services",
     // Filter tabs and the services groups.
     shortName: "AWS",
-    // The region map legend, which keeps all providers on one line.
-    legendName: "AWS",
     type: "aws",
     enabled: true,
     defaultRegion: "us-east-1",
@@ -90,7 +88,6 @@ export const PROVIDERS_CONFIG = {
   azure: {
     name: "Microsoft Azure",
     shortName: "Azure",
-    legendName: "Azure",
     type: "azure",
     enabled: false,
     defaultRegion: "East US",
@@ -208,6 +205,8 @@ export const PROVIDERS_CONFIG = {
   gcp: {
     name: "Google Cloud Platform",
     shortName: "Google Cloud",
+    // The region map legend, which keeps all providers on one line (the
+    // others use their short name there).
     legendName: "GCP",
     type: "gcp",
     enabled: false,
@@ -305,7 +304,6 @@ export const PROVIDERS_CONFIG = {
   onpremise: {
     name: "On-Premise",
     shortName: "On-prem",
-    legendName: "On-prem",
     type: "onpremise",
     enabled: false,
     defaultRegion: "datacenter-1",

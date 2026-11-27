@@ -1,3 +1,4 @@
+import { providerLegendName } from "../../utils/environmentStats";
 import { PROVIDERS_CONFIG, getProviderRegions } from "../providersConfig";
 
 // The region map places a region by `at` and names it by `city`: a cloud
@@ -33,7 +34,10 @@ it.each(Object.entries(PROVIDERS_CONFIG))(
 
 // The region map legend names every provider on one line, so even shorter.
 it("names the providers in the region legend", () => {
-  expect(
-    Object.values(PROVIDERS_CONFIG).map((provider) => provider.legendName),
-  ).toEqual(["AWS", "Azure", "GCP", "On-prem"]);
+  expect(Object.keys(PROVIDERS_CONFIG).map(providerLegendName)).toEqual([
+    "AWS",
+    "Azure",
+    "GCP",
+    "On-prem",
+  ]);
 });
