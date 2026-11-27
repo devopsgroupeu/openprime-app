@@ -162,6 +162,22 @@ export const servicesByCategory = (environments) => {
 };
 
 /**
+ * `rows` ({ category, count }, most first) cut to at most `max` rows: past that,
+ * the last row is "Other" with the rest summed and `other: true`.
+ */
+export const foldCategories = (rows, max) =>
+  rows.length > max
+    ? [
+        ...rows.slice(0, max - 1),
+        {
+          category: "Other",
+          count: rows.slice(max - 1).reduce((sum, row) => sum + row.count, 0),
+          other: true,
+        },
+      ]
+    : rows;
+
+/**
  * Regions in use `{ region, name, city, at, count }`, most environments first. `at` is the
  * listed region's [longitude, latitude], else null; an unlisted region's name and city are its
  * code.

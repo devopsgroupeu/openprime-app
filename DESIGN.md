@@ -520,14 +520,16 @@ layout shift and do not fade in. A pending action is a spinner in its button, ne
 - Stat strip, always (`EnvironmentStatStrip.jsx`): Environments, Services enabled, Regions, Last
   generated (relative or "Never"), four in a row from a 42rem content column (`@2xl`), else two.
   Each tile has a picture drawn only from the environments (no invented trend), hidden below sm;
-  tooltips on donut parts and dots only repeat the legend or the text:
-  - Environments: a status donut (2-unit gaps, status colors) and its legend, beside it from a
-    15rem tile, else under it.
-  - Services enabled: every catalog category as a `bg-chart-1` bar, the count at the tip.
+  tooltips on ring parts only repeat the legend; region and generate dots name their point:
+  - Environments: a status ring (round parts, 3-unit gaps, status colors) with the Ready share in
+    its middle and its legend: beside it from a 15rem tile, else a 64 px ring with the legend
+    wrapping under it.
+  - Services enabled: the catalog categories as `bg-chart-1` bars, the count at the tip; past six
+    rows the rest fold into "Other" (`foldCategories`), so the tile never grows.
   - Regions: `RegionMap` (`environments/RegionMap.jsx`), an Equal Earth map framed to the regions
     in use (land from `environments/worldLand.js`, generated once from Natural Earth; region
-    `city` and `at` in `providersConfig.js`), a `bg-chart-1` dot with a halo that grows with its
-    environments, then the cities as text.
+    `city` and `at` in `providersConfig.js`, a test fails without them), a `bg-chart-1` dot with a
+    halo that grows with its environments. Names are in the dots' tooltips and an sr-only list.
   - Last generated: one dot per environment's last generate (`bg-primary`, failed
     `bg-destructive`, `ring-card`, 24 px hover target) on a line from the oldest (at least 30 days
     back) to Now, then the three most recent by name.

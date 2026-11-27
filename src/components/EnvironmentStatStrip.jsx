@@ -1,4 +1,5 @@
 import {
+  foldCategories,
   generations,
   regionsInUse,
   servicesByCategory,
@@ -36,54 +37,64 @@ const Swatch = ({ className }) => (
   <span aria-hidden className={cn("size-2 shrink-0 rounded-full", className)} />
 );
 
-// The donut's circle has a circumference of 100, so a part's share is its length.
+// The ring's circle has a circumference of 100, so a part's share is its
+// length; round caps add STROKE to each part, so they come off it.
 const R = 50 / Math.PI;
-const GAP = 2;
+const STROKE = 4.5;
+const GAP = 3;
 
-/** One whole split by status as a donut (2-unit gaps) and its legend. */
-function StatusDonut({ parts, total }) {
+/**
+ * One whole split by status as a ring with the Ready share in its middle,
+ * and its legend: beside it from a 15rem tile, else a smaller ring with the
+ * legend wrapping under it.
+ */
+function StatusRing({ parts, total }) {
+  const ready = parts.find((part) => part.key === "ready")?.count ?? 0;
+  const whole = parts.length === 1;
   let start = 0;
   return (
-    // Side by side once the tile is 15rem wide, else the legend goes under it.
-    <div className="flex flex-col gap-3 @[15rem]:flex-row @[15rem]:items-center @[15rem]:gap-4">
-      <svg
-        aria-hidden
-        viewBox="0 0 40 40"
-        className="size-16 shrink-0 -rotate-90"
-      >
-        {parts.map((part) => {
-          const share = (part.count / total) * 100;
-          const length = parts.length > 1 ? Math.max(share - GAP, 1) : 100;
-          const offset = start;
-          start += share;
-          return (
-            <Tooltip key={part.key}>
-              <TooltipTrigger asChild>
-                <circle
-                  cx="20"
-                  cy="20"
-                  r={R}
-                  fill="none"
-                  strokeWidth="5"
-                  strokeDasharray={`${length} ${100 - length}`}
-                  strokeDashoffset={-offset}
-                  className={TONE[part.tone].stroke}
-                />
-              </TooltipTrigger>
-              <TooltipContent>
-                {part.label}: {part.count} of {total}
-              </TooltipContent>
-            </Tooltip>
-          );
-        })}
-      </svg>
-      <ul className="flex min-w-0 flex-1 flex-col gap-1.5 text-xs">
+    <div className="flex flex-col items-start gap-3 @[15rem]:flex-row @[15rem]:items-center @[15rem]:gap-5">
+      <div className="relative size-16 shrink-0 @[15rem]:size-20">
+        <svg aria-hidden viewBox="0 0 40 40" className="size-full -rotate-90">
+          {parts.map((part) => {
+            const share = (part.count / total) * 100;
+            const length = whole ? 100 : Math.max(share - GAP - STROKE, 0.01);
+            const offset = whole ? 0 : start + (GAP + STROKE) / 2;
+            start += share;
+            return (
+              <Tooltip key={part.key}>
+                <TooltipTrigger asChild>
+                  <circle
+                    cx="20"
+                    cy="20"
+                    r={R}
+                    fill="none"
+                    strokeWidth={STROKE}
+                    strokeLinecap={whole ? "butt" : "round"}
+                    strokeDasharray={`${length} ${100 - length}`}
+                    strokeDashoffset={-offset}
+                    className={TONE[part.tone].stroke}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  {part.label}: {part.count} of {total}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </svg>
+        <p className="absolute inset-0 flex flex-col items-center justify-center leading-tight">
+          <span className="text-sm font-semibold tabular-nums">
+            {Math.round((ready / total) * 100)}%
+          </span>
+          <span className="text-xs text-muted-foreground">ready</span>
+        </p>
+      </div>
+      <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs @[15rem]:flex-col @[15rem]:gap-1.5">
         {parts.map((part) => (
           <li key={part.key} className="flex items-center gap-2">
             <Swatch className={TONE[part.tone].fill} />
-            <span className="min-w-0 flex-1 truncate text-muted-foreground">
-              {part.label}
-            </span>
+            <span className="text-muted-foreground">{part.label}</span>
             <span className="font-medium tabular-nums">{part.count}</span>
           </li>
         ))}
@@ -92,12 +103,16 @@ function StatusDonut({ parts, total }) {
   );
 }
 
-/** Every category as a one-color bar from a common start, its count at the tip. */
-function CategoryBars({ rows }) {
-  const max = rows[0]?.count ?? 1;
+// At most this many rows; more categories fold into "Other".
+const MAX_CATEGORIES = 6;
+
+/** The categories as one-color bars from a common start, the count at the tip. */
+function CategoryBars({ rows: all }) {
+  const rows = foldCategories(all, MAX_CATEGORIES);
+  const max = Math.max(1, ...rows.map((row) => row.count));
   return (
     <ul className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 text-xs">
-      {rows.map(({ category, count }) => (
+      {rows.map(({ category, count, other }) => (
         <li
           key={category}
           className="col-span-2 grid grid-cols-subgrid items-center"
@@ -106,7 +121,10 @@ function CategoryBars({ rows }) {
           <span className="flex items-center gap-1.5">
             <span
               aria-hidden
-              className="h-2 rounded-r-sm bg-chart-1"
+              className={cn(
+                "h-2 rounded-r-sm",
+                other ? "bg-muted-foreground/40" : "bg-chart-1",
+              )}
               style={{
                 width: `max(0.25rem, calc((100% - 2rem) * ${count / max}))`,
               }}
@@ -119,26 +137,19 @@ function CategoryBars({ rows }) {
   );
 }
 
-/** The regions on a map, then their names, most environments first. */
+/** The regions on a map; their names are in the dots' tooltips and, as text, for screen readers. */
 function Regions({ regions }) {
   return (
-    <div className="flex flex-col gap-2">
+    <>
       <RegionMap regions={regions} />
-      <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-        {regions.map(({ region, city, count }) => (
-          <li key={region} className="flex items-center gap-1.5">
-            <Swatch className="bg-chart-1" />
-            {city}
-            {count > 1 ? (
-              <span className="font-medium text-foreground tabular-nums">
-                {count}
-                <span className="sr-only"> environments</span>
-              </span>
-            ) : null}
+      <ul className="sr-only">
+        {regions.map(({ region, name, count }) => (
+          <li key={region}>
+            {name}: {count} {count === 1 ? "environment" : "environments"}
           </li>
         ))}
       </ul>
-    </div>
+    </>
   );
 }
 
@@ -222,7 +233,7 @@ export default function EnvironmentStatStrip({ environments }) {
     <div className="@container">
       <div className="grid grid-cols-2 gap-2 sm:gap-4 @2xl:grid-cols-4">
         <StatCard compact label="Environments" value={stats.total}>
-          <StatusDonut
+          <StatusRing
             parts={statusBreakdown(environments)}
             total={stats.total}
           />

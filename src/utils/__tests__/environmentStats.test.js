@@ -1,5 +1,6 @@
 import {
   enabledServices,
+  foldCategories,
   generations,
   regionsInUse,
   servicesByCategory,
@@ -390,6 +391,25 @@ describe("generations", () => {
         at: "2026-08-01T10:00:00Z",
         status: "failed",
       },
+    ]);
+  });
+});
+
+describe("foldCategories", () => {
+  const rows = ["A", "B", "C", "D"].map((category, i) => ({
+    category,
+    count: 4 - i,
+  }));
+
+  it("keeps up to `max` rows as they are", () => {
+    expect(foldCategories(rows, 4)).toBe(rows);
+  });
+
+  it("sums the rest into Other so the tile never grows", () => {
+    expect(foldCategories(rows, 3)).toEqual([
+      { category: "A", count: 4 },
+      { category: "B", count: 3 },
+      { category: "Other", count: 3, other: true },
     ]);
   });
 });

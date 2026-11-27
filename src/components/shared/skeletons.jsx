@@ -65,7 +65,7 @@ export function ListPageSkeleton({ stats = 0 }) {
               <Skeleton
                 key={i}
                 data-slot="stat-card-skeleton"
-                className="h-9 rounded-lg sm:h-36.5"
+                className="h-9 rounded-lg sm:h-44"
               />
             ))}
           </div>

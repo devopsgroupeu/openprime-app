@@ -138,14 +138,19 @@ describe("EnvironmentsPage", () => {
     expect(
       stats.slice(0, 3).map((card) => card.children[1].textContent),
     ).toEqual(["3", "13", "3"]);
-    // Each tile's picture: statuses, every category, regions by city.
+    // Each tile's picture: statuses around the Ready share, every category,
+    // the regions.
     expect(within(stats[0]).getByText("Not generated")).toBeInTheDocument();
+    expect(stats[0]).toHaveTextContent("33%ready");
     expect(
       within(stats[1])
         .getAllByRole("listitem")
         .map((li) => li.firstChild.textContent),
     ).toEqual(["Compute", "Networking", "Storage", "Database", "Integration"]);
-    expect(within(stats[2]).getByText("Ireland")).toBeInTheDocument();
+    // Regions are dots on the map, named for screen readers.
+    expect(
+      within(stats[2]).getByText("Europe (Ireland): 1 environment"),
+    ).toBeInTheDocument();
     // The value is the last successful generate; the picture under it lists
     // the recent ones too.
     expect(stats[3].children[1]).toHaveTextContent(
