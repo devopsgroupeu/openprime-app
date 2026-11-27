@@ -1,13 +1,18 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Outlet, matchPath, useLocation } from "react-router";
 import { PageShell } from "@/components/shared/page-shell";
+import {
+  DetailPageSkeleton,
+  WizardPageSkeleton,
+} from "@/components/shared/skeletons";
 import { SkipLink } from "@/components/shared/skip-link";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { Spinner } from "@/components/ui/spinner";
 import { matches, shortcut } from "@/lib/shortcuts";
 import { wizardRoute } from "../../config/nav";
 import { CatalogProvider } from "../../contexts/CatalogContext";
 import AuraChatButton from "../AuraChatButton";
+import { EnvironmentsPageLoading } from "../EnvironmentsPage";
+import { SettingsPageLoading } from "../SettingsPage";
 import ErrorBoundary, { PageCrash } from "../ErrorBoundary";
 import AppSidebar from "./AppSidebar";
 import AppTopBar, { TopBarSlot } from "./AppTopBar";
@@ -140,19 +145,25 @@ const AppLayout = ({ environments }) => {
   );
 };
 
-/** The content area while the pages wait for the service catalog. */
+/**
+ * The content area while the pages wait for the service catalog: the route's
+ * own loading state, so nothing moves when the catalog and the page's data
+ * arrive (one skeleton, not a spinner and then a skeleton).
+ */
 function CatalogLoading() {
-  return (
-    <PageShell>
-      <p
-        role="status"
-        className="flex min-h-80 items-center justify-center gap-2 text-sm text-muted-foreground"
-      >
-        <Spinner aria-hidden />
-        Loading the service catalog...
-      </p>
-    </PageShell>
-  );
+  const { pathname } = useLocation();
+  const wizard = wizardRoute(pathname);
+  if (wizard) return <WizardPageSkeleton mode={wizard.mode} />;
+  const settings = matchPath("/settings/:tab", pathname);
+  if (settings) return <SettingsPageLoading tab={settings.params.tab} />;
+  if (matchPath("/environments/:id", pathname)) {
+    return (
+      <PageShell width="detail">
+        <DetailPageSkeleton />
+      </PageShell>
+    );
+  }
+  return <EnvironmentsPageLoading />;
 }
 
 export default AppLayout;
