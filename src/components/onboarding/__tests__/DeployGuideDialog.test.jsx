@@ -158,7 +158,10 @@ describe("DeployGuideDialog", () => {
     renderDialog();
 
     expect(
-      screen.getByText(/first for AWS, then for Kubernetes/),
+      screen.getByText("Approve Terraform apply (AWS)"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Approve Terraform apply (Kubernetes)"),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Copy approve" }));
     await waitFor(() => expect(clipboard).toHaveBeenCalledWith("approve"));

@@ -320,24 +320,68 @@ const DeployGuideDialog = ({
               <LinkButton href={pages?.workflow}>
                 Open Terraform Deployment
               </LinkButton>
-              <p className="text-sm text-secondary">
-                Click Run workflow, choose apply under Terraform action to run,
-                and click the green Run workflow button.
+              {/* Labels as GitHub shows them for this workflow's
+                  workflow_dispatch inputs (terraform-deploy.yml). */}
+              <ol className="list-decimal space-y-1 pl-5 text-sm text-secondary">
+                <li>
+                  Click <strong className="text-primary">Run workflow</strong>{" "}
+                  on the right, above the list of runs.
+                </li>
+                <li>Leave the branch as it is.</li>
+                <li>
+                  Under{" "}
+                  <strong className="text-primary">
+                    Terraform action to run
+                  </strong>
+                  , choose <strong className="text-primary">apply</strong>.
+                </li>
+                <li>
+                  Leave{" "}
+                  <strong className="text-primary">
+                    Destroy without taking a final DB snapshot
+                  </strong>{" "}
+                  unticked.
+                </li>
+                <li>
+                  Click the green{" "}
+                  <strong className="text-primary">Run workflow</strong> button.
+                </li>
+              </ol>
+              <p className="text-xs text-tertiary">
+                The run shows up in the list after a few seconds. It prepares a
+                plan first, then waits for your approval.
               </p>
             </Section>
 
             <Section number={4} title="Approve it, twice">
-              <p className="text-sm text-secondary">
-                The run stops and opens an issue in your repository: first for
-                AWS, then for Kubernetes. Post this comment in each one:
-              </p>
-              <div className="flex items-center gap-2">
-                <code className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-primary">
-                  approve
-                </code>
-                <CopyButton value="approve" label="Copy approve" />
-              </div>
               <LinkButton href={pages?.issues}>Open issues</LinkButton>
+              <ol className="list-decimal space-y-1 pl-5 text-sm text-secondary">
+                <li>
+                  Open the issue{" "}
+                  <strong className="text-primary">
+                    Approve Terraform apply (AWS)
+                  </strong>
+                  . It appears a few minutes after the start, once the plan is
+                  ready.
+                </li>
+                <li>
+                  <span className="inline-flex flex-wrap items-center gap-2">
+                    Post this comment:
+                    <code className="rounded-lg border border-border bg-background px-2 py-1 text-primary">
+                      approve
+                    </code>
+                    <CopyButton value="approve" label="Copy approve" />
+                  </span>
+                </li>
+                <li>
+                  When the AWS part is built (with a cluster this takes 15
+                  minutes or more), a second issue appears:{" "}
+                  <strong className="text-primary">
+                    Approve Terraform apply (Kubernetes)
+                  </strong>
+                  . Approve it the same way.
+                </li>
+              </ol>
               <p className="text-xs text-tertiary">
                 Each request expires after 55 minutes.
               </p>
