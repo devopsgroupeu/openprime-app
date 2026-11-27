@@ -57,22 +57,6 @@ const shownPreferences = (preferences) => {
   };
 };
 
-/**
- * A settings tab while the shell waits for the service catalog: the page's
- * static header, then the tab's skeleton, as the page shows them while the
- * tab loads. An unknown tab is Account, where the page sends it.
- */
-export const SettingsPageLoading = ({ tab: id }) => {
-  const tab = SETTINGS_TABS.find((t) => t.id === id) ?? SETTINGS_TABS[0];
-  return (
-    <PageShell width="settings" className="grow">
-      <PageHeader title={tab.label} description={tab.description} />
-      <Separator />
-      <SettingsPageSkeleton tab={tab.id} />
-    </PageShell>
-  );
-};
-
 const SettingsPage = () => {
   const toast = useToast();
   const { tab: activeTab } = useParams();

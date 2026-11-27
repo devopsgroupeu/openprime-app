@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import { useCatalog } from "../contexts/CatalogContext";
 import { useToast } from "../contexts/ToastContext";
 import authService from "../services/authService";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
@@ -135,6 +136,7 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const toast = useToast();
+  const catalog = useCatalog();
   const [environment, setEnvironment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
@@ -192,7 +194,8 @@ function EnvironmentDetail({ id, onDelete, onEnvironmentChange }) {
     if (environment) onEnvironmentChange?.(environment);
   }, [environment]);
 
-  if (loading) {
+  // The services tab reads the catalog: it waits here too, in one skeleton.
+  if (loading || catalog.status === "loading") {
     return (
       <PageShell width="detail">
         <DetailPageSkeleton />

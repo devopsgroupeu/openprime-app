@@ -1,18 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Outlet, matchPath, useLocation } from "react-router";
-import { PageShell } from "@/components/shared/page-shell";
-import {
-  DetailPageSkeleton,
-  WizardPageSkeleton,
-} from "@/components/shared/skeletons";
 import { SkipLink } from "@/components/shared/skip-link";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { matches, shortcut } from "@/lib/shortcuts";
 import { wizardRoute } from "../../config/nav";
 import { CatalogProvider } from "../../contexts/CatalogContext";
 import AuraChatButton from "../AuraChatButton";
-import { EnvironmentsPageLoading } from "../EnvironmentsPage";
-import { SettingsPageLoading } from "../SettingsPage";
 import ErrorBoundary, { PageCrash } from "../ErrorBoundary";
 import AppSidebar from "./AppSidebar";
 import AppTopBar, { TopBarSlot } from "./AppTopBar";
@@ -44,8 +37,9 @@ export function breadcrumbsFor(pathname, environments) {
  * with a hairline once the content scrolls, the Cmd+K palette, the
  * shortcuts dialog and the floating Aura. The viewport never scrolls; the area
  * under the top bar does. Every signed-in page renders here, the wizard too
- * (it fills the area and scrolls its own columns). While the service catalog
- * loads, and when a page crashes, the content area says so; the shell stays.
+ * (it fills the area and scrolls its own columns). The pages that read the
+ * service catalog wait for it in their own loading state; when a page
+ * crashes, the content area says so. The shell stays.
  */
 const AppLayout = ({ environments }) => {
   const { pathname } = useLocation();
@@ -112,7 +106,7 @@ const AppLayout = ({ environments }) => {
                 : "pb-16 has-[[data-slot=save-bar]]:flex has-[[data-slot=save-bar]]:min-h-full has-[[data-slot=save-bar]]:flex-col has-[[data-slot=save-bar]]:pb-0"
             }
           >
-            <CatalogProvider fallback={<CatalogLoading />}>
+            <CatalogProvider>
               {/* Reset by a route change, never remounted by one: a settings
                   tab switch keeps the form's edits. */}
               <ErrorBoundary resetKey={pathname} fallback={PageCrash}>
@@ -144,26 +138,5 @@ const AppLayout = ({ environments }) => {
     </SidebarProvider>
   );
 };
-
-/**
- * The content area while the pages wait for the service catalog: the route's
- * own loading state, so nothing moves when the catalog and the page's data
- * arrive (one skeleton, not a spinner and then a skeleton).
- */
-function CatalogLoading() {
-  const { pathname } = useLocation();
-  const wizard = wizardRoute(pathname);
-  if (wizard) return <WizardPageSkeleton mode={wizard.mode} />;
-  const settings = matchPath("/settings/:tab", pathname);
-  if (settings) return <SettingsPageLoading tab={settings.params.tab} />;
-  if (matchPath("/environments/:id", pathname)) {
-    return (
-      <PageShell width="detail">
-        <DetailPageSkeleton />
-      </PageShell>
-    );
-  }
-  return <EnvironmentsPageLoading />;
-}
 
 export default AppLayout;

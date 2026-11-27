@@ -27,14 +27,19 @@ async function loadWithFlagOn() {
   window._env_ = { USE_RUNTIME_CATALOG: "true" };
 
   const servicesConfig = await import("../../config/servicesConfig");
-  const { CatalogProvider } = await import("../CatalogContext");
+  const { CatalogProvider, useCatalog } = await import("../CatalogContext");
   const { loadCatalog } = await import("../../services/catalogService");
 
   // Guard the setup itself: if the flag did not actually take, every assertion
   // below would pass against the flag-off path and mean nothing.
   expect(servicesConfig.USE_RUNTIME_CATALOG).toBe(true);
 
-  return { servicesConfig, CatalogProvider, loadCatalog };
+  // Children render at once; the status says when the fetch has settled.
+  const App = () => <div data-testid="app">{useCatalog().status}</div>;
+  const settled = (status) =>
+    waitFor(() => expect(screen.getByTestId("app")).toHaveTextContent(status));
+
+  return { servicesConfig, CatalogProvider, App, settled, loadCatalog };
 }
 
 describe("CatalogProvider — catalog failure degrades, never blocks", () => {
@@ -50,18 +55,19 @@ describe("CatalogProvider — catalog failure degrades, never blocks", () => {
   });
 
   it("renders children when the catalog fetch fails", async () => {
-    const { CatalogProvider, loadCatalog } = await loadWithFlagOn();
+    const { CatalogProvider, App, settled, loadCatalog } =
+      await loadWithFlagOn();
     const err = new Error("catalog service is not responding");
     err.status = 502;
     loadCatalog.mockRejectedValue(err);
 
     render(
-      <CatalogProvider fallback={<div>loading</div>}>
-        <div data-testid="app">the app</div>
+      <CatalogProvider>
+        <App />
       </CatalogProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId("app")).toBeInTheDocument());
+    await settled("error");
     expect(screen.queryByText(/Service catalog unavailable/i)).toBeNull();
   });
 
@@ -69,17 +75,17 @@ describe("CatalogProvider — catalog failure degrades, never blocks", () => {
     // The fallback is only real if SERVICES_CONFIG still describes AWS. Seeded
     // empty under flag-on, children would render an empty service list — a
     // product with no services, which is worse than an error screen.
-    const { CatalogProvider, loadCatalog, servicesConfig } =
+    const { CatalogProvider, App, settled, loadCatalog, servicesConfig } =
       await loadWithFlagOn();
     loadCatalog.mockRejectedValue(new Error("boom"));
 
     render(
       <CatalogProvider>
-        <div data-testid="app">the app</div>
+        <App />
       </CatalogProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId("app")).toBeInTheDocument());
+    await settled("error");
 
     expect(servicesConfig.SERVICES_CONFIG.eks).toBeDefined();
     expect(servicesConfig.SERVICES_CONFIG.vpc).toBeDefined();
@@ -92,7 +98,7 @@ describe("CatalogProvider — catalog failure degrades, never blocks", () => {
     // The fallback seed must not weaken the flag-on path: a service the catalog
     // does not describe has to disappear, or the catalog stops being the source
     // of truth and OP-210 can never delete aws.js.
-    const { CatalogProvider, loadCatalog, servicesConfig } =
+    const { CatalogProvider, App, settled, loadCatalog, servicesConfig } =
       await loadWithFlagOn();
     loadCatalog.mockResolvedValue({
       schemaVersion: 1,
@@ -110,11 +116,11 @@ describe("CatalogProvider — catalog failure degrades, never blocks", () => {
 
     render(
       <CatalogProvider>
-        <div data-testid="app">the app</div>
+        <App />
       </CatalogProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId("app")).toBeInTheDocument());
+    await settled("ready");
 
     expect(servicesConfig.SERVICES_CONFIG.eks).toBeDefined();
     // vpc came from the static seed and the catalog dropped it.
@@ -124,16 +130,17 @@ describe("CatalogProvider — catalog failure degrades, never blocks", () => {
   });
 
   it("says so in the console rather than failing silently", async () => {
-    const { CatalogProvider, loadCatalog } = await loadWithFlagOn();
+    const { CatalogProvider, App, settled, loadCatalog } =
+      await loadWithFlagOn();
     loadCatalog.mockRejectedValue(new Error("boom"));
 
     render(
       <CatalogProvider>
-        <div data-testid="app">the app</div>
+        <App />
       </CatalogProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId("app")).toBeInTheDocument());
+    await settled("error");
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining("falling back to the static service config"),
       expect.anything(),

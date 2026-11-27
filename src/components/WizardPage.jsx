@@ -704,10 +704,14 @@ const WizardPage = ({ onCreateEnvironment, onUpdateEnvironment }) => {
  * The page of both wizard routes. The router keeps its element when only the
  * wizard changes (an edit to create, one environment's edit to another's),
  * so the key starts each one afresh: no state, draft or Aura conversation
- * carries over.
+ * carries over. The wizard builds its state from the service catalog when it
+ * opens, so it opens once the catalog is there.
  */
 const KeyedWizardPage = (props) => {
   const { id } = useParams();
+  const catalog = useCatalog();
+  if (catalog.status === "loading")
+    return <WizardPageSkeleton mode={id ? "edit" : "create"} />;
   return <WizardPage key={id ? `edit:${id}` : "create"} {...props} />;
 };
 

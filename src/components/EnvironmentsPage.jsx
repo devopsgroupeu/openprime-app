@@ -9,6 +9,7 @@ import ProviderIcon from "./icons/ProviderIcon";
 import PrerequisitesChecklist from "./PrerequisitesChecklist";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal";
 import authService from "../services/authService";
+import { useCatalog } from "../contexts/CatalogContext";
 import { useToast } from "../contexts/ToastContext";
 import {
   SORTS,
@@ -67,17 +68,16 @@ const ListHeader = ({ actions }) => (
   />
 );
 
-// The list while it loads: the static header at once (New environment works
-// before the data), then the skeleton. One element for the page and for the
-// shell's catalog wait. The page returns it as it is, so its PageShell and
-// header stay mounted (no replayed entrance) when the environments arrive.
+// The list while the environments or the service catalog (service names)
+// load: the static header at once (New environment works before the data),
+// then the skeleton. Its PageShell and header stay mounted (no replayed
+// entrance, focus kept) when the data arrives.
 const loadingList = (
   <PageShell>
     <ListHeader actions={<NewEnvironmentButton />} />
     <ListPageSkeleton />
   </PageShell>
 );
-export const EnvironmentsPageLoading = () => loadingList;
 
 const EnvironmentsPage = ({
   environments,
@@ -88,6 +88,7 @@ const EnvironmentsPage = ({
   onDelete,
 }) => {
   const toast = useToast();
+  const catalog = useCatalog();
   const [query, setQuery] = useState("");
   // The provider and status filters are shareable and survive Back: they
   // live in ?provider= and ?status=.
@@ -153,7 +154,7 @@ const EnvironmentsPage = ({
     }
   }, [loading, hasEnvironments, loadError]);
 
-  if (loading) return loadingList;
+  if (loading || catalog.status === "loading") return loadingList;
 
   const changeSort = (value) => {
     setSort(value);

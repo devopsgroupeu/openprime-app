@@ -218,7 +218,7 @@ the page, below the card) with the white-wordmark logo, the logo tile stays whit
 | Icon buttons      | `IconAction` (`label`, `icon`, `shortcutId`, `to`, `onClick`): ghost `icon-sm`, tooltip below with the label and `ShortcutKeys`, no tooltip below md.                                                                                                                                                           |
 | User menu         | `UserMenu.jsx`, opens upward, `w-60`, non-modal: name and email, Theme (Light, Dark), Settings, Help (Documentation, Keyboard shortcuts), Sign out.                                                                                                                                                             |
 | Shortcuts         | `src/lib/shortcuts.js`: Cmd/Ctrl+K palette, Cmd/Ctrl+B sidebar, Cmd/Ctrl+/ shortcuts dialog (`KeyboardShortcutsDialog.jsx`).                                                                                                                                                                                    |
-| Waits and crashes | While the catalog loads, the content area shows the route's own loading state (`CatalogLoading`). `ErrorBoundary resetKey={pathname} fallback={PageCrash}` keeps the shell when a page crashes; a route change clears it. The root boundary in `App.jsx` is full screen.                                        |
+| Waits and crashes | While the catalog loads, the list and detail pages show their loading state, the wizard `WizardPageSkeleton`; other pages do not wait. `ErrorBoundary resetKey={pathname} fallback={PageCrash}` keeps the shell when a page crashes; a route change clears it. The root boundary in `App.jsx` is full screen.   |
 | Floating Aura     | `AuraChatButton hidden={wizard} greet={list}`: on every page but the wizard, where it stays mounted so its conversation survives; `greet` (`/environments`) shows the greeting once per page load (6.4).                                                                                                        |
 | Skip link, title  | `SkipLink` ("Skip to content" to `#main`); tab title "<page> - OpenPrime" via `PageHeader` or `useDocumentTitle`.                                                                                                                                                                                               |
 
@@ -449,9 +449,8 @@ Skeletons: `ListPageSkeleton`, `DetailPageSkeleton`, `SettingsPageSkeleton tab` 
   `text-xs` line); the region map's block keeps its 2.6 aspect. Header, stat strip, toolbar and the
   first cards or rows do not move when the data arrives.
 - The page keeps its `PageShell` and header mounted from loading to loaded, so the entrance does
-  not replay. The catalog wait (4.1) shows the same loading state (`EnvironmentsPageLoading`,
-  `SettingsPageLoading`, `DetailPageSkeleton`, `WizardPageSkeleton`), one skeleton, never a spinner
-  first.
+  not replay and focus stays. The list and the detail page count the catalog wait (4.1) as loading;
+  the wizard routes show `WizardPageSkeleton` until it ends. One skeleton, never a spinner first.
 - Skeletons do not fade in; under reduced motion the pulse stops (`src/index.css`). Spinners are for
   actions and waits of unknown shape: a pending action is a spinner in its button, the sign-in wait
   a `FullScreenState`, never a page spinner.
