@@ -61,15 +61,16 @@
   --chart-3: #0369a1;
   --chart-4: #6d28d9;
   --chart-5: #c2410c;
-  /* Sidebar = the deep-green brand surface in both themes; teal primary takes green text. */
-  --sidebar: #04312c;
-  --sidebar-foreground: #f8fafa;
-  --sidebar-primary: #35b0a0;
-  --sidebar-primary-foreground: #04312c;
-  --sidebar-accent: #13463f;
-  --sidebar-accent-foreground: #f8fafa;
-  --sidebar-border: #0a3e38;
-  --sidebar-ring: #35b0a0;
+  /* Sidebar = a neutral grey from the page ramp, one step darker than the page; the brand
+     stays in the logo, the primary action and focus. */
+  --sidebar: oklch(0.945 0.003 264);
+  --sidebar-foreground: oklch(0.215 0.006 264);
+  --sidebar-primary: #1e7366;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: oklch(0.88 0.005 264);
+  --sidebar-accent-foreground: oklch(0.215 0.006 264);
+  --sidebar-border: oklch(0.912 0.005 264);
+  --sidebar-ring: #1e7366;
   /* Self-hosted in src/styles/fonts.css (CSP font-src 'self'). */
   --font-sans: "Inter Variable", Inter, system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", monospace;
@@ -122,15 +123,14 @@
   --chart-3: #38bdf8;
   --chart-4: #a78bfa;
   --chart-5: #fb923c;
-  /* Deep brand green adjusted for a dark page: a touch deeper than the light sidebar so it
-     does not glow next to the charcoal canvas, still clearly green, never grey. */
-  --sidebar: #052823;
-  --sidebar-foreground: #f8fafa;
+  /* Charcoal a step above the page and below the card, with a quiet divider. */
+  --sidebar: oklch(0.24 0.005 264);
+  --sidebar-foreground: oklch(0.945 0.003 264);
   --sidebar-primary: #35b0a0;
   --sidebar-primary-foreground: #04312c;
-  --sidebar-accent: #133d37;
-  --sidebar-accent-foreground: #f8fafa;
-  --sidebar-border: #0b332e;
+  --sidebar-accent: oklch(0.32 0.006 264);
+  --sidebar-accent-foreground: oklch(0.965 0.003 264);
+  --sidebar-border: oklch(0.28 0.005 264);
   --sidebar-ring: #35b0a0;
   --radius: 0.5rem;
   /* Same geometry as light, hotter alphas: on a charcoal ground a shadow needs

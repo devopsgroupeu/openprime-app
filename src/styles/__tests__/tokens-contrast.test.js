@@ -187,10 +187,15 @@ describe.each(Object.entries(themes))("%s theme tokens", (theme, t) => {
     );
   });
 
-  it("sidebar is the brand green, not grey", () => {
-    const [r, g, b] = need(t.sidebar);
-    expect(g - r).toBeGreaterThan(0.1);
-    expect(b - r).toBeGreaterThan(0.08);
+  it("sidebar is a neutral grey one step off the page", () => {
+    const rgb = need(t.sidebar);
+    expect(Math.max(...rgb) - Math.min(...rgb)).toBeLessThan(0.02);
+    if (theme === "light") {
+      expect(luminance(t.sidebar)).toBeLessThan(luminance(t.background));
+    } else {
+      expect(luminance(t.sidebar)).toBeGreaterThan(luminance(t.background));
+      expect(luminance(t.sidebar)).toBeLessThan(luminance(t.card));
+    }
   });
 
   it("hover row is a visible step above the sidebar", () => {

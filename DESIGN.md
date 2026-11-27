@@ -35,7 +35,7 @@ Users are engineers setting up AWS infrastructure. The UI must feel calm, dense 
 | Id   | Decision (do not reopen)                                                                                                                                                                                                                                                          |
 | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | D-1  | Every signed-in screen is a page of the one shell (`AppLayout`: sidebar, top bar, content area). Only the content area changes; the wizard, the catalog wait, Not found and a page crash render inside it. Only the screens before sign-in are full screen (`FullScreenState`).   |
-| D-2  | The sidebar is always there and always deep brand green (`--sidebar` #04312c light, #052823 dark). Users may hide it (offcanvas, Cmd/Ctrl+B); below md it is a Sheet. While hidden, the top bar shows "Show sidebar" and "New environment".                                       |
+| D-2  | The sidebar is always there, a neutral grey from the page ramp (`--sidebar`), never a brand tint. Users may hide it (offcanvas, Cmd/Ctrl+B); below md it is a Sheet. While hidden, the top bar shows "Show sidebar" and "New environment".                                        |
 | D-3  | The wizard is a normal shell page (`/environments/create`, `/environments/:id/edit`) with no top bar of its own: draft status, Start over, Aura and Cancel go into the shell top bar through `TopBarActions`.                                                                     |
 | D-4  | The cover gradient (`CoverGradient`) is the only decorative gradient: environment cards and the detail header, picked from the environment id, decorative only. Its round provider avatar is 40 px so the AWS wordmark stays legible.                                             |
 | D-5  | Logos are official files, never recolored: chart and git logos only through `LogoTile` on the white `--logo-tile`, AWS services through `ServiceIcon`, providers through `ProviderIcon`. Sources and terms: `public/assets/chart-logos/README.md`.                                |
@@ -85,8 +85,8 @@ One cool neutral ramp (OKLCH hue 264); elevation background < card < popover < a
 | `--primary` / `--ring`              | #1e7366                                            | #35b0a0                                            | Forward action, focus; foreground #ffffff / #04312c   |
 | `--destructive`                     | #dc2626                                            | #f87171                                            | Destructive; foreground #ffffff / #f8fafc             |
 | `--warning` / `--info`              | `oklch(0.52 0.125 60)` / `oklch(0.51 0.2 268)`     | `oklch(0.85 0.135 82)` / `oklch(0.7 0.17 265)`     | Amber / blue-indigo                                   |
-| `--sidebar` / `-accent` / `-border` | #04312c / #13463f / #0a3e38                        | #052823 / #133d37 / #0b332e                        | Sidebar surface / hover and active row / separators   |
-| `--sidebar-foreground` / `-ring`    | #f8fafa / #35b0a0                                  | #f8fafa / #35b0a0                                  | Rows at `/80`, labels at `/70`; sidebar focus         |
+| `--sidebar` / `-accent` / `-border` | `oklch(0.945 0.003 264)` / L `0.88` / L `0.912`    | `oklch(0.24 0.005 264)` / L `0.32` / L `0.28`      | Sidebar surface / hover and active row / separators   |
+| `--sidebar-foreground` / `-ring`    | `--foreground` / #1e7366                           | `--foreground` / #35b0a0                           | Rows at `/80`, labels at `/70`; sidebar focus         |
 | `--logo-tile`                       | `oklch(1 0 0)`                                     | `oklch(1 0 0)`                                     | Logo tiles, white in both themes                      |
 
 Recipes: hover `bg-accent` (cards `hover:bg-accent/40`, rows `hover:bg-muted/40`); quiet fills
@@ -198,8 +198,9 @@ and transitions to 0.01 ms, overlays keep a `--dur-fast` fade, spinners turn, `A
 (`openprime-theme-v2`) wins, else the OS setting at load; users switch in the user menu (Theme) or the
 palette ("Toggle theme"). `dark:` utilities are token based only (`dark:bg-input/10`,
 `dark:bg-black/60`). The dark destructive button is a tint
-(`dark:border dark:border-destructive/60 dark:bg-destructive/15`); the sidebar stays green, the logo
-tile white, and `.cover-gradient` gets a 22 % page-color veil.
+(`dark:border dark:border-destructive/60 dark:bg-destructive/15`); the sidebar turns charcoal (above
+the page, below the card) with the white-wordmark logo, the logo tile stays white, and
+`.cover-gradient` gets a 22 % page-color veil.
 
 ## 4. Layout
 

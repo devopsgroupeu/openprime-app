@@ -14,6 +14,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import logo from "../../assets/openprime-logo-color.svg";
 import logoInverse from "../../assets/openprime-logo-color-inverse.svg";
 import { SETTINGS_TABS, wizardRoute } from "../../config/nav";
 import { IconAction } from "./IconAction";
@@ -63,7 +64,13 @@ function TopRow({ onSearch }) {
         onClick={() => setOpenMobile(false)}
         className="mr-auto flex h-7 min-w-0 items-center rounded-lg px-1.5 outline-none transition-[background-color] duration-(--dur-fast) hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring max-md:min-h-11"
       >
-        <img src={logoInverse} alt="" className="h-4 w-auto" />
+        {/* Brand lockups: black wordmark on the light sidebar, white on dark. */}
+        <img src={logo} alt="" className="h-4 w-auto dark:hidden" />
+        <img
+          src={logoInverse}
+          alt=""
+          className="hidden h-4 w-auto dark:block"
+        />
       </Link>
       <IconAction
         label="Search"
@@ -169,7 +176,7 @@ export default function AppSidebar({ onSearch, onShortcuts }) {
   };
 
   return (
-    <Sidebar collapsible="offcanvas">
+    <Sidebar collapsible="offcanvas" className="border-sidebar-border">
       {inSettings ? (
         <SettingsNav pathname={pathname} />
       ) : (
