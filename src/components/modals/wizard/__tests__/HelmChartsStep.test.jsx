@@ -42,17 +42,13 @@ const enabledNames = (charts) =>
 
 describe("HelmChartsStep — Ingress Stack quick template (OP-234)", () => {
   it("ships the AWS Load Balancer Controller with the stack on EKS", () => {
-    // REGRESSION: without the controller, ingress-nginx's Service of type
-    // LoadBalancer never gets an address, ArgoCD blocks on its health and never
-    // applies the Deployment. The 2026-09-02 walkthrough left a cluster whose
-    // ingress-nginx namespace held zero pods, permanently, with nothing on
-    // screen explaining it.
+    // REGRESSION: the ingresses use the ALB class, and nothing provisions a
+    // load balancer for them unless the AWS Load Balancer Controller runs.
     const charts = chartsAfterIngressStack("eks");
     expect(enabledNames(charts)).toEqual([
       "awsLoadBalancerController",
       "certManager",
       "externalDns",
-      "ingressNginx",
     ]);
   });
 
@@ -61,11 +57,7 @@ describe("HelmChartsStep — Ingress Stack quick template (OP-234)", () => {
     // for AKS/GKE too, so enabling it unconditionally would put a chart into the
     // config that the selector cannot render and generation would drop.
     const charts = chartsAfterIngressStack("gke");
-    expect(enabledNames(charts)).toEqual([
-      "certManager",
-      "externalDns",
-      "ingressNginx",
-    ]);
+    expect(enabledNames(charts)).toEqual(["certManager", "externalDns"]);
     expect(charts.awsLoadBalancerController).toBeUndefined();
   });
 

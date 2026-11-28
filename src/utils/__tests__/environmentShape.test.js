@@ -41,6 +41,7 @@ describe("normalizeEnvironment", () => {
         eks: {
           enabled: true,
           helmCharts: {
+            certManager: { enabled: true },
             ingressNginx: { enabled: true },
             thanos: { enabled: true },
             "ingress-nginx": { enabled: true },
@@ -50,7 +51,7 @@ describe("normalizeEnvironment", () => {
     });
 
     expect(Object.keys(normalized.services.eks.helmCharts)).toEqual([
-      "ingressNginx",
+      "certManager",
     ]);
     expect(normalized.services.eks.enabled).toBe(true);
   });

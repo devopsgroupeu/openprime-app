@@ -51,10 +51,10 @@ export const environments = [
         // (camelCase). The stale kebab-case keys this fixture used to carry
         // matched neither, so generation silently dropped them.
         helmCharts: {
-          ingressNginx: {
+          certManager: {
             enabled: true,
             version: "1.4.1",
-            namespace: "ingress-system",
+            namespace: "cert-manager",
           },
           prometheusStack: {
             enabled: true,

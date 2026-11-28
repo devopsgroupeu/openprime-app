@@ -20,7 +20,7 @@ describe("WizardReviewStep readiness gates", () => {
         eks: {
           enabled: true,
           helmCharts: {
-            ingressNginx: { enabled: true },
+            certManager: { enabled: true },
           },
         },
       },
@@ -75,7 +75,7 @@ describe("WizardReviewStep readiness gates", () => {
         eks: {
           enabled: true,
           helmCharts: {
-            ingressNginx: { enabled: true },
+            certManager: { enabled: true },
           },
         },
       },

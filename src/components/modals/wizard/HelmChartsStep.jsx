@@ -186,19 +186,15 @@ const HelmChartsStep = ({ newEnv, setNewEnv, onEditHelmValues }) => {
                 onClick={() => {
                   const currentCharts =
                     newEnv.services[k8sService.name]?.helmCharts || {};
-                  // ingress-nginx exposes a Service of type LoadBalancer. On EKS
-                  // nothing provisions one unless the AWS Load Balancer
-                  // Controller is running, so ArgoCD blocks on that Service's
-                  // health and never applies the Deployment - the customer gets
-                  // an app stuck with no pods and nothing explaining why
-                  // (OP-234). Ship the controller with the stack, filtered to
+                  // The ingresses are served by the AWS Load Balancer Controller.
+                  // On EKS nothing provisions a load balancer for them unless the
+                  // controller is running, so ship it with the stack, filtered to
                   // the charts this Kubernetes service actually has: it is
                   // EKS-only, and the stack is offered for AKS/GKE too.
                   const available = new Set(
                     getHelmChartsForK8sService(k8sService.name),
                   );
                   const stack = [
-                    "ingressNginx",
                     "certManager",
                     "externalDns",
                     "awsLoadBalancerController",
