@@ -68,3 +68,26 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+## Supply chain
+
+Every image published to `ghcr.io/devopsgroupeu/openprime-app` carries:
+
+- a **keyless [cosign](https://github.com/sigstore/cosign) signature**, made by the publish workflow with GitHub's OIDC identity (no long-lived signing key exists);
+- an **SBOM** (SPDX) and **build provenance**, attached to the image as attestations by BuildKit.
+
+Before a release is cut, CI builds the image from the same commit (linux/amd64) and scans it, together with the production dependencies in `package-lock.json`, with Trivy. A fixable HIGH or CRITICAL vulnerability stops the release. Pull requests run the same scan, plus CodeQL (`javascript-typescript`) and `helm lint --strict` + kubeconform on `chart/ci/*-values.yaml`. Dependencies are installed with `npm ci`, which verifies every package against the integrity hashes in the committed lock file.
+
+The image runs as UID/GID 1000 and works with a read-only root filesystem; only `/tmp`, `/var/cache/nginx` and `/var/run` must be writable (the Helm chart mounts them as emptyDirs).
+
+### Verify the signature
+
+Use cosign v3.1.4 or newer (the publish workflow signs with v3.1.4):
+
+```bash
+cosign verify ghcr.io/devopsgroupeu/openprime-app:<version> \
+  --certificate-identity "https://github.com/devopsgroupeu/openprime-app/.github/workflows/reusable-docker-publish.yml@refs/heads/main" \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+Dev images built by `publish.yml` from the `dev` branch are signed with the identity ending in `@refs/heads/dev`.

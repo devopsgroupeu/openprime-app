@@ -21,9 +21,19 @@ jobs:
   test:
     uses: ./.github/workflows/reusable-test.yml
 
+  # Gate BEFORE semantic-release: if the image fails the scan, nothing is tagged,
+  # no GitHub release or CHANGELOG commit is made, and no version number is burnt.
+  scan:
+    name: Image scan
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    permissions:
+      contents: read
+      security-events: write
+    uses: ./.github/workflows/reusable-image-scan.yml
+
   release:
     name: Semantic Release
-    needs: test
+    needs: [test, scan]
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     permissions:
@@ -36,7 +46,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -44,7 +54,7 @@ jobs:
         run: git fetch --tags --force
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: lts/*
 
@@ -70,7 +80,7 @@ jobs:
         if: steps.semantic.outputs.new_release_published == 'true'
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
   publish-docker:
     needs: release
@@ -78,6 +88,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write # caps the reusable workflow's keyless cosign signing
     uses: ./.github/workflows/reusable-docker-publish.yml
     with:
       tags: |

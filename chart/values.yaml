@@ -40,10 +40,12 @@ serviceAccount:
 
 podAnnotations: {}
 
+# UID/GID 1000 matches USER 1000:1000 in the Dockerfile (H97).
 podSecurityContext:
-  fsGroup: 101
+  fsGroup: 1000
   runAsNonRoot: true
-  runAsUser: 101
+  runAsUser: 1000
+  runAsGroup: 1000
 
 securityContext:
   allowPrivilegeEscalation: false
@@ -52,8 +54,8 @@ securityContext:
     - ALL
   readOnlyRootFilesystem: true
   runAsNonRoot: true
-  runAsUser: 101
-
+  runAsUser: 1000
+  runAsGroup: 1000
 service:
   type: ClusterIP
   port: 80

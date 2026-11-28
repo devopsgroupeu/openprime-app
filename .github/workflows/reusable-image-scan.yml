@@ -1,0 +1,119 @@
+name: Reusable Image Scan
+
+on:
+  workflow_call:
+    inputs:
+      build-args:
+        required: false
+        type: string
+        description: "Newline-separated build args passed to the image build"
+
+jobs:
+  scan:
+    name: Trivy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Trivy repo scan (dependencies)
+        id: trivy-fs
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          format: sarif
+          output: trivy-fs.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          limit-severities-for-sarif: true
+          exit-code: "1"
+
+      - name: Build image for scan (amd64, no push)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          push: false
+          load: true
+          tags: scan-target:${{ github.sha }}
+          build-args: ${{ inputs.build-args }}
+          cache-from: type=gha,scope=image-scan
+          cache-to: type=gha,scope=image-scan,mode=max
+          platforms: linux/amd64
+
+      - name: Trivy image scan
+        id: trivy-image
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: scan-target:${{ github.sha }}
+          format: sarif
+          output: trivy-image.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          limit-severities-for-sarif: true
+          exit-code: "1"
+          skip-setup-trivy: true
+
+      - name: Upload Trivy repo results
+        if: >-
+          always() && hashFiles('trivy-fs.sarif') != '' &&
+          (github.event_name != 'pull_request' ||
+           github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: trivy-fs.sarif
+          category: trivy-fs
+
+      - name: Upload Trivy image results
+        if: >-
+          always() && hashFiles('trivy-image.sarif') != '' &&
+          (github.event_name != 'pull_request' ||
+           github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: trivy-image.sarif
+          category: trivy-image
+
+      # SARIF is not readable in the log, and fork PRs cannot upload it, so on
+      # failure print the same findings as a table (DB is already cached).
+      - name: Show repo findings
+        if: steps.trivy-fs.outcome == 'failure'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "0"
+          skip-setup-trivy: true
+
+      - name: Show image findings
+        if: steps.trivy-image.outcome == 'failure'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: scan-target:${{ github.sha }}
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "0"
+          skip-setup-trivy: true
+
+      - name: Fail on vulnerabilities
+        if: steps.trivy-fs.outcome == 'failure' || steps.trivy-image.outcome == 'failure'
+        env:
+          FS_OUTCOME: ${{ steps.trivy-fs.outcome }}
+          IMAGE_OUTCOME: ${{ steps.trivy-image.outcome }}
+        run: |
+          echo "::error::Trivy found fixable HIGH/CRITICAL vulnerabilities (or a scan failed to run). repo scan: ${FS_OUTCOME}, image scan: ${IMAGE_OUTCOME}"
+          exit 1
