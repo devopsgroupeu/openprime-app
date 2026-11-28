@@ -9,8 +9,8 @@ import { getServiceConfig } from "../config/servicesConfig";
 // search, filter and sort.
 
 /**
- * The most recent finished job `{ kind, status, error }` (generate or push, by
- * last_*_at; a tie goes to generate), or null before the first one.
+ * The most recent finished job `{ kind, at, status, error }` (generate or
+ * push, by last_*_at; a tie goes to generate), or null before the first one.
  */
 export const lastJob = (environment) => {
   const genAt = environment.last_generate_at;
@@ -18,6 +18,7 @@ export const lastJob = (environment) => {
   if (pushAt && !(genAt && genAt >= pushAt)) {
     return {
       kind: "push",
+      at: pushAt,
       status: environment.last_push_status,
       error: environment.last_push_error,
     };
@@ -25,6 +26,7 @@ export const lastJob = (environment) => {
   if (genAt) {
     return {
       kind: "generate",
+      at: genAt,
       status: environment.last_generate_status,
       error: environment.last_generate_error,
     };
@@ -155,8 +157,8 @@ export const modifiedAt = (env) =>
 
 /**
  * Stat strip: environments, enabled services, distinct regions and the time
- * of the last successful generate (ISO, or null), facts the filter tabs do
- * not show.
+ * of the last successful generate or push (ISO, or null; a push runs the
+ * generate first), facts the filter tabs do not show.
  */
 export const summarizeEnvironments = (environments) => ({
   total: environments.length,
@@ -171,14 +173,16 @@ export const summarizeEnvironments = (environments) => ({
   ).size,
   lastGenerated:
     environments
-      .filter((env) => env.last_generate_status === "succeeded")
-      .map((env) => env.last_generate_at)
+      .flatMap((env) => [
+        env.last_generate_status === "succeeded" && env.last_generate_at,
+        env.last_push_status === "succeeded" && env.last_push_at,
+      ])
       .filter(Boolean)
       .sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? null,
 });
 
 // The stat strip's pictures: status shares, services per category, the
-// regions by city and each environment's last generate.
+// regions by city and each environment's last generate or push.
 
 const toneOf = (key) =>
   Object.values(STATUSES).find((s) => s.key === key)?.tone ?? "neutral";
@@ -269,17 +273,22 @@ export const regionsInUse = (environments) => {
 };
 
 /**
- * Each environment's last generate `{ id, name, at, status }`, newest first;
- * the never generated (`at` and `status` null) last, by name.
+ * Each environment's most recent job, generate or push (`lastJob`, as the
+ * status pill), `{ id, name, at, status, kind }`, newest first; the never
+ * run (`at`, `status` and `kind` null) last, by name.
  */
 export const generations = (environments) =>
   environments
-    .map((env) => ({
-      id: env.id,
-      name: env.name,
-      at: env.last_generate_at ?? null,
-      status: env.last_generate_at ? env.last_generate_status : null,
-    }))
+    .map((env) => {
+      const job = lastJob(env);
+      return {
+        id: env.id,
+        name: env.name,
+        at: job?.at ?? null,
+        status: job?.status ?? null,
+        kind: job?.kind ?? null,
+      };
+    })
     .sort(
       (a, b) =>
         (Date.parse(b.at) || 0) - (Date.parse(a.at) || 0) || byName(a, b),

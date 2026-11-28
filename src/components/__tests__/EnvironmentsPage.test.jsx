@@ -301,6 +301,44 @@ describe("EnvironmentsPage", () => {
     );
   });
 
+  // A push runs the full generate first: the more recent of the two counts,
+  // as in the status pill, and its row says it was a push.
+  const pushed = {
+    ...prod,
+    last_push_at: "2026-06-21T10:00:00Z",
+    last_push_status: "succeeded",
+  };
+  const pushFailed = {
+    ...sandbox,
+    last_push_at: "2026-06-11T10:00:00Z",
+    last_push_status: "failed",
+  };
+
+  it("counts a push newer than the generate and says it was a push", () => {
+    renderPage({ environments: [pushed, staging, pushFailed] });
+    expect(lastGeneratedTile().children[1]).toHaveTextContent(
+      formatRelative(pushed.last_push_at),
+    );
+    expect(generateRows()).toEqual([
+      `demo-prod${formatAge(pushed.last_push_at)}: pushed ${formatRelative(pushed.last_push_at)}, ${formatDateTime(pushed.last_push_at)}`,
+      `zeta-sandbox${formatAge(pushFailed.last_push_at)}: push failed ${formatRelative(pushFailed.last_push_at)}, ${formatDateTime(pushFailed.last_push_at)}`,
+      "demo-stagingNever: never generated",
+    ]);
+  });
+
+  it.each([
+    [0, `demo-prod: pushed ${formatDateTime(pushed.last_push_at)}`],
+    [1, `zeta-sandbox: push failed ${formatDateTime(pushFailed.last_push_at)}`],
+  ])(
+    "gives push row %i its outcome and time in the tooltip",
+    async (i, tip) => {
+      renderPage({ environments: [pushed, staging, pushFailed] });
+      const row = within(lastGeneratedTile()).getAllByRole("listitem")[i];
+      fireEvent.pointerMove(row, { pointerType: "mouse" });
+      expect(await screen.findByRole("tooltip")).toHaveTextContent(tip);
+    },
+  );
+
   it("scrolls the generates past four rows in a region the keyboard can reach", () => {
     const more = (n) => ({
       ...prod,

@@ -275,18 +275,20 @@ function Regions({ regions }) {
 }
 
 /**
- * Every environment's last generate (`generations`) like a CI run list: the
- * outcome icon, name and short age; the tooltip gives the whole name and
- * the exact time. Screen readers hear the outcome, the long age and the
- * exact time (the tooltip is hover only). Past four rows the list scrolls
- * (`ScrollRows`).
+ * Every environment's last generate or push (`generations`) like a CI run
+ * list: the outcome icon, name and short age; the tooltip gives the whole
+ * name, the outcome of that kind and the exact time. Screen readers hear the
+ * outcome, the long age and the exact time (the tooltip is hover only). Past
+ * four rows the list scrolls (`ScrollRows`).
  */
 function GenerateFeed({ items, now }) {
   return (
     <ScrollRows label="Recent generates" scrolls={items.length > VISIBLE_ROWS}>
       <ul className="flex flex-col gap-2 text-xs">
-        {items.map(({ id, name, at, status }) => {
+        {items.map(({ id, name, at, status, kind }) => {
           const failed = status === "failed";
+          const push = kind === "push";
+          const done = push ? "pushed" : "generated";
           const { Icon, text } =
             TONE[!at ? "neutral" : failed ? "destructive" : "success"];
           return (
@@ -301,7 +303,7 @@ function GenerateFeed({ items, now }) {
                     <span className="sr-only">
                       :{" "}
                       {at
-                        ? `${failed ? "failed" : "generated"} ${formatRelative(at, now)}, ${formatDateTime(at)}`
+                        ? `${failed ? (push ? "push failed" : "failed") : done} ${formatRelative(at, now)}, ${formatDateTime(at)}`
                         : "never generated"}
                     </span>
                   </span>
@@ -310,7 +312,7 @@ function GenerateFeed({ items, now }) {
               <TooltipContent>
                 {name}:{" "}
                 {at
-                  ? `${failed ? "generate failed" : "generated"} ${formatDateTime(at)}`
+                  ? `${failed ? `${kind} failed` : done} ${formatDateTime(at)}`
                   : "never generated"}
               </TooltipContent>
             </Tooltip>

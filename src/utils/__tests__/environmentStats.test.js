@@ -91,6 +91,31 @@ describe("summarizeEnvironments", () => {
     ).toBe("2026-08-01T10:00:00Z");
   });
 
+  // A push runs the full generate first, so a succeeded push is a generate.
+  it("dates a succeeded push as a generate, a failed one not", () => {
+    expect(
+      summarizeEnvironments([
+        {
+          ...prod,
+          last_generate_at: "2026-07-01T10:00:00Z",
+          last_generate_status: "succeeded",
+          last_push_at: "2026-07-02T10:00:00Z",
+          last_push_status: "failed",
+        },
+      ]).lastGenerated,
+    ).toBe("2026-07-01T10:00:00Z");
+    expect(
+      summarizeEnvironments([
+        prod,
+        {
+          ...staging,
+          last_push_at: "2026-08-01T10:00:00Z",
+          last_push_status: "succeeded",
+        },
+      ]).lastGenerated,
+    ).toBe("2026-08-01T10:00:00Z");
+  });
+
   it("counts a region once however many environments use it", () => {
     expect(
       summarizeEnvironments([prod, { ...staging, region: "eu-west-1" }])
@@ -159,6 +184,7 @@ describe("lastJob", () => {
       }),
     ).toEqual({
       kind: "push",
+      at: "2026-07-02T10:00:00Z",
       status: "failed",
       error: "Failed to push to Git: permission denied",
     });
@@ -170,6 +196,7 @@ describe("lastJob", () => {
       }),
     ).toEqual({
       kind: "generate",
+      at: "2026-07-01T10:00:00Z",
       status: "failed",
       error: "Terraform fmt failed",
     });
@@ -534,16 +561,65 @@ describe("generations", () => {
         name: "analytics-dev",
         at: "2026-08-01T10:00:00Z",
         status: "failed",
+        kind: "generate",
       },
       {
         id: "env-2",
         name: "demo-staging",
         at: "2026-07-01T10:00:00Z",
         status: "succeeded",
+        kind: "generate",
       },
       // Never generated, by name.
-      { id: "env-1", name: "demo-prod", at: null, status: null },
-      { id: "env-3", name: "zeta-sandbox", at: null, status: null },
+      { id: "env-1", name: "demo-prod", at: null, status: null, kind: null },
+      { id: "env-3", name: "zeta-sandbox", at: null, status: null, kind: null },
+    ]);
+  });
+
+  // The more recent job counts, as in the status pill; a push is a generate.
+  it("takes the push when it is newer than the generate", () => {
+    expect(
+      generations([
+        {
+          ...prod,
+          last_generate_at: "2026-07-01T10:00:00Z",
+          last_generate_status: "succeeded",
+          last_push_at: "2026-07-02T10:00:00Z",
+          last_push_status: "failed",
+        },
+        staging,
+      ]),
+    ).toEqual([
+      {
+        id: "env-1",
+        name: "demo-prod",
+        at: "2026-07-02T10:00:00Z",
+        status: "failed",
+        kind: "push",
+      },
+      { id: "env-2", name: "demo-staging", at: null, status: null, kind: null },
+    ]);
+  });
+
+  it("takes the generate on a tie", () => {
+    expect(
+      generations([
+        {
+          ...prod,
+          last_generate_at: "2026-07-01T10:00:00Z",
+          last_generate_status: "succeeded",
+          last_push_at: "2026-07-01T10:00:00Z",
+          last_push_status: "failed",
+        },
+      ]),
+    ).toEqual([
+      {
+        id: "env-1",
+        name: "demo-prod",
+        at: "2026-07-01T10:00:00Z",
+        status: "succeeded",
+        kind: "generate",
+      },
     ]);
   });
 
